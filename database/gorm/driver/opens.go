@@ -1,7 +1,7 @@
 package driver
 
 import (
-	g "gorm.io/gorm"
+	"gorm.io/gorm"
 )
 
-var Opens = map[string]func(string) g.Dialector{}
+var Opens = map[string]func(string) gorm.Dialector{}
