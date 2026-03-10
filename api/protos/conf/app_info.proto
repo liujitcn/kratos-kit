@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package conf;
+
+import "google/protobuf/timestamp.proto";
+
+// 应用/实例信息
+message AppInfo {
+  // 项目唯一标识（小写 + 连字符，如 shop）
+  string project = 1;
+  // 纯微服务名（小写 + 连字符，如：admin-service）
+  string app_id = 2;
+  // 实例 ID，比如：shop-admin-service@172.16.0.12:8080@ajk2n8d3789z
+  string instance_id = 3;
+  // 「项目名 + 服务名」的自然语言描述，比如：商城管理平台服务
+  string name = 4;
+  // 语义化版本号（SemVer），：v1.2.3、2.0.0-beta
+  string version = 5;
+
+  // 运行时信息
+  string hostname = 10;
+  repeated Endpoint endpoints = 11;
+  google.protobuf.Timestamp start_time = 12;
+
+  // 部署/环境/标签
+  string environment = 20; // dev/stage/prod
+  string region = 21;
+  string zone = 22;
+  map<string, string> labels = 23;
+
+  // 构建信息
+  string build_id = 30;
+  string git_commit = 31;
+
+  // 任意键值元数据
+  map<string, string> metadata = 40;
+}
+
+// 表示一个可访问的 endpoint（IP:PORT 或 URI）
+message Endpoint {
+  string kind = 1;    // e.g., "grpc", "http", "metrics"
+  string address = 2; // e.g., "10.0.0.1:8080" or "http://host:8080"
+}

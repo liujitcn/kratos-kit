@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package conf;
+
+import "google/protobuf/duration.proto";
+
+// 认证
+message Authentication {
+  // JWT
+  message Jwt {
+    // 白名单列表
+    message WhiteList {
+      repeated string prefix = 1;
+      repeated string regex = 2;
+      repeated string path = 3;
+      repeated string match = 4;
+    }
+
+    string method = 1; // JWT签名的算法，支持算法：HS256
+    string secret = 2; // JWT 秘钥
+    google.protobuf.Duration accessTokenExpires = 3; // token 过期时间
+    google.protobuf.Duration refreshTokenExpires = 4; // 刷新token 时间
+    WhiteList whiteList = 10;
+  }
+
+  optional Jwt jwt = 1; // JWT 认证
+}

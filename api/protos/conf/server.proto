@@ -1,0 +1,123 @@
+syntax = "proto3";
+
+package conf;
+
+import "google/protobuf/duration.proto";
+
+import "conf/tls.proto";
+
+// 服务器
+message Server {
+  // 中间件
+  message Middleware {
+    // 限流器
+    message RateLimiter {
+      string name = 1; // 限流器名字，支持：bbr。
+    }
+
+    // 性能指标
+    message Metrics {
+      bool histogram = 1; // 直方图
+      bool counter = 2; // 计数器
+      bool gauge = 3; // 仪表盘
+      bool summary = 4; // 摘要
+    }
+
+    bool enable_logging = 1; // 日志开关
+    bool enable_recovery = 2; // 异常恢复
+    bool enable_tracing = 3; // 链路追踪开关
+    bool enable_validate = 4; // 参数校验开关
+    bool enable_metadata = 5; // 元数据开关
+    bool enable_circuit_breaker = 6; // 熔断器
+
+    RateLimiter limiter = 10;
+    Metrics metrics = 11;
+  }
+
+  // HTTP
+  message HTTP {
+    message CORS {
+      repeated string headers = 1;  //
+      repeated string methods = 2;  //
+      repeated string origins = 3;  //
+    }
+
+    string network = 1; // 网络
+    string addr = 2;  // 服务监听地址
+    google.protobuf.Duration timeout = 3; // 超时时间
+
+    CORS cors = 10;  // 服务监听地址
+    Middleware middleware = 11;  // 中间件
+    TLS tls = 12;  // TLS配置
+
+    bool enable_swagger = 20;  // 启用SwaggerUI
+    bool enable_pprof = 21;  // 启用pprof
+  }
+
+  // gPRC
+  message GRPC {
+    string network = 1; // 网络
+    string addr = 2;  // 服务监听地址
+
+    google.protobuf.Duration timeout = 3; // 超时时间
+
+    Middleware middleware = 11;
+
+    TLS tls = 12;  // TLS配置
+
+    bool customHealth = 20; //自定义健康监测
+  }
+
+  message MCP {
+    repeated Route routes = 1;
+    Interceptors interceptors = 2;
+
+    message Route {
+      string name = 1;
+      string description = 2;
+      repeated Arg args = 3;
+      RequestTemplate request_template = 4;
+      repeated string interceptors = 5;
+    }
+
+    message Arg {
+      string name = 1;
+      string description = 2;
+      string position = 3;
+      bool required = 4;
+      string type = 5;
+    }
+
+    message RequestTemplate {
+      string method = 1;
+      string url = 2;
+      repeated Header headers = 3;
+    }
+
+    message Header {
+      string key = 1;
+      string value = 2;
+    }
+
+    message Interceptors {
+      Crypto crypto = 1;
+      Oauth oauth = 2;
+    }
+
+    message Crypto {
+      string des3_key = 1;
+    }
+
+    message Oauth {
+      string url = 1;
+      string client_id = 2;
+      string client_secret = 3;
+    }
+
+  }
+
+  // RPC
+  optional HTTP http = 1;  // Http服务
+  optional GRPC grpc = 2;  // gRPC服务
+  optional MCP mcp = 3;  // Mcp服务
+}

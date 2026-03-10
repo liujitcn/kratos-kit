@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package conf;
+
+import "conf/server.proto";
+import "conf/client.proto";
+import "conf/data.proto";
+import "conf/tracer.proto";
+import "conf/logger.proto";
+import "conf/registry.proto";
+import "conf/config.proto";
+import "conf/oss.proto";
+import "conf/pprof.proto";
+import "conf/notify.proto";
+import "conf/authn.proto";
+import "conf/authz.proto";
+
+// 引导信息
+message Bootstrap {
+  optional Server server = 1;
+  optional Client client = 2;
+  optional Data data = 3;
+  optional Tracer trace = 4;
+  optional Logger logger = 5;
+  optional Registry registry = 6;
+  optional Config config = 7;
+  optional OSS oss = 8;
+  optional Notification notify = 9;
+  optional Authentication authn = 10;
+  optional Authorization authz = 11;
+  optional Pprof pprof = 12;
+}

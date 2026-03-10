@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package conf;
+
+// 授权
+message Authorization {
+  // Casbin配置
+  message Casbin {
+    message UrlInfo {
+      string url = 1; //请求路径
+      string method = 2; //请求方式
+    }
+    string prefix = 1; //前缀
+    repeated UrlInfo exclude = 2; // 排除的路由列表
+  }
+
+  Casbin casbin = 1; // casbin
+}

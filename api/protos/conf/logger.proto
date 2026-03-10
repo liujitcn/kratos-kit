@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package conf;
+
+// 日志
+message Logger {
+  // Zap
+  message Zap {
+    string filepath = 1; // 日志文件地址
+    string level = 2; // 最低日志级别 DebugLevel Level = iota - 1,InfoLevel,WarnLevel,ErrorLevel
+    int32 max_size = 3; // 日志文件大小
+    int32 max_age = 4; // 日志文件保留天数
+    int32 max_backups = 5; // 最大保留日志文件数量
+    bool LogToConsole = 6; //打印到控制台
+  }
+
+  // logrus
+  message Logrus {
+    string level = 1; // 日志等级
+    string formatter = 2; // 输出格式：text, json.
+    string timestamp_format = 3; // 定义时间戳格式，例如："2006-01-02 15:04:05"
+    bool disable_colors = 4; // 不需要彩色日志
+    bool disable_timestamp = 5; // 不需要时间戳
+  }
+
+  // Fluent
+  message Fluent {
+    string endpoint = 1; // 公网接入地址
+  }
+
+  // 阿里云
+  message Aliyun {
+    string endpoint = 1; // 公网接入地址
+    string project = 2; //
+    string access_key = 3; // 访问密钥ID
+    string access_secret = 4; // 访问密钥
+  }
+
+  // 腾讯
+  message Tencent {
+    string endpoint = 1; // 公网接入地址
+    string topic_id = 2; //
+    string access_key = 3; // 访问密钥ID
+    string access_secret = 4; // 访问密钥
+  }
+
+  // Zerolog
+  message Zerolog {
+    string level = 1; // 日志等级
+
+    string time_field_format = 2; // 定义时间戳格式，例如："2006-01-02 15:04:05"
+    string timestamp_field_name = 3; // 时间戳字段名称
+    string level_field_name= 4; // 日志等级字段名称
+    string message_field_name = 5; // 日志消息字段名称
+
+    string writer = 6; // 输出目标，默认stdout，可选：stdout, stderr, file
+    string filepath = 7; // 当writer为file时，指定日志文件地址
+  }
+
+  string type = 1;
+
+  optional Zap zap = 2;
+  optional Logrus logrus = 3;
+  optional Fluent fluent = 4;
+  optional Aliyun aliyun = 5;
+  optional Tencent tencent = 6;
+  optional Zerolog zerolog = 7;
+}

@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package conf;
+
+import "google/protobuf/duration.proto";
+
+import "conf/tls.proto";
+
+// 数据
+message Data {
+  // 数据库
+  message Database {
+    string driver = 1;  // 驱动名：mysql、postgresql、mongodb、sqlite……
+    string source = 2;  // 数据源（DSN字符串）
+
+    bool openLog = 11; // 打开日志开关
+    bool enable_trace = 12; // 链路追踪开关
+    bool enable_metrics = 13; // 性能分析开关
+
+    optional int32 max_idle_connections = 20; // 连接池最大空闲连接数
+    optional int32 max_open_connections = 21; // 连接池最大打开连接数
+    optional google.protobuf.Duration connection_max_lifetime = 22; // 连接可重用的最大时间长度
+
+    optional string prometheus_push_addr = 30;
+    optional string prometheus_db_name = 31;
+    optional uint32 prometheus_http_port = 32;
+  }
+
+  // redis
+  message Redis {
+    repeated string addr = 1;  // 服务端地址
+    string password = 2;  // 密码
+    int32 db = 3; // 数据库索引
+
+    google.protobuf.Duration dial_timeout = 4;  // 连接超时时间
+    google.protobuf.Duration read_timeout = 5;  // 读取超时时间
+    google.protobuf.Duration write_timeout = 6; // 写入超时时间
+    TLS tls = 7; // 证书
+
+    bool enable_tracing = 8; // 打开链路追踪
+    bool enable_metrics = 9; // 打开性能度量
+  }
+
+  // 队列
+  message Queue {
+    message Memory {
+      int64 poolSize = 1;
+    }
+    message Redis {
+      message Producer {
+        int64 streamMaxLength = 1;
+        bool approximateMaxLength = 2;
+      }
+      message Consumer {
+        google.protobuf.Duration visibilityTimeout = 1;
+        google.protobuf.Duration blockingTimeout = 2;
+        google.protobuf.Duration reclaimInterval = 3;
+        int64 bufferSize = 4;
+        int64 concurrency = 5;
+      }
+      Producer producer = 1;
+      Consumer consumer = 2;
+    }
+    Memory memory = 1;
+    Redis redis = 2;
+  }
+
+  optional Database database = 1;  // 数据库DSN
+  optional Redis redis = 2;  // Redis
+  optional Queue queue = 3; // 队列
+}

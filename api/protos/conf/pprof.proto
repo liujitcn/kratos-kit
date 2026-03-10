@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package conf;
+
+
+import "google/protobuf/duration.proto";
+
+// 服务监控
+message Pprof {
+  // https://github.com/grafana/pyroscope
+  message Pyroscope {
+    string applicationName = 1; // 应用标识名，用于在服务端区分不同应用的数据。建议使用分层命名（如 backend.purchases）。
+    string serverAddress = 2; // Pyroscope 服务端地址。http://pyroscope.services.internal:4040
+    string basicAuthUser = 3; // HTTP Basic 认证用户名。
+    string basicAuthPassword = 4; // HTTP Basic 认证密码。
+    string tenantId = 5; // 多租户 ID（仅在使用 Phlare 多租户功能时需指定）。
+    google.protobuf.Duration uploadRate = 6; // 数据上传频率（如 10*time.Second）。
+    map<string, string> tags = 7; // 附加标签，用于数据过滤和分类（如环境、版本）。
+    repeated string profileTypes = 8; // 收集的性能数据类型（如 ProfileCPU, ProfileHeap, ProfileAllocObjects）。
+    bool disableGCRuns = 9; // 禁用自动 runtime.GC，避免堆分析时因 GC 干扰数据准确性。
+    map<string, string> httpHeaders = 10; // 自定义 HTTP 请求头（如添加额外认证信息）。
+  }
+
+  string type = 1;
+
+  Pyroscope pyroscope = 2;//本地
+}

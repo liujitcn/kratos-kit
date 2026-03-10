@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package conf;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+
+import "conf/tls.proto";
+
+// 客户端
+message Client {
+  // 中间件
+  message Middleware {
+    // JWT校验
+    message Auth {
+      string method = 1; // JWT签名的算法，支持算法：HS256
+      string secret = 2; // JWT 秘钥
+    }
+
+    // 负载均衡选择器
+    message SelectorFilter {
+      string filterVersion = 1; // 客户端负载均衡过滤版本号
+      string balancer = 2; // 客户端负载选择器
+    }
+
+    bool enable_logging = 1; // 日志开关
+    bool enable_recovery = 2; // 异常恢复
+    bool enable_tracing = 3; // 链路追踪开关
+    bool enable_metadata = 4; // 元数据开关
+
+    Auth auth = 10;
+    SelectorFilter selectorFilter = 11;
+  }
+
+  // HTTP
+  message HTTP {
+    string endpoint = 1; //服务地址
+    google.protobuf.Duration timeout = 2; // 超时时间
+    Middleware middleware = 3;// 中间件
+    TLS tls = 4;  // TLS配置
+    map<string,string> metadata = 5; // 元数据
+  }
+
+  // gPRC
+  message GRPC {
+    string endpoint = 1; //服务地址
+    google.protobuf.Duration timeout = 2; // 超时时间
+    Middleware middleware = 3; // 中间件
+    TLS tls = 4;  // TLS配置
+    map<string,string> metadata = 5; // 元数据
+  }
+
+  // MCP
+  message MCP {
+    // Stdio 子进程配置
+    message Stdio {
+      // Command is the executable to run (e.g., "python", "node", "npx")
+      // 命令行可执行程序
+      string command = 1;
+      // Args are the command arguments (e.g., ["-m", "mcp_server_time"])
+      // 命令参数
+      repeated string args = 2;
+      // Env contains environment variables for the subprocess
+      // 子进程环境变量
+      map<string, string> env = 3;
+      // WorkDir is the working directory for the subprocess
+      // 子进程工作目录
+      string work_dir = 4;
+    }
+
+    // HTTP 远程服务配置
+    message HTTP {
+      // URL is the MCP server endpoint
+      // MCP 服务地址
+      string endpoint = 1;
+      // Headers are custom HTTP headers to include in requests
+      // 自定义请求头
+      map<string, string> headers = 2;
+      // Timeout is the request timeout duration
+      // 请求超时时间
+      google.protobuf.Duration timeout = 3;
+    }
+
+    // Name is the unique identifier for the MCP server
+    // MCP 服务唯一名称
+    string name = 1;
+    // Transport specifies the communication method
+    // 传输方式："stdio" / "http" / "websocket"
+    string transport = 2;
+    // Stdio configuration (when transport = "stdio")
+    // stdio 方式配置
+    Stdio stdio = 3;
+    // HTTP configuration (when transport = "http")
+    // http 方式配置
+    HTTP http = 4;
+  }
+
+  // LLM 配置
+  message LLM {
+    // OpenAI 兼容接口地址
+    string base_url = 1;
+    // API 密钥
+    string api_key = 2;
+    // 模型名
+    string model = 3;
+
+    // 随机种子（用于提升结果可复现性）
+    int64 seed = 4;
+    // 最大输出 token 数
+    int64 max_output_tokens = 5;
+    // 频率惩罚（降低重复措辞）
+    double frequency_penalty = 6;
+    // 出现惩罚（鼓励引入新内容）
+    double presence_penalty = 7;
+    // 温度（控制随机性）
+    double temperature = 8;
+    // top-p 核采样参数
+    double top_p = 9;
+    // 停止词序列
+    repeated string stop_sequences = 10;
+    // 透传给底层请求的扩展字段
+    google.protobuf.Struct extra_fields = 11;
+    // 推理强度：minimal / low / medium / high
+    string reasoning_effort = 12;
+  }
+
+  optional HTTP http = 1;  // Http服务
+  optional GRPC grpc = 2;  // gRPC服务
+  optional MCP mcp = 3;  // mcp服务
+  optional LLM llm = 4;  // llm服务
+}
