@@ -1,0 +1,50 @@
+# Go 二进制与构建产物
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.app
+*.out
+bin/
+build/
+dist/
+
+# Go 测试与覆盖率
+*.test
+*.cover
+cover.out
+coverage.out
+
+# Go 工作区与缓存
+go.work
+.gocache/
+
+# 依赖目录（按需）
+vendor/
+
+# 日志与临时文件
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# 本地环境与配置
+.env
+.env.*
+config.local.yaml
+config.local.yml
+config.local.json
+
+# 调试产物
+__debug_bin
+
+# 编辑器与系统文件
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
