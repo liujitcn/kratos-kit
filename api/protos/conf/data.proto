@@ -44,9 +44,11 @@ message Data {
 
   // 队列
   message Queue {
+
     message Memory {
       int64 poolSize = 1;
     }
+
     message Redis {
       message Producer {
         int64 streamMaxLength = 1;
