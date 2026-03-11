@@ -42,8 +42,12 @@ def detect_remote_ref() -> str:
     return remote_ref
 
 
-def module_dirs() -> list[str]:
-    paths = sorted(str(p.parent) for p in Path(".").rglob("go.mod") if ".git" not in p.parts)
+def module_dirs(base_dir: str = ".") -> list[str]:
+    base = Path(base_dir)
+    if not base.exists() or not base.is_dir():
+        raise RuntimeError(f"目录不存在: {base_dir}")
+
+    paths = sorted({p.parent.as_posix() for p in base.rglob("go.mod") if ".git" not in p.parts})
     return ["." if p == "." else p for p in paths]
 
 
@@ -128,28 +132,50 @@ def process_module(module_dir: str, remote_ref: str) -> bool:
     return True
 
 
+def normalize_module_dir(module_dir: str) -> str:
+    clean = module_dir.strip().rstrip("/")
+    if clean in {"", "."}:
+        return "."
+    if clean.startswith("/") or ".." in Path(clean).parts:
+        raise RuntimeError(f"非法模块目录: {module_dir}（请使用仓库内相对路径）")
+    return clean
+
+
+def resolve_target_dirs(module_path: str | None) -> list[str]:
+    if not module_path:
+        return module_dirs(".")
+
+    target = normalize_module_dir(module_path)
+    targets = module_dirs(target)
+    if not targets:
+        raise RuntimeError(f"目录及其子目录不存在 go.mod: {target}")
+    return targets
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="远程更新触发的 tag 发布脚本")
-    parser.add_argument("mode", choices=["tag", "sub-tag"], help="tag=根模块，sub-tag=全部模块")
+    parser.add_argument(
+        "--path",
+        dest="module_path",
+        help="从指定相对目录开始递归检查 go.mod（包含当前目录与子目录）",
+    )
     args = parser.parse_args()
 
     try:
         run(["git", "fetch", "origin", "--tags"])
         remote_ref = detect_remote_ref()
         print(f"远程分支引用: {remote_ref}")
-
-        if args.mode == "tag":
-            ok = process_module(".", remote_ref)
-            if not ok:
-                print("根模块远程无更新，未推送任何 tag。")
-            return 0
+        targets = resolve_target_dirs(args.module_path)
 
         pushed = False
-        for d in module_dirs():
+        for d in targets:
             if process_module(d, remote_ref):
                 pushed = True
         if not pushed:
-            print("所有模块远程均无更新，未推送任何 tag。")
+            if args.module_path:
+                print(f"{normalize_module_dir(args.module_path)} 及其子目录远程无更新，未推送任何 tag。")
+            else:
+                print("所有模块远程均无更新，未推送任何 tag。")
         return 0
     except RuntimeError as err:
         print(str(err), file=sys.stderr)

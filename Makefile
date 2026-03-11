@@ -1,23 +1,13 @@
-# Not Support Windows
+# 运行要求：Linux/macOS，或 Windows 下使用 WSL/Git Bash（需具备 make、python3、go）
 
-.PHONY: help init plugin cli api tag sub-tag
+.PHONY: help init plugin cli api tag
 
-ifeq ($(OS),Windows_NT)
-    IS_WINDOWS := 1
-endif
-
-CURRENT_DIR	:= $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-ROOT_DIR	:= $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-
-SRCS_MK		:= $(foreach dir, app, $(wildcard $(dir)/*/*/Makefile))
-
-
-# initialize develop environment
+# 初始化开发环境
 init: plugin cli
 
-# install protoc plugin
+# 安装 protoc 插件
 plugin:
-	# go
+	# Go
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2@latest
@@ -27,7 +17,7 @@ plugin:
 	@go install github.com/menta2k/protoc-gen-redact/v3@latest
 	@go install github.com/go-kratos/protoc-gen-typescript-http@latest
 
-# install cli tools
+# 安装命令行工具
 cli:
 	@go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
 	@go install github.com/google/gnostic@latest
@@ -35,21 +25,16 @@ cli:
 	@go install entgo.io/ent/cmd/ent@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-# generate protobuf api go code
+# 生成 protobuf API Go 代码
 api:
 	@cd api && \
 	buf generate
 
-# 根模块：仅根据远程仓库更新状态决定是否打并推送远程 tag（不提交代码）
+# 统一打 tag：默认扫描根目录及子目录的 go.mod；可通过 MODULE=auth 指定起始目录递归扫描（不提交代码）
 tag:
-	@python3 scripts/tag_release.py tag
+	@python3 scripts/tag_release.py $(if $(MODULE),--path $(MODULE),)
 
-# 多模块：递归检查 go.mod 目录，仅根据远程仓库更新状态为模块打并推送远程 tag（不提交代码）
-sub-tag:
-	@python3 scripts/tag_release.py sub-tag
-
-
-# show help
+# 显示帮助
 help:
 	@echo ""
 	@echo "Usage:"

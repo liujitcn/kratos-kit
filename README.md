@@ -103,8 +103,9 @@ import "conf/tls.proto";
 make plugin   # 安装 protoc 相关插件
 make cli      # 安装 kratos/buf 等命令行工具
 make api      # 生成 api 代码
-make tag      # 根模块：根据远程更新状态自动打并推送 vX.Y.Z
-make sub-tag  # 多模块：递归按 目录/vX.Y.Z 规则打并推送 tag
+make tag      # 默认从仓库根目录递归检查 go.mod 并自动打/推送 tag（含根模块）
+make tag MODULE=auth       # 从 auth 目录开始递归检查 go.mod 并打 tag
+make tag MODULE=auth/authn # 从 auth/authn 目录开始递归检查 go.mod 并打 tag
 ```
 
 ## 子模块文档
