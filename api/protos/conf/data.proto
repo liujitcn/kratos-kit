@@ -13,7 +13,8 @@ message Data {
     string driver = 1;  // 驱动名：mysql、postgresql、mongodb、sqlite……
     string source = 2;  // 数据源（DSN字符串）
 
-    bool openLog = 11; // 打开日志开关
+    bool migrate = 10; // 数据迁移开关
+    bool debug = 11; // 调试开关
     bool enable_trace = 12; // 链路追踪开关
     bool enable_metrics = 13; // 性能分析开关
 
