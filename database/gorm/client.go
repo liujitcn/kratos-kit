@@ -21,19 +21,23 @@ import (
 	"github.com/liujitcn/kratos-kit/api/gen/go/conf"
 )
 
+type Client struct {
+	*gorm.DB
+}
+
 // NewGormClient 创建GORM数据库客户端
-func NewGormClient(cfg *conf.Data_Database) (*gorm.DB, error) {
+func NewGormClient(cfg *conf.Data_Database) (*Client, func(), error) {
 	if cfg == nil {
-		return nil, errors.New("gorm client config is nil")
+		return nil, nil, errors.New("gorm client config is nil")
 	}
 	log.Infof("Gorm SqlDb: %s => %s", util.Blue(cfg.Driver), util.Green(cfg.Source))
 	// 获取驱动
 	gormDriver, ok := driver.Opens[cfg.Driver]
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("Gorm驱动加载失败【%s】", cfg.Driver))
+		return nil, nil, errors.New(fmt.Sprintf("Gorm驱动加载失败【%s】", cfg.Driver))
 	}
 	var lv gormLog.LogLevel
-	if cfg.OpenLog {
+	if cfg.Debug {
 		lv = gormLog.Info
 	} else {
 		lv = gormLog.Silent
@@ -75,6 +79,34 @@ func NewGormClient(cfg *conf.Data_Database) (*gorm.DB, error) {
 
 	var sqlDB *sql.DB
 	sqlDB, err = db.DB()
+
+	cleanUp := func() {
+		if sqlDB != nil {
+			err = sqlDB.Close()
+			if err != nil {
+				log.Fatalf("failed close sql db: %v", err)
+				return
+			}
+		}
+	}
+
+	//创建钩子函数
+	creates := getCallbackCreates()
+	if len(creates) > 0 {
+		for i, fn := range creates {
+			err = db.Callback().Create().Before("gorm:before_create").Register(fmt.Sprintf("before_create_%d", i), fn)
+			if err != nil {
+				return nil, cleanUp, err
+			}
+		}
+	}
+	updates := getCallbackUpdates()
+	for i, fn := range updates {
+		err = db.Callback().Update().Before("gorm:before_update").Register(fmt.Sprintf("before_update_%d", i), fn)
+		if err != nil {
+			return nil, cleanUp, err
+		}
+	}
 	if sqlDB != nil {
 		if cfg.MaxIdleConnections != nil {
 			sqlDB.SetMaxIdleConns(int(cfg.GetMaxIdleConnections()))
@@ -86,5 +118,18 @@ func NewGormClient(cfg *conf.Data_Database) (*gorm.DB, error) {
 			sqlDB.SetConnMaxLifetime(cfg.GetConnectionMaxLifetime().AsDuration())
 		}
 	}
-	return db, nil
+
+	c := &Client{db}
+
+	// 如果开启自动迁移，使用 resolveMigrateModels 汇总并执行 AutoMigrate
+	if cfg.EnableMigrate {
+		models := getRegisteredMigrateModels()
+		if len(models) > 0 {
+			if err = c.DB.AutoMigrate(models...); err != nil {
+				return nil, cleanUp, err
+			}
+		}
+	}
+
+	return c, cleanUp, nil
 }
