@@ -53,52 +53,37 @@ func (t *UserTokenPayload) MakeAuthClaims() *authnEngine.AuthClaims {
 // ExtractAuthClaims 解析认证声明
 func (t *UserTokenPayload) ExtractAuthClaims(claims *authnEngine.AuthClaims) error {
 	var err error
-	var sub string
-	sub, err = claims.GetSubject()
+	t.UserName, err = claims.GetSubject()
 	if err == nil {
-		t.UserName = sub
+		return err
 	}
-
-	var uid int64
-	uid, err = claims.GetInt64(ClaimFieldUserID)
+	t.UserId, err = claims.GetInt64(ClaimFieldUserID)
 	if err == nil {
-		t.UserId = uid
+		return err
 	}
-
-	var rid int64
-	rid, err = claims.GetInt64(ClaimFieldRoleID)
+	t.RoleId, err = claims.GetInt64(ClaimFieldRoleID)
 	if err == nil {
-		t.RoleId = rid
+		return err
 	}
-
-	var rname string
-	rname, err = claims.GetString(ClaimFieldRoleName)
+	t.RoleName, err = claims.GetString(ClaimFieldRoleName)
 	if err == nil {
-		t.RoleName = rname
+		return err
 	}
-
-	var rcode string
-	rcode, err = claims.GetString(ClaimFieldRoleCode)
+	t.RoleCode, err = claims.GetString(ClaimFieldRoleCode)
 	if err == nil {
-		t.RoleCode = rcode
+		return err
 	}
-
-	var did int64
-	did, err = claims.GetInt64(ClaimFieldDeptID)
+	t.DeptId, err = claims.GetInt64(ClaimFieldDeptID)
 	if err == nil {
-		t.DeptId = did
+		return err
 	}
-
-	var dname string
-	dname, err = claims.GetString(ClaimFieldDeptName)
+	t.DeptName, err = claims.GetString(ClaimFieldDeptName)
 	if err == nil {
-		t.DeptName = dname
+		return err
 	}
-
-	var oid string
-	oid, err = claims.GetString(ClaimFieldOpenID)
+	t.OpenId, err = claims.GetString(ClaimFieldOpenID)
 	if err == nil {
-		t.OpenId = oid
+		return err
 	}
 	return nil
 }
