@@ -88,8 +88,8 @@ type Data_Database struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	Driver                string                 `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`                                                                     // 驱动名：mysql、postgresql、mongodb、sqlite……
 	Source                string                 `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`                                                                     // 数据源（DSN字符串）
-	Migrate               bool                   `protobuf:"varint,10,opt,name=migrate,proto3" json:"migrate,omitempty"`                                                                 // 数据迁移开关
-	Debug                 bool                   `protobuf:"varint,11,opt,name=debug,proto3" json:"debug,omitempty"`                                                                     // 调试开关
+	Debug                 bool                   `protobuf:"varint,10,opt,name=debug,proto3" json:"debug,omitempty"`                                                                     // 调试开关
+	EnableMigrate         bool                   `protobuf:"varint,11,opt,name=enable_migrate,json=enableMigrate,proto3" json:"enable_migrate,omitempty"`                                // 数据迁移开关
 	EnableTrace           bool                   `protobuf:"varint,12,opt,name=enable_trace,json=enableTrace,proto3" json:"enable_trace,omitempty"`                                      // 链路追踪开关
 	EnableMetrics         bool                   `protobuf:"varint,13,opt,name=enable_metrics,json=enableMetrics,proto3" json:"enable_metrics,omitempty"`                                // 性能分析开关
 	MaxIdleConnections    *int32                 `protobuf:"varint,20,opt,name=max_idle_connections,json=maxIdleConnections,proto3,oneof" json:"max_idle_connections,omitempty"`         // 连接池最大空闲连接数
@@ -146,16 +146,16 @@ func (x *Data_Database) GetSource() string {
 	return ""
 }
 
-func (x *Data_Database) GetMigrate() bool {
+func (x *Data_Database) GetDebug() bool {
 	if x != nil {
-		return x.Migrate
+		return x.Debug
 	}
 	return false
 }
 
-func (x *Data_Database) GetDebug() bool {
+func (x *Data_Database) GetEnableMigrate() bool {
 	if x != nil {
-		return x.Debug
+		return x.EnableMigrate
 	}
 	return false
 }
@@ -606,17 +606,17 @@ var File_conf_data_proto protoreflect.FileDescriptor
 
 const file_conf_data_proto_rawDesc = "" +
 	"\n" +
-	"\x0fconf/data.proto\x12\x04conf\x1a\x1egoogle/protobuf/duration.proto\x1a\x0econf/tls.proto\"\xfc\x0e\n" +
+	"\x0fconf/data.proto\x12\x04conf\x1a\x1egoogle/protobuf/duration.proto\x1a\x0econf/tls.proto\"\x89\x0f\n" +
 	"\x04Data\x124\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x13.conf.Data.DatabaseH\x00R\bdatabase\x88\x01\x01\x12+\n" +
 	"\x05redis\x18\x02 \x01(\v2\x10.conf.Data.RedisH\x01R\x05redis\x88\x01\x01\x12+\n" +
-	"\x05queue\x18\x03 \x01(\v2\x10.conf.Data.QueueH\x02R\x05queue\x88\x01\x01\x1a\xb2\x05\n" +
+	"\x05queue\x18\x03 \x01(\v2\x10.conf.Data.QueueH\x02R\x05queue\x88\x01\x01\x1a\xbf\x05\n" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
-	"\x06source\x18\x02 \x01(\tR\x06source\x12\x18\n" +
-	"\amigrate\x18\n" +
-	" \x01(\bR\amigrate\x12\x14\n" +
-	"\x05debug\x18\v \x01(\bR\x05debug\x12!\n" +
+	"\x06source\x18\x02 \x01(\tR\x06source\x12\x14\n" +
+	"\x05debug\x18\n" +
+	" \x01(\bR\x05debug\x12%\n" +
+	"\x0eenable_migrate\x18\v \x01(\bR\renableMigrate\x12!\n" +
 	"\fenable_trace\x18\f \x01(\bR\venableTrace\x12%\n" +
 	"\x0eenable_metrics\x18\r \x01(\bR\renableMetrics\x125\n" +
 	"\x14max_idle_connections\x18\x14 \x01(\x05H\x00R\x12maxIdleConnections\x88\x01\x01\x125\n" +
