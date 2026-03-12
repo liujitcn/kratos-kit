@@ -34,7 +34,7 @@ func NewLogger(cfg *conf.Logger) (log.Logger, error) {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
-	} //指定时间格式
+	}                                                            //指定时间格式
 	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder //按级别显示不同颜色，不需要的话取值zapcore.CapitalLevelEncoder就可以了
 	//encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder      //显示完整文件路径
 	encoderConfig.EncodeCaller = nCallerEncoder //自定义Caller显示
@@ -56,7 +56,7 @@ func NewLogger(cfg *conf.Logger) (log.Logger, error) {
 	}
 
 	var core zapcore.Core
-	if cfg.Zap.LogToConsole {
+	if cfg.Zap.EnableConsole {
 		core = zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(writeSyncer, zapcore.AddSync(os.Stdout)), lvl)
 	} else {
 		core = zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(writeSyncer), lvl)
