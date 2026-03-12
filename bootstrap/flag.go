@@ -19,7 +19,7 @@ type CommandFlags struct {
 
 func NewCommandFlags() *CommandFlags {
 	return &CommandFlags{
-		Conf:       "../../configs",
+		Conf:       "configs",
 		Env:        "dev",
 		ConfigHost: "127.0.0.1:8500",
 		ConfigType: "consul",
