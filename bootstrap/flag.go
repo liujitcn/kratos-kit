@@ -29,7 +29,7 @@ func NewCommandFlags() *CommandFlags {
 
 // AddFlags 将 flags 绑定到传入的 cobra.Command（通常是 root command）。
 func (f *CommandFlags) AddFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&f.Conf, "conf", "c", f.Conf, "config path, eg: -conf ../../configs")
+	cmd.PersistentFlags().StringVarP(&f.Conf, "conf", "c", f.Conf, "config path, eg: -conf configs")
 	cmd.PersistentFlags().StringVarP(&f.Env, "env", "e", f.Env, "runtime environment, eg: -env dev")
 	cmd.PersistentFlags().StringVarP(&f.ConfigHost, "chost", "s", f.ConfigHost, "config server host, eg: -chost 127.0.0.1:8500")
 	cmd.PersistentFlags().StringVarP(&f.ConfigType, "ctype", "t", f.ConfigType, "config server type, eg: -ctype consul")
