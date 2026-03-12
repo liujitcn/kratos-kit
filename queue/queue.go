@@ -3,11 +3,11 @@ package queue
 import (
 	"errors"
 
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/liujitcn/kratos-kit/api/gen/go/conf"
 	"github.com/liujitcn/kratos-kit/queue/data"
 	"github.com/liujitcn/kratos-kit/queue/memory"
 	"github.com/liujitcn/kratos-kit/queue/redis"
-	"go.newcapec.cn/ncttools/nmskit/log"
 )
 
 type Queue interface {

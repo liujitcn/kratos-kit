@@ -23,6 +23,7 @@
 - `transport`：通用传输辅助（含 `keepalive`、`mcp` 子模块）
 - `rpc`：Kratos HTTP/GRPC Server 配置封装
 - `swagger-ui`：Swagger UI 嵌入与路由注册封装（支持 `net/http` 与 Kratos）
+- `pprof`：性能采样封装（当前支持 `pyroscope`）
 - `captcha`：验证码生成与存储封装
 - `sdk`：SDK 初始化入口封装
 - `runtime`：运行时应用信息模型
@@ -41,6 +42,7 @@ go get github.com/liujitcn/kratos-kit/tracer@latest
 go get github.com/liujitcn/kratos-kit/transport/mcp@latest
 go get github.com/liujitcn/kratos-kit/rpc@latest
 go get github.com/liujitcn/kratos-kit/swagger-ui@latest
+go get github.com/liujitcn/kratos-kit/pprof@latest
 ```
 
 ## 快速开始

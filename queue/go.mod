@@ -3,11 +3,11 @@ module github.com/liujitcn/kratos-kit/queue
 go 1.26.0
 
 require (
+	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/google/uuid v1.6.0
-	github.com/liujitcn/kratos-kit/api v0.0.4
+	github.com/liujitcn/kratos-kit/api v0.0.8
 	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.4
 	github.com/liujitcn/kratos-kit/utils v0.0.4
-	go.newcapec.cn/ncttools/nmskit/log v0.1.2
 )
 
 require (
