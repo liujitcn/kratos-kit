@@ -3,8 +3,6 @@ package runtime
 import (
 	"sync"
 
-	"github.com/go-kratos/kratos/v2/log"
-	"github.com/liujitcn/go-utils/id"
 	"github.com/liujitcn/kratos-kit/cache"
 	"github.com/liujitcn/kratos-kit/database/gorm"
 	"github.com/liujitcn/kratos-kit/locker"
@@ -14,8 +12,7 @@ import (
 )
 
 type Application struct {
-	snowflake *id.Snowflake
-	anyMap    map[string]any
+	anyMap map[string]any
 
 	gormClient *gorm.Client
 	cache      cache.Cache
@@ -28,20 +25,9 @@ type Application struct {
 
 // NewRuntime 默认值
 func NewRuntime() Runtime {
-	sf, err := id.NewSnowflake()
-	if err != nil {
-		log.Error("NewRuntime err:", err)
-	}
 	return &Application{
-		snowflake: sf,
-		anyMap:    make(map[string]any),
+		anyMap: make(map[string]any),
 	}
-}
-
-func (e *Application) GetSnowflake() *id.Snowflake {
-	e.mux.Lock()
-	defer e.mux.Unlock()
-	return e.snowflake
 }
 
 func (e *Application) SetInterface(s string, a any) {
