@@ -117,12 +117,12 @@ func (x *Logger) GetZerolog() *Logger_Zerolog {
 // Zap
 type Logger_Zap struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filepath      string                 `protobuf:"bytes,1,opt,name=filepath,proto3" json:"filepath,omitempty"`                        // 日志文件地址
-	Level         string                 `protobuf:"bytes,2,opt,name=level,proto3" json:"level,omitempty"`                              // 最低日志级别 DebugLevel Level = iota - 1,InfoLevel,WarnLevel,ErrorLevel
-	MaxSize       int32                  `protobuf:"varint,3,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`          // 日志文件大小
-	MaxAge        int32                  `protobuf:"varint,4,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`             // 日志文件保留天数
-	MaxBackups    int32                  `protobuf:"varint,5,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"` // 最大保留日志文件数量
-	LogToConsole  bool                   `protobuf:"varint,6,opt,name=LogToConsole,proto3" json:"LogToConsole,omitempty"`               //打印到控制台
+	Filepath      string                 `protobuf:"bytes,1,opt,name=filepath,proto3" json:"filepath,omitempty"`                                 // 日志文件地址
+	Level         string                 `protobuf:"bytes,2,opt,name=level,proto3" json:"level,omitempty"`                                       // 最低日志级别 DebugLevel Level = iota - 1,InfoLevel,WarnLevel,ErrorLevel
+	MaxSize       int32                  `protobuf:"varint,3,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`                   // 日志文件大小
+	MaxAge        int32                  `protobuf:"varint,4,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`                      // 日志文件保留天数
+	MaxBackups    int32                  `protobuf:"varint,5,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`          // 最大保留日志文件数量
+	EnableConsole bool                   `protobuf:"varint,6,opt,name=enable_console,json=enableConsole,proto3" json:"enable_console,omitempty"` //打印到控制台
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -192,9 +192,9 @@ func (x *Logger_Zap) GetMaxBackups() int32 {
 	return 0
 }
 
-func (x *Logger_Zap) GetLogToConsole() bool {
+func (x *Logger_Zap) GetEnableConsole() bool {
 	if x != nil {
-		return x.LogToConsole
+		return x.EnableConsole
 	}
 	return false
 }
@@ -556,7 +556,7 @@ var File_conf_logger_proto protoreflect.FileDescriptor
 
 const file_conf_logger_proto_rawDesc = "" +
 	"\n" +
-	"\x11conf/logger.proto\x12\x04conf\"\xb5\n" +
+	"\x11conf/logger.proto\x12\x04conf\"\xb8\n" +
 	"\n" +
 	"\x06Logger\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12'\n" +
@@ -565,15 +565,15 @@ const file_conf_logger_proto_rawDesc = "" +
 	"\x06fluent\x18\x04 \x01(\v2\x13.conf.Logger.FluentH\x02R\x06fluent\x88\x01\x01\x120\n" +
 	"\x06aliyun\x18\x05 \x01(\v2\x13.conf.Logger.AliyunH\x03R\x06aliyun\x88\x01\x01\x123\n" +
 	"\atencent\x18\x06 \x01(\v2\x14.conf.Logger.TencentH\x04R\atencent\x88\x01\x01\x123\n" +
-	"\azerolog\x18\a \x01(\v2\x14.conf.Logger.ZerologH\x05R\azerolog\x88\x01\x01\x1a\xb0\x01\n" +
+	"\azerolog\x18\a \x01(\v2\x14.conf.Logger.ZerologH\x05R\azerolog\x88\x01\x01\x1a\xb3\x01\n" +
 	"\x03Zap\x12\x1a\n" +
 	"\bfilepath\x18\x01 \x01(\tR\bfilepath\x12\x14\n" +
 	"\x05level\x18\x02 \x01(\tR\x05level\x12\x19\n" +
 	"\bmax_size\x18\x03 \x01(\x05R\amaxSize\x12\x17\n" +
 	"\amax_age\x18\x04 \x01(\x05R\x06maxAge\x12\x1f\n" +
 	"\vmax_backups\x18\x05 \x01(\x05R\n" +
-	"maxBackups\x12\"\n" +
-	"\fLogToConsole\x18\x06 \x01(\bR\fLogToConsole\x1a\xbb\x01\n" +
+	"maxBackups\x12%\n" +
+	"\x0eenable_console\x18\x06 \x01(\bR\renableConsole\x1a\xbb\x01\n" +
 	"\x06Logrus\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1c\n" +
 	"\tformatter\x18\x02 \x01(\tR\tformatter\x12)\n" +

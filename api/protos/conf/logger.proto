@@ -11,7 +11,7 @@ message Logger {
     int32 max_size = 3; // 日志文件大小
     int32 max_age = 4; // 日志文件保留天数
     int32 max_backups = 5; // 最大保留日志文件数量
-    bool LogToConsole = 6; //打印到控制台
+    bool enable_console = 6; //打印到控制台
   }
 
   // logrus
