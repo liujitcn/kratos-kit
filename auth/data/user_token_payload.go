@@ -54,35 +54,35 @@ func (t *UserTokenPayload) MakeAuthClaims() *authnEngine.AuthClaims {
 func (t *UserTokenPayload) ExtractAuthClaims(claims *authnEngine.AuthClaims) error {
 	var err error
 	t.UserName, err = claims.GetSubject()
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	t.UserId, err = claims.GetInt64(ClaimFieldUserID)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	t.RoleId, err = claims.GetInt64(ClaimFieldRoleID)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	t.RoleName, err = claims.GetString(ClaimFieldRoleName)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	t.RoleCode, err = claims.GetString(ClaimFieldRoleCode)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	t.DeptId, err = claims.GetInt64(ClaimFieldDeptID)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	t.DeptName, err = claims.GetString(ClaimFieldDeptName)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	t.OpenId, err = claims.GetString(ClaimFieldOpenID)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 	return nil
