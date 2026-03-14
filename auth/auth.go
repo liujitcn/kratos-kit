@@ -35,12 +35,10 @@ func Server(userToken *data.UserToken) middleware.Middleware {
 			}
 
 			sub, _ := authnClaims.GetString(data.ClaimFieldRoleCode)
-			path := authzEngine.Resource(tr.Operation())
-
 			authzClaims := authzEngine.AuthClaims{
 				Subject:  (*authzEngine.Subject)(&sub),
 				Action:   &Action,
-				Resource: &path,
+				Resource: new(authzEngine.Resource(tr.Operation())),
 			}
 
 			ctx = authzMiddleware.NewContext(ctx, &authzClaims)

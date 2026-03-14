@@ -59,9 +59,7 @@ func NewLogger(cfg *conf.Logger) (log.Logger, error) {
 	}
 
 	// 创建基础 zerolog.Logger
-	z := zerolog.New(w).With().Timestamp().Logger()
-
-	wrapped := NewZerologLogger(&z)
+	wrapped := NewZerologLogger(new(zerolog.New(w).With().Timestamp().Logger()))
 
 	return wrapped, nil
 }
