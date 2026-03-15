@@ -3,8 +3,6 @@ module github.com/liujitcn/kratos-kit
 go 1.26.0
 
 require (
-	github.com/go-kratos/kratos/v2 v2.9.2
-	github.com/liujitcn/go-utils v0.0.5
 	github.com/liujitcn/kratos-kit/cache v0.0.4
 	github.com/liujitcn/kratos-kit/database/gorm v0.0.6
 	github.com/liujitcn/kratos-kit/locker v0.0.1
@@ -25,6 +23,7 @@ require (
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
+	github.com/go-kratos/kratos/v2 v2.9.2 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/form/v4 v4.3.0 // indirect
@@ -46,7 +45,7 @@ require (
 	github.com/jlaffaye/ftp v0.2.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
-	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
+	github.com/liujitcn/go-utils v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/api v0.0.8 // indirect
 	github.com/liujitcn/kratos-kit/auth v0.0.2 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.4 // indirect
