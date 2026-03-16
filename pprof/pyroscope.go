@@ -37,8 +37,6 @@ func (p *Pyroscope) Start() {
 	})
 	if err != nil {
 		log.Errorf("pyroscope.Start: %v", err)
-	} else {
-		log.Infof("pyroscope.Start: ok")
 	}
 }
 
