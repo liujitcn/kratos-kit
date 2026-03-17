@@ -81,9 +81,10 @@ func generateServiceStruct(gen *protogen.Plugin, file *protogen.File, g *protoge
 	refPackage := file.GoDescriptorIdent.GoImportPath
 	shopCoreType := g.QualifiedGoIdent(baseCorePackage.Ident("ShopCore"))
 	serverType := service.GoName
+	serviceComment := normalizeCommentText(service.Comments.Leading)
 
 	// 结构体中内嵌未实现服务与基础上下文，便于后续补充业务依赖。
-	g.P("// ", serverType, " is the server API for ", service.GoName, " service implement.")
+	g.P(formatTypeComment(serverType, serviceComment))
 	g.P("type ", serverType, " struct {")
 	g.P(g.QualifiedGoIdent(refPackage.Ident("Unimplemented" + service.GoName + "Server")))
 	g.P("*", shopCoreType)
@@ -93,8 +94,8 @@ func generateServiceStruct(gen *protogen.Plugin, file *protogen.File, g *protoge
 	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
 		g.P(deprecationComment)
 	}
-	g.P("// New", serverType, " create a service implement.")
-	g.P(service.Comments.Leading, "func New", serverType, " (sc *", shopCoreType, ") *", serverType, " {")
+	g.P(formatTypeComment("New"+serverType, serviceComment))
+	g.P("func New", serverType, " (sc *", shopCoreType, ") *", serverType, " {")
 	g.P("var ss =", serverType, " {")
 	g.P("ShopCore:     sc,")
 	g.P("}")
@@ -103,8 +104,8 @@ func generateServiceStruct(gen *protogen.Plugin, file *protogen.File, g *protoge
 	g.P()
 
 	for _, method := range service.Methods {
-		g.P("//", method.GoName)
-		g.P(method.Comments.Leading, "func (s *", serverType, ") ", serverSignature(g, method), "{")
+		g.P(formatMethodComment(method.GoName, normalizeCommentText(method.Comments.Leading)))
+		g.P("func (s *", serverType, ") ", serverSignature(g, method), "{")
 		if isUnaryMethod(method) {
 			g.P("var reply = &", g.QualifiedGoIdent(method.Output.GoIdent), "{}")
 		}
@@ -158,6 +159,43 @@ func stripRedundantImportAliases(content []byte) ([]byte, error) {
 // isRedundantImportAlias 判断 import 别名是否仅重复了默认包名。
 func isRedundantImportAlias(alias, importPath string) bool {
 	return path.Base(importPath) == alias
+}
+
+// normalizeCommentText 提取 proto 注释文本，并清理多余的注释标记与空白。
+func normalizeCommentText(comments protogen.Comments) string {
+	raw := strings.TrimSpace(string(comments))
+	if raw == "" {
+		return ""
+	}
+
+	lines := strings.Split(raw, "\n")
+	parts := make([]string, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		line = strings.TrimPrefix(line, "//")
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts = append(parts, line)
+	}
+	return strings.Join(parts, " ")
+}
+
+// formatTypeComment 生成结构体和构造函数注释，统一采用“名称 描述”格式。
+func formatTypeComment(name, comment string) string {
+	if comment == "" {
+		return "// " + name
+	}
+	return "// " + name + " " + comment
+}
+
+// formatMethodComment 生成方法注释，保持“//方法名 描述”的输出样式。
+func formatMethodComment(name, comment string) string {
+	if comment == "" {
+		return "//" + name
+	}
+	return "//" + name + " " + comment
 }
 
 // serverSignature 生成服务方法签名，统一处理一元与流式 RPC 的参数列表。
