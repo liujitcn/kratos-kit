@@ -146,6 +146,7 @@ func CreateHttpServer(cfg *conf.Bootstrap, mds ...middleware.Middleware) (*krato
 	if err != nil {
 		return nil, err
 	}
+	options = append(options, kratosHttp.ResponseEncoder(protoJSONResponseEncoder))
 
 	srv := kratosHttp.NewServer(options...)
 

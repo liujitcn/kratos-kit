@@ -7,6 +7,7 @@ require (
 	github.com/go-kratos/aegis v0.2.0
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/gorilla/handlers v1.5.2
+	github.com/json-iterator/go v1.1.12
 	github.com/liujitcn/go-utils v0.0.5
 	github.com/liujitcn/kratos-kit/api v0.0.8
 	github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.4
@@ -36,6 +37,8 @@ require (
 	github.com/liujitcn/go-utils/jwt v0.0.1 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a // indirect
+	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/redis/go-redis/v9 v9.18.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
