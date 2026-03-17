@@ -187,7 +187,7 @@ func formatTypeComment(name, comment string) string {
 	if comment == "" {
 		return "// " + name
 	}
-	return "// " + name + " " + comment
+	return "// " + name + " 创建" + comment
 }
 
 // formatMethodComment 生成方法注释，保持“//方法名 描述”的输出样式。
