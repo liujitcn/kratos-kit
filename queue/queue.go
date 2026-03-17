@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/liujitcn/kratos-kit/api/gen/go/conf"
@@ -10,6 +10,7 @@ import (
 	"github.com/liujitcn/kratos-kit/queue/redis"
 )
 
+// Queue 定义统一的队列操作接口。
 type Queue interface {
 	Append(stream string, message data.Message) error
 	Register(stream string, fn data.ConsumerFunc)
@@ -17,8 +18,10 @@ type Queue interface {
 	Shutdown()
 }
 
+// NewQueue 根据配置创建内存或 Redis 队列实例。
 func NewQueue(redisConf *conf.Data_Redis, queueConf *conf.Data_Queue) (Queue, func(), error) {
 	var queue Queue
+	var err error
 	if redisConf == nil {
 		var poolSize int64
 		if queueConf != nil && queueConf.Memory != nil {
@@ -26,10 +29,13 @@ func NewQueue(redisConf *conf.Data_Redis, queueConf *conf.Data_Queue) (Queue, fu
 		}
 		queue = memory.NewMemory(poolSize)
 	} else {
-		queue = redis.NewRedis(redisConf, queueConf)
+		queue, err = redis.NewRedis(redisConf, queueConf)
+		if err != nil {
+			return nil, nil, fmt.Errorf("init redis queue failed: %w", err)
+		}
 	}
 	if queue == nil {
-		return nil, nil, errors.New("queue is null")
+		return nil, nil, fmt.Errorf("queue is nil")
 	}
 	return queue, func() {
 		log.Info("queue cleanup...")

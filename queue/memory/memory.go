@@ -2,6 +2,7 @@ package memory
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ type Memory struct {
 	wait    sync.WaitGroup
 	mutex   sync.RWMutex
 	PoolNum int64
+	running atomic.Bool
 }
 
 // NewMemory 内存模式
@@ -25,6 +27,7 @@ func NewMemory(poolNum int64) *Memory {
 	}
 }
 
+// Append 追加消息到指定内存队列。
 func (s *Memory) Append(stream string, message data.Message) error {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
@@ -53,6 +56,7 @@ func (s *Memory) Append(stream string, message data.Message) error {
 	return nil
 }
 
+// Register 注册指定队列的消费处理函数。
 func (s *Memory) Register(name string, fn data.ConsumerFunc) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
@@ -87,15 +91,26 @@ func (s *Memory) Register(name string, fn data.ConsumerFunc) {
 	}(q, fn)
 }
 
+// Run 启动内存队列阻塞等待，直到收到关闭信号。
 func (s *Memory) Run() {
+	// 仅在首次启动时增加等待计数，避免重复 Run 导致 Shutdown 次数无法匹配。
+	if !s.running.CompareAndSwap(false, true) {
+		return
+	}
 	s.wait.Add(1)
 	s.wait.Wait()
 }
 
+// Shutdown 关闭内存队列阻塞等待。
 func (s *Memory) Shutdown() {
+	// 只有在 Run 已经成功进入等待态时才允许 Done，避免出现负数计数 panic。
+	if !s.running.CompareAndSwap(true, false) {
+		return
+	}
 	s.wait.Done()
 }
 
+// makeQueue 创建内存消息通道。
 func (s *Memory) makeQueue() queueChan {
 	if s.PoolNum <= 0 {
 		return make(queueChan)
