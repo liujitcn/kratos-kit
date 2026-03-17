@@ -187,7 +187,11 @@ func formatTypeComment(name, comment string) string {
 	if comment == "" {
 		return "// " + name
 	}
-	return "// " + name + " 创建" + comment
+	if strings.HasPrefix(name, "New") {
+		return "// " + name + " 创建" + comment
+	}
+
+	return "// " + name + " " + comment
 }
 
 // formatMethodComment 生成方法注释，保持“//方法名 描述”的输出样式。
