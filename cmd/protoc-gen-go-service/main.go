@@ -50,6 +50,7 @@ func main() {
 			// 固定生成到 service 包，避免与 pb.go 共用包名时污染已有实现。
 			f.GoPackageName = generatedServicePackage
 			generateServiceFile(gen, f)
+			generateBizFile(gen, f)
 		}
 		return nil
 	})
