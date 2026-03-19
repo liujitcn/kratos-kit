@@ -24,7 +24,7 @@ const (
 	codesPackage    = protogen.GoImportPath("google.golang.org/grpc/codes")
 	statusPackage   = protogen.GoImportPath("google.golang.org/grpc/status")
 	logPackage      = protogen.GoImportPath("github.com/go-kratos/kratos/v2/log")
-	baseCorePackage = protogen.GoImportPath("github.com/liujitcn/shop-base/server/core")
+	baseCasePackage = protogen.GoImportPath("github.com/liujitcn/shop-base/server/biz")
 )
 
 const deprecationComment = "// Deprecated: Do not use."
@@ -134,19 +134,16 @@ func generateBizFileContent(file *protogen.File, g *protogen.GeneratedFile) {
 
 // generateServiceStruct 为单个 proto service 生成实现结构与方法桩代码。
 func generateServiceStruct(gen *protogen.Plugin, file *protogen.File, g *protogen.GeneratedFile, service *protogen.Service) {
-	refPackage := file.GoDescriptorIdent.GoImportPath
 	bizPackage := bizImportPath(file)
-	shopCoreType := g.QualifiedGoIdent(baseCorePackage.Ident("ShopCore"))
 	serverType := service.GoName
 	caseName := serviceCaseName(service)
 	caseFieldName := unexport(strings.TrimSuffix(caseName, "Case")) + "Case"
 	serviceComment := normalizeCommentText(service.Comments.Leading)
 
-	// 结构体中内嵌未实现服务与基础上下文，便于后续补充业务依赖。
+	// 结构体中内嵌未实现服务与 biz 层 Case，统一由 Case 承载基础上下文依赖。
 	g.P(formatTypeComment(serverType, serviceComment))
 	g.P("type ", serverType, " struct {")
-	g.P(g.QualifiedGoIdent(refPackage.Ident("Unimplemented" + service.GoName + "Server")))
-	g.P("*", shopCoreType)
+	g.P(g.QualifiedGoIdent(file.GoDescriptorIdent.GoImportPath.Ident("Unimplemented" + service.GoName + "Server")))
 	g.P(caseFieldName, " *", g.QualifiedGoIdent(bizPackage.Ident(caseName)))
 	g.P("}")
 	g.P()
@@ -155,9 +152,8 @@ func generateServiceStruct(gen *protogen.Plugin, file *protogen.File, g *protoge
 		g.P(deprecationComment)
 	}
 	g.P(formatTypeComment("New"+serverType, serviceComment))
-	g.P("func New", serverType, " (sc *", shopCoreType, ", ", caseFieldName, " *", g.QualifiedGoIdent(bizPackage.Ident(caseName)), ") *", serverType, " {")
+	g.P("func New", serverType, " (", caseFieldName, " *", g.QualifiedGoIdent(bizPackage.Ident(caseName)), ") *", serverType, " {")
 	g.P("var ss =", serverType, " {")
-	g.P("ShopCore:     sc,")
 	g.P(caseFieldName, ": ", caseFieldName, ",")
 	g.P("}")
 	g.P("return &", "ss")
@@ -186,19 +182,23 @@ func generateBizStruct(file *protogen.File, g *protogen.GeneratedFile, service *
 	repoName := serviceRepoName(service)
 	repoFieldName := repoName
 	repoArgName := unexport(repoName)
+	baseCaseType := g.QualifiedGoIdent(baseCasePackage.Ident("BaseCase"))
 	serviceComment := normalizeCommentText(service.Comments.Leading)
 
 	g.P(formatTypeComment(caseName, serviceComment))
 	g.P("type ", caseName, " struct {")
+	g.P("*", baseCaseType)
 	g.P("*", g.QualifiedGoIdent(dataPackage.Ident(repoFieldName)))
 	g.P("}")
 	g.P()
 
 	g.P(formatTypeComment("New"+caseName, serviceComment))
 	g.P("func New", caseName, "(")
+	g.P("baseCase *", baseCaseType, ",")
 	g.P(repoArgName, " *", g.QualifiedGoIdent(dataPackage.Ident(repoName)), ",")
 	g.P(") *", caseName, " {")
 	g.P("return &", caseName, "{")
+	g.P("BaseCase: ", "baseCase,")
 	g.P(repoFieldName, ": ", repoArgName, ",")
 	g.P("}")
 	g.P("}")
@@ -219,8 +219,8 @@ func generateBizStruct(file *protogen.File, g *protogen.GeneratedFile, service *
 // generateUnaryMethodBody 生成一元 RPC 固定模版，统一转调 biz 层 Case。
 func generateUnaryMethodBody(g *protogen.GeneratedFile, method *protogen.Method, caseFieldName string) {
 	errorMessage := strconv.Quote(methodErrorMessage(method))
-	g.P("var err error")
 	if isEmptyReply(method) {
+		g.P("var err error")
 		g.P("// 直接转调 biz 层 Case，返回空响应。")
 		g.P("err = s.", caseFieldName, ".", method.GoName, "(", serviceCaseArgs(method), ")")
 		g.P("if err != nil {")
@@ -231,9 +231,7 @@ func generateUnaryMethodBody(g *protogen.GeneratedFile, method *protogen.Method,
 		return
 	}
 
-	g.P("var reply *", g.QualifiedGoIdent(method.Output.GoIdent))
-	g.P("// 直接转调 biz 层 Case，透传业务响应。")
-	g.P("reply, err = s.", caseFieldName, ".", method.GoName, "(", serviceCaseArgs(method), ")")
+	g.P("reply, err := s.", caseFieldName, ".", method.GoName, "(", serviceCaseArgs(method), ")")
 	g.P("if err != nil {")
 	g.P(g.QualifiedGoIdent(logPackage.Ident("Error")), "(", strconv.Quote(method.GoName+" err:"), ", err.Error())")
 	g.P("return nil, ", g.QualifiedGoIdent(errorsPackage.Ident("New")), "(", errorMessage, ")")
@@ -244,7 +242,6 @@ func generateUnaryMethodBody(g *protogen.GeneratedFile, method *protogen.Method,
 // generateBizMethodBody 生成 biz 层固定方法体。
 func generateBizMethodBody(g *protogen.GeneratedFile, method *protogen.Method) {
 	if isEmptyReply(method) {
-		g.P("// TODO: 在此补充具体业务逻辑。")
 		g.P("return nil")
 		return
 	}
