@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v2 v2.9.2
-	github.com/liujitcn/kratos-kit/transport v0.0.1
+	github.com/liujitcn/kratos-kit/transport v0.0.3
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.79.2
 )

@@ -31,8 +31,8 @@ github.com/liujitcn/kratos-kit/broker v0.0.1 h1:myvG/AeccY6l+TmtvKqNL2N9OeK8ypzE
 github.com/liujitcn/kratos-kit/broker v0.0.1/go.mod h1:afdXKNgz1e2Ws6ChBp7XRPXIYJNeEV5clF5/GXTJPYY=
 github.com/liujitcn/kratos-kit/tracing v0.0.1 h1:ItI3O88j9HtiSYobKEZV//gf9KmtbHqGvJxtQXSCVzU=
 github.com/liujitcn/kratos-kit/tracing v0.0.1/go.mod h1:DY6oEaPhP7IjezboUoCxNvfxLPG+j5FjbikyMq6jY3Y=
-github.com/liujitcn/kratos-kit/transport v0.0.1 h1:FP4LQHlphBvizL389MgMJUxSZFydk+QWUsSy6wRCtsM=
-github.com/liujitcn/kratos-kit/transport v0.0.1/go.mod h1:QnX5oqhCIj+EeWE2sLzn3RdBWJNelkQCBBAxq16FoBI=
+github.com/liujitcn/kratos-kit/transport v0.0.3 h1:MwhhGR4YDv3LJBsiN5+Icze9y9suxLZuigLPORvRc4g=
+github.com/liujitcn/kratos-kit/transport v0.0.3/go.mod h1:QnX5oqhCIj+EeWE2sLzn3RdBWJNelkQCBBAxq16FoBI=
 github.com/openzipkin/zipkin-go v0.4.3 h1:9EGwpqkgnwdEIJ+Od7QVSEIH+ocmm5nPat0G7sjsSdg=
 github.com/openzipkin/zipkin-go v0.4.3/go.mod h1:M9wCJZFWCo2RiY+o1eBCEMe0Dp2S5LDHcMZmk3RmK7c=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
