@@ -9,10 +9,10 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/json-iterator/go v1.1.12
 	github.com/liujitcn/go-utils v0.0.5
-	github.com/liujitcn/kratos-kit/api v0.0.8
-	github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.4
-	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.4
-	github.com/liujitcn/kratos-kit/utils v0.0.4
+	github.com/liujitcn/kratos-kit/api v0.0.9
+	github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.5
+	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.5
+	github.com/liujitcn/kratos-kit/utils v0.0.5
 	google.golang.org/grpc v1.79.2
 	google.golang.org/protobuf v1.36.11
 )
@@ -35,7 +35,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
 	github.com/liujitcn/go-utils/jwt v0.0.1 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.4 // indirect
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.5 // indirect
 	github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
