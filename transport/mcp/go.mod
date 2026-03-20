@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v2 v2.9.2
-	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.1
+	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.2
 	github.com/mark3labs/mcp-go v0.45.0
 	github.com/stretchr/testify v1.11.1
 )
@@ -23,7 +23,7 @@ require (
 	github.com/invopop/jsonschema v0.13.0 // indirect
 	github.com/liujitcn/kratos-kit/broker v0.0.1 // indirect
 	github.com/liujitcn/kratos-kit/tracing v0.0.1 // indirect
-	github.com/liujitcn/kratos-kit/transport v0.0.1 // indirect
+	github.com/liujitcn/kratos-kit/transport v0.0.3 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

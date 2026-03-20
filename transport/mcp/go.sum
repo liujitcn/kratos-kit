@@ -40,10 +40,10 @@ github.com/liujitcn/kratos-kit/broker v0.0.1 h1:myvG/AeccY6l+TmtvKqNL2N9OeK8ypzE
 github.com/liujitcn/kratos-kit/broker v0.0.1/go.mod h1:afdXKNgz1e2Ws6ChBp7XRPXIYJNeEV5clF5/GXTJPYY=
 github.com/liujitcn/kratos-kit/tracing v0.0.1 h1:ItI3O88j9HtiSYobKEZV//gf9KmtbHqGvJxtQXSCVzU=
 github.com/liujitcn/kratos-kit/tracing v0.0.1/go.mod h1:DY6oEaPhP7IjezboUoCxNvfxLPG+j5FjbikyMq6jY3Y=
-github.com/liujitcn/kratos-kit/transport v0.0.1 h1:FP4LQHlphBvizL389MgMJUxSZFydk+QWUsSy6wRCtsM=
-github.com/liujitcn/kratos-kit/transport v0.0.1/go.mod h1:QnX5oqhCIj+EeWE2sLzn3RdBWJNelkQCBBAxq16FoBI=
-github.com/liujitcn/kratos-kit/transport/keepalive v0.0.1 h1:mG7BlyqQod51dPUVzBHCd+N78Ahia40tV9yGnqWe6GI=
-github.com/liujitcn/kratos-kit/transport/keepalive v0.0.1/go.mod h1:iesvc+SUJSN9tWIB2zCy3iUymsZvgZhKFSuhXX1sGv4=
+github.com/liujitcn/kratos-kit/transport v0.0.3 h1:MwhhGR4YDv3LJBsiN5+Icze9y9suxLZuigLPORvRc4g=
+github.com/liujitcn/kratos-kit/transport v0.0.3/go.mod h1:QnX5oqhCIj+EeWE2sLzn3RdBWJNelkQCBBAxq16FoBI=
+github.com/liujitcn/kratos-kit/transport/keepalive v0.0.2 h1:7vRF15vG/1o/PRKyPvWrSrRlB9Ym6FC/5O7zawcX/Pw=
+github.com/liujitcn/kratos-kit/transport/keepalive v0.0.2/go.mod h1:zB8bcUidrLvShztdT0ra/MeSpE3szHvO99rKCT3jfaw=
 github.com/mailru/easyjson v0.7.7 h1:UGYAvKxe3sBsEDzO8ZeWOSlIQfWFlxbzLZe7hwFURr0=
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/mark3labs/mcp-go v0.45.0 h1:s0S8qR/9fWaQ3pHxz7pm1uQ0DrswoSnRIxKIjbiQtkc=
