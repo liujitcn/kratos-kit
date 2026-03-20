@@ -6,7 +6,7 @@ require (
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/jlaffaye/ftp v0.2.0
-	github.com/liujitcn/kratos-kit/api v0.0.4
+	github.com/liujitcn/kratos-kit/api v0.0.9
 	github.com/minio/minio-go/v7 v7.0.80
 )
 
