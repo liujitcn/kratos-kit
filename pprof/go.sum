@@ -10,8 +10,8 @@ github.com/grafana/pyroscope-go/godeltaprof v0.1.9 h1:c1Us8i6eSmkW+Ez05d3co8kasn
 github.com/grafana/pyroscope-go/godeltaprof v0.1.9/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
 github.com/klauspost/compress v1.17.8 h1:YcnTYrq7MikUT7k0Yb5eceMmALQPYBW/Xltxn0NAMnU=
 github.com/klauspost/compress v1.17.8/go.mod h1:Di0epgTjJY877eYKx5yC51cX2A2Vl2ibi7bDH9ttBbw=
-github.com/liujitcn/kratos-kit/api v0.0.8 h1:JzEHpMeLxk6er9uv5shf0rV2fx3wfER10gIp/Sf0zGA=
-github.com/liujitcn/kratos-kit/api v0.0.8/go.mod h1:vEdhTflQEXTq8F7hzC1UxENeJXAQ8ws1IwCNTwsGNMU=
+github.com/liujitcn/kratos-kit/api v0.0.9 h1:6qTN7aFHVMIonEvdETzkePng/O2ffCPXUeNBMoru0E4=
+github.com/liujitcn/kratos-kit/api v0.0.9/go.mod h1:vEdhTflQEXTq8F7hzC1UxENeJXAQ8ws1IwCNTwsGNMU=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.5.2 h1:xuMeJ0Sdp5ZMRXx/aWO6RZxdr3beISkG5/G/aIRr3pY=

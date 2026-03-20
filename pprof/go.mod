@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/grafana/pyroscope-go v1.2.7
-	github.com/liujitcn/kratos-kit/api v0.0.8
+	github.com/liujitcn/kratos-kit/api v0.0.9
 )
 
 require (
