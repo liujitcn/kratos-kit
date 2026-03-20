@@ -5,12 +5,12 @@ go 1.26.0
 require (
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/google/uuid v1.6.0
-	github.com/liujitcn/kratos-kit/api v0.0.4
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.4
-	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.4
-	github.com/liujitcn/kratos-kit/auth/authz v0.0.4
-	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.4
-	github.com/liujitcn/kratos-kit/cache v0.0.4
+	github.com/liujitcn/kratos-kit/api v0.0.9
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.5
+	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.5
+	github.com/liujitcn/kratos-kit/auth/authz v0.0.5
+	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.5
+	github.com/liujitcn/kratos-kit/cache v0.0.5
 	github.com/redis/go-redis/v9 v9.18.0
 )
 
@@ -23,7 +23,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/liujitcn/go-utils v0.0.1 // indirect
-	github.com/liujitcn/kratos-kit/utils v0.0.4 // indirect
+	github.com/liujitcn/kratos-kit/utils v0.0.5 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.0 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.7.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
