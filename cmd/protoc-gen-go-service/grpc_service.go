@@ -221,7 +221,6 @@ func generateUnaryMethodBody(g *protogen.GeneratedFile, method *protogen.Method,
 	errorMessage := strconv.Quote(methodErrorMessage(method))
 	if isEmptyReply(method) {
 		g.P("var err error")
-		g.P("// 直接转调 biz 层 Case，返回空响应。")
 		g.P("err = s.", caseFieldName, ".", method.GoName, "(", serviceCaseArgs(method), ")")
 		g.P("if err != nil {")
 		g.P(g.QualifiedGoIdent(logPackage.Ident("Error")), "(", strconv.Quote(method.GoName+" err:"), ", err.Error())")
@@ -469,7 +468,7 @@ func serviceRepoName(service *protogen.Service) string {
 	if name == "" {
 		name = service.GoName
 	}
-	return "Base" + name + "Repo"
+	return name + "Repo"
 }
 
 // isEmptyRequest 判断方法入参是否为 google.protobuf.Empty。
