@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/godoes/gorm-oracle v1.6.18
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.6
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.7
 )
 
 require (

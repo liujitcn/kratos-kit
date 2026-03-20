@@ -6,8 +6,8 @@ github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=
 github.com/jinzhu/now v1.1.5/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.6 h1:ybIdCFZP8eKIgmGX2OIouLADHKszYsSlAtIxTCEJ5wA=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.6/go.mod h1:G4im2NEUggOLq3CAX5otJi0LaqxedbXbhazUuaIExvM=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.7 h1:v3xLKphWkKBaiH3qlOrgoSPj6pyVMS1mIFQ6KNI3hmQ=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.7/go.mod h1:G4im2NEUggOLq3CAX5otJi0LaqxedbXbhazUuaIExvM=
 github.com/sijms/go-ora/v2 v2.9.0 h1:+iQbUeTeCOFMb5BsOMgUhV8KWyrv9yjKpcK4x7+MFrg=
 github.com/sijms/go-ora/v2 v2.9.0/go.mod h1:QgFInVi3ZWyqAiJwzBQA+nbKYKH77tdp1PYoCqhR2dU=
 golang.org/x/text v0.20.0 h1:gK/Kv2otX8gz+wn7Rmb3vT96ZwuoxnQlY+HlJVj7Qug=
