@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v2 v2.9.2
-	github.com/liujitcn/kratos-kit/auth/authz v0.0.4
+	github.com/liujitcn/kratos-kit/auth/authz v0.0.5
 )
 
 require (
