@@ -4,9 +4,9 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v2 v2.9.2
-	github.com/liujitcn/kratos-kit/api v0.0.8
-	github.com/liujitcn/kratos-kit/auth v0.0.2
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.6
+	github.com/liujitcn/kratos-kit/api v0.0.9
+	github.com/liujitcn/kratos-kit/auth v0.0.5
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.7
 	gorm.io/gorm v1.31.1
 	gorm.io/plugin/opentelemetry v0.1.16
 	gorm.io/plugin/prometheus v0.1.0
@@ -38,12 +38,12 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/liujitcn/go-utils v0.0.1 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.4 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.4 // indirect
-	github.com/liujitcn/kratos-kit/auth/authz v0.0.4 // indirect
-	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.4 // indirect
-	github.com/liujitcn/kratos-kit/cache v0.0.4 // indirect
-	github.com/liujitcn/kratos-kit/utils v0.0.4 // indirect
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.5 // indirect
+	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.5 // indirect
+	github.com/liujitcn/kratos-kit/auth/authz v0.0.5 // indirect
+	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.5 // indirect
+	github.com/liujitcn/kratos-kit/cache v0.0.5 // indirect
+	github.com/liujitcn/kratos-kit/utils v0.0.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/paulmach/orb v0.11.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
