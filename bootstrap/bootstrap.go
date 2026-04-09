@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 
 	bConfig "github.com/liujitcn/kratos-kit/config"
@@ -101,6 +102,8 @@ func bootstrap(ctx *Context, initApp InitAppFunc) error {
 	if ctx.logger == nil {
 		return fmt.Errorf("init logger failed")
 	}
+	// 将全局日志器切换为当前应用 logger，确保包级别 log.Debugf/Infof 与 Kratos server 日志格式一致。
+	log.SetLogger(ctx.logger)
 
 	// init registrar
 	ctx.registrar, err = bRegistry.NewRegistrar(ctx.config.Registry)

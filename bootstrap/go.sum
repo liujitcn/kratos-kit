@@ -56,8 +56,8 @@ github.com/liujitcn/kratos-kit/api v0.0.9 h1:6qTN7aFHVMIonEvdETzkePng/O2ffCPXUeN
 github.com/liujitcn/kratos-kit/api v0.0.9/go.mod h1:vEdhTflQEXTq8F7hzC1UxENeJXAQ8ws1IwCNTwsGNMU=
 github.com/liujitcn/kratos-kit/config v0.0.6 h1:8AhXaz0DBHSseYjlRqISM96SONoSA7Lq2ItbRRvwT/s=
 github.com/liujitcn/kratos-kit/config v0.0.6/go.mod h1:MvkDbE0I0JNG/LA+IMoVFIZUDwAJ3O9QUFfzyIlJxpA=
-github.com/liujitcn/kratos-kit/logger v0.0.8 h1:+UGxnEhqe/QzXLtWSn9RTaY2jpfd1fFeJBzEBXv1wH0=
-github.com/liujitcn/kratos-kit/logger v0.0.8/go.mod h1:tg2wBN1DRq6ZyK1/9PEfENfQoxPfiDpIyh7/HcQ7JYU=
+github.com/liujitcn/kratos-kit/logger v0.0.10 h1:ti9Zt9k6ycNUzYhv2A5bOK5RQ5Gd9HrFbz41rySEVc4=
+github.com/liujitcn/kratos-kit/logger v0.0.10/go.mod h1:tg2wBN1DRq6ZyK1/9PEfENfQoxPfiDpIyh7/HcQ7JYU=
 github.com/liujitcn/kratos-kit/registry v0.0.6 h1:p+QNV0fMM7P9C5iq7YKfRPK5iF3XuM7UDQoJauqstc0=
 github.com/liujitcn/kratos-kit/registry v0.0.6/go.mod h1:2NSTvYHGZi0Pd76hEYthj+QYtvjcHEcrtiJQK2c6QTk=
 github.com/liujitcn/kratos-kit/tracer v0.0.5 h1:LxW5lEY6L9nUFH0sBruC6WawLe5z5hrTnX6qaoLjHLY=
