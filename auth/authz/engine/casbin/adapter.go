@@ -2,6 +2,7 @@ package casbin
 
 import (
 	"errors"
+
 	"github.com/casbin/casbin/v2/model"
 )
 
