@@ -21,6 +21,7 @@ message Authentication {
     google.protobuf.Duration accessTokenExpires = 3; // token 过期时间
     google.protobuf.Duration refreshTokenExpires = 4; // 刷新token 时间
     WhiteList whiteList = 10;
+    WhiteList optionalAuth = 11; // 可匿名访问，但如果携带 token 则尝试解析用户
   }
 
   optional Jwt jwt = 1; // JWT 认证

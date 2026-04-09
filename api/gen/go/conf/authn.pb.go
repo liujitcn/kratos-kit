@@ -7,12 +7,13 @@
 package conf
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 )
 
 const (
@@ -75,6 +76,7 @@ type Authentication_Jwt struct {
 	AccessTokenExpires  *durationpb.Duration          `protobuf:"bytes,3,opt,name=accessTokenExpires,proto3" json:"accessTokenExpires,omitempty"`   // token 过期时间
 	RefreshTokenExpires *durationpb.Duration          `protobuf:"bytes,4,opt,name=refreshTokenExpires,proto3" json:"refreshTokenExpires,omitempty"` // 刷新token 时间
 	WhiteList           *Authentication_Jwt_WhiteList `protobuf:"bytes,10,opt,name=whiteList,proto3" json:"whiteList,omitempty"`
+	OptionalAuth        *Authentication_Jwt_WhiteList `protobuf:"bytes,11,opt,name=optionalAuth,proto3" json:"optionalAuth,omitempty"` // 可匿名访问，但如果携带 token 则尝试解析用户
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -140,6 +142,13 @@ func (x *Authentication_Jwt) GetRefreshTokenExpires() *durationpb.Duration {
 func (x *Authentication_Jwt) GetWhiteList() *Authentication_Jwt_WhiteList {
 	if x != nil {
 		return x.WhiteList
+	}
+	return nil
+}
+
+func (x *Authentication_Jwt) GetOptionalAuth() *Authentication_Jwt_WhiteList {
+	if x != nil {
+		return x.OptionalAuth
 	}
 	return nil
 }
@@ -217,16 +226,17 @@ var File_conf_authn_proto protoreflect.FileDescriptor
 
 const file_conf_authn_proto_rawDesc = "" +
 	"\n" +
-	"\x10conf/authn.proto\x12\x04conf\x1a\x1egoogle/protobuf/duration.proto\"\xc0\x03\n" +
+	"\x10conf/authn.proto\x12\x04conf\x1a\x1egoogle/protobuf/duration.proto\"\x88\x04\n" +
 	"\x0eAuthentication\x12/\n" +
-	"\x03jwt\x18\x01 \x01(\v2\x18.conf.Authentication.JwtH\x00R\x03jwt\x88\x01\x01\x1a\xf4\x02\n" +
+	"\x03jwt\x18\x01 \x01(\v2\x18.conf.Authentication.JwtH\x00R\x03jwt\x88\x01\x01\x1a\xbc\x03\n" +
 	"\x03Jwt\x12\x16\n" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x16\n" +
 	"\x06secret\x18\x02 \x01(\tR\x06secret\x12I\n" +
 	"\x12accessTokenExpires\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x12accessTokenExpires\x12K\n" +
 	"\x13refreshTokenExpires\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x13refreshTokenExpires\x12@\n" +
 	"\twhiteList\x18\n" +
-	" \x01(\v2\".conf.Authentication.Jwt.WhiteListR\twhiteList\x1ac\n" +
+	" \x01(\v2\".conf.Authentication.Jwt.WhiteListR\twhiteList\x12F\n" +
+	"\foptionalAuth\x18\v \x01(\v2\".conf.Authentication.Jwt.WhiteListR\foptionalAuth\x1ac\n" +
 	"\tWhiteList\x12\x16\n" +
 	"\x06prefix\x18\x01 \x03(\tR\x06prefix\x12\x14\n" +
 	"\x05regex\x18\x02 \x03(\tR\x05regex\x12\x12\n" +
@@ -260,11 +270,12 @@ var file_conf_authn_proto_depIdxs = []int32{
 	3, // 1: conf.Authentication.Jwt.accessTokenExpires:type_name -> google.protobuf.Duration
 	3, // 2: conf.Authentication.Jwt.refreshTokenExpires:type_name -> google.protobuf.Duration
 	2, // 3: conf.Authentication.Jwt.whiteList:type_name -> conf.Authentication.Jwt.WhiteList
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	2, // 4: conf.Authentication.Jwt.optionalAuth:type_name -> conf.Authentication.Jwt.WhiteList
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_conf_authn_proto_init() }
