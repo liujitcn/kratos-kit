@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/google/uuid v1.6.0
-	github.com/liujitcn/kratos-kit/api v0.0.9
+	github.com/liujitcn/kratos-kit/api v0.0.10
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.5
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.5
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.5
