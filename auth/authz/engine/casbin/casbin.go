@@ -37,13 +37,11 @@ type State struct {
 	projects                  engine.Projects
 	wildcardItem              string
 	authorizedProjectsMatcher string
-
-	log *log.Helper
 }
 
+// NewEngine 创建 Casbin 鉴权引擎实例。
 func NewEngine(_ context.Context, opts ...OptFunc) (*State, error) {
 	s := State{
-		log:                       log.NewHelper(log.With(log.DefaultLogger, "module", "casbin.authz.engine")),
 		policy:                    newAdapter(),
 		projects:                  engine.Projects{},
 		wildcardItem:              DefaultWildcardItem,
@@ -57,6 +55,7 @@ func NewEngine(_ context.Context, opts ...OptFunc) (*State, error) {
 	return &s, nil
 }
 
+// init 初始化 Casbin 模型与执行器。
 func (s *State) init(opts ...OptFunc) error {
 	for _, opt := range opts {
 		opt(s)
@@ -67,24 +66,26 @@ func (s *State) init(opts ...OptFunc) error {
 	if s.model == nil {
 		s.model, err = model.NewModelFromString(assets.DefaultRestfullWithRoleModel)
 		if err != nil {
-			s.log.Errorf("failed to create casbin model: %v", err)
+			log.Errorf("casbin.authz.engine: failed to create casbin model: %v", err)
 			return err
 		}
 	}
 
 	s.enforcer, err = stdCasbin.NewSyncedEnforcer(s.model, s.policy)
 	if err != nil {
-		s.log.Errorf("failed to create casbin enforcer: %v", err)
+		log.Errorf("casbin.authz.engine: failed to create casbin enforcer: %v", err)
 		return err
 	}
 
 	return nil
 }
 
+// Name 返回引擎名称。
 func (s *State) Name() string {
 	return string(engine.Casbin)
 }
 
+// ProjectsAuthorized 返回在指定项目集合中具备权限的项目列表。
 func (s *State) ProjectsAuthorized(_ context.Context, subjects engine.Subjects, action engine.Action, resource engine.Resource, projects engine.Projects) (engine.Projects, error) {
 	result := make(engine.Projects, 0, len(projects))
 
@@ -93,7 +94,7 @@ func (s *State) ProjectsAuthorized(_ context.Context, subjects engine.Subjects, 
 	for _, project := range projects {
 		for _, subject := range subjects {
 			if allowed, err = s.enforcer.Enforce(string(subject), string(resource), string(action), string(project)); err != nil {
-				s.log.Errorf("failed to enforce policy for projects: %v", err)
+				log.Errorf("casbin.authz.engine: failed to enforce policy for projects: %v", err)
 				return nil, err
 			} else if allowed {
 				result = append(result, project)
@@ -104,6 +105,7 @@ func (s *State) ProjectsAuthorized(_ context.Context, subjects engine.Subjects, 
 	return result, nil
 }
 
+// FilterAuthorizedPairs 过滤出主体具备权限的资源动作对。
 func (s *State) FilterAuthorizedPairs(_ context.Context, subjects engine.Subjects, pairs engine.Pairs) (engine.Pairs, error) {
 	result := make(engine.Pairs, 0, len(pairs))
 
@@ -114,7 +116,7 @@ func (s *State) FilterAuthorizedPairs(_ context.Context, subjects engine.Subject
 	for _, p := range pairs {
 		for _, subject := range subjects {
 			if allowed, err = s.enforcer.Enforce(string(subject), string(p.Resource), string(p.Action), string(project)); err != nil {
-				s.log.Errorf("failed to enforce policy for pair: %v", err)
+				log.Errorf("casbin.authz.engine: failed to enforce policy for pair: %v", err)
 				return nil, err
 			} else if allowed {
 				result = append(result, p)
@@ -124,6 +126,7 @@ func (s *State) FilterAuthorizedPairs(_ context.Context, subjects engine.Subject
 	return result, nil
 }
 
+// FilterAuthorizedProjects 过滤出主体具备访问权限的项目列表。
 func (s *State) FilterAuthorizedProjects(_ context.Context, subjects engine.Subjects) (engine.Projects, error) {
 	result := make(engine.Projects, 0, len(s.projects))
 
@@ -135,7 +138,7 @@ func (s *State) FilterAuthorizedProjects(_ context.Context, subjects engine.Subj
 	for _, project := range s.projects {
 		for _, subject := range subjects {
 			if allowed, err = s.enforcer.EnforceWithMatcher(s.authorizedProjectsMatcher, string(subject), string(resource), string(action), string(project)); err != nil {
-				s.log.Errorf("failed to enforce policy with matcher: %v", err)
+				log.Errorf("casbin.authz.engine: failed to enforce policy with matcher: %v", err)
 				return nil, err
 			} else if allowed {
 				result = append(result, project)
@@ -146,15 +149,17 @@ func (s *State) FilterAuthorizedProjects(_ context.Context, subjects engine.Subj
 	return result, nil
 }
 
+// IsAuthorized 判断主体是否具备指定资源动作权限。
 func (s *State) IsAuthorized(_ context.Context, subject engine.Subject, action engine.Action, resource engine.Resource, project engine.Project) (bool, error) {
 	if len(project) == 0 {
+		// 未显式指定项目时，回退到通配项目规则进行匹配。
 		project = engine.Project(s.wildcardItem)
 	}
 
 	var err error
 	var allowed bool
 	if allowed, err = s.enforcer.Enforce(string(subject), string(resource), string(action), string(project)); err != nil {
-		s.log.Errorf("failed to enforce policy: %v", err)
+		log.Errorf("casbin.authz.engine: failed to enforce policy: %v", err)
 		return false, err
 	} else if allowed {
 		return true, nil
@@ -162,11 +167,12 @@ func (s *State) IsAuthorized(_ context.Context, subject engine.Subject, action e
 	return false, nil
 }
 
+// SetPolicies 更新策略并重新加载到 Casbin 执行器中。
 func (s *State) SetPolicies(_ context.Context, policyMap engine.PolicyMap, _ engine.RoleMap) error {
 	s.policy.SetPolicies(policyMap)
 
 	if err := s.enforcer.LoadPolicy(); err != nil {
-		s.log.Errorf("failed to load policy: %v", err)
+		log.Errorf("casbin.authz.engine: failed to load policy: %v", err)
 		return err
 	}
 

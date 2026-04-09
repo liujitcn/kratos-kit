@@ -67,7 +67,7 @@ func NewLoggerProvider(cfg *conf.Logger, appInfo *conf.AppInfo) log.Logger {
 	// build base fields - always include timestamp, caller, trace/span ids
 	fields := []interface{}{
 		"ts", log.DefaultTimestamp,
-		"caller", log.DefaultCaller,
+		"caller", DefaultFullCaller,
 		"trace_id", tracing.TraceID(),
 		"span_id", tracing.SpanID(),
 	}

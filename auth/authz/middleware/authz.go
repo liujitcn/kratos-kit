@@ -9,10 +9,9 @@ import (
 	"github.com/liujitcn/kratos-kit/auth/authz/engine"
 )
 
+// Server 创建服务端鉴权中间件。
 func Server(authorizer engine.Authorizer, opts ...Option) middleware.Middleware {
-	o := &options{
-		log: log.NewHelper(log.With(log.DefaultLogger, "module", "authz.middleware")),
-	}
+	o := &options{}
 	for _, opt := range opts {
 		opt(o)
 	}
@@ -30,12 +29,13 @@ func Server(authorizer engine.Authorizer, opts ...Option) middleware.Middleware 
 
 			claims, ok := engine.AuthClaimsFromContext(ctx)
 			if !ok {
-				o.log.Error("authz middleware: missing auth claims in context")
+				// 缺少认证声明时无法继续鉴权，直接返回标准错误。
+				log.Error("authz middleware: missing auth claims in context")
 				return nil, ErrMissingClaims
 			}
 
 			if claims.Action == nil || claims.Resource == nil {
-				o.log.Error("authz middleware: missing auth claims in context")
+				log.Error("authz middleware: missing auth claims in context")
 				return nil, ErrInvalidClaims
 			}
 
@@ -49,7 +49,7 @@ func Server(authorizer engine.Authorizer, opts ...Option) middleware.Middleware 
 			if claims.Subject != nil {
 				allowed, err = authorizer.IsAuthorized(ctx, *claims.Subject, *claims.Action, *claims.Resource, project)
 				if err != nil {
-					o.log.Errorf("authz middleware: authorization failed for subject %s, action %s, resource %s, project %s: %v",
+					log.Errorf("authz middleware: authorization failed for subject %s, action %s, resource %s, project %s: %v",
 						*claims.Subject, *claims.Action, *claims.Resource, project, err)
 					return nil, err
 				}
@@ -60,11 +60,12 @@ func Server(authorizer engine.Authorizer, opts ...Option) middleware.Middleware 
 				for _, subject := range *claims.Subjects {
 					allowed, err = authorizer.IsAuthorized(ctx, engine.Subject(subject), *claims.Action, *claims.Resource, project)
 					if err != nil {
-						o.log.Errorf("authz middleware: authorization failed for subject %s, action %s, resource %s, project %s: %v",
+						log.Errorf("authz middleware: authorization failed for subject %s, action %s, resource %s, project %s: %v",
 							subject, *claims.Action, *claims.Resource, project, err)
 						return nil, err
 					}
 					if allowed {
+						// 只要任一主体通过鉴权即可放行，后续无需继续遍历。
 						break
 					}
 				}
@@ -72,7 +73,7 @@ func Server(authorizer engine.Authorizer, opts ...Option) middleware.Middleware 
 					return nil, ErrUnauthorized
 				}
 			} else {
-				o.log.Error("authz middleware: missing subject in auth claims")
+				log.Error("authz middleware: missing subject in auth claims")
 				return nil, ErrMissingSubject
 			}
 
