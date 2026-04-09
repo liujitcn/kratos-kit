@@ -1,8 +1,9 @@
 package main
 
 import (
-	swaggerUI "github.com/liujitcn/kratos-kit/swagger-ui"
 	"net/http"
+
+	swaggerUI "github.com/liujitcn/kratos-kit/swagger-ui"
 )
 
 func main() {

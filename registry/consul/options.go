@@ -1,8 +1,9 @@
 package consul
 
 import (
-	"github.com/hashicorp/consul/api"
 	"time"
+
+	"github.com/hashicorp/consul/api"
 )
 
 // Option is consul registry option.
