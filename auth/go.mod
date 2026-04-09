@@ -22,7 +22,7 @@ require (
 	github.com/go-playground/form/v4 v4.3.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
-	github.com/liujitcn/go-utils v0.0.1 // indirect
+	github.com/liujitcn/go-utils v0.0.21 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.5 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.0 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.7.0 // indirect

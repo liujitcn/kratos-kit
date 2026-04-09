@@ -8,7 +8,7 @@ require (
 	github.com/go-kratos/kratos/v2 v2.9.2
 	github.com/gorilla/handlers v1.5.2
 	github.com/json-iterator/go v1.1.12
-	github.com/liujitcn/go-utils v0.0.5
+	github.com/liujitcn/go-utils v0.0.21
 	github.com/liujitcn/kratos-kit/api v0.0.9
 	github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.5
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.5

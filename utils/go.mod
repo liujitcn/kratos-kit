@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/utils
 go 1.26.0
 
 require (
-	github.com/liujitcn/go-utils v0.0.1
+	github.com/liujitcn/go-utils v0.0.21
 	github.com/liujitcn/kratos-kit/api v0.0.9
 	github.com/redis/go-redis/v9 v9.18.0
 )

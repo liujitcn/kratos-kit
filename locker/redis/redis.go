@@ -18,7 +18,7 @@ type Redis struct {
 	mutex  *redislock.Client
 }
 
-// NewRedis redis模式
+// NewRedis 创建 Redis 分布式锁实例。
 func NewRedis(cfg *conf.Data_Redis) (*Redis, func(), error) {
 	redisOptions, err := utils.GetRedisOptions(cfg)
 	if err != nil {
@@ -54,7 +54,7 @@ func NewRedis(cfg *conf.Data_Redis) (*Redis, func(), error) {
 			if client != nil {
 				err = client.Close()
 				if err != nil {
-					log.Error("failed close redis: %s", err.Error())
+					log.Errorf("failed close redis: %s", err.Error())
 					return
 				}
 			}

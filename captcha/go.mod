@@ -15,7 +15,7 @@ require (
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/liujitcn/go-utils v0.0.1 // indirect
+	github.com/liujitcn/go-utils v0.0.21 // indirect
 	github.com/liujitcn/kratos-kit/api v0.0.9 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.5 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.7.0 // indirect

@@ -37,7 +37,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.17.8 // indirect
-	github.com/liujitcn/go-utils v0.0.1 // indirect
+	github.com/liujitcn/go-utils v0.0.21 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.5 // indirect

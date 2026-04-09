@@ -13,9 +13,7 @@ type cacheStore struct {
 	expiration time.Duration
 }
 
-// NewCacheStore returns a new standard memory store for captchas with the
-// given collection threshold and expiration time (duration). The returned
-// store must be registered with SetCustomStore to replace the default one.
+// NewCacheStore 创建基于缓存的验证码存储实现。
 func NewCacheStore(cache cache.Cache, expiration time.Duration) base64Captcha.Store {
 	s := new(cacheStore)
 	s.cache = cache
@@ -23,17 +21,16 @@ func NewCacheStore(cache cache.Cache, expiration time.Duration) base64Captcha.St
 	return s
 }
 
-// Set sets the digits for the captcha id.
+// Set 设置验证码对应的缓存值。
 func (e *cacheStore) Set(id string, value string) error {
 	err := e.cache.Set(id, value, e.expiration)
 	if err != nil {
-		log.Errorf(err.Error())
+		log.Error(err.Error())
 	}
 	return err
 }
 
-// Get returns stored digits for the captcha id. Clear indicates
-// whether the captcha must be deleted from the store.
+// Get 获取验证码对应的缓存值。
 func (e *cacheStore) Get(id string, clear bool) string {
 	v, err := e.cache.Get(id)
 	if err == nil {
@@ -45,7 +42,7 @@ func (e *cacheStore) Get(id string, clear bool) string {
 	return ""
 }
 
-// Verify captcha's answer directly
+// Verify 校验验证码答案。
 func (e *cacheStore) Verify(id, answer string, clear bool) bool {
 	return e.Get(id, clear) == answer
 }

@@ -193,7 +193,7 @@ func (r *UserToken) createAccessJwtToken(userToken *UserTokenPayload) string {
 
 	signedToken, err := r.authenticator.CreateIdentity(*userToken.MakeAuthClaims())
 	if err != nil {
-		log.Error("create access token failed: [%v]", err)
+		log.Errorf("create access token failed: [%v]", err)
 	}
 
 	return signedToken

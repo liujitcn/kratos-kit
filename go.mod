@@ -45,7 +45,7 @@ require (
 	github.com/jlaffaye/ftp v0.2.0 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
-	github.com/liujitcn/go-utils v0.0.5 // indirect
+	github.com/liujitcn/go-utils v0.0.21 // indirect
 	github.com/liujitcn/kratos-kit/api v0.0.9 // indirect
 	github.com/liujitcn/kratos-kit/auth v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.5 // indirect

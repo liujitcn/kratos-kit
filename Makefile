@@ -1,6 +1,6 @@
 # 运行要求：Linux/macOS，或 Windows 下使用 WSL/Git Bash（需具备 make、python3、go）
 
-.PHONY: help init plugin cli api tag
+.PHONY: help init plugin cli fmt api gen tag
 
 # 初始化开发环境
 init: plugin cli
@@ -25,10 +25,17 @@ cli:
 	@go install entgo.io/ent/cmd/ent@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
+# 使用 goimports 统一整理 Go 代码的 import 与格式
+fmt:
+	@goimports -w $$(rg --files -g '*.go')
+
 # 生成 protobuf API Go 代码
 api:
 	@cd api && \
 	buf generate
+
+# 一键生成全部接口产物（Go 代码）
+gen: api fmt
 
 # 统一打 tag：默认扫描根目录及子目录的 go.mod；可通过 MODULE=auth 指定起始目录递归扫描（不提交代码）
 tag:

@@ -115,7 +115,9 @@ import "conf/tls.proto";
 ```bash
 make plugin   # 安装 protoc 相关插件
 make cli      # 安装 kratos/buf 等命令行工具
+make fmt      # 使用 goimports 统一整理 Go 代码
 make api      # 生成 api 代码
+make gen      # 一键生成并整理 api 代码
 make tag      # 默认从仓库根目录递归检查 go.mod 并自动打/推送 tag（含根模块）
 make tag MODULE=auth       # 从 auth 目录开始递归检查 go.mod 并打 tag
 make tag MODULE=auth/authn # 从 auth/authn 目录开始递归检查 go.mod 并打 tag

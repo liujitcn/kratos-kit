@@ -16,7 +16,7 @@ type Redis struct {
 	client *redis.Client
 }
 
-// NewRedis create go-redis Client
+// NewRedis 创建单机 Redis 缓存实例。
 func NewRedis(cfg *conf.Data_Redis) (*Redis, func(), error) {
 	redisOptions, err := utils.GetRedisOptions(cfg)
 	if err != nil {
@@ -53,7 +53,7 @@ func NewRedis(cfg *conf.Data_Redis) (*Redis, func(), error) {
 			if client != nil {
 				err = client.Close()
 				if err != nil {
-					log.Error("failed close redis: %s", err.Error())
+					log.Errorf("failed close redis: %s", err.Error())
 					return
 				}
 			}

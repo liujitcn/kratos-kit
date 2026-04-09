@@ -11,12 +11,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// ClusterRedis cache implement
+// ClusterRedis 表示 Redis 集群缓存客户端。
 type ClusterRedis struct {
 	client *redis.ClusterClient
 }
 
-// NewClusterRedis redis集群模式
+// NewClusterRedis 创建 Redis 集群缓存实例。
 func NewClusterRedis(cfg *conf.Data_Redis) (*ClusterRedis, func(), error) {
 	redisOptions, err := utils.GetClusterRedisOptions(cfg)
 	if err != nil {
@@ -55,7 +55,7 @@ func NewClusterRedis(cfg *conf.Data_Redis) (*ClusterRedis, func(), error) {
 			if client != nil {
 				err = client.Close()
 				if err != nil {
-					log.Error("failed close redis: %s", err.Error())
+					log.Errorf("failed close redis: %s", err.Error())
 					return
 				}
 			}
