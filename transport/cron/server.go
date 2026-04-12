@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/go-kratos/kratos/v2/log"
 	kratosTransport "github.com/go-kratos/kratos/v2/transport"
 	"github.com/robfig/cron/v3"
 
@@ -85,13 +86,13 @@ func (s *Server) Start(ctx context.Context) error {
 	defer s.Unlock()
 
 	if s.started.Load() {
-		return errors.New("cron server already started")
+		return errors.New("[Cron] server already started")
 	}
 	if s.err != nil {
 		return s.err
 	}
 
-	LogInfo("cron server starting...")
+	log.Info("[Cron] server starting...")
 
 	// 启动 cron 调度器
 	s.cronScheduler.Start()
@@ -105,7 +106,7 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}
 
-	LogInfo("cron server started successfully")
+	log.Info("[Cron] server started successfully")
 
 	return nil
 }
@@ -116,7 +117,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	defer s.Unlock()
 
 	if !s.started.Load() {
-		return errors.New("cron server not started")
+		return errors.New("[Cron] server not started")
 	}
 	if s.stopping.Load() {
 		return nil
@@ -128,7 +129,7 @@ func (s *Server) Stop(ctx context.Context) error {
 		s.started.Store(false)
 	}()
 
-	LogInfo("cron server stopping...")
+	log.Info("[Cron] server stopping...")
 
 	// 取消上下文
 	if s.cancel != nil {
@@ -149,9 +150,9 @@ func (s *Server) Stop(ctx context.Context) error {
 	// 等待优雅停止完成
 	select {
 	case <-stopCh:
-		LogInfo("all cron jobs stopped gracefully")
+		log.Info("all cron jobs stopped gracefully")
 	case <-ctxStop.Done():
-		LogWarn("cron server shutdown timeout, force stop")
+		log.Warn("[Cron] server shutdown timeout, force stop")
 	}
 
 	// 停止 keepalive
@@ -159,7 +160,7 @@ func (s *Server) Stop(ctx context.Context) error {
 		_ = s.keepaliveServer.Stop(ctx)
 	}
 
-	LogInfo("cron server stopped successfully")
+	log.Info("[Cron] server stopped successfully")
 	return nil
 }
 
@@ -168,7 +169,7 @@ func (s *Server) Endpoint() (*url.URL, error) {
 		return &url.URL{}, nil
 	}
 	if s.keepaliveServer == nil {
-		return nil, errors.New("cron server keepalive instance is nil")
+		return nil, errors.New("[Cron] server keepalive instance is nil")
 	}
 	return s.keepaliveServer.Endpoint()
 }
@@ -178,7 +179,7 @@ func (s *Server) Endpoint() (*url.URL, error) {
 // cmd: 任务执行函数
 func (s *Server) StartTimerJob(spec string, cmd func()) (cron.EntryID, error) {
 	if !s.started.Load() {
-		return 0, errors.New("cron server not started, please start server first")
+		return 0, errors.New("[Cron] server not started, please start server first")
 	}
 
 	s.cronMu.Lock()
@@ -187,13 +188,13 @@ func (s *Server) StartTimerJob(spec string, cmd func()) (cron.EntryID, error) {
 	// 添加任务
 	entryID, err := s.cronScheduler.AddFunc(spec, cmd)
 	if err != nil {
-		LogErrorf("failed to add cron job: %v", err)
+		log.Errorf("failed to add cron job: %v", err)
 		return 0, err
 	}
 
 	// 存储任务ID
 	s.entryIDs.Store(entryID, spec)
-	LogInfof("cron job started: id=%d, spec=%s", entryID, spec)
+	log.Infof("cron job started: id=%d, spec=%s", entryID, spec)
 	return entryID, nil
 }
 
@@ -206,7 +207,7 @@ func (s *Server) StopTimerJob(entryID cron.EntryID) {
 	s.cronScheduler.Remove(entryID)
 	// 删除记录
 	if spec, ok := s.entryIDs.LoadAndDelete(entryID); ok {
-		LogInfof("cron job stopped: id=%d, spec=%s", entryID, spec)
+		log.Infof("cron job stopped: id=%d, spec=%s", entryID, spec)
 	}
 }
 
@@ -225,7 +226,7 @@ func (s *Server) StopAllJobs() {
 	})
 
 	s.entryIDs = sync.Map{}
-	LogInfof("all cron jobs stopped, total count: %d", count)
+	log.Infof("all cron jobs stopped, total count: %d", count)
 }
 
 // GetJobCount 获取当前运行的任务数量

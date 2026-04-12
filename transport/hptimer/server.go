@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/go-kratos/kratos/v2/log"
 	kratosTransport "github.com/go-kratos/kratos/v2/transport"
 	"github.com/liujitcn/kratos-kit/transport/keepalive"
 )
@@ -74,13 +75,13 @@ func (s *Server) Start(ctx context.Context) error {
 	defer s.Unlock()
 
 	if s.started.Load() {
-		return errors.New("hptimer server already started")
+		return errors.New("[HpTimer] server already started")
 	}
 	if s.err != nil {
 		return s.err
 	}
 
-	LogInfo("hptimer server starting...")
+	log.Info("[HpTimer] server starting...")
 
 	// 创建并启动定时器引擎
 	s.hpTimer = NewHighPrecisionTimer(s.timerObserver)
@@ -96,7 +97,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	s.started.Store(true) // 启动成功后设置 started
 
-	LogInfo("hptimer server started successfully")
+	log.Info("[HpTimer] server started successfully")
 
 	return nil
 }
@@ -107,7 +108,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	defer s.Unlock()
 
 	if !s.started.Load() {
-		return errors.New("hptimer server not started")
+		return errors.New("[HpTimer] server not started")
 	}
 	if s.stopping.Load() {
 		return nil
@@ -119,7 +120,7 @@ func (s *Server) Stop(ctx context.Context) error {
 		s.started.Store(false) // 停止后设置 started=false
 	}()
 
-	LogInfo("hptimer server stopping...")
+	log.Info("[HpTimer] server stopping...")
 
 	// 1. 取消上下文
 	if s.cancel != nil {
@@ -140,9 +141,9 @@ func (s *Server) Stop(ctx context.Context) error {
 
 	select {
 	case <-wait:
-		LogInfo("high precision timer stopped gracefully")
+		log.Info("high precision timer stopped gracefully")
 	case <-stopCtx.Done():
-		LogWarn("hptimer shutdown timeout, force stop")
+		log.Warn("hptimer shutdown timeout, force stop")
 	}
 
 	// 停止心跳
@@ -150,7 +151,7 @@ func (s *Server) Stop(ctx context.Context) error {
 		_ = s.keepaliveServer.Stop(ctx)
 	}
 
-	LogInfo("hptimer server stopped successfully")
+	log.Info("[HpTimer] server stopped successfully")
 	return nil
 }
 
@@ -159,7 +160,7 @@ func (s *Server) Endpoint() (*url.URL, error) {
 		return &url.URL{}, nil
 	}
 	if s.keepaliveServer == nil {
-		return nil, errors.New("hptimer server keepalive instance is nil")
+		return nil, errors.New("[HpTimer] server keepalive instance is nil")
 	}
 	return s.keepaliveServer.Endpoint()
 }
