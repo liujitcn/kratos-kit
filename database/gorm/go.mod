@@ -4,9 +4,9 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v2 v2.9.2
-	github.com/liujitcn/kratos-kit/api v0.0.9
-	github.com/liujitcn/kratos-kit/auth v0.0.5
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.7
+	github.com/liujitcn/kratos-kit/api v0.0.10
+	github.com/liujitcn/kratos-kit/auth v0.0.7
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.8
 	gorm.io/gorm v1.31.1
 	gorm.io/plugin/opentelemetry v0.1.16
 	gorm.io/plugin/prometheus v0.1.0
