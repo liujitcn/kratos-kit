@@ -128,6 +128,9 @@ func NewGormClient(cfg *conf.Data_Database) (*Client, func(), error) {
 			if err = c.DB.AutoMigrate(models...); err != nil {
 				return nil, cleanUp, err
 			}
+			if err = applyRegisteredTableComments(c.DB, models...); err != nil {
+				return nil, cleanUp, err
+			}
 		}
 	}
 

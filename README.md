@@ -18,7 +18,7 @@
 - `queue`：内存/Redis 队列封装
 - `locker`：Redis 分布式锁封装
 - `oss`：本地/FTP/MinIO/阿里云 OSS 封装
-- `database/gorm`：GORM 客户端封装（含多数据库 driver 子模块）
+- `database/gorm`：GORM 客户端封装（含多数据库 driver 子模块，支持自动迁移后的表/字段注释回填）
 - `broker`：消息发布订阅与 typed handler 封装
 - `transport`：通用传输辅助（含 `keepalive`、`mcp` 子模块）
 - `rpc`：Kratos HTTP/GRPC Server 配置封装
