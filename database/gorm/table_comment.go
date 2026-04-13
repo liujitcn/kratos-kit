@@ -3,7 +3,6 @@ package gorm
 import (
 	"reflect"
 
-	"github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -95,16 +94,40 @@ func resolveModelTable(db *gorm.DB, model interface{}) (interface{}, error) {
 	return clause.Table{Name: stmt.Table}, nil
 }
 
-// execTableCommentSQL 根据方言执行表注释更新。
+// execTableCommentSQL 执行表注释更新。
 func execTableCommentSQL(db *gorm.DB, table interface{}, comment string) error {
-	switch db.Dialector.Name() {
-	case "mysql":
-		return db.Exec("ALTER TABLE ? COMMENT = ?", table, comment).Error
-	case "postgres":
-		return db.Exec("COMMENT ON TABLE ? IS ?", table, gorm.Expr(db.Dialector.Explain("$1", comment))).Error
-	default:
-		// 其他方言暂未统一支持，记录日志后跳过，避免影响迁移主流程。
-		log.Warnf("gorm AutoMigrate 当前方言未实现表注释回填，driver=%s", db.Dialector.Name())
-		return nil
+	sql, err := buildTableCommentSQL(db, table, comment)
+	if err != nil {
+		return err
 	}
+
+	return db.Exec(sql).Error
+}
+
+// buildTableCommentSQL 使用 GORM 官方 Statement 能力构造表注释 SQL。
+func buildTableCommentSQL(db *gorm.DB, table interface{}, comment string) (string, error) {
+	// 使用 GORM 的引用和参数展开能力，避免手写标识符与字符串转义。
+	tx := db.Session(&gorm.Session{NewDB: true, DryRun: true})
+	stmt := &gorm.Statement{DB: tx}
+
+	//noinspection SqlNoDataSourceInspection
+	_, err := stmt.WriteString("ALTER TABLE ")
+	if err != nil {
+		return "", err
+	}
+
+	stmt.WriteQuoted(table)
+
+	_, err = stmt.WriteString(" COMMENT = ")
+	if err != nil {
+		return "", err
+	}
+
+	stmt.AddVar(&stmt.SQL, comment)
+
+	if stmt.DB.Error != nil {
+		return "", stmt.DB.Error
+	}
+
+	return stmt.DB.Dialector.Explain(stmt.SQL.String(), stmt.Vars...), nil
 }
