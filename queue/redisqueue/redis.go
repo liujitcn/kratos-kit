@@ -13,12 +13,10 @@ import (
 
 var redisVersionRE = regexp.MustCompile(`redis_version:(.+)`)
 
-// RedisOptions is an alias to redis.Options so that users can this instead of
-// having to import go-redis directly.
+// RedisOptions 是 redis.UniversalOptions 的别名，便于调用方直接复用配置结构。
 type RedisOptions = redis.UniversalOptions
 
-// newRedisClient creates a new Redis client with the given options. If options
-// is nil, it will use default options.
+// newRedisClient 根据给定配置创建 Redis 客户端；若配置为空，则使用默认配置。
 func newRedisClient(options *RedisOptions) redis.UniversalClient {
 	if options == nil {
 		options = &RedisOptions{}
@@ -26,10 +24,18 @@ func newRedisClient(options *RedisOptions) redis.UniversalClient {
 	return redis.NewUniversalClient(options)
 }
 
-// redisPreflightChecks makes sure the Redis instance backing the *redis.Client
-// offers the functionality we need. Specifically, it also that it can connect
-// to the actual instance and that the instance supports Redis streams (i.e.
-// it's at least v5).
+// newCheckedRedisClient 创建并校验 Redis 客户端，若校验失败则立即释放底层连接资源。
+func newCheckedRedisClient(options *RedisOptions) (redis.UniversalClient, error) {
+	client := newRedisClient(options)
+	if err := redisPreflightChecks(client); err != nil {
+		_ = client.Close()
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// redisPreflightChecks 校验 Redis 实例是否可连接，并确认当前版本支持 Redis Streams。
 func redisPreflightChecks(client redis.UniversalClient) error {
 	info, err := client.Info(context.TODO(), "server").Result()
 	if err != nil {
@@ -54,9 +60,7 @@ func redisPreflightChecks(client redis.UniversalClient) error {
 	return nil
 }
 
-// incrementMessageID takes in a message ID (e.g. 1564886140363-0) and
-// increments the index section (e.g. 1564886140363-1). This is the next valid
-// ID value, and it can be used for paging through messages.
+// incrementMessageID 将消息 ID 的序号部分加一，用于继续向后分页读取消息。
 func incrementMessageID(id string) (string, error) {
 	parts := strings.Split(id, "-")
 	index := parts[1]

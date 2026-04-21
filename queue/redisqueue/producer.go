@@ -6,31 +6,20 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// ProducerOptions provide options to configure the Producer.
+// ProducerOptions 生产者配置。
 type ProducerOptions struct {
-	// StreamMaxLength sets the MAXLEN option when calling XADD. This creates a
-	// capped stream to prevent the stream from taking up memory indefinitely.
-	// It's important to note though that this isn't the maximum number of
-	// _completed_ messages, but the maximum number of _total_ messages. This
-	// means that if all consumers are down, but producers are still enqueuing,
-	// and the maximum is reached, unprocessed message will start to be dropped.
-	// So ideally, you'll set this number to be as high as you can makee it.
-	// More info here: https://redis.io/commands/xadd#capped-streams.
+	// StreamMaxLength 对应 XADD 的 MAXLEN 配置，用于限制 Stream 总长度，避免消息无限增长占满内存。
+	// 这里限制的是 Stream 中的总消息数，而不是“已消费完成”的消息数。
+	// 如果消费者全部不可用但生产者仍在持续入队，达到上限后较早的未处理消息也可能被裁剪。
+	// 因此生产环境通常建议根据业务峰值将该值设置得更高。
 	StreamMaxLength int64
-	// ApproximateMaxLength determines whether to use the ~ with the MAXLEN
-	// option. This allows the stream trimming to done in a more efficient
-	// manner. More info here: https://redis.io/commands/xadd#capped-streams.
+	// ApproximateMaxLength 控制 MAXLEN 是否使用 `~` 近似裁剪，以换取更高的裁剪性能。
 	ApproximateMaxLength bool
-	// RedisOptions allows you to configure the underlying Redis connection.
-	// More info here:
-	// https://pkg.go.dev/github.com/go-redis/redis/v7?tab=doc#Options.
-	//
-	// This field is used if RedisClient field is nil.
+	// RedisOptions 底层 Redis 连接配置。
 	RedisOptions *RedisOptions
 }
 
-// Producer adds a convenient wrapper around enqueuing messages that will be
-// processed later by a Consumer.
+// Producer Redis Stream 生产者。
 type Producer struct {
 	options *ProducerOptions
 	redis   redis.UniversalClient
@@ -41,18 +30,32 @@ var defaultProducerOptions = &ProducerOptions{
 	ApproximateMaxLength: true,
 }
 
-// NewProducer uses a default set of options to create a Producer. It sets
-// StreamMaxLength to 1000 and ApproximateMaxLength to true. In most production
-// environments, you'll want to use NewProducerWithOptions.
+// normalizeProducerOptions 归一化生产者配置并补齐默认值。
+func normalizeProducerOptions(options *ProducerOptions) *ProducerOptions {
+	if options == nil {
+		return &ProducerOptions{
+			StreamMaxLength:      defaultProducerOptions.StreamMaxLength,
+			ApproximateMaxLength: defaultProducerOptions.ApproximateMaxLength,
+		}
+	}
+	if options.StreamMaxLength <= 0 {
+		options.StreamMaxLength = defaultProducerOptions.StreamMaxLength
+	}
+
+	return options
+}
+
+// NewProducer 使用默认配置创建生产者。
 func NewProducer() (*Producer, error) {
 	return NewProducerWithOptions(defaultProducerOptions)
 }
 
-// NewProducerWithOptions creates a Producer using custom ProducerOptions.
+// NewProducerWithOptions 使用自定义配置创建生产者。
 func NewProducerWithOptions(options *ProducerOptions) (*Producer, error) {
-	redisClient := newRedisClient(options.RedisOptions)
+	options = normalizeProducerOptions(options)
 
-	if err := redisPreflightChecks(redisClient); err != nil {
+	redisClient, err := newCheckedRedisClient(options.RedisOptions)
+	if err != nil {
 		return nil, err
 	}
 
@@ -62,21 +65,23 @@ func NewProducerWithOptions(options *ProducerOptions) (*Producer, error) {
 	}, nil
 }
 
-// Enqueue takes in a pointer to Message and enqueues it into the stream set at
-// msg.Stream. While you can set msg.ID, unless you know what you're doing, you
-// should let Redis auto-generate the ID. If an ID is auto-generated, it will be
-// set on msg.ID for your reference. msg.Values is also required.
-func (p *Producer) Enqueue(msg *Message) error {
+// buildXAddArgs 构造 XADD 参数，并透传长度裁剪相关配置。
+func (p *Producer) buildXAddArgs(msg *Message) *redis.XAddArgs {
 	args := &redis.XAddArgs{
 		ID:     msg.ID,
 		Stream: msg.Stream,
 		Values: msg.Values,
 	}
-	//if p.options.ApproximateMaxLength {
-	//	args.MaxLenApprox = p.options.StreamMaxLength
-	//} else {
 	args.MaxLen = p.options.StreamMaxLength
-	//}
+	args.Approx = p.options.ApproximateMaxLength
+	return args
+}
+
+// Enqueue 将消息追加到指定 Stream。
+// 除非业务明确需要自定义消息 ID，否则建议交由 Redis 自动生成。
+// 若由 Redis 自动生成，生成后的 ID 会回写到 msg.ID。
+func (p *Producer) Enqueue(msg *Message) error {
+	args := p.buildXAddArgs(msg)
 	id, err := p.redis.XAdd(context.TODO(), args).Result()
 	if err != nil {
 		return err

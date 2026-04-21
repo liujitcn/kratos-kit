@@ -2,17 +2,18 @@ package redisqueue
 
 import (
 	"context"
+	stderrors "errors"
 	"net"
 	"os"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
-// ConsumerFunc is a type alias for the functions that will be used to handle
-// and process Messages.
+// ConsumerFunc 消息消费处理函数。
 type ConsumerFunc func(*Message) error
 
 type registeredConsumer struct {
@@ -20,67 +21,34 @@ type registeredConsumer struct {
 	id string
 }
 
-// ConsumerOptions provide options to configure the Consumer.
+// ConsumerOptions 消费者配置。
 type ConsumerOptions struct {
-	// Name sets the name of this consumer. This will be used when fetching from
-	// Redis. If empty, the hostname will be used.
-	Name string
-	// GroupName sets the name of the consumer group. This will be used when
-	// coordinating in Redis. If empty, the hostname will be used.
-	GroupName string
-	// VisibilityTimeout dictates the maximum amount of time a message should
-	// stay in pending. If there is a message that has been idle for more than
-	// this duration, the consumer will attempt to claim it.
+	Name              string
+	GroupName         string
 	VisibilityTimeout time.Duration
-	// BlockingTimeout designates how long the XREADGROUP call blocks for. If
-	// this is 0, it will block indefinitely. While this is the most efficient
-	// from a polling perspective, if this call never times out, there is no
-	// opportunity to yield back to Go at a regular interval. This means it's
-	// possible that if no messages are coming in, the consumer cannot
-	// gracefully shutdown. Instead, it's recommended to set this to 1-5
-	// seconds, or even longer, depending on how long your application can wait
-	// to shutdown.
-	BlockingTimeout time.Duration
-	// ReclaimInterval is the amount of time in between calls to XPENDING to
-	// attempt to reclaim jobs that have been idle for more than the visibility
-	// timeout. A smaller duration will result in more frequent checks. This
-	// will allow messages to be reaped faster, but it will put more load on
-	// Redis.
-	ReclaimInterval time.Duration
-	// BufferSize determines the size of the channel uses to coordinate the
-	// processing of the messages. This determines the maximum number of
-	// in-flight messages.
-	BufferSize int
-	// Concurrency dictates how many goroutines to spawn to handle the messages.
-	Concurrency int
-	// RedisOptions allows you to configure the underlying Redis connection.
-	// More info here:
-	// https://pkg.go.dev/github.com/go-redis/redis/v7?tab=doc#Options.
-	//
-	// This field is used if RedisClient field is nil.
-	RedisOptions *RedisOptions
+	BlockingTimeout   time.Duration
+	ReclaimInterval   time.Duration
+	BufferSize        int
+	Concurrency       int
+	RedisOptions      *RedisOptions
 }
 
-// Consumer adds a convenient wrapper around dequeuing and managing concurrency.
+// Consumer Redis Stream 消费器。
 type Consumer struct {
-	// Errors is a channel that you can receive from to centrally handle any
-	// errors that may occur either by your ConsumerFuncs or by internal
-	// processing functions. Because this is an unbuffered channel, you must
-	// have a listener on it. If you don't parts of the consumer could stop
-	// functioning when errors occur due to the blocking nature of unbuffered
-	// channels.
+	// Errors 用于上报消费过程中的错误；通道带缓冲，避免无人监听时阻塞主流程。
 	Errors chan error
 
 	options   *ConsumerOptions
 	redis     redis.UniversalClient
 	consumers map[string]registeredConsumer
-	streams   []string
 	queue     chan *Message
 	wg        *sync.WaitGroup
+	bgWg      *sync.WaitGroup
 
-	stopReclaim chan struct{}
-	stopPoll    chan struct{}
-	stopWorkers chan struct{}
+	mux      sync.RWMutex
+	running  atomic.Bool
+	stopOnce sync.Once
+	stopCh   chan struct{}
 }
 
 var defaultConsumerOptions = &ConsumerOptions{
@@ -91,119 +59,122 @@ var defaultConsumerOptions = &ConsumerOptions{
 	Concurrency:       10,
 }
 
-// NewConsumer uses a default set of options to create a Consumer. It sets Name
-// to the hostname, GroupName to "redisqueue", VisibilityTimeout to 60 seconds,
-// BufferSize to 100, and Concurrency to 10. In most production environments,
-// you'll want to use NewConsumerWithOptions.
+// NewConsumer 使用默认配置创建消费者。
 func NewConsumer() (*Consumer, error) {
 	return NewConsumerWithOptions(defaultConsumerOptions)
 }
 
-// NewConsumerWithOptions creates a Consumer with custom ConsumerOptions. If
-// Name is left empty, it defaults to the hostname; if GroupName is left empty,
-// it defaults to "redisqueue"; if BlockingTimeout is 0, it defaults to 5
-// seconds; if ReclaimInterval is 0, it defaults to 1 second.
-func NewConsumerWithOptions(options *ConsumerOptions) (*Consumer, error) {
-	hostname, _ := os.Hostname()
+// normalizeConsumerOptions 归一化消费者配置并补齐默认值。
+func normalizeConsumerOptions(options *ConsumerOptions) *ConsumerOptions {
+	if options == nil {
+		options = &ConsumerOptions{}
+	}
 
+	hostname, _ := os.Hostname()
 	if options.Name == "" {
 		options.Name = hostname
 	}
 	if options.GroupName == "" {
 		options.GroupName = "redisqueue"
 	}
+	if options.VisibilityTimeout == 0 {
+		options.VisibilityTimeout = defaultConsumerOptions.VisibilityTimeout
+	}
 	if options.BlockingTimeout == 0 {
-		options.BlockingTimeout = 5 * time.Second
+		options.BlockingTimeout = defaultConsumerOptions.BlockingTimeout
 	}
 	if options.ReclaimInterval == 0 {
-		options.ReclaimInterval = 1 * time.Second
+		options.ReclaimInterval = defaultConsumerOptions.ReclaimInterval
+	}
+	if options.BufferSize <= 0 {
+		options.BufferSize = defaultConsumerOptions.BufferSize
+	}
+	if options.Concurrency <= 0 {
+		options.Concurrency = defaultConsumerOptions.Concurrency
 	}
 
-	redisClient := newRedisClient(options.RedisOptions)
+	return options
+}
 
-	if err := redisPreflightChecks(redisClient); err != nil {
+// NewConsumerWithOptions 使用自定义配置创建消费者。
+func NewConsumerWithOptions(options *ConsumerOptions) (*Consumer, error) {
+	options = normalizeConsumerOptions(options)
+
+	redisClient, err := newCheckedRedisClient(options.RedisOptions)
+	if err != nil {
 		return nil, err
 	}
 
 	return &Consumer{
-		Errors: make(chan error),
+		Errors: make(chan error, options.BufferSize),
 
 		options:   options,
 		redis:     redisClient,
 		consumers: make(map[string]registeredConsumer),
-		streams:   make([]string, 0),
 		queue:     make(chan *Message, options.BufferSize),
 		wg:        &sync.WaitGroup{},
-
-		stopReclaim: make(chan struct{}, 1),
-		stopPoll:    make(chan struct{}, 1),
-		stopWorkers: make(chan struct{}, options.Concurrency),
+		bgWg:      &sync.WaitGroup{},
+		stopCh:    make(chan struct{}),
 	}, nil
 }
 
-// RegisterWithLastID is the same as Register, except that it also lets you
-// specify the oldest message to receive when first creating the consumer group.
-// This can be any valid message ID, "0" for all messages in the stream, or "$"
-// for only new messages.
-//
-// If the consumer group already exists the id field is ignored, meaning you'll
-// receive unprocessed messages.
+// RegisterWithLastID 注册流消费处理函数，并指定首次建组时的起始消息 ID。
 func (c *Consumer) RegisterWithLastID(stream string, id string, fn ConsumerFunc) {
 	if len(id) == 0 {
 		id = "0"
 	}
 
+	c.mux.Lock()
 	c.consumers[stream] = registeredConsumer{
 		fn: fn,
 		id: id,
 	}
+	running := c.running.Load()
+	c.mux.Unlock()
+
+	if running {
+		if err := c.createConsumerGroup(stream, id); err != nil {
+			c.reportError(errors.Wrap(err, "error creating consumer group"))
+		}
+	}
 }
 
-// Register takes in a stream name and a ConsumerFunc that will be called when a
-// message comes in from that stream. Register must be called at least once
-// before Run is called. If the same stream name is passed in twice, the first
-// ConsumerFunc is overwritten by the second.
+// Register 注册流消费处理函数。
 func (c *Consumer) Register(stream string, fn ConsumerFunc) {
 	c.RegisterWithLastID(stream, "0", fn)
 }
 
-// Run starts all of the worker goroutines and starts processing from the
-// streams that have been registered with Register. All errors will be sent to
-// the Errors channel. If Register was never called, an error will be sent and
-// Run will terminate early. The same will happen if an error occurs when
-// creating the consumer group in Redis. Run will block until Shutdown is called
-// and all of the in-flight messages have been processed.
+// Run 启动消费者并阻塞，直到收到关闭信号。
 func (c *Consumer) Run() {
-	if len(c.consumers) == 0 {
-		c.Errors <- errors.New("at least one consumer function needs to be registered")
+	if !c.running.CompareAndSwap(false, true) {
+		c.wg.Wait()
 		return
 	}
 
-	for stream, consumer := range c.consumers {
-		c.streams = append(c.streams, stream)
-		err := c.redis.XGroupCreateMkStream(context.TODO(), stream, c.options.GroupName, consumer.id).Err()
-		// ignoring the BUSYGROUP error makes this a noop
-		if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
-			c.Errors <- errors.Wrap(err, "error creating consumer group")
-			return
-		}
+	consumers := c.snapshotConsumers()
+	if len(consumers) == 0 {
+		c.running.Store(false)
+		c.reportError(errors.New("at least one consumer function needs to be registered"))
+		return
+	}
+	if err := c.prepareConsumerGroups(consumers); err != nil {
+		c.running.Store(false)
+		c.reportError(err)
+		return
 	}
 
-	for i := 0; i < len(c.consumers); i++ {
-		c.streams = append(c.streams, ">")
+	if c.options.VisibilityTimeout > 0 {
+		c.bgWg.Add(1)
+		go c.reclaim()
 	}
-
-	go c.reclaim()
+	c.bgWg.Add(1)
 	go c.poll()
-
-	stop := newSignalHandler()
 	go func() {
-		<-stop
-		c.Shutdown()
+		c.bgWg.Wait()
+		close(c.queue)
 	}()
 
 	c.wg.Add(c.options.Concurrency)
-
 	for i := 0; i < c.options.Concurrency; i++ {
 		go c.work()
 	}
@@ -211,38 +182,118 @@ func (c *Consumer) Run() {
 	c.wg.Wait()
 }
 
-// Shutdown stops new messages from being processed and tells the workers to
-// wait until all in-flight messages have been processed, and then they exit.
-// The order that things stop is 1) the reclaim process (if it's running), 2)
-// the polling process, and 3) the worker processes.
+// Shutdown 停止拉取新消息，并等待在途消息处理完成。
 func (c *Consumer) Shutdown() {
-	c.stopReclaim <- struct{}{}
-	if c.options.VisibilityTimeout == 0 {
-		c.stopPoll <- struct{}{}
+	if !c.running.CompareAndSwap(true, false) {
+		return
+	}
+
+	c.stopOnce.Do(func() {
+		close(c.stopCh)
+	})
+}
+
+// prepareConsumerGroups 为当前所有已注册流准备消费组。
+func (c *Consumer) prepareConsumerGroups(consumers map[string]registeredConsumer) error {
+	for stream, consumer := range consumers {
+		if err := c.createConsumerGroup(stream, consumer.id); err != nil {
+			return errors.Wrap(err, "error creating consumer group")
+		}
+	}
+
+	return nil
+}
+
+// createConsumerGroup 为指定流创建消费组。
+func (c *Consumer) createConsumerGroup(stream string, id string) error {
+	err := c.redis.XGroupCreateMkStream(context.TODO(), stream, c.options.GroupName, id).Err()
+	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+		return err
+	}
+
+	return nil
+}
+
+// snapshotConsumers 获取已注册消费者快照。
+func (c *Consumer) snapshotConsumers() map[string]registeredConsumer {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+
+	consumers := make(map[string]registeredConsumer, len(c.consumers))
+	for stream, consumer := range c.consumers {
+		consumers[stream] = consumer
+	}
+
+	return consumers
+}
+
+// snapshotStreamNames 获取已注册流名称快照。
+func (c *Consumer) snapshotStreamNames() []string {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+
+	streams := make([]string, 0, len(c.consumers))
+	for stream := range c.consumers {
+		streams = append(streams, stream)
+	}
+
+	return streams
+}
+
+// buildReadStreams 构造 XREADGROUP 所需的流参数。
+func (c *Consumer) buildReadStreams() []string {
+	streams := c.snapshotStreamNames()
+	if len(streams) == 0 {
+		return nil
+	}
+
+	readStreams := make([]string, 0, len(streams)*2)
+	readStreams = append(readStreams, streams...)
+	for range streams {
+		readStreams = append(readStreams, ">")
+	}
+
+	return readStreams
+}
+
+// getConsumer 获取指定流的消费处理函数。
+func (c *Consumer) getConsumer(stream string) (registeredConsumer, bool) {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+
+	consumer, ok := c.consumers[stream]
+	return consumer, ok
+}
+
+// reportError 以非阻塞方式上报错误，避免消费主流程被错误通道卡住。
+func (c *Consumer) reportError(err error) {
+	if err == nil {
+		return
+	}
+
+	select {
+	case c.Errors <- err:
+	default:
 	}
 }
 
-// reclaim runs in a separate goroutine and checks the list of pending messages
-// in every stream. For every message, if it's been idle for longer than the
-// VisibilityTimeout, it will attempt to claim that message for this consumer.
-// If VisibilityTimeout is 0, this function returns early and no messages are
-// reclaimed. It checks the list of pending messages according to
-// ReclaimInterval.
+// reclaim 检查并回收超时未确认的消息。
 func (c *Consumer) reclaim() {
+	defer c.bgWg.Done()
+
 	if c.options.VisibilityTimeout == 0 {
 		return
 	}
 
 	ticker := time.NewTicker(c.options.ReclaimInterval)
+	defer ticker.Stop()
 
 	for {
 		select {
-		case <-c.stopReclaim:
-			// once the reclaim process has stopped, stop the polling process
-			c.stopPoll <- struct{}{}
+		case <-c.stopCh:
 			return
 		case <-ticker.C:
-			for stream := range c.consumers {
+			for _, stream := range c.snapshotStreamNames() {
 				start := "-"
 				end := "+"
 
@@ -254,56 +305,51 @@ func (c *Consumer) reclaim() {
 						End:    end,
 						Count:  int64(c.options.BufferSize - len(c.queue)),
 					}).Result()
-					if err != nil && err != redis.Nil {
-						c.Errors <- errors.Wrap(err, "error listing pending messages")
+					if err != nil && !stderrors.Is(err, redis.Nil) {
+						c.reportError(errors.Wrap(err, "error listing pending messages"))
 						break
 					}
-
 					if len(res) == 0 {
 						break
 					}
 
-					msgs := make([]string, 0)
-
 					for _, r := range res {
-						if r.Idle >= c.options.VisibilityTimeout {
-							claimres, err := c.redis.XClaim(context.TODO(), &redis.XClaimArgs{
-								Stream:   stream,
-								Group:    c.options.GroupName,
-								Consumer: c.options.Name,
-								MinIdle:  c.options.VisibilityTimeout,
-								Messages: []string{r.ID},
-							}).Result()
-							if err != nil && err != redis.Nil {
-								c.Errors <- errors.Wrapf(err, "error claiming %d message(s)", len(msgs))
-								break
-							}
-							// If the Redis nil error is returned, it means that
-							// the message no longer exists in the stream.
-							// However, it is still in a pending state. This
-							// could happen if a message was claimed by a
-							// consumer, that consumer died, and the message
-							// gets deleted (either through a XDEL call or
-							// through MAXLEN). Since the message no longer
-							// exists, the only way we can get it out of the
-							// pending state is to acknowledge it.
-							if err == redis.Nil {
-								err = c.redis.XAck(context.TODO(), stream, c.options.GroupName, r.ID).Err()
-								if err != nil {
-									c.Errors <- errors.Wrapf(err, "error acknowledging after failed claim for %q stream and %q message", stream, r.ID)
-									continue
-								}
-							}
-							c.enqueue(stream, claimres)
+						if r.Idle < c.options.VisibilityTimeout {
+							continue
 						}
+
+						// 显式声明返回值，避免与上文 err 形成混合短声明。
+						var claimres []redis.XMessage
+						claimres, err = c.redis.XClaim(context.TODO(), &redis.XClaimArgs{
+							Stream:   stream,
+							Group:    c.options.GroupName,
+							Consumer: c.options.Name,
+							MinIdle:  c.options.VisibilityTimeout,
+							Messages: []string{r.ID},
+						}).Result()
+						if err != nil && !stderrors.Is(err, redis.Nil) {
+							c.reportError(errors.Wrap(err, "error claiming message"))
+							break
+						}
+						// 消息已经被裁剪或删除时，需要主动 ack 清理 pending 状态。
+						if stderrors.Is(err, redis.Nil) {
+							err = c.redis.XAck(context.TODO(), stream, c.options.GroupName, r.ID).Err()
+							if err != nil {
+								c.reportError(errors.Wrapf(err, "error acknowledging after failed claim for %q stream and %q message", stream, r.ID))
+							}
+							continue
+						}
+
+						c.enqueue(stream, claimres)
 					}
 
-					newID, err := incrementMessageID(res[len(res)-1].ID)
+					// 显式声明新消息游标，避免复用 err 时触发混合短声明告警。
+					var newID string
+					newID, err = incrementMessageID(res[len(res)-1].ID)
 					if err != nil {
-						c.Errors <- err
+						c.reportError(err)
 						break
 					}
-
 					start = newID
 				}
 			}
@@ -311,25 +357,19 @@ func (c *Consumer) reclaim() {
 	}
 }
 
-// poll constantly checks the streams using XREADGROUP to see if there are any
-// messages for this consumer to process. It blocks for up to 5 seconds instead
-// of blocking indefinitely so that it can periodically check to see if Shutdown
-// was called.
+// poll 轮询 Redis Stream 新消息。
 func (c *Consumer) poll() {
+	defer c.bgWg.Done()
+
 	for {
 		select {
-		case <-c.stopPoll:
-			// once the polling has stopped (i.e. there will be no more messages
-			// put onto c.queue), stop all of the workers
-			for i := 0; i < c.options.Concurrency; i++ {
-				c.stopWorkers <- struct{}{}
-			}
+		case <-c.stopCh:
 			return
 		default:
 			res, err := c.redis.XReadGroup(context.TODO(), &redis.XReadGroupArgs{
 				Group:    c.options.GroupName,
 				Consumer: c.options.Name,
-				Streams:  c.streams,
+				Streams:  c.buildReadStreams(),
 				Count:    int64(c.options.BufferSize - len(c.queue)),
 				Block:    c.options.BlockingTimeout,
 			}).Result()
@@ -337,10 +377,10 @@ func (c *Consumer) poll() {
 				if err, ok := err.(net.Error); ok && err.Timeout() {
 					continue
 				}
-				if err == redis.Nil {
+				if stderrors.Is(err, redis.Nil) {
 					continue
 				}
-				c.Errors <- errors.Wrap(err, "error reading redis stream")
+				c.reportError(errors.Wrap(err, "error reading redis stream"))
 				continue
 			}
 
@@ -351,8 +391,7 @@ func (c *Consumer) poll() {
 	}
 }
 
-// enqueue takes a slice of XMessages, creates corresponding Messages, and sends
-// them on the centralized channel for worker goroutines to process.
+// enqueue 投递消息到本地工作队列。
 func (c *Consumer) enqueue(stream string, msgs []redis.XMessage) {
 	for _, m := range msgs {
 		msg := &Message{
@@ -364,33 +403,26 @@ func (c *Consumer) enqueue(stream string, msgs []redis.XMessage) {
 	}
 }
 
-// work is called in a separate goroutine. The number of work goroutines is
-// determined by Concurreny. Once it gets a message from the centralized
-// channel, it calls the corrensponding ConsumerFunc depending on the stream it
-// came from. If no error is returned from the ConsumerFunc, the message is
-// acknowledged in Redis.
+// work 工作协程负责处理消息并执行确认。
 func (c *Consumer) work() {
 	defer c.wg.Done()
 
-	for {
-		select {
-		case msg := <-c.queue:
-			err := c.process(msg)
-			if err != nil {
-				c.Errors <- errors.Wrapf(err, "error calling ConsumerFunc for %q stream and %q message", msg.Stream, msg.ID)
-				continue
-			}
-			err = c.redis.XAck(context.TODO(), msg.Stream, c.options.GroupName, msg.ID).Err()
-			if err != nil {
-				c.Errors <- errors.Wrapf(err, "error acknowledging after success for %q stream and %q message", msg.Stream, msg.ID)
-				continue
-			}
-		case <-c.stopWorkers:
-			return
+	for msg := range c.queue {
+		err := c.process(msg)
+		if err != nil {
+			c.reportError(errors.Wrapf(err, "error calling ConsumerFunc for %q stream and %q message", msg.Stream, msg.ID))
+			continue
+		}
+
+		err = c.redis.XAck(context.TODO(), msg.Stream, c.options.GroupName, msg.ID).Err()
+		if err != nil {
+			c.reportError(errors.Wrapf(err, "error acknowledging after success for %q stream and %q message", msg.Stream, msg.ID))
+			continue
 		}
 	}
 }
 
+// process 执行具体的消费处理函数。
 func (c *Consumer) process(msg *Message) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -401,6 +433,12 @@ func (c *Consumer) process(msg *Message) (err error) {
 			err = errors.Errorf("ConsumerFunc panic: %v", r)
 		}
 	}()
-	err = c.consumers[msg.Stream].fn(msg)
+
+	consumer, ok := c.getConsumer(msg.Stream)
+	if !ok {
+		return errors.Errorf("consumer for %q stream not found", msg.Stream)
+	}
+
+	err = consumer.fn(msg)
 	return
 }
