@@ -403,6 +403,22 @@ func (c *Consumer) enqueue(stream string, msgs []redis.XMessage) {
 	}
 }
 
+type streamAckDeleter interface {
+	XAck(ctx context.Context, stream string, group string, ids ...string) *redis.IntCmd
+	XDel(ctx context.Context, stream string, ids ...string) *redis.IntCmd
+}
+
+// acknowledgeMessage 确认消息消费完成，并删除 Stream 中的消息实体。
+func acknowledgeMessage(ctx context.Context, client streamAckDeleter, groupName string, msg *Message) error {
+	err := client.XAck(ctx, msg.Stream, groupName, msg.ID).Err()
+	if err != nil {
+		return err
+	}
+
+	_, err = client.XDel(ctx, msg.Stream, msg.ID).Result()
+	return err
+}
+
 // work 工作协程负责处理消息并执行确认。
 func (c *Consumer) work() {
 	defer c.wg.Done()
@@ -414,9 +430,9 @@ func (c *Consumer) work() {
 			continue
 		}
 
-		err = c.redis.XAck(context.TODO(), msg.Stream, c.options.GroupName, msg.ID).Err()
+		err = acknowledgeMessage(context.TODO(), c.redis, c.options.GroupName, msg)
 		if err != nil {
-			c.reportError(errors.Wrapf(err, "error acknowledging after success for %q stream and %q message", msg.Stream, msg.ID))
+			c.reportError(errors.Wrapf(err, "error acknowledging completed message for %q stream and %q message", msg.Stream, msg.ID))
 			continue
 		}
 	}
