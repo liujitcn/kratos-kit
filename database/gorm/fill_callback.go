@@ -5,7 +5,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
+	kratosTransport "github.com/go-kratos/kratos/v2/transport"
 	"github.com/liujitcn/kratos-kit/auth"
 	"gorm.io/gorm"
 )
@@ -55,7 +57,7 @@ func hasAnyField(db *gorm.DB, fieldNames ...string) bool {
 
 // getUserIDFromContext 从上下文中解析当前用户ID。
 func getUserIDFromContext(ctx context.Context) int64 {
-	if ctx == nil || ctx == context.Background() || ctx == context.TODO() {
+	if ctx == nil || ctx == context.Background() || ctx == context.TODO() || isAppLifecycleContext(ctx) {
 		return 0
 	}
 
@@ -107,4 +109,19 @@ func fillUpdatedFields(db *gorm.DB) {
 
 	safeSetColumn(db, "UpdatedBy", userId)
 	safeSetColumn(db, "UpdatedAt", time.Now())
+}
+
+// isAppLifecycleContext 判断当前上下文是否为 Kratos 应用生命周期上下文。
+func isAppLifecycleContext(ctx context.Context) bool {
+	if ctx == nil {
+		return false
+	}
+
+	// 请求上下文会额外挂载 transport 信息，不能按应用生命周期上下文处理。
+	if _, ok := kratosTransport.FromServerContext(ctx); ok {
+		return false
+	}
+
+	_, ok := kratos.FromContext(ctx)
+	return ok
 }
