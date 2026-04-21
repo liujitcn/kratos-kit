@@ -20,10 +20,8 @@ github.com/liujitcn/go-utils v0.0.21 h1:O2xGAhSnB78UVfha0fZAH4wsX7kbmUONns7hB6/p
 github.com/liujitcn/go-utils v0.0.21/go.mod h1:NAJOI0G1c51rdEjdXHffKZCdgyBJl5ty7Z+F55TIMeI=
 github.com/liujitcn/kratos-kit/api v0.0.10 h1:Fyu2rv0YPPVkeEK4GBRPhHamGkLX68aDT7klhwYMQbA=
 github.com/liujitcn/kratos-kit/api v0.0.10/go.mod h1:vEdhTflQEXTq8F7hzC1UxENeJXAQ8ws1IwCNTwsGNMU=
-github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.4 h1:wHE3k0llIL83KjlwuoTXZ6oS8OWbxif0YSH+j0iaQ+Q=
-github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.4/go.mod h1:l99Q4NqeyJOJFrtz4GW67vFV3+DXFpE82G8ZmZ24omw=
-github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.5 h1:BebGWAKGBuYCuyxfYC3MQQCeGiOK2tfcBGrTbn+usVc=
-github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.5/go.mod h1:l99Q4NqeyJOJFrtz4GW67vFV3+DXFpE82G8ZmZ24omw=
+github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.6 h1:p/DFYlDefWAA8kvPapmjwtEWr2dqTamSeXCvZcMJwmY=
+github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.6/go.mod h1:l99Q4NqeyJOJFrtz4GW67vFV3+DXFpE82G8ZmZ24omw=
 github.com/liujitcn/kratos-kit/utils v0.0.7 h1:ME6TXLfE5NzLqDyryQtRTQOL2crCn6GY+TBEf5oB7Zg=
 github.com/liujitcn/kratos-kit/utils v0.0.7/go.mod h1:QRTMuZhRo8QWJbkvWjS0OTFzqEq3H24qA1Rh8DR37Ho=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
