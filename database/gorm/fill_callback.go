@@ -1,6 +1,7 @@
 package gorm
 
 import (
+	"context"
 	"slices"
 	"time"
 
@@ -36,6 +37,42 @@ func isFieldZero(db *gorm.DB, fieldName string) bool {
 	return true
 }
 
+// hasAnyField 判断当前模型是否声明了任一指定字段。
+func hasAnyField(db *gorm.DB, fieldNames ...string) bool {
+	statement := db.Statement
+	if statement == nil || statement.Schema == nil {
+		return false
+	}
+
+	for _, fieldName := range fieldNames {
+		if statement.Schema.LookUpField(fieldName) != nil {
+			return true
+		}
+	}
+
+	return false
+}
+
+// getUserIDFromContext 从上下文中解析当前用户ID。
+func getUserIDFromContext(ctx context.Context) int64 {
+	if ctx == nil || ctx == context.Background() || ctx == context.TODO() {
+		return 0
+	}
+
+	userInfo, err := auth.FromContext(ctx)
+	if err != nil {
+		log.Warnf("context has no user info, use default user id")
+		return 0
+	}
+	if userInfo == nil {
+		log.Errorf("get user id failed, use default user id")
+		return 0
+	}
+
+	return userInfo.UserId
+}
+
+// fillCreatedFields 在创建时回填审计字段。
 func fillCreatedFields(db *gorm.DB) {
 	table := db.Statement.Table
 	if slices.Contains(auditExcludeTables, table) {
@@ -43,15 +80,9 @@ func fillCreatedFields(db *gorm.DB) {
 	}
 
 	var userId int64
-	ctx := db.Statement.Context
-	if userInfo, err := auth.FromContext(ctx); err == nil {
-		log.Warnf("context has no user info, use default user id")
-	} else {
-		if userInfo == nil {
-			log.Errorf("get user id failed, use default user id")
-		} else {
-			userId = userInfo.UserId
-		}
+	// 仅当模型声明了审计人字段时，才尝试从上下文中解析用户ID，避免无效读取。
+	if hasAnyField(db, "CreatedBy", "UpdatedBy") {
+		userId = getUserIDFromContext(db.Statement.Context)
 	}
 
 	now := time.Now()
@@ -61,6 +92,7 @@ func fillCreatedFields(db *gorm.DB) {
 	safeSetColumn(db, "UpdatedAt", now)
 }
 
+// fillUpdatedFields 在更新时回填审计字段。
 func fillUpdatedFields(db *gorm.DB) {
 	table := db.Statement.Table
 	if slices.Contains(auditExcludeTables, table) {
@@ -68,15 +100,9 @@ func fillUpdatedFields(db *gorm.DB) {
 	}
 
 	var userId int64
-	ctx := db.Statement.Context
-	if userInfo, err := auth.FromContext(ctx); err == nil {
-		log.Warnf("context has no user info, use default user id")
-	} else {
-		if userInfo == nil {
-			log.Errorf("get user id failed, use default user id")
-		} else {
-			userId = userInfo.UserId
-		}
+	// 更新时只在存在 UpdatedBy 字段的模型上解析用户ID，避免不必要的上下文访问。
+	if hasAnyField(db, "UpdatedBy") {
+		userId = getUserIDFromContext(db.Statement.Context)
 	}
 
 	safeSetColumn(db, "UpdatedBy", userId)
