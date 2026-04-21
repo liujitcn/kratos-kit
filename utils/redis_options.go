@@ -5,6 +5,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// GetRedisOptions 构造单机 Redis 连接配置。
 func GetRedisOptions(cfg *conf.Data_Redis) (*redis.Options, error) {
 	redisOptions := &redis.Options{
 		Addr:         cfg.Addr[0],
@@ -19,6 +20,7 @@ func GetRedisOptions(cfg *conf.Data_Redis) (*redis.Options, error) {
 	return redisOptions, err
 }
 
+// GetClusterRedisOptions 构造 Redis 集群连接配置。
 func GetClusterRedisOptions(cfg *conf.Data_Redis) (*redis.ClusterOptions, error) {
 	redisOptions := &redis.ClusterOptions{
 		Addrs:        cfg.Addr,
@@ -32,10 +34,12 @@ func GetClusterRedisOptions(cfg *conf.Data_Redis) (*redis.ClusterOptions, error)
 	return redisOptions, err
 }
 
+// GetUniversalOptions 构造通用 Redis 连接配置。
 func GetUniversalOptions(cfg *conf.Data_Redis) (*redis.UniversalOptions, error) {
 	redisOptions := &redis.UniversalOptions{
 		Addrs:        cfg.Addr,
 		Password:     cfg.Password,
+		DB:           int(cfg.Db),
 		DialTimeout:  cfg.DialTimeout.AsDuration(),
 		ReadTimeout:  cfg.ReadTimeout.AsDuration(),
 		WriteTimeout: cfg.WriteTimeout.AsDuration(),
