@@ -7,7 +7,7 @@ require (
 	github.com/liujitcn/kratos-kit/database/gorm v0.0.8
 	github.com/liujitcn/kratos-kit/locker v0.0.2
 	github.com/liujitcn/kratos-kit/oss v0.0.5
-	github.com/liujitcn/kratos-kit/queue v0.0.7
+	github.com/liujitcn/kratos-kit/queue v0.0.9
 )
 
 require (
@@ -46,15 +46,15 @@ require (
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/liujitcn/go-utils v0.0.21 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.9 // indirect
+	github.com/liujitcn/kratos-kit/api v0.0.10 // indirect
 	github.com/liujitcn/kratos-kit/auth v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.7 // indirect
-	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.4 // indirect
-	github.com/liujitcn/kratos-kit/utils v0.0.5 // indirect
+	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.5 // indirect
+	github.com/liujitcn/kratos-kit/utils v0.0.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/minio-go/v7 v7.0.80 // indirect
