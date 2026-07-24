@@ -1,0 +1,675 @@
+package driver
+
+import (
+	"strings"
+	"time"
+)
+
+// DriverType 表示验证码驱动类型。
+type DriverType string
+
+const (
+	// DriverDigit 表示数字验证码。
+	DriverDigit DriverType = "digit"
+	// DriverString 表示字符串验证码。
+	DriverString DriverType = "string"
+	// DriverMath 表示算术验证码。
+	DriverMath DriverType = "math"
+	// DriverChinese 表示中文验证码。
+	DriverChinese DriverType = "chinese"
+	// DriverSlide 表示滑动拼图验证码。
+	DriverSlide DriverType = "slide"
+	// DriverClick 表示点击文字验证码。
+	DriverClick DriverType = "click"
+	// DriverRotate 表示旋转验证码。
+	DriverRotate DriverType = "rotate"
+)
+
+// DigitConfig 数字验证码配置
+type DigitConfig struct {
+	Height       int     `json:"height"`        // 图片高度
+	Width        int     `json:"width"`         // 图片宽度
+	CaptchaCount int     `json:"captcha_count"` // 验证码字符数量
+	MaxSkew      float64 `json:"max_skew"`      // 最大倾斜度
+	DotCount     int     `json:"dot_count"`     // 干扰点数量
+	BgColorR     uint8   `json:"bg_color_r"`    // 背景色R
+	BgColorG     uint8   `json:"bg_color_g"`    // 背景色G
+	BgColorB     uint8   `json:"bg_color_b"`    // 背景色B
+	FontColorR   uint8   `json:"font_color_r"`  // 字体色R
+	FontColorG   uint8   `json:"font_color_g"`  // 字体色G
+	FontColorB   uint8   `json:"font_color_b"`  // 字体色B
+	CaptchaLen   int     `json:"captcha_len"`   // 验证码长度（兼容字段）
+}
+
+// StringConfig 字符串验证码配置
+type StringConfig struct {
+	Height       int     `json:"height"`        // 图片高度
+	Width        int     `json:"width"`         // 图片宽度
+	CaptchaCount int     `json:"captcha_count"` // 验证码字符数量
+	MaxSkew      float64 `json:"max_skew"`      // 最大倾斜度
+	DotCount     int     `json:"dot_count"`     // 干扰点数量
+	BgColorR     uint8   `json:"bg_color_r"`    // 背景色R
+	BgColorG     uint8   `json:"bg_color_g"`    // 背景色G
+	BgColorB     uint8   `json:"bg_color_b"`    // 背景色B
+	FontColorR   uint8   `json:"font_color_r"`  // 字体色R
+	FontColorG   uint8   `json:"font_color_g"`  // 字体色G
+	FontColorB   uint8   `json:"font_color_b"`  // 字体色B
+	Source       string  `json:"source"`        // 字符源
+	CaptchaLen   int     `json:"captcha_len"`   // 验证码长度（兼容字段）
+}
+
+// MathConfig 算术验证码配置
+type MathConfig struct {
+	Height       int     `json:"height"`        // 图片高度
+	Width        int     `json:"width"`         // 图片宽度
+	CaptchaCount int     `json:"captcha_count"` // 验证码字符数量
+	MaxSkew      float64 `json:"max_skew"`      // 最大倾斜度
+	DotCount     int     `json:"dot_count"`     // 干扰点数量
+	BgColorR     uint8   `json:"bg_color_r"`    // 背景色R
+	BgColorG     uint8   `json:"bg_color_g"`    // 背景色G
+	BgColorB     uint8   `json:"bg_color_b"`    // 背景色B
+	FontColorR   uint8   `json:"font_color_r"`  // 字体色R
+	FontColorG   uint8   `json:"font_color_g"`  // 字体色G
+	FontColorB   uint8   `json:"font_color_b"`  // 字体色B
+	CaptchaLen   int     `json:"captcha_len"`   // 验证码长度（兼容字段）
+}
+
+// ChineseConfig 中文验证码配置
+type ChineseConfig struct {
+	Height       int    `json:"height"`        // 图片高度
+	Width        int    `json:"width"`         // 图片宽度
+	CaptchaCount int    `json:"captcha_count"` // 验证码字符数量
+	DotCount     int    `json:"dot_count"`     // 干扰点数量
+	Source       string `json:"source"`        // 中文字符源，支持逗号分隔
+	CaptchaLen   int    `json:"captcha_len"`   // 验证码长度（兼容字段）
+}
+
+// SlideConfig 滑动拼图验证码配置
+type SlideConfig struct {
+	MasterWidth   int `json:"master_width"`    // 主图宽度
+	MasterHeight  int `json:"master_height"`   // 主图高度
+	TileWidth     int `json:"tile_width"`      // 滑块宽度
+	TileHeight    int `json:"tile_height"`     // 滑块高度
+	TileRadius    int `json:"tile_radius"`     // 滑块圆角半径
+	JigsawRadius  int `json:"jigsaw_radius"`   // 拼图缺口圆角半径
+	ShadowOffsetX int `json:"shadow_offset_x"` // 阴影X偏移
+	ShadowOffsetY int `json:"shadow_offset_y"` // 阴影Y偏移
+	ShadowBlur    int `json:"shadow_blur"`     // 阴影模糊度
+}
+
+// ClickConfig 点击文字验证码配置
+type ClickConfig struct {
+	MasterWidth   int    `json:"master_width"`    // 主图宽度
+	MasterHeight  int    `json:"master_height"`   // 主图高度
+	ThumbWidth    int    `json:"thumb_width"`     // 缩略图宽度
+	ThumbHeight   int    `json:"thumb_height"`    // 缩略图高度
+	CaptchaCount  int    `json:"captcha_count"`   // 主图字符数量
+	VerifyCount   int    `json:"verify_count"`    // 验证字符数量
+	DisplayShadow bool   `json:"display_shadow"`  // 是否显示阴影
+	ShadowColor   string `json:"shadow_color"`    // 阴影颜色
+	ShadowOffsetX int    `json:"shadow_offset_x"` // 阴影X偏移
+	ShadowOffsetY int    `json:"shadow_offset_y"` // 阴影Y偏移
+	Chars         string `json:"chars"`           // 字符集
+	Language      string `json:"language"`        // 语言类型 zh, en
+}
+
+// RotateConfig 旋转验证码配置
+type RotateConfig struct {
+	MasterWidth  int `json:"master_width"`  // 主图宽度
+	MasterHeight int `json:"master_height"` // 主图高度
+	ThumbWidth   int `json:"thumb_width"`   // 缩略图宽度
+	ThumbHeight  int `json:"thumb_height"`  // 缩略图高度
+}
+
+// Config 验证码总配置
+type Config struct {
+	DriverType    DriverType     `json:"driver_type"`    // 驱动类型
+	Expire        time.Duration  `json:"expire"`         // 过期时间
+	KeyPrefix     string         `json:"key_prefix"`     // 缓存 key 前缀
+	DigitConfig   *DigitConfig   `json:"digit_config"`   // 数字配置
+	StringConfig  *StringConfig  `json:"string_config"`  // 字符串配置
+	MathConfig    *MathConfig    `json:"math_config"`    // 算术配置
+	ChineseConfig *ChineseConfig `json:"chinese_config"` // 中文配置
+	SlideConfig   *SlideConfig   `json:"slide_config"`   // 滑动拼图配置
+	ClickConfig   *ClickConfig   `json:"click_config"`   // 点击文字配置
+	RotateConfig  *RotateConfig  `json:"rotate_config"`  // 旋转配置
+}
+
+// DefaultDigitConfig 默认数字配置
+func DefaultDigitConfig() *DigitConfig {
+	return &DigitConfig{
+		Height:       80,
+		Width:        240,
+		CaptchaCount: 6,
+		MaxSkew:      0.4,
+		DotCount:     30,
+		BgColorR:     255,
+		BgColorG:     255,
+		BgColorB:     255,
+		FontColorR:   0,
+		FontColorG:   0,
+		FontColorB:   0,
+		CaptchaLen:   4,
+	}
+}
+
+// DefaultStringConfig 默认字符串配置
+func DefaultStringConfig() *StringConfig {
+	return &StringConfig{
+		Height:       80,
+		Width:        240,
+		CaptchaCount: 4,
+		MaxSkew:      0.4,
+		DotCount:     8,
+		BgColorR:     255,
+		BgColorG:     255,
+		BgColorB:     255,
+		FontColorR:   0,
+		FontColorG:   0,
+		FontColorB:   0,
+		Source:       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+		CaptchaLen:   4,
+	}
+}
+
+// DefaultMathConfig 默认算术配置
+func DefaultMathConfig() *MathConfig {
+	return &MathConfig{
+		Height:       80,
+		Width:        240,
+		CaptchaCount: 4,
+		MaxSkew:      0.4,
+		DotCount:     8,
+		BgColorR:     255,
+		BgColorG:     255,
+		BgColorB:     255,
+		FontColorR:   0,
+		FontColorG:   0,
+		FontColorB:   0,
+		CaptchaLen:   4,
+	}
+}
+
+// DefaultChineseConfig 默认中文配置
+func DefaultChineseConfig() *ChineseConfig {
+	return &ChineseConfig{
+		Height:       80,
+		Width:        240,
+		CaptchaCount: 4,
+		DotCount:     8,
+		CaptchaLen:   4,
+	}
+}
+
+// DefaultSlideConfig 默认滑动拼图配置
+func DefaultSlideConfig() *SlideConfig {
+	return &SlideConfig{
+		MasterWidth:   300,
+		MasterHeight:  220,
+		TileWidth:     60,
+		TileHeight:    60,
+		TileRadius:    5,
+		JigsawRadius:  10,
+		ShadowOffsetX: 5,
+		ShadowOffsetY: 5,
+		ShadowBlur:    10,
+	}
+}
+
+// DefaultClickConfig 默认点击文字配置
+func DefaultClickConfig() *ClickConfig {
+	return &ClickConfig{
+		MasterWidth:   300,
+		MasterHeight:  220,
+		ThumbWidth:    180,
+		ThumbHeight:   48,
+		CaptchaCount:  6,
+		VerifyCount:   4,
+		DisplayShadow: true,
+		ShadowColor:   "#000000",
+		ShadowOffsetX: 2,
+		ShadowOffsetY: 2,
+		Chars:         defaultCommonCharsSource,
+		Language:      "zh",
+	}
+}
+
+// DefaultRotateConfig 默认旋转验证码配置
+func DefaultRotateConfig() *RotateConfig {
+	return &RotateConfig{
+		MasterWidth:  300,
+		MasterHeight: 300,
+		ThumbWidth:   150,
+		ThumbHeight:  150,
+	}
+}
+
+// DefaultConfig 默认总配置
+func DefaultConfig() *Config {
+	return &Config{
+		DriverType:    DriverDigit,
+		Expire:        5 * time.Minute,
+		KeyPrefix:     "captcha",
+		DigitConfig:   DefaultDigitConfig(),
+		StringConfig:  DefaultStringConfig(),
+		MathConfig:    DefaultMathConfig(),
+		ChineseConfig: DefaultChineseConfig(),
+		SlideConfig:   DefaultSlideConfig(),
+		ClickConfig:   DefaultClickConfig(),
+		RotateConfig:  DefaultRotateConfig(),
+	}
+}
+
+// Option 表示验证码配置选项函数。
+type Option func(*Config)
+
+// WithDriverType 设置驱动类型
+func WithDriverType(driverType DriverType) Option {
+	return func(c *Config) {
+		c.DriverType = driverType
+	}
+}
+
+// WithExpire 设置过期时间
+func WithExpire(expire time.Duration) Option {
+	return func(c *Config) {
+		c.Expire = expire
+	}
+}
+
+// WithKeyPrefix 设置缓存 key 前缀
+func WithKeyPrefix(prefix string) Option {
+	return func(c *Config) {
+		c.KeyPrefix = prefix
+	}
+}
+
+// WithDigitConfig 设置数字验证码配置
+func WithDigitConfig(config *DigitConfig) Option {
+	return func(c *Config) {
+		c.DigitConfig = config
+	}
+}
+
+// WithStringConfig 设置字符串验证码配置
+func WithStringConfig(config *StringConfig) Option {
+	return func(c *Config) {
+		c.StringConfig = config
+	}
+}
+
+// WithMathConfig 设置算术验证码配置
+func WithMathConfig(config *MathConfig) Option {
+	return func(c *Config) {
+		c.MathConfig = config
+	}
+}
+
+// WithChineseConfig 设置中文验证码配置
+func WithChineseConfig(config *ChineseConfig) Option {
+	return func(c *Config) {
+		c.ChineseConfig = config
+	}
+}
+
+// WithDigitHeight 设置数字验证码高度
+func WithDigitHeight(height int) Option {
+	return func(c *Config) {
+		if c.DigitConfig == nil {
+			c.DigitConfig = DefaultDigitConfig()
+		}
+		c.DigitConfig.Height = height
+	}
+}
+
+// WithDigitWidth 设置数字验证码宽度
+func WithDigitWidth(width int) Option {
+	return func(c *Config) {
+		if c.DigitConfig == nil {
+			c.DigitConfig = DefaultDigitConfig()
+		}
+		c.DigitConfig.Width = width
+	}
+}
+
+// WithDigitCount 设置数字验证码字符数量
+func WithDigitCount(count int) Option {
+	return func(c *Config) {
+		if c.DigitConfig == nil {
+			c.DigitConfig = DefaultDigitConfig()
+		}
+		c.DigitConfig.CaptchaCount = count
+	}
+}
+
+// WithDigitMaxSkew 设置数字验证码最大倾斜度
+func WithDigitMaxSkew(skew float64) Option {
+	return func(c *Config) {
+		if c.DigitConfig == nil {
+			c.DigitConfig = DefaultDigitConfig()
+		}
+		c.DigitConfig.MaxSkew = skew
+	}
+}
+
+// WithDigitDotCount 设置数字验证码干扰点数量
+func WithDigitDotCount(count int) Option {
+	return func(c *Config) {
+		if c.DigitConfig == nil {
+			c.DigitConfig = DefaultDigitConfig()
+		}
+		c.DigitConfig.DotCount = count
+	}
+}
+
+// WithStringHeight 设置字符串验证码高度
+func WithStringHeight(height int) Option {
+	return func(c *Config) {
+		if c.StringConfig == nil {
+			c.StringConfig = DefaultStringConfig()
+		}
+		c.StringConfig.Height = height
+	}
+}
+
+// WithStringWidth 设置字符串验证码宽度
+func WithStringWidth(width int) Option {
+	return func(c *Config) {
+		if c.StringConfig == nil {
+			c.StringConfig = DefaultStringConfig()
+		}
+		c.StringConfig.Width = width
+	}
+}
+
+// WithStringCount 设置字符串验证码字符数量
+func WithStringCount(count int) Option {
+	return func(c *Config) {
+		if c.StringConfig == nil {
+			c.StringConfig = DefaultStringConfig()
+		}
+		c.StringConfig.CaptchaCount = count
+	}
+}
+
+// WithStringSource 设置字符串验证码字符源
+func WithStringSource(source string) Option {
+	return func(c *Config) {
+		if c.StringConfig == nil {
+			c.StringConfig = DefaultStringConfig()
+		}
+		c.StringConfig.Source = source
+	}
+}
+
+// WithStringDotCount 设置字符串验证码干扰点数量
+func WithStringDotCount(count int) Option {
+	return func(c *Config) {
+		if c.StringConfig == nil {
+			c.StringConfig = DefaultStringConfig()
+		}
+		c.StringConfig.DotCount = count
+	}
+}
+
+// WithMathHeight 设置算术验证码高度
+func WithMathHeight(height int) Option {
+	return func(c *Config) {
+		if c.MathConfig == nil {
+			c.MathConfig = DefaultMathConfig()
+		}
+		c.MathConfig.Height = height
+	}
+}
+
+// WithMathWidth 设置算术验证码宽度
+func WithMathWidth(width int) Option {
+	return func(c *Config) {
+		if c.MathConfig == nil {
+			c.MathConfig = DefaultMathConfig()
+		}
+		c.MathConfig.Width = width
+	}
+}
+
+// WithMathDotCount 设置算术验证码干扰点数量
+func WithMathDotCount(count int) Option {
+	return func(c *Config) {
+		if c.MathConfig == nil {
+			c.MathConfig = DefaultMathConfig()
+		}
+		c.MathConfig.DotCount = count
+	}
+}
+
+// WithChineseHeight 设置中文验证码高度
+func WithChineseHeight(height int) Option {
+	return func(c *Config) {
+		if c.ChineseConfig == nil {
+			c.ChineseConfig = DefaultChineseConfig()
+		}
+		c.ChineseConfig.Height = height
+	}
+}
+
+// WithChineseWidth 设置中文验证码宽度
+func WithChineseWidth(width int) Option {
+	return func(c *Config) {
+		if c.ChineseConfig == nil {
+			c.ChineseConfig = DefaultChineseConfig()
+		}
+		c.ChineseConfig.Width = width
+	}
+}
+
+// WithChineseCount 设置中文验证码字符数量
+func WithChineseCount(count int) Option {
+	return func(c *Config) {
+		if c.ChineseConfig == nil {
+			c.ChineseConfig = DefaultChineseConfig()
+		}
+		c.ChineseConfig.CaptchaCount = count
+	}
+}
+
+// WithChineseSource 设置中文验证码字符源
+func WithChineseSource(source string) Option {
+	return func(c *Config) {
+		if c.ChineseConfig == nil {
+			c.ChineseConfig = DefaultChineseConfig()
+		}
+		c.ChineseConfig.Source = source
+	}
+}
+
+// WithChineseChars 设置中文验证码字符列表。
+func WithChineseChars(chars []string) Option {
+	return func(c *Config) {
+		if c.ChineseConfig == nil {
+			c.ChineseConfig = DefaultChineseConfig()
+		}
+		c.ChineseConfig.Source = strings.Join(chars, ",")
+	}
+}
+
+// WithChineseDotCount 设置中文验证码干扰点数量
+func WithChineseDotCount(count int) Option {
+	return func(c *Config) {
+		if c.ChineseConfig == nil {
+			c.ChineseConfig = DefaultChineseConfig()
+		}
+		c.ChineseConfig.DotCount = count
+	}
+}
+
+// WithSlideConfig 设置滑动拼图验证码配置
+func WithSlideConfig(config *SlideConfig) Option {
+	return func(c *Config) {
+		c.SlideConfig = config
+	}
+}
+
+// WithSlideMasterSize 设置滑动拼图主图尺寸
+func WithSlideMasterSize(width, height int) Option {
+	return func(c *Config) {
+		if c.SlideConfig == nil {
+			c.SlideConfig = DefaultSlideConfig()
+		}
+		c.SlideConfig.MasterWidth = width
+		c.SlideConfig.MasterHeight = height
+	}
+}
+
+// WithSlideTileSize 设置滑动拼图滑块尺寸
+func WithSlideTileSize(width, height int) Option {
+	return func(c *Config) {
+		if c.SlideConfig == nil {
+			c.SlideConfig = DefaultSlideConfig()
+		}
+		c.SlideConfig.TileWidth = width
+		c.SlideConfig.TileHeight = height
+	}
+}
+
+// WithSlideTileRadius 设置滑动拼图滑块圆角半径
+func WithSlideTileRadius(radius int) Option {
+	return func(c *Config) {
+		if c.SlideConfig == nil {
+			c.SlideConfig = DefaultSlideConfig()
+		}
+		c.SlideConfig.TileRadius = radius
+	}
+}
+
+// WithSlideJigsawRadius 设置滑动拼图缺口圆角半径
+func WithSlideJigsawRadius(radius int) Option {
+	return func(c *Config) {
+		if c.SlideConfig == nil {
+			c.SlideConfig = DefaultSlideConfig()
+		}
+		c.SlideConfig.JigsawRadius = radius
+	}
+}
+
+// WithSlideShadow 设置滑动拼图阴影效果
+func WithSlideShadow(offsetX, offsetY, blur int) Option {
+	return func(c *Config) {
+		if c.SlideConfig == nil {
+			c.SlideConfig = DefaultSlideConfig()
+		}
+		c.SlideConfig.ShadowOffsetX = offsetX
+		c.SlideConfig.ShadowOffsetY = offsetY
+		c.SlideConfig.ShadowBlur = blur
+	}
+}
+
+// WithClickConfig 设置点击文字验证码配置
+func WithClickConfig(config *ClickConfig) Option {
+	return func(c *Config) {
+		c.ClickConfig = config
+	}
+}
+
+// WithClickMasterSize 设置点击验证码主图尺寸
+func WithClickMasterSize(width, height int) Option {
+	return func(c *Config) {
+		if c.ClickConfig == nil {
+			c.ClickConfig = DefaultClickConfig()
+		}
+		c.ClickConfig.MasterWidth = width
+		c.ClickConfig.MasterHeight = height
+	}
+}
+
+// WithClickThumbSize 设置点击验证码缩略图尺寸
+func WithClickThumbSize(width, height int) Option {
+	return func(c *Config) {
+		if c.ClickConfig == nil {
+			c.ClickConfig = DefaultClickConfig()
+		}
+		c.ClickConfig.ThumbWidth = width
+		c.ClickConfig.ThumbHeight = height
+	}
+}
+
+// WithClickCaptchaCount 设置点击验证码主图字符数量
+func WithClickCaptchaCount(count int) Option {
+	return func(c *Config) {
+		if c.ClickConfig == nil {
+			c.ClickConfig = DefaultClickConfig()
+		}
+		c.ClickConfig.CaptchaCount = count
+	}
+}
+
+// WithClickVerifyCount 设置点击验证码验证字符数量
+func WithClickVerifyCount(count int) Option {
+	return func(c *Config) {
+		if c.ClickConfig == nil {
+			c.ClickConfig = DefaultClickConfig()
+		}
+		c.ClickConfig.VerifyCount = count
+	}
+}
+
+// WithClickChars 设置点击验证码字符集
+func WithClickChars(chars string) Option {
+	return func(c *Config) {
+		if c.ClickConfig == nil {
+			c.ClickConfig = DefaultClickConfig()
+		}
+		c.ClickConfig.Chars = chars
+	}
+}
+
+// WithClickLanguage 设置点击验证码语言
+func WithClickLanguage(language string) Option {
+	return func(c *Config) {
+		if c.ClickConfig == nil {
+			c.ClickConfig = DefaultClickConfig()
+		}
+		c.ClickConfig.Language = language
+	}
+}
+
+// WithClickShadow 设置点击验证码阴影效果
+func WithClickShadow(display bool, color string, offsetX, offsetY int) Option {
+	return func(c *Config) {
+		if c.ClickConfig == nil {
+			c.ClickConfig = DefaultClickConfig()
+		}
+		c.ClickConfig.DisplayShadow = display
+		c.ClickConfig.ShadowColor = color
+		c.ClickConfig.ShadowOffsetX = offsetX
+		c.ClickConfig.ShadowOffsetY = offsetY
+	}
+}
+
+// WithRotateConfig 设置旋转验证码配置
+func WithRotateConfig(config *RotateConfig) Option {
+	return func(c *Config) {
+		c.RotateConfig = config
+	}
+}
+
+// WithRotateMasterSize 设置旋转验证码主图尺寸
+func WithRotateMasterSize(width, height int) Option {
+	return func(c *Config) {
+		if c.RotateConfig == nil {
+			c.RotateConfig = DefaultRotateConfig()
+		}
+		c.RotateConfig.MasterWidth = width
+		c.RotateConfig.MasterHeight = height
+	}
+}
+
+// WithRotateThumbSize 设置旋转验证码缩略图尺寸
+func WithRotateThumbSize(width, height int) Option {
+	return func(c *Config) {
+		if c.RotateConfig == nil {
+			c.RotateConfig = DefaultRotateConfig()
+		}
+		c.RotateConfig.ThumbWidth = width
+		c.RotateConfig.ThumbHeight = height
+	}
+}
