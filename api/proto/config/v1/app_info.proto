@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// AppInfo 描述应用实例的基础、运行时、部署和构建信息。
+message AppInfo {
+  // 项目唯一标识，通常使用小写与连字符，例如 kratos。
+  string project = 1;
+  // 纯微服务名，通常使用小写与连字符，例如 admin-service。
+  string app_id = 2;
+  // 实例 ID，例如 kratos-admin-service@172.16.0.12:8080@ajk2n8d3789z。
+  string instance_id = 3;
+  // 项目名与服务名组合后的自然语言描述，例如商城管理平台服务。
+  string name = 4;
+  // 语义化版本号，例如 v1.2.3 或 2.0.0-beta。
+  string version = 5;
+
+  // 运行实例所在主机名。
+  string hostname = 10;
+  // 当前实例暴露的访问端点列表。
+  repeated Endpoint endpoints = 11;
+  // 当前实例启动时间。
+  google.protobuf.Timestamp start_time = 12;
+
+  // 部署环境，例如 dev、stage、prod。
+  string environment = 20;
+  // 部署区域。
+  string region = 21;
+  // 部署可用区。
+  string zone = 22;
+  // 实例标签，用于筛选、分组或路由。
+  map<string, string> labels = 23;
+
+  // 构建流水线或构建任务 ID。
+  string build_id = 30;
+  // 构建对应的 Git commit。
+  string git_commit = 31;
+
+  // 任意键值元数据。
+  map<string, string> metadata = 40;
+}
+
+// Endpoint 表示一个可访问的端点。
+message Endpoint {
+  // 端点类型，例如 grpc、http、metrics。
+  string kind = 1;
+  // 端点地址，例如 10.0.0.1:8080 或 http://host:8080。
+  string address = 2;
+}

@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package config.v1;
+
+// Logger 描述日志组件配置。
+message Logger {
+  // Zap 描述 zap 日志配置。
+  message Zap {
+    // filepath 为日志文件地址。
+    string filepath = 1;
+    // level 为最低日志级别。
+    string level = 2;
+    // max_size 为日志文件大小上限。
+    int32 max_size = 3;
+    // max_age 为日志文件保留天数。
+    int32 max_age = 4;
+    // max_backups 为最大保留日志文件数量。
+    int32 max_backups = 5;
+    // enable_console 表示是否同时输出到控制台。
+    bool enable_console = 6;
+  }
+
+  // Logrus 描述 logrus 日志配置。
+  message Logrus {
+    // level 为日志等级。
+    string level = 1;
+    // formatter 为输出格式，例如 text、json。
+    string formatter = 2;
+    // timestamp_format 为时间戳格式，例如 2006-01-02 15:04:05。
+    string timestamp_format = 3;
+    // disable_colors 表示是否禁用彩色日志。
+    bool disable_colors = 4;
+    // disable_timestamp 表示是否禁用时间戳。
+    bool disable_timestamp = 5;
+  }
+
+  // Fluent 描述 Fluent 日志配置。
+  message Fluent {
+    // endpoint 为公网接入地址。
+    string endpoint = 1;
+  }
+
+  // Aliyun 描述阿里云日志服务配置。
+  message Aliyun {
+    // endpoint 为公网接入地址。
+    string endpoint = 1;
+    // project 为日志项目名称。
+    string project = 2;
+    // access_key 为访问密钥 ID。
+    string access_key = 3;
+    // access_secret 为访问密钥。
+    string access_secret = 4;
+  }
+
+  // Tencent 描述腾讯云日志服务配置。
+  message Tencent {
+    // endpoint 为公网接入地址。
+    string endpoint = 1;
+    // topic_id 为日志主题 ID。
+    string topic_id = 2;
+    // access_key 为访问密钥 ID。
+    string access_key = 3;
+    // access_secret 为访问密钥。
+    string access_secret = 4;
+  }
+
+  // Zerolog 描述 zerolog 日志配置。
+  message Zerolog {
+    // level 为日志等级。
+    string level = 1;
+    // time_field_format 为时间戳格式，例如 2006-01-02 15:04:05。
+    string time_field_format = 2;
+    // timestamp_field_name 为时间戳字段名称。
+    string timestamp_field_name = 3;
+    // level_field_name 为日志等级字段名称。
+    string level_field_name = 4;
+    // message_field_name 为日志消息字段名称。
+    string message_field_name = 5;
+    // writer 为输出目标，默认 stdout，可选 stdout、stderr、file。
+    string writer = 6;
+    // filepath 为 writer=file 时的日志文件地址。
+    string filepath = 7;
+  }
+
+  // type 为日志组件类型。
+  string type = 1;
+  // zap 为 zap 日志配置。
+  optional Zap zap = 2;
+  // logrus 为 logrus 日志配置。
+  optional Logrus logrus = 3;
+  // fluent 为 Fluent 日志配置。
+  optional Fluent fluent = 4;
+  // aliyun 为阿里云日志服务配置。
+  optional Aliyun aliyun = 5;
+  // tencent 为腾讯云日志服务配置。
+  optional Tencent tencent = 6;
+  // zerolog 为 zerolog 日志配置。
+  optional Zerolog zerolog = 7;
+}

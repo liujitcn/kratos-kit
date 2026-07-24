@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package config.v1;
+
+// Tracer 描述链路追踪配置。
+message Tracer {
+  // exporter 为导出器名称，例如 otlp-grpc、otlp-http、zipkin、stdout。
+  string exporter = 1;
+  // endpoint 为导出器端点地址。
+  string endpoint = 2;
+  // sampler 为采样率，默认 1.0。
+  double sampler = 3;
+  // env 为运行环境，例如 dev、debug、product。
+  string env = 4;
+  // insecure 表示是否使用非安全连接。
+  bool insecure = 5;
+  // batcher_options 为批处理 Span Processor 配置。
+  optional BatcherOptions batcher_options = 6;
+  // enable_trace_context 表示是否包含 W3C TraceContext 传播。
+  optional bool enable_trace_context = 7;
+  // enable_baggage 表示是否包含 Baggage 传播。
+  optional bool enable_baggage = 8;
+}
+
+// BatcherOptions 描述 BatchSpanProcessor 批处理参数。
+message BatcherOptions {
+  // enabled 表示是否启用 BatchSpanProcessor，默认 true。
+  bool enabled = 1;
+  // max_queue_size 为最大队列大小。
+  uint32 max_queue_size = 2;
+  // max_export_batch_size 为单次最大导出批量大小。
+  uint32 max_export_batch_size = 3;
+  // schedule_delay_millis 为批处理调度延迟，单位毫秒。
+  uint32 schedule_delay_millis = 4;
+  // export_timeout_millis 为导出超时时间，单位毫秒。
+  uint32 export_timeout_millis = 5;
+}

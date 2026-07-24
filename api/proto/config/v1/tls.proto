@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package config.v1;
+
+// Tls 描述 TLS 证书与校验配置。
+message Tls {
+  // File 描述通过文件路径加载证书的配置。
+  message File {
+    // cert_path 为证书文件路径。
+    optional string cert_path = 1;
+    // key_path 为私钥文件路径。
+    optional string key_path = 2;
+    // ca_path 为 CA 证书文件路径。
+    optional string ca_path = 3;
+  }
+
+  // Config 描述直接以内存内容提供证书的配置。
+  message Config {
+    // cert_pem 为 PEM 格式证书内容。
+    optional bytes cert_pem = 1;
+    // key_pem 为 PEM 格式私钥内容。
+    optional bytes key_pem = 2;
+    // ca_pem 为 PEM 格式 CA 证书内容。
+    optional bytes ca_pem = 3;
+  }
+
+  // file 为证书文件路径配置。
+  optional File file = 1;
+  // config 为内存证书内容配置。
+  optional Config config = 2;
+  // insecure_skip_verify 表示是否跳过服务端证书校验。
+  bool insecure_skip_verify = 3;
+  // domain 为 HTTPS 对应的域名。
+  string domain = 6;
+}

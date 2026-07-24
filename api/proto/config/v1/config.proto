@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "google/protobuf/duration.proto";
+
+// Config 描述远程配置中心配置。
+message Config {
+  // Nacos 描述 Nacos 配置中心配置。
+  message Nacos {
+    // address 为服务端地址。
+    string address = 1;
+    // port 为服务端端口。
+    uint64 port = 2;
+    // username 为用户名。
+    string username = 3;
+    // password 为密码。
+    string password = 4;
+
+    // namespace_id 为命名空间 ID。
+    string namespace_id = 10;
+    // group 为配置分组。
+    string group = 11;
+    // data_id 为配置数据 ID。
+    string data_id = 12;
+
+    // log_level 为日志级别。
+    string log_level = 20;
+    // cache_dir 为缓存目录。
+    string cache_dir = 21;
+    // log_dir 为日志目录。
+    string log_dir = 22;
+
+    // not_load_cache_at_start 表示启动时是否不加载缓存。
+    bool not_load_cache_at_start = 30;
+    // update_cache_when_empty 表示当配置为空时是否更新缓存。
+    bool update_cache_when_empty = 31;
+
+    // update_thread_num 为更新服务的线程数。
+    int32 update_thread_num = 40;
+    // timeout_ms 为 HTTP 请求超时时间，单位毫秒。
+    uint64 timeout_ms = 41;
+    // beat_interval 为心跳间隔时间，单位毫秒。
+    int64 beat_interval = 42;
+  }
+
+  // Etcd 描述 Etcd 配置中心配置。
+  message Etcd {
+    // endpoints 为服务端地址列表。
+    repeated string endpoints = 1;
+    // timeout 为请求超时时间。
+    google.protobuf.Duration timeout = 2;
+    // key 为配置键。
+    string key = 3;
+  }
+
+  // Consul 描述 Consul 配置中心配置。
+  message Consul {
+    // scheme 为网络协议。
+    string scheme = 1;
+    // address 为服务端地址。
+    string address = 2;
+    // key 为配置键。
+    string key = 3;
+  }
+
+  // Apollo 描述 Apollo 配置中心配置。
+  message Apollo {
+    // endpoint 为服务端地址。
+    string endpoint = 1;
+    // app_id 为应用 ID。
+    string app_id = 2;
+    // cluster 为集群名称。
+    string cluster = 3;
+    // namespace 为命名空间。
+    string namespace = 4;
+    // secret 为访问密钥。
+    string secret = 5;
+  }
+
+  // Kubernetes 描述 Kubernetes 配置中心配置。
+  message Kubernetes {
+    // namespace 为命名空间。
+    string namespace = 1;
+    // label_selector 为标签选择器。
+    string label_selector = 2;
+    // field_selector 为字段选择器。
+    string field_selector = 3;
+    // kube_config 为 kubeconfig 文件路径。
+    string kube_config = 4;
+    // master 为 Kubernetes API Server 地址。
+    string master = 5;
+  }
+
+  // Polaris 描述 Polaris 配置中心配置。
+  message Polaris {
+    // namespace 为命名空间。
+    string namespace = 1;
+    // file_group 为配置文件组。
+    string file_group = 2;
+    // file_name 为配置文件名。
+    string file_name = 3;
+  }
+
+  // type 为配置中心类型。
+  string type = 1;
+  // etcd 为 Etcd 配置中心配置。
+  optional Etcd etcd = 2;
+  // consul 为 Consul 配置中心配置。
+  optional Consul consul = 3;
+  // nacos 为 Nacos 配置中心配置。
+  optional Nacos nacos = 4;
+  // apollo 为 Apollo 配置中心配置。
+  optional Apollo apollo = 6;
+  // kubernetes 为 Kubernetes 配置中心配置。
+  optional Kubernetes kubernetes = 7;
+  // polaris 为 Polaris 配置中心配置。
+  optional Polaris polaris = 8;
+}
