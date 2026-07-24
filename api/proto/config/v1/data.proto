@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "config/v1/tls.proto";
+import "google/protobuf/duration.proto";
+
+// Data 描述数据库、缓存与队列等数据层配置。
+message Data {
+  // Database 描述数据库连接与观测配置。
+  message Database {
+    // driver 为驱动名，例如 mysql、postgres、sqlite。
+    string driver = 1;
+    // source 为数据源 DSN 字符串。
+    string source = 2;
+
+    // debug 表示是否启用调试模式。
+    bool debug = 10;
+    // enable_migrate 表示是否启用数据迁移。
+    bool enable_migrate = 11;
+    // enable_trace 表示是否启用链路追踪。
+    bool enable_trace = 12;
+    // enable_metrics 表示是否启用性能指标。
+    bool enable_metrics = 13;
+
+    // max_idle_connections 为连接池最大空闲连接数。
+    optional int32 max_idle_connections = 20;
+    // max_open_connections 为连接池最大打开连接数。
+    optional int32 max_open_connections = 21;
+    // connection_max_lifetime 为连接可重用的最大时间长度。
+    optional google.protobuf.Duration connection_max_lifetime = 22;
+    // connection_timeout 为启动时校验数据库连接的超时时间。
+    optional google.protobuf.Duration connection_timeout = 23;
+
+    // prometheus_push_addr 为 Prometheus Pushgateway 地址。
+    optional string prometheus_push_addr = 30;
+    // prometheus_db_name 为 Prometheus 中展示的数据库名称。
+    optional string prometheus_db_name = 31;
+    // prometheus_http_port 为 Prometheus 指标 HTTP 端口。
+    optional uint32 prometheus_http_port = 32;
+  }
+
+  // Redis 描述 Redis 连接与观测配置。
+  message Redis {
+    // addr 为 Redis 服务端地址列表。
+    repeated string addr = 1;
+    // password 为 Redis 密码。
+    string password = 2;
+    // db 为 Redis 数据库索引。
+    int32 db = 3;
+
+    // dial_timeout 为连接超时时间。
+    google.protobuf.Duration dial_timeout = 4;
+    // read_timeout 为读取超时时间。
+    google.protobuf.Duration read_timeout = 5;
+    // write_timeout 为写入超时时间。
+    google.protobuf.Duration write_timeout = 6;
+    // tls 为 TLS 配置。
+    Tls tls = 7;
+
+    // enable_tracing 表示是否启用链路追踪。
+    bool enable_tracing = 8;
+    // enable_metrics 表示是否启用性能指标。
+    bool enable_metrics = 9;
+  }
+
+  // Queue 描述队列配置。
+  message Queue {
+    // Memory 描述内存队列配置。
+    message Memory {
+      // pool_size 为内存队列工作池大小。
+      int64 pool_size = 1;
+    }
+
+    // Redis 描述 Redis Stream 队列配置。
+    message Redis {
+      // Producer 描述 Redis 队列生产者配置。
+      message Producer {
+        // stream_max_length 为 stream 最大长度。
+        int64 stream_max_length = 1;
+        // approximate_max_length 表示裁剪 stream 时是否使用近似最大长度。
+        bool approximate_max_length = 2;
+      }
+
+      // Consumer 描述 Redis 队列消费者配置。
+      message Consumer {
+        // visibility_timeout 为消息可见性超时时间。
+        google.protobuf.Duration visibility_timeout = 1;
+        // blocking_timeout 为阻塞读取超时时间。
+        google.protobuf.Duration blocking_timeout = 2;
+        // reclaim_interval 为回收未确认消息的间隔。
+        google.protobuf.Duration reclaim_interval = 3;
+        // buffer_size 为消费缓冲区大小。
+        int64 buffer_size = 4;
+        // concurrency 为消费者并发数。
+        int64 concurrency = 5;
+      }
+
+      // producer 为 Redis 队列生产者配置。
+      Producer producer = 1;
+      // consumer 为 Redis 队列消费者配置。
+      Consumer consumer = 2;
+    }
+
+    // memory 为内存队列配置。
+    Memory memory = 1;
+    // redis 为 Redis 队列配置。
+    Redis redis = 2;
+  }
+
+  // database 为数据库配置。
+  optional Database database = 1;
+  // databases 为按名称区分的多个数据库配置。
+  map<string, Database> databases = 2;
+  // redis 为 Redis 配置。
+  optional Redis redis = 3;
+  // queue 为队列配置。
+  optional Queue queue = 4;
+}

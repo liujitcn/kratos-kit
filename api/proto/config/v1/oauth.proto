@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package config.v1;
+
+// OAuth 配置
+message OAuth {
+  // OAuth Provider 配置，key 为 Provider 名称，例如：
+  // github、gitee、google、wechat、wechatmp、wechatmini、wechatwork、dingtalk、feishu 等。
+  map<string, Provider> providers = 1;
+}
+
+message Provider {
+  // OAuth Client ID（AppID）
+  string client_id = 1;
+  // OAuth Client Secret（AppSecret）
+  string client_secret = 2;
+  // OAuth 授权回调地址（Redirect URI），必须与第三方平台配置保持一致。
+  string redirect_uri = 3;
+  // OAuth 授权 Scope。
+  //
+  // 示例：
+  // GitHub：
+  //   - user:email
+  //
+  // Gitee：
+  //   - user_info
+  //   - emails
+  //
+  // Google：
+  //   - openid
+  //   - profile
+  //   - email
+  //
+  // 微信开放平台：
+  //   - snsapi_login
+  //
+  // 微信公众号：
+  //   - snsapi_userinfo
+  //
+  // 微信小程序：
+  //   - 无需配置 scope，小程序端通过 wx.login 获取 code。
+  repeated string scopes = 4;
+}

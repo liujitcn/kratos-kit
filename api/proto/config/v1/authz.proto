@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package config.v1;
+
+// Authorization 描述授权相关配置。
+message Authorization {
+  // Casbin 描述 Casbin 授权配置。
+  message Casbin {
+    // UrlInfo 描述一条需要排除授权检查的路由信息。
+    message UrlInfo {
+      // url 为请求路径。
+      string url = 1;
+      // method 为请求方法。
+      string method = 2;
+    }
+
+    // prefix 为授权策略前缀。
+    string prefix = 1;
+    // exclude 为排除授权检查的路由列表。
+    repeated UrlInfo exclude = 2;
+  }
+
+  // casbin 为 Casbin 授权配置。
+  Casbin casbin = 1;
+}

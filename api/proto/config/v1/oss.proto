@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package config.v1;
+
+// Oss 描述对象存储配置。
+message Oss {
+  // Ftp 描述 FTP 对象存储配置。
+  message Ftp {
+    // endpoint 为 FTP 服务地址，例如 127.0.0.1:21。
+    string endpoint = 1;
+    // user_name 为 FTP 登录账号。
+    string user_name = 2;
+    // user_pwd 为 FTP 登录密码。
+    string user_pwd = 3;
+  }
+
+  // Aliyun 描述阿里云 OSS 配置。
+  message Aliyun {
+    // endpoint 为 OSS 访问地址。
+    string endpoint = 1;
+    // access_key_id 为访问密钥 ID。
+    string access_key_id = 2;
+    // access_key_secret 为访问密钥。
+    string access_key_secret = 3;
+    // bucket_name 为存储空间名称。
+    string bucket_name = 4;
+  }
+
+  // Minio 描述 MinIO 对象存储配置。
+  message Minio {
+    // endpoint 为服务端地址。
+    string endpoint = 1;
+    // access_key 为访问密钥。
+    string access_key = 2;
+    // secret_key 为密钥。
+    string secret_key = 3;
+    // token 为访问令牌。
+    string token = 4;
+    // bucket_name 为存储空间名称。
+    string bucket_name = 5;
+    // use_ssl 表示是否使用 SSL。
+    bool use_ssl = 10;
+  }
+
+  // type 为对象存储类型。
+  string type = 1;
+  // root_directory 为存储空间根目录。
+  string root_directory = 2;
+  // aliyun 为阿里云 OSS 配置。
+  optional Aliyun aliyun = 3;
+  // ftp 为 FTP 对象存储配置。
+  optional Ftp ftp = 4;
+  // minio 为 MinIO 对象存储配置。
+  optional Minio minio = 5;
+}

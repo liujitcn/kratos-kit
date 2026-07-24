@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "google/protobuf/duration.proto";
+
+// Registry 描述注册发现中心配置。
+message Registry {
+  // Consul 描述 Consul 注册发现配置。
+  message Consul {
+    // scheme 为网络协议。
+    string scheme = 1;
+    // address 为服务端地址。
+    string address = 2;
+    // health_check 表示是否启用健康检查。
+    bool health_check = 3;
+  }
+
+  // Etcd 描述 Etcd 注册发现配置。
+  message Etcd {
+    // endpoints 为服务端地址列表。
+    repeated string endpoints = 1;
+  }
+
+  // ZooKeeper 描述 ZooKeeper 注册发现配置。
+  message ZooKeeper {
+    // endpoints 为服务端地址列表。
+    repeated string endpoints = 1;
+    // timeout 为请求超时时间。
+    google.protobuf.Duration timeout = 2;
+  }
+
+  // Nacos 描述 Nacos 注册发现配置。
+  message Nacos {
+    // address 为服务端地址。
+    string address = 1;
+    // port 为服务端端口。
+    uint64 port = 2;
+    // namespace_id 为命名空间 ID。
+    string namespace_id = 3;
+    // region_id 为区域 ID。
+    string region_id = 4;
+    // app_name 为应用名称。
+    string app_name = 5;
+    // app_key 为应用密钥。
+    string app_key = 6;
+    // access_key 为访问密钥。
+    string access_key = 7;
+    // secret_key 为密钥。
+    string secret_key = 8;
+    // username 为用户名。
+    string username = 9;
+    // password 为密码。
+    string password = 10;
+
+    // timeout 为 HTTP 请求超时时间。
+    google.protobuf.Duration timeout = 20;
+    // beat_interval 为心跳间隔时间。
+    google.protobuf.Duration beat_interval = 21;
+    // listen_interval 为监听间隔时间。
+    google.protobuf.Duration listen_interval = 22;
+
+    // update_thread_num 为更新服务的线程数。
+    int32 update_thread_num = 30;
+
+    // not_load_cache_at_start 表示启动时是否不读取本地缓存。
+    bool not_load_cache_at_start = 40;
+    // update_cache_when_empty 表示服务列表为空时是否更新本地缓存。
+    bool update_cache_when_empty = 41;
+    // open_kms 表示是否开启 KMS 加密。
+    bool open_kms = 42;
+
+    // log_level 为日志等级。
+    string log_level = 50;
+    // log_dir 为日志目录。
+    string log_dir = 51;
+    // cache_dir 为缓存目录。
+    string cache_dir = 52;
+    // context_path 为上下文路径。
+    string context_path = 53;
+  }
+
+  // Kubernetes 描述 Kubernetes 注册发现配置。
+  message Kubernetes {}
+
+  // Eureka 描述 Eureka 注册发现配置。
+  message Eureka {
+    // endpoints 为服务端地址列表。
+    repeated string endpoints = 1;
+    // heartbeat_interval 为心跳间隔。
+    google.protobuf.Duration heartbeat_interval = 2;
+    // refresh_interval 为服务列表刷新间隔。
+    google.protobuf.Duration refresh_interval = 3;
+    // path 为注册路径。
+    string path = 4;
+  }
+
+  // Polaris 描述 Polaris 注册发现配置。
+  message Polaris {
+    // address 为服务端地址。
+    string address = 1;
+    // port 为服务端端口。
+    int32 port = 2;
+    // instance_count 为实例数量。
+    int32 instance_count = 3;
+    // namespace 为命名空间。
+    string namespace = 4;
+    // service 为服务名称。
+    string service = 5;
+    // token 为访问令牌。
+    string token = 6;
+  }
+
+  // Servicecomb 描述 ServiceComb 注册发现配置。
+  message Servicecomb {
+    // endpoints 为服务端地址列表。
+    repeated string endpoints = 1;
+  }
+
+  // type 为注册发现中心类型。
+  string type = 1;
+  // consul 为 Consul 注册发现配置。
+  optional Consul consul = 2;
+  // etcd 为 Etcd 注册发现配置。
+  optional Etcd etcd = 3;
+  // zookeeper 为 ZooKeeper 注册发现配置。
+  optional ZooKeeper zookeeper = 4;
+  // nacos 为 Nacos 注册发现配置。
+  optional Nacos nacos = 5;
+  // kubernetes 为 Kubernetes 注册发现配置。
+  optional Kubernetes kubernetes = 6;
+  // eureka 为 Eureka 注册发现配置。
+  optional Eureka eureka = 7;
+  // polaris 为 Polaris 注册发现配置。
+  optional Polaris polaris = 8;
+  // servicecomb 为 ServiceComb 注册发现配置。
+  optional Servicecomb servicecomb = 9;
+}

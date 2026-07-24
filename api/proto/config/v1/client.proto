@@ -1,0 +1,149 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "config/v1/tls.proto";
+import "google/protobuf/duration.proto";
+
+// Client 描述对外部服务发起请求时使用的客户端配置。
+message Client {
+  // Middleware 描述客户端请求链路的中间件配置。
+  message Middleware {
+    // Auth 描述客户端请求携带的 JWT 认证配置。
+    message Auth {
+      // method 为 JWT 签名算法，例如 HS256。
+      string method = 1;
+      // secret 为 JWT 签名密钥。
+      string secret = 2;
+    }
+
+    // SelectorFilter 描述客户端负载均衡过滤器配置。
+    message SelectorFilter {
+      // filter_version 为客户端负载均衡过滤版本号。
+      string filter_version = 1;
+      // balancer 为客户端负载均衡选择器名称。
+      string balancer = 2;
+    }
+
+    // enable_logging 表示是否启用日志中间件。
+    bool enable_logging = 1;
+    // enable_recovery 表示是否启用异常恢复中间件。
+    bool enable_recovery = 2;
+    // enable_tracing 表示是否启用链路追踪中间件。
+    bool enable_tracing = 3;
+    // enable_metadata 表示是否启用元数据中间件。
+    bool enable_metadata = 4;
+
+    // auth 为 JWT 认证中间件配置。
+    Auth auth = 10;
+    // selector_filter 为负载均衡过滤器配置。
+    SelectorFilter selector_filter = 11;
+  }
+
+  // Http 描述 HTTP 客户端配置。
+  message Http {
+    // endpoint 为服务地址。
+    string endpoint = 1;
+    // timeout 为请求超时时间。
+    google.protobuf.Duration timeout = 2;
+    // middleware 为客户端中间件配置。
+    Middleware middleware = 3;
+    // tls 为 TLS 配置。
+    Tls tls = 4;
+    // metadata 为请求元数据。
+    map<string, string> metadata = 5;
+  }
+
+  // Grpc 描述 gRPC 客户端配置。
+  message Grpc {
+    // endpoint 为服务地址。
+    string endpoint = 1;
+    // timeout 为请求超时时间。
+    google.protobuf.Duration timeout = 2;
+    // middleware 为客户端中间件配置。
+    Middleware middleware = 3;
+    // tls 为 TLS 配置。
+    Tls tls = 4;
+    // metadata 为请求元数据。
+    map<string, string> metadata = 5;
+  }
+
+  // Sse 描述 SSE 客户端配置。
+  message Sse {
+    // endpoint 为 SSE 服务地址。
+    string endpoint = 1;
+    // timeout 为请求超时时间。
+    google.protobuf.Duration timeout = 2;
+    // tls 为 TLS 配置。
+    Tls tls = 3;
+    // metadata 为请求元数据。
+    map<string, string> metadata = 4;
+    // encode_base64 表示是否按 Base64 数据格式解码事件内容。
+    bool encode_base64 = 5;
+  }
+
+  // Mcp 描述 MCP 客户端配置。
+  message Mcp {
+    // Transport 描述 MCP 客户端传输方式。
+    enum Transport {
+      // UNSPECIFIED 表示未指定 MCP 客户端传输方式，默认使用 HTTP。
+      UNSPECIFIED = 0;
+      // HTTP 表示使用 Streamable HTTP MCP 客户端。
+      HTTP = 1;
+      // SSE 表示使用 Legacy SSE MCP 客户端。
+      SSE = 2;
+      // STDIO 表示启动子进程并通过标准输入输出通信。
+      STDIO = 3;
+    }
+
+    // Stdio 描述 stdio 子进程传输配置。
+    message Stdio {
+      // command 为待执行的命令，例如 python、node、npx。
+      string command = 1;
+      // args 为命令参数。
+      repeated string args = 2;
+      // env 为子进程环境变量。
+      map<string, string> env = 3;
+      // work_dir 为子进程工作目录。
+      string work_dir = 4;
+    }
+
+    // Http 描述 Streamable HTTP MCP 远程服务配置。
+    message Http {
+      // endpoint 为 Streamable HTTP MCP 服务地址。
+      string endpoint = 1;
+      // headers 为请求附带的自定义 HTTP 请求头。
+      map<string, string> headers = 2;
+      // timeout 为请求超时时间。
+      google.protobuf.Duration timeout = 3;
+    }
+
+    // Sse 描述 Legacy SSE MCP 远程服务配置。
+    message Sse {
+      // endpoint 为 Legacy SSE MCP 服务地址。
+      string endpoint = 1;
+      // headers 为请求附带的自定义 HTTP 请求头。
+      map<string, string> headers = 2;
+      // timeout 为请求超时时间。
+      google.protobuf.Duration timeout = 3;
+    }
+
+    // transport 为 MCP 客户端传输方式。
+    Transport transport = 2;
+    // stdio 为 stdio 方式配置，仅在 transport 为 stdio 时使用。
+    Stdio stdio = 3;
+    // http 为 Streamable HTTP 方式配置，仅在 transport 为 HTTP 时使用。
+    Http http = 4;
+    // sse 为 Legacy SSE 方式配置，仅在 transport 为 SSE 时使用。
+    Sse sse = 5;
+  }
+
+  // http 为 HTTP 客户端配置。
+  optional Http http = 1;
+  // grpc 为 gRPC 客户端配置。
+  optional Grpc grpc = 2;
+  // mcp 为 MCP 客户端配置。
+  optional Mcp mcp = 3;
+  // sse 为 SSE 客户端配置。
+  optional Sse sse = 4;
+}

@@ -1,0 +1,274 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "config/v1/tls.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+
+// Server 描述服务端配置。
+message Server {
+  // Middleware 描述服务端请求链路中间件配置。
+  message Middleware {
+    // RateLimiter 描述限流器配置。
+    message RateLimiter {
+      // name 为限流器名称，例如 bbr。
+      string name = 1;
+    }
+
+    // Metrics 描述性能指标配置。
+    message Metrics {
+      // histogram 表示是否启用直方图指标。
+      bool histogram = 1;
+      // counter 表示是否启用计数器指标。
+      bool counter = 2;
+      // gauge 表示是否启用仪表盘指标。
+      bool gauge = 3;
+      // summary 表示是否启用摘要指标。
+      bool summary = 4;
+    }
+
+    // enable_logging 表示是否启用日志中间件。
+    bool enable_logging = 1;
+    // enable_recovery 表示是否启用异常恢复中间件。
+    bool enable_recovery = 2;
+    // enable_tracing 表示是否启用链路追踪中间件。
+    bool enable_tracing = 3;
+    // enable_validate 表示是否启用参数校验中间件。
+    bool enable_validate = 4;
+    // enable_metadata 表示是否启用元数据中间件。
+    bool enable_metadata = 5;
+    // enable_circuit_breaker 表示是否启用熔断器。
+    bool enable_circuit_breaker = 6;
+
+    // limiter 为限流器配置。
+    RateLimiter limiter = 10;
+    // metrics 为性能指标配置。
+    Metrics metrics = 11;
+  }
+
+  // Http 描述 HTTP 服务端配置。
+  message Http {
+    // Cors 描述跨域资源共享配置。
+    message Cors {
+      // headers 为允许的请求头列表。
+      repeated string headers = 1;
+      // methods 为允许的请求方法列表。
+      repeated string methods = 2;
+      // origins 为允许的请求来源列表。
+      repeated string origins = 3;
+    }
+
+    // network 为监听网络类型。
+    string network = 1;
+    // addr 为服务监听地址。
+    string addr = 2;
+    // timeout 为请求超时时间。
+    google.protobuf.Duration timeout = 3;
+
+    // cors 为跨域资源共享配置。
+    Cors cors = 10;
+    // middleware 为服务端中间件配置。
+    Middleware middleware = 11;
+    // tls 为 TLS 配置。
+    Tls tls = 12;
+
+    // enable_swagger 表示是否启用 Swagger UI。
+    bool enable_swagger = 20;
+    // enable_pprof 表示是否启用 pprof。
+    bool enable_pprof = 21;
+  }
+
+  // Grpc 描述 gRPC 服务端配置。
+  message Grpc {
+    // network 为监听网络类型。
+    string network = 1;
+    // addr 为服务监听地址。
+    string addr = 2;
+    // timeout 为请求超时时间。
+    google.protobuf.Duration timeout = 3;
+    // middleware 为服务端中间件配置。
+    Middleware middleware = 11;
+    // tls 为 TLS 配置。
+    Tls tls = 12;
+    // custom_health 表示是否启用自定义健康检查。
+    bool custom_health = 20;
+  }
+
+  // Sse 描述 SSE 服务端配置。
+  message Sse {
+    // Transport 描述 SSE 服务端运行形态。
+    enum Transport {
+      // UNSPECIFIED 表示未指定 SSE 运行形态，默认使用 HTTP。
+      UNSPECIFIED = 0;
+      // HTTP 表示独立监听端口的 SSE 服务。
+      HTTP = 1;
+      // IN_PROCESS 表示进程内 SSE 服务，可挂载到外部 HTTP 服务。
+      IN_PROCESS = 2;
+    }
+
+    // transport 为 SSE 服务运行形态。
+    Transport transport = 1;
+    // network 为监听网络类型。
+    string network = 2;
+    // addr 为服务监听地址。
+    string addr = 3;
+    // path 为 SSE 路由路径。
+    string path = 4;
+    // codec 为事件编解码器。
+    string codec = 5;
+    // tls 为 TLS 配置。
+    Tls tls = 6;
+
+    // timeout 为请求超时时间。
+    google.protobuf.Duration timeout = 10;
+    // event_ttl 为事件存活时间。
+    google.protobuf.Duration event_ttl = 11;
+
+    // auto_stream 表示是否自动管理流。
+    bool auto_stream = 20;
+    // auto_reply 表示是否自动回复事件。
+    bool auto_reply = 21;
+    // split_data 表示是否分割数据。
+    bool split_data = 22;
+    // encode_base64 表示是否进行 Base64 编码。
+    bool encode_base64 = 23;
+  }
+
+  // Mcp 描述 MCP 服务端配置。
+  message Mcp {
+    // Transport 描述 MCP 服务端运行形态。
+    enum Transport {
+      // UNSPECIFIED 表示未指定 MCP 运行形态。
+      UNSPECIFIED = 0;
+      // HTTP 表示独立监听端口的 Streamable HTTP MCP 服务。
+      HTTP = 1;
+      // SSE 表示独立监听端口的 Legacy SSE MCP 服务。
+      SSE = 2;
+      // STDIO 表示通过标准输入输出运行 MCP 服务。
+      STDIO = 3;
+      // IN_PROCESS 表示进程内 MCP 服务，可挂载到外部 HTTP 服务。
+      IN_PROCESS = 4;
+    }
+
+    // StreamableHttp 描述 Streamable HTTP MCP Handler 配置。
+    message StreamableHttp {
+      // stateless 表示是否使用无状态 Streamable HTTP 模式。
+      bool stateless = 1;
+      // json_response 表示是否使用 JSON 响应格式。
+      bool json_response = 2;
+      // session_timeout 为会话超时时间。
+      google.protobuf.Duration session_timeout = 3;
+      // disable_localhost_protection 表示是否关闭 localhost 保护。
+      bool disable_localhost_protection = 4;
+    }
+
+    // LegacySse 描述 Legacy SSE MCP Handler 配置。
+    message LegacySse {
+      // disable_localhost_protection 表示是否关闭 localhost 保护。
+      bool disable_localhost_protection = 1;
+    }
+
+    // HttpParamLocation 描述 HTTP Tool 参数写入请求的位置。
+    enum HttpParamLocation {
+      // HTTP_PARAM_LOCATION_UNSPECIFIED 表示未指定参数位置。
+      HTTP_PARAM_LOCATION_UNSPECIFIED = 0;
+      // HTTP_PARAM_LOCATION_PATH 表示参数写入 URL 路径变量。
+      HTTP_PARAM_LOCATION_PATH = 1;
+      // HTTP_PARAM_LOCATION_QUERY 表示参数写入 URL 查询参数。
+      HTTP_PARAM_LOCATION_QUERY = 2;
+      // HTTP_PARAM_LOCATION_HEADER 表示参数写入 HTTP Header。
+      HTTP_PARAM_LOCATION_HEADER = 3;
+      // HTTP_PARAM_LOCATION_BODY 表示参数写入请求 Body。
+      HTTP_PARAM_LOCATION_BODY = 4;
+    }
+
+    // HttpBodyMode 描述 HTTP Tool 请求 Body 编码方式。
+    enum HttpBodyMode {
+      // HTTP_BODY_MODE_UNSPECIFIED 表示未指定 Body 编码方式。
+      HTTP_BODY_MODE_UNSPECIFIED = 0;
+      // HTTP_BODY_MODE_NONE 表示请求不发送 Body。
+      HTTP_BODY_MODE_NONE = 1;
+      // HTTP_BODY_MODE_JSON 表示请求 Body 使用 JSON 编码。
+      HTTP_BODY_MODE_JSON = 2;
+      // HTTP_BODY_MODE_FORM 表示请求 Body 使用表单编码。
+      HTTP_BODY_MODE_FORM = 3;
+      // HTTP_BODY_MODE_RAW 表示请求 Body 使用原始模板内容。
+      HTTP_BODY_MODE_RAW = 4;
+    }
+
+    // HttpTool 描述一个可暴露为 MCP Tool 的 HTTP 接口。
+    message HttpTool {
+      // Parameter 描述 HTTP Tool 入参及其请求映射规则。
+      message Parameter {
+        // name 为 MCP Tool 入参名称。
+        string name = 1;
+        // description 为入参描述。
+        string description = 2;
+        // location 为参数写入 HTTP 请求的位置。
+        HttpParamLocation location = 3;
+        // required 表示参数是否必填。
+        bool required = 4;
+        // type 为 JSON Schema 类型，例如 string、integer、number、boolean、object、array。
+        string type = 5;
+        // target 为实际写入 HTTP 请求时使用的名称，未配置时使用 name。
+        string target = 6;
+        // default_value 为参数默认值，按字符串形式写入请求。
+        string default_value = 7;
+      }
+
+      // name 为 MCP Tool 名称。
+      string name = 1;
+      // description 为 MCP Tool 描述。
+      string description = 2;
+      // method 为 HTTP 请求方法，例如 GET、POST、PUT、DELETE。
+      string method = 3;
+      // base_url 为 HTTP 服务基础地址，适用于 Gin、net/http 或第三方 HTTP 服务。
+      string base_url = 4;
+      // url 为 HTTP 请求路径或完整地址，支持通过 path 参数替换路径变量。
+      string url = 5;
+      // headers 为 HTTP 请求固定 Header。
+      map<string, string> headers = 6;
+      // parameters 为 MCP Tool 入参与 HTTP 请求的映射规则。
+      repeated Parameter parameters = 7;
+      // body_mode 为请求 Body 编码方式。
+      HttpBodyMode body_mode = 8;
+      // body_template 为请求 Body 模板，body_mode 为 RAW 或复杂 JSON 场景时使用。
+      string body_template = 9;
+      // input_schema 为 MCP Tool 输入 JSON Schema，未配置时可由 parameters 推导。
+      google.protobuf.Struct input_schema = 10;
+      // timeout 为单次 HTTP Tool 调用超时时间。
+      google.protobuf.Duration timeout = 11;
+    }
+
+    // transport 为 MCP 服务运行形态。
+    Transport transport = 1;
+    // network 为独立 HTTP/SSE 服务监听网络。
+    string network = 2;
+    // addr 为独立 HTTP/SSE 服务监听地址。
+    string addr = 3;
+    // path 为 MCP HTTP/SSE Handler 挂载路径。
+    string path = 4;
+    // tls 为独立 HTTP/SSE 服务 TLS 配置。
+    Tls tls = 5;
+    // shutdown_timeout 为服务停止时的优雅关闭超时时间。
+    google.protobuf.Duration shutdown_timeout = 6;
+    // enable_keepalive 表示是否启用 MCP 配套 keepalive 服务；未配置时使用服务默认值。
+    optional bool enable_keepalive = 7;
+    // streamable_http 为 Streamable HTTP MCP Handler 配置。
+    StreamableHttp streamable_http = 8;
+    // legacy_sse 为 Legacy SSE MCP Handler 配置。
+    LegacySse legacy_sse = 9;
+    // http_tools 为通过配置暴露的 HTTP MCP Tool，适用于 Gin、net/http 或其他 HTTP 接口。
+    repeated HttpTool http_tools = 10;
+  }
+
+  // http 为 HTTP 服务端配置。
+  optional Http http = 1;
+  // grpc 为 gRPC 服务端配置。
+  optional Grpc grpc = 2;
+  // mcp 为 MCP 服务端配置。
+  optional Mcp mcp = 3;
+  // sse 为 SSE 服务端配置。
+  optional Sse sse = 4;
+}

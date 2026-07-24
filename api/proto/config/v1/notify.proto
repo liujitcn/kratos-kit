@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package config.v1;
+
+// Notification 描述通知消息组件配置。
+message Notification {
+  // Sms 描述短信通知配置。
+  message Sms {
+    // endpoint 为公网接入地址。
+    string endpoint = 1;
+    // region_id 为地域 ID。
+    string region_id = 2;
+    // access_key_id 为访问密钥 ID。
+    string access_key_id = 3;
+    // access_key_secret 为访问密钥。
+    string access_key_secret = 4;
+  }
+
+  // type 为通知组件类型。
+  string type = 1;
+  // sms 为短信通知配置。
+  optional Sms sms = 2;
+}

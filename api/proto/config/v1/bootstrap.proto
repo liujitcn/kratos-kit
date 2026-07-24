@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "config/v1/ai.proto";
+import "config/v1/authn.proto";
+import "config/v1/authz.proto";
+import "config/v1/client.proto";
+import "config/v1/config.proto";
+import "config/v1/data.proto";
+import "config/v1/logger.proto";
+import "config/v1/notify.proto";
+import "config/v1/oauth.proto";
+import "config/v1/oss.proto";
+import "config/v1/pprof.proto";
+import "config/v1/registry.proto";
+import "config/v1/server.proto";
+import "config/v1/tracer.proto";
+
+// Bootstrap 描述应用启动时加载的完整配置。
+message Bootstrap {
+  // server 为服务端配置。
+  optional Server server = 1;
+  // client 为客户端配置。
+  optional Client client = 2;
+  // data 为数据层配置。
+  optional Data data = 3;
+  // trace 为链路追踪配置。
+  optional Tracer trace = 4;
+  // logger 为日志配置。
+  optional Logger logger = 5;
+  // registry 为注册发现中心配置。
+  optional Registry registry = 6;
+  // config 为远程配置中心配置。
+  optional Config config = 7;
+  // oss 为对象存储配置。
+  optional Oss oss = 8;
+  // notify 为通知配置。
+  optional Notification notify = 9;
+  // authn 为认证配置。
+  optional Authentication authn = 10;
+  // authz 为授权配置。
+  optional Authorization authz = 11;
+  // pprof 为性能分析配置。
+  optional Pprof pprof = 12;
+  // ai 为ai相关配置。
+  optional AI ai = 13;
+  // oauth 为三方登录授权配置。
+  optional OAuth oauth = 14;
+}

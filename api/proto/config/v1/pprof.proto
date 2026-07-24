@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "google/protobuf/duration.proto";
+
+// Pprof 描述性能分析配置。
+message Pprof {
+  // Pyroscope 描述 Pyroscope 性能分析上报配置。
+  message Pyroscope {
+    // application_name 为应用标识名，用于在服务端区分不同应用数据。
+    string application_name = 1;
+    // server_address 为 Pyroscope 服务端地址。
+    string server_address = 2;
+    // basic_auth_user 为 HTTP Basic 认证用户名。
+    string basic_auth_user = 3;
+    // basic_auth_password 为 HTTP Basic 认证密码。
+    string basic_auth_password = 4;
+    // tenant_id 为多租户 ID。
+    string tenant_id = 5;
+    // upload_rate 为数据上传频率。
+    google.protobuf.Duration upload_rate = 6;
+    // tags 为附加标签，用于数据过滤和分类。
+    map<string, string> tags = 7;
+    // profile_types 为收集的性能数据类型列表。
+    repeated string profile_types = 8;
+    // disable_gc_runs 表示是否禁用自动 runtime.GC。
+    bool disable_gc_runs = 9;
+    // http_headers 为自定义 HTTP 请求头。
+    map<string, string> http_headers = 10;
+  }
+
+  // type 为性能分析组件类型。
+  string type = 1;
+  // pyroscope 为 Pyroscope 性能分析配置。
+  Pyroscope pyroscope = 2;
+}

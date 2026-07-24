@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "google/protobuf/duration.proto";
+
+// Authentication 描述认证相关配置。
+message Authentication {
+  // Jwt 描述 JWT 认证配置。
+  message Jwt {
+    // WhiteList 描述无需强制认证或可选认证的路由匹配规则。
+    message WhiteList {
+      // prefix 按路径前缀匹配。
+      repeated string prefix = 1;
+      // regex 按正则表达式匹配。
+      repeated string regex = 2;
+      // path 按完整路径匹配。
+      repeated string path = 3;
+      // match 按框架 operation 标识匹配。
+      repeated string match = 4;
+    }
+
+    // JWT 签名算法，例如 HS256。
+    string method = 1;
+    // JWT 签名密钥。
+    string secret = 2;
+    // 访问令牌过期时间。
+    google.protobuf.Duration access_token_expires = 3;
+    // 刷新令牌过期时间。
+    google.protobuf.Duration refresh_token_expires = 4;
+    // 强制跳过认证的白名单规则。
+    WhiteList white_list = 10;
+    // 可匿名访问的规则，携带令牌时仍会尝试解析用户。
+    WhiteList optional_auth = 11;
+  }
+
+  // jwt 为 JWT 认证配置。
+  optional Jwt jwt = 1;
+}
