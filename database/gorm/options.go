@@ -7,8 +7,11 @@ const DefaultClientName = "default"
 type ClientOption func(*clientOptions)
 
 type clientOptions struct {
-	name          string
-	migrateSet    bool
+	// name 是客户端名称，供日志、指标和多数据源迁移目标识别使用。
+	name string
+	// modelsExplicit 表示是否显式指定了当前客户端的模型集合。
+	modelsExplicit bool
+	// migrateModels 是当前客户端参与自动建表和字段审计的模型集合。
 	migrateModels []interface{}
 }
 
@@ -22,7 +25,7 @@ func WithName(name string) ClientOption {
 // WithMigrateModels 设置当前客户端专属的迁移和隔离模型。
 func WithMigrateModels(models ...interface{}) ClientOption {
 	return func(opts *clientOptions) {
-		opts.migrateSet = true
+		opts.modelsExplicit = true
 		opts.migrateModels = append([]interface{}(nil), models...)
 	}
 }

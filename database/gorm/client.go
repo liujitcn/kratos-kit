@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,8 +24,12 @@ import (
 
 // Client 封装 GORM 数据库客户端。
 type Client struct {
+	// DB 是实际执行查询、事务和迁移脚本的 GORM 数据库对象。
 	*gormdb.DB
+	// name 是数据源名称，default 表示集中保存迁移记录的默认库。
 	name string
+	// migrateEnabled 表示当前数据源是否允许执行自动建表和版本化迁移。
+	migrateEnabled bool
 }
 
 const defaultMetricsHTTPPort uint32 = 8080
@@ -59,7 +64,11 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 		logLevel = gormLog.Silent
 	}
 
-	db, err := gormdb.Open(gormDriver(cfg.Source), &gormdb.Config{
+	source := cfg.Source
+	if cfg.GetEnableMigrate() && (cfg.Driver == "mysql" || cfg.Driver == "doris") {
+		source = ensureMySQLMultiStatements(source)
+	}
+	db, err := gormdb.Open(gormDriver(source), &gormdb.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
@@ -136,7 +145,7 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 		return nil, cleanup, fmt.Errorf("failed ping database[%s]: %w", clientLabel, err)
 	}
 
-	registry := newMigrateRegistry(clientOpts.migrateModels, clientOpts.migrateSet)
+	registry := newMigrateRegistry(clientOpts.migrateModels, clientOpts.modelsExplicit)
 	db = db.Set(migrateRegistryKey, registry)
 	if err = registerCallbacks(db); err != nil {
 		return nil, cleanup, err
@@ -151,7 +160,11 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 		sqlDB.SetConnMaxLifetime(cfg.GetConnectionMaxLifetime().AsDuration())
 	}
 
-	client := &Client{DB: db, name: clientOpts.name}
+	client := &Client{
+		DB:             db,
+		name:           clientLabel,
+		migrateEnabled: cfg.GetEnableMigrate(),
+	}
 
 	// 自动迁移会汇总当前客户端模型，并补充数据库表注释。
 	if cfg.EnableMigrate {
@@ -169,6 +182,19 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 	}
 
 	return client, cleanup, nil
+}
+
+// MigrationEnabled 返回当前客户端是否允许执行结构迁移。
+func (c *Client) MigrationEnabled() bool {
+	return c != nil && c.migrateEnabled
+}
+
+// Name 返回当前客户端的数据源名称。
+func (c *Client) Name() string {
+	if c == nil || c.name == "" {
+		return DefaultClientName
+	}
+	return c.name
 }
 
 // registerCallbacks 按注册顺序将包级回调安装到 GORM 客户端。
@@ -211,4 +237,20 @@ func registerCallbacks(db *gormdb.DB) error {
 		}
 	}
 	return nil
+}
+
+// ensureMySQLMultiStatements 为启用迁移的 MySQL 连接补充多语句执行参数。
+func ensureMySQLMultiStatements(source string) string {
+	lowerSource := strings.ToLower(source)
+	const disabledMultiStatements = "multistatements=false"
+	if index := strings.Index(lowerSource, disabledMultiStatements); index >= 0 {
+		return source[:index] + "multiStatements=true" + source[index+len(disabledMultiStatements):]
+	}
+	if strings.Contains(lowerSource, "multistatements=") {
+		return source
+	}
+	if strings.Contains(source, "?") {
+		return source + "&multiStatements=true"
+	}
+	return source + "?multiStatements=true"
 }
