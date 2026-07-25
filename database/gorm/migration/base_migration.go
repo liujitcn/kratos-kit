@@ -4,9 +4,7 @@ import (
 	"time"
 )
 
-const TableNameBaseMigration = "base_migration"
-
-// baseMigration 数据库迁移记录
+// BaseMigration 数据库迁移记录
 type baseMigration struct {
 	ID          int64     `gorm:"column:id;type:bigint;primaryKey;comment:主键ID" json:"id"`          // 主键ID
 	Business    string    `gorm:"column:business;type:varchar(20);comment:迁移业务" json:"business"`    // 迁移业务
@@ -18,5 +16,5 @@ type baseMigration struct {
 
 // TableName baseMigration's table name
 func (*baseMigration) TableName() string {
-	return TableNameBaseMigration
+	return "base_migration"
 }
