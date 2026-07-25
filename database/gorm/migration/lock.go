@@ -8,8 +8,14 @@ import (
 	databaseGorm "github.com/liujitcn/kratos-kit/database/gorm"
 )
 
-// withMigrationLock 使用默认数据库锁定一个迁移业务。
-func withMigrationLock(ctx context.Context, client *databaseGorm.Client, business string, fn func() error) error {
+// withMigrationLock 使用默认数据库锁定一个模块的数据源迁移。
+func withMigrationLock(
+	ctx context.Context,
+	client *databaseGorm.Client,
+	module ModuleName,
+	dataSource string,
+	fn func() error,
+) error {
 	var sqlDB *sql.DB
 	var err error
 	sqlDB, err = client.DB.DB()
@@ -24,7 +30,7 @@ func withMigrationLock(ctx context.Context, client *databaseGorm.Client, busines
 	defer func() {
 		_ = conn.Close()
 	}()
-	lockName := "kratos_migration_" + business
+	lockName := "kratos_migration_" + module.String() + "_" + dataSource
 	if len(lockName) > 64 {
 		lockName = lockName[:64]
 	}
@@ -34,7 +40,7 @@ func withMigrationLock(ctx context.Context, client *databaseGorm.Client, busines
 		return fmt.Errorf("获取迁移锁失败: %w", err)
 	}
 	if acquired != 1 {
-		return fmt.Errorf("迁移业务 %s 获取锁超时", business)
+		return fmt.Errorf("迁移数据源 %s 获取锁超时", dataSource)
 	}
 	defer func() {
 		_, _ = conn.ExecContext(context.Background(), "SELECT RELEASE_LOCK(?)", lockName)

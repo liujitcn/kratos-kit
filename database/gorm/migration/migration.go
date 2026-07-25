@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"sort"
 	"sync"
 
 	databaseGorm "github.com/liujitcn/kratos-kit/database/gorm"
 )
 
-// DefaultTarget 表示默认业务数据库目标。
+// DefaultTarget 表示默认数据源目标。
 const DefaultTarget = databaseGorm.DefaultClientName
 
 // Migration 描述一个模块提供的版本化迁移资源。
@@ -19,13 +20,13 @@ type Migration struct {
 	// Path 表示迁移脚本在文件系统中的目录。
 	Path string
 	// Dependencies 表示当前迁移模块依赖的其他模块。
-	Dependencies []string
+	Dependencies []ModuleName
 }
 
 // Contributor 表示可向应用贡献数据库迁移资源的模块。
 type Contributor interface {
 	// Name 返回迁移模块注册名称。
-	Name() string
+	Name() ModuleName
 	// Migrations 返回迁移模块提供的版本化资源。
 	Migrations() []Migration
 }
@@ -74,7 +75,10 @@ func NewReady(_ *databaseGorm.Client) Ready {
 }
 
 // Run 执行指定迁移模块及其依赖模块。
-func (r *Runner) Run(ctx context.Context, name string, targetClient *databaseGorm.Client) error {
+//
+// 不传目标客户端时，按版本目录中的数据源目录自动执行所有已注入客户端；
+// 传入一个目标客户端时，仅执行该客户端对应的数据源迁移。
+func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*databaseGorm.Client) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -85,26 +89,119 @@ func (r *Runner) Run(ctx context.Context, name string, targetClient *databaseGor
 	if !centralClient.MigrationEnabled() {
 		return nil
 	}
-	if targetClient == nil || targetClient.DB == nil {
-		return fmt.Errorf("迁移目标数据库客户端不能为空")
-	}
-	if !targetClient.MigrationEnabled() {
-		return nil
-	}
 	if _, exists := r.registry.migrations[name]; !exists {
 		return fmt.Errorf("迁移模块未注册: %s", name)
 	}
-	visited := make(map[string]bool)
-	return r.runModule(ctx, centralClient, name, targetClient, visited)
+	if len(targetClients) > 1 {
+		return fmt.Errorf("迁移目标数据库客户端最多只能传入一个")
+	}
+	assetsByModule := make(map[ModuleName][]migrationAsset)
+	err := r.loadMigrationTree(name, assetsByModule, make(map[ModuleName]bool))
+	if err != nil {
+		return err
+	}
+	targets := make(map[string]*databaseGorm.Client)
+	if len(targetClients) == 1 {
+		targetClient := targetClients[0]
+		if targetClient == nil || targetClient.DB == nil {
+			return fmt.Errorf("迁移目标数据库客户端不能为空")
+		}
+		targets[targetClient.Name()] = targetClient
+	} else {
+		for _, assets := range assetsByModule {
+			for _, asset := range assets {
+				targetClient, exists := r.clients[asset.dataSource]
+				if !exists || targetClient == nil || targetClient.DB == nil {
+					return fmt.Errorf("迁移目标数据源客户端未注入: %s", asset.dataSource)
+				}
+				targets[asset.dataSource] = targetClient
+			}
+		}
+	}
+	targetNames := make([]string, 0, len(targets))
+	for targetName := range targets {
+		targetNames = append(targetNames, targetName)
+	}
+	sort.Strings(targetNames)
+	for _, targetName := range targetNames {
+		targetClient := targets[targetName]
+		if !targetClient.MigrationEnabled() {
+			continue
+		}
+		visited := make(map[ModuleName]bool)
+		err = r.runModule(ctx, centralClient, name, targetName, targetClient, visited, assetsByModule)
+		if err != nil {
+			return fmt.Errorf("执行迁移模块 %s 数据源 %s 失败: %w", name, targetName, err)
+		}
+	}
+	return nil
+}
+
+// loadMigrationTree 加载当前模块及其依赖模块的迁移资源。
+func (r *Runner) loadMigrationTree(
+	name ModuleName,
+	assetsByModule map[ModuleName][]migrationAsset,
+	visited map[ModuleName]bool,
+) error {
+	if visited[name] {
+		return nil
+	}
+	visited[name] = true
+	migrations := r.registry.migrations[name]
+	if len(migrations) == 0 {
+		return fmt.Errorf("迁移模块未提供资源: %s", name)
+	}
+	var err error
+	_, err = r.loadModuleAssets(name, migrations, assetsByModule)
+	if err != nil {
+		return err
+	}
+	for _, dependency := range migrationDependencies(migrations) {
+		if err = r.loadMigrationTree(dependency, assetsByModule, visited); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// loadModuleAssets 加载一个迁移模块的全部数据源资源。
+func (r *Runner) loadModuleAssets(
+	name ModuleName,
+	migrations []Migration,
+	assetsByModule map[ModuleName][]migrationAsset,
+) ([]migrationAsset, error) {
+	if assets, exists := assetsByModule[name]; exists {
+		return assets, nil
+	}
+	assets := make([]migrationAsset, 0)
+	assetKeys := make(map[string]bool)
+	for _, migration := range migrations {
+		loaded, err := loadMigrationAssets(migration.FS, migration.Path)
+		if err != nil {
+			return nil, err
+		}
+		for _, asset := range loaded {
+			key := asset.dataSource + "\x00" + asset.versionName
+			if assetKeys[key] {
+				return nil, fmt.Errorf("迁移模块 %s 数据源 %s 版本 %s 存在重复资源", name, asset.dataSource, asset.versionName)
+			}
+			assetKeys[key] = true
+			assets = append(assets, asset)
+		}
+	}
+	assetsByModule[name] = assets
+	return assets, nil
 }
 
 // runModule 按依赖顺序执行迁移模块。
 func (r *Runner) runModule(
 	ctx context.Context,
 	centralClient *databaseGorm.Client,
-	name string,
+	name ModuleName,
+	dataSource string,
 	targetClient *databaseGorm.Client,
-	visited map[string]bool,
+	visited map[ModuleName]bool,
+	assetsByModule map[ModuleName][]migrationAsset,
 ) error {
 	if visited[name] {
 		return nil
@@ -114,16 +211,19 @@ func (r *Runner) runModule(
 		return fmt.Errorf("迁移模块未提供资源: %s", name)
 	}
 	var err error
-	for _, dependency := range migrations[0].Dependencies {
-		err = r.runModule(ctx, centralClient, dependency, centralClient, visited)
+	for _, dependency := range migrationDependencies(migrations) {
+		err = r.runModule(ctx, centralClient, dependency, dataSource, targetClient, visited, assetsByModule)
 		if err != nil {
 			return err
 		}
 	}
-	for _, migration := range migrations {
-		err = r.runMigration(ctx, centralClient, targetClient, name, migration)
+	for _, asset := range assetsByModule[name] {
+		if asset.dataSource != dataSource {
+			continue
+		}
+		err = r.runMigration(ctx, centralClient, targetClient, name, asset)
 		if err != nil {
-			return fmt.Errorf("执行迁移模块 %s 数据源 %s 失败: %w", name, targetClient.Name(), err)
+			return err
 		}
 	}
 	visited[name] = true
@@ -135,8 +235,8 @@ func (r *Runner) runMigration(
 	ctx context.Context,
 	centralClient *databaseGorm.Client,
 	targetClient *databaseGorm.Client,
-	moduleName string,
-	migration Migration,
+	moduleName ModuleName,
+	asset migrationAsset,
 ) error {
 	if targetClient == nil || targetClient.DB == nil {
 		return fmt.Errorf("迁移模块 %s 数据库客户端不能为空", moduleName)
@@ -152,13 +252,8 @@ func (r *Runner) runMigration(
 	if targetDriver != "mysql" {
 		return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", moduleName, targetDriver)
 	}
-	assets, err := loadMigrationAssets(migration.FS, migration.Path)
-	if err != nil {
-		return err
-	}
-	business := targetClient.Name()
-	err = withMigrationLock(ctx, centralClient, business, func() error {
-		return applyMigrationAssets(ctx, centralClient, targetClient, business, assets)
+	err := withMigrationLock(ctx, centralClient, moduleName, asset.dataSource, func() error {
+		return applyMigrationAssets(ctx, centralClient, targetClient, moduleName, asset.dataSource, []migrationAsset{asset})
 	})
 	if err != nil {
 		return fmt.Errorf("执行迁移模块 %s 失败: %w", moduleName, err)

@@ -149,23 +149,41 @@ client, cleanup, err := gormkit.NewGormClient(
 ## 版本化迁移
 
 `database/gorm/migration` 提供与 admin 无关的版本化迁移能力。业务模块通过
-`embed.FS` 提供按版本目录组织的迁移资源，通过 `Contributor.Name()` 标识模块，
+`embed.FS` 提供按版本目录组织的迁移资源，通过 `Contributor.Name()`（类型为
+`migration.ModuleName`）标识模块，
 并可通过 `Dependencies` 声明执行顺序。
-所有模块统一使用默认 `data.database` 中的 `base_migration` 表记录版本，使用
-`business` 字段区分模块，并保存 `description` 描述。资源目录最外层只放纯数字
-版本目录支持兼容的纯数字格式（如 `000001`）以及 `v0.0.1`、
-`v0.0.1-20260511170946`、`v0.0.1.20260511170946` 三种版本格式。目录中的
-`*.up.sql`、`*.down.sql` 和 `.md` 文件均为可选；所有 `.md` 文件
-按文件名排序后直接拼接为版本描述。`*.down.sql` 文件只保存，不参与当前升级执行。多个升级
-脚本按文件名排序，在同一个数据库事务中执行，任一脚本失败时回滚该版本的脚本。目录可以
-只有描述、只有脚本或完全为空；没有升级脚本时仍记录并标记该版本成功。脚本仍连接各自
-`Target` 数据源执行，只有版本记录集中保存到默认数据库。
+kit 只定义 `migration.ModuleName` 类型，不内置具体业务模块枚举。每个调用方应在自己的
+模块包中声明 `migration.ModuleName` 常量，禁止在调用处传裸字符串；同一个 `Registry`
+会拒绝重复注册的模块名，并校验模块名及其依赖的格式。
+所有模块统一使用默认数据源中的 `base_migration` 表记录版本。单库配置使用
+`data.database`，命名多数据源配置使用 `data.databases.default`。记录使用
+`module` 区分迁移模块，使用 `data_source` 区分目标数据源，并保存 `description` 描述。
+资源目录最外层只放纯数字版本目录，支持兼容的纯数字格式（如 `000001`）以及
+`v0.0.1`、`v0.0.1-20260511170946`、`v0.0.1.20260511170946` 三种版本格式。
+版本目录下的直系文件属于 `default` 数据源；一级子目录名表示数据源名称，例如：
 
-`base_migration` 对应的 `BaseMigration` 模型位于 `database/gorm/migration`，迁移包
-只负责使用，不会自动注册或建表；宿主项目（例如 kratos-admin）在 GORM 建表前注册该模型。
-默认 GORM 客户端在 `enable_migrate: true` 时通过 `AutoMigrate` 创建。迁移执行器不会再自行创建这张表；
-默认中心数据库客户端未注入或未开启 `enable_migrate` 时，所有版本化脚本都会跳过，
-目标客户端未注入或未开启时也会跳过该目标的脚本。接入项目不需要提前手工建表。
+```text
+assets/mysql/v0.0.1/
+  default-data.description.md
+  default-data.up.sql
+  shop/
+    shop.description.md
+    shop.up.sql
+```
+
+每个数据源资源都会产生独立的 `module + data_source + version` 迁移记录。目录中的
+`*.up.sql`、`*.down.sql` 和 `.md` 文件均为可选；所有 `.md` 文件按文件名排序后直接
+拼接为对应数据源的版本描述。`*.down.sql` 文件只保存，不参与当前升级执行。多个升级
+脚本按文件名排序，在同一个数据库事务中执行，任一脚本失败时回滚该版本的脚本。目录可以
+只有描述、只有脚本或完全为空；没有升级脚本时仍记录并标记该版本成功。
+
+`base_migration` 对应的 `BaseMigration` 模型位于 `database/gorm/migration`。宿主项目
+应在默认客户端的 GORM 模型中注册该模型；默认客户端在 `enable_migrate: true` 时通过
+`AutoMigrate` 创建或更新表。默认中心数据库客户端未注入或未开启 `enable_migrate` 时，
+所有版本化脚本都会跳过；目录声明的数据源客户端未注入时返回错误，客户端未开启
+`enable_migrate` 时跳过该数据源脚本。
+`BaseMigration.DataSource` 为兼容既有安装，仍映射数据库中的 `business` 列；接口和代码
+统一使用 `data_source` 语义。
 `base_migration.up_sql` 保存本次版本实际执行的全部升级脚本，`down_sql` 预留给后续回退能力，
 当前不会执行回退脚本。升级脚本执行失败会保留失败记录，应用继续启动，并在后续启动时
 重试该版本。
@@ -173,9 +191,11 @@ client, cleanup, err := gormkit.NewGormClient(
 ```go
 type contributor struct{}
 
+const moduleName migration.ModuleName = "test"
+
 // Name 返回迁移模块名称。
-func (contributor) Name() string {
-	return "test"
+func (contributor) Name() migration.ModuleName {
+	return moduleName
 }
 
 // Migrations 返回业务模块的版本化迁移资源。
@@ -190,15 +210,16 @@ registry, err := migration.NewRegistry(
     migration.AdditionalMigrations{contributor{}},
 )
 runner, err := migration.NewRunner(registry)
-// client 为宿主创建的默认 *gorm.Client。
-err = runner.SetClient(client)
-err = runner.Run(ctx, "test", client)
+// defaultClient 和 shopClient 为宿主创建的命名 *gorm.Client。
+err = runner.SetClient(defaultClient)
+err = runner.SetClient(shopClient)
+err = runner.Run(ctx, moduleName)
 ```
 
-迁移核心使用 `Run` 传入的客户端执行脚本。名称为 `default` 的客户端使用 GORM
-保存和查询 `base_migration` 记录；依赖模块使用默认客户端执行。客户端的
-`enable_migrate` 为 `false` 时跳过对应脚本，
-不要求接入项目依赖 kratos-admin 或 Wire。
+迁移核心按版本目录中的数据源名称查找已注入客户端。`Run(ctx, moduleName)` 执行模块的
+全部数据源资源；传入一个客户端时可只执行该数据源，例如
+`Run(ctx, moduleName, shopClient)`。依赖模块继承当前数据源，依赖模块如果也需要执行到
+`shop`，应在对应版本目录下提供 `shop` 子目录。不要求接入项目依赖 kratos-admin 或 Wire。
 
 ## 自动填充的数据
 

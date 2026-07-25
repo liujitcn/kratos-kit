@@ -28,6 +28,8 @@ type migrationAsset struct {
 	version migrationVersion
 	// versionName 是原始版本目录名称，用于写入迁移记录。
 	versionName string
+	// dataSource 是目标数据源名称；版本目录下的直系文件使用 default。
+	dataSource string
 	// upScripts 是按文件名排序的升级脚本集合。
 	upScripts []migrationScript
 	// downScripts 是按文件名排序的回退脚本集合。
@@ -42,6 +44,16 @@ type migrationScript struct {
 	name string
 	// sql 是 SQL 文件内容。
 	sql []byte
+}
+
+// migrationTargetFiles 表示一个数据源对应的迁移文件集合。
+type migrationTargetFiles struct {
+	// dataSource 是目标数据源名称。
+	dataSource string
+	// path 是数据源文件所在目录。
+	path string
+	// entries 是数据源目录下的文件项。
+	entries []fs.DirEntry
 }
 
 // loadMigrationAssets 加载按版本目录组织的 SQL 脚本和升级描述文件。
@@ -74,49 +86,99 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 		if err != nil {
 			return nil, fmt.Errorf("读取迁移版本目录 %s 失败: %w", versionPath, err)
 		}
-		var upFileNames []string
-		var downFileNames []string
-		var descriptionFileNames []string
-		upFileNames, downFileNames, descriptionFileNames, err = findMigrationFiles(versionPath, versionEntries)
+		var targetFiles []migrationTargetFiles
+		targetFiles, err = findMigrationTargets(f, versionPath, versionEntries)
 		if err != nil {
 			return nil, err
 		}
-		var descriptionBuilder strings.Builder
-		for _, descriptionFileName := range descriptionFileNames {
-			descriptionPath := path.Join(versionPath, descriptionFileName)
-			var descriptionContent []byte
-			descriptionContent, err = fs.ReadFile(f, descriptionPath)
+		for _, targetFile := range targetFiles {
+			var upFileNames []string
+			var downFileNames []string
+			var descriptionFileNames []string
+			upFileNames, downFileNames, descriptionFileNames, err = findMigrationFiles(targetFile.path, targetFile.entries)
 			if err != nil {
-				return nil, fmt.Errorf("读取迁移描述文件 %s 失败: %w", descriptionPath, err)
+				return nil, err
 			}
-			descriptionBuilder.Write(descriptionContent)
+			var descriptionBuilder strings.Builder
+			for _, descriptionFileName := range descriptionFileNames {
+				descriptionPath := path.Join(targetFile.path, descriptionFileName)
+				var descriptionContent []byte
+				descriptionContent, err = fs.ReadFile(f, descriptionPath)
+				if err != nil {
+					return nil, fmt.Errorf("读取迁移描述文件 %s 失败: %w", descriptionPath, err)
+				}
+				descriptionBuilder.Write(descriptionContent)
+			}
+			var upScripts []migrationScript
+			upScripts, err = readMigrationScripts(f, targetFile.path, upFileNames)
+			if err != nil {
+				return nil, err
+			}
+			var downScripts []migrationScript
+			downScripts, err = readMigrationScripts(f, targetFile.path, downFileNames)
+			if err != nil {
+				return nil, err
+			}
+			assets = append(assets, migrationAsset{
+				version:     version,
+				versionName: name,
+				dataSource:  targetFile.dataSource,
+				upScripts:   upScripts,
+				downScripts: downScripts,
+				description: descriptionBuilder.String(),
+			})
 		}
-		description := descriptionBuilder.String()
-		var upScripts []migrationScript
-		upScripts, err = readMigrationScripts(f, versionPath, upFileNames)
-		if err != nil {
-			return nil, err
-		}
-		var downScripts []migrationScript
-		downScripts, err = readMigrationScripts(f, versionPath, downFileNames)
-		if err != nil {
-			return nil, err
-		}
-		assets = append(assets, migrationAsset{
-			version:     version,
-			versionName: name,
-			upScripts:   upScripts,
-			downScripts: downScripts,
-			description: description,
-		})
 	}
 	if len(assets) == 0 {
 		return nil, fmt.Errorf("迁移目录 %s 未提供任何版本目录", directory)
 	}
 	sort.Slice(assets, func(index, other int) bool {
-		return assets[index].version.less(assets[other].version)
+		if assets[index].version.less(assets[other].version) {
+			return true
+		}
+		if assets[other].version.less(assets[index].version) {
+			return false
+		}
+		return assets[index].dataSource < assets[other].dataSource
 	})
 	return assets, nil
+}
+
+// findMigrationTargets 按版本目录下的直系文件和一级子目录划分数据源。
+func findMigrationTargets(f fs.FS, versionPath string, entries []fs.DirEntry) ([]migrationTargetFiles, error) {
+	targets := make([]migrationTargetFiles, 0, len(entries)+1)
+	directEntries := make([]fs.DirEntry, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			directEntries = append(directEntries, entry)
+			continue
+		}
+		dataSource := entry.Name()
+		if dataSource == DefaultTarget {
+			return nil, fmt.Errorf("迁移版本目录 %s 不允许使用 default 子目录，默认数据源请直接放置文件", versionPath)
+		}
+		targetPath := path.Join(versionPath, dataSource)
+		targetEntries, err := fs.ReadDir(f, targetPath)
+		if err != nil {
+			return nil, fmt.Errorf("读取迁移数据源目录 %s 失败: %w", targetPath, err)
+		}
+		targets = append(targets, migrationTargetFiles{
+			dataSource: dataSource,
+			path:       targetPath,
+			entries:    targetEntries,
+		})
+	}
+	if len(directEntries) > 0 || len(targets) == 0 {
+		targets = append(targets, migrationTargetFiles{
+			dataSource: DefaultTarget,
+			path:       versionPath,
+			entries:    directEntries,
+		})
+	}
+	sort.Slice(targets, func(index, other int) bool {
+		return targets[index].dataSource < targets[other].dataSource
+	})
+	return targets, nil
 }
 
 // findMigrationFiles 校验版本目录并返回升级、回退 SQL 与描述文件名。
