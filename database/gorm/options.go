@@ -1,5 +1,8 @@
 package gorm
 
+// DefaultClientName 表示默认 GORM 客户端名称。
+const DefaultClientName = "default"
+
 // ClientOption 配置 GORM 客户端的名称和模型范围。
 type ClientOption func(*clientOptions)
 

@@ -44,7 +44,7 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 	}
 	clientLabel := clientOpts.name
 	if clientLabel == "" {
-		clientLabel = "default"
+		clientLabel = DefaultClientName
 	}
 	log.Info(fmt.Sprintf("GORM SQL DB[%s]: %s => %s", clientLabel, util.Blue(cfg.Driver), util.Green(cfg.Source)))
 

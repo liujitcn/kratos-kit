@@ -26,6 +26,7 @@
 ```bash
 go get github.com/liujitcn/kratos-kit/database/gorm@latest
 go get github.com/liujitcn/kratos-kit/database/gorm/driver/mysql@latest
+go get github.com/liujitcn/kratos-kit/database/gorm/migration@latest
 ```
 
 可用 driver 导入路径：
@@ -56,7 +57,7 @@ import (
 	"time"
 )
 
-type Order struct {
+type Test struct {
 	ID        int64     `gorm:"column:id;primaryKey"`
 	TenantID  int64     `gorm:"column:tenant_id;not null;index"`
 	CreatedBy int64     `gorm:"column:created_by;not null;index"`
@@ -66,13 +67,13 @@ type Order struct {
 }
 
 // TableName 返回订单表名。
-func (*Order) TableName() string {
-	return "shop_order"
+func (*Test) TableName() string {
+	return "test"
 }
 
 // TableComment 返回订单表注释。
-func (*Order) TableComment() string {
-	return "订单表"
+func (*Test) TableComment() string {
+	return "测试"
 }
 
 ```
@@ -102,7 +103,7 @@ func NewDB(cfg *configv1.Data_Database) (*gormkit.Client, func(), error) {
 
 ```yaml
 driver: mysql
-source: "root:password@tcp(127.0.0.1:3306)/shop?charset=utf8mb4&parseTime=true&loc=Local"
+source: "root:password@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=true&loc=Local"
 debug: false
 enable_migrate: true
 enable_trace: true
@@ -123,7 +124,7 @@ data:
   databases:
     main:
       driver: mysql
-      source: "root:password@tcp(127.0.0.1:3306)/shop"
+      source: "root:password@tcp(127.0.0.1:3306)/test"
       connection_timeout: 5s
     audit:
       driver: postgres
@@ -144,6 +145,46 @@ client, cleanup, err := gormkit.NewGormClient(
 ```
 
 启用 metrics 的多个客户端必须使用不同的 `prometheus_http_port`；未显式配置 `prometheus_db_name` 时使用客户端名称。
+
+## 版本化迁移
+
+`database/gorm/migration` 提供与 admin 无关的版本化迁移能力。业务模块通过
+`embed.FS` 提供按版本目录组织的迁移资源，使用 `Name` 标识模块、`Target` 选择
+`data.database` 或 `data.databases[Target]`，并可通过 `Dependencies` 声明执行顺序。
+所有模块统一使用默认 `data.database` 中的 `base_migrations` 表记录版本，使用
+`business` 字段区分模块，并保存 `description` 描述。资源目录最外层只放纯数字
+`NNNNNN` 版本目录，每个版本目录必须包含同一功能名的
+`<feature>.up.sql` 和 `<feature>.description.md`。
+脚本仍连接各自 `Target` 数据源执行，只有版本记录集中保存到默认数据库。
+
+`base_migrations` 对应的 `MigrationHistory` 模型位于 `database/gorm/migration`，迁移包
+只负责使用，不会自动注册或建表；宿主项目（例如 kratos-admin）在 GORM 建表前注册该模型。
+默认 GORM 客户端在 `enable_migrate: true` 时通过 `AutoMigrate` 创建。迁移执行器不会再自行创建这张表；
+默认中心数据库未配置或未开启 `enable_migrate` 时，所有版本化脚本都会跳过，命名目标
+数据库未配置或未开启时也会跳过该目标的脚本。接入项目不需要提前手工建表。
+
+```go
+// Migrations 返回业务模块的版本化迁移资源。
+func (contributor) Migrations() []migration.MigrationSpec {
+	return []migration.MigrationSpec{{
+		Name: "test", // 写入 base_migrations.business。
+		FS:   migrationFS,
+		Path: "assets/mysql",
+	}}
+}
+
+registry, err := migration.NewRegistry(
+	migration.AdditionalMigrations{contributor{}},
+)
+runner, err := migration.NewRunner(dataConfig, registry)
+// client 为宿主创建的默认 *gorm.Client。
+err = runner.SetClient(client)
+err = runner.Run(ctx, "test", migration.DefaultTarget)
+```
+
+迁移核心通过 `SetClient` 注入默认 GORM 客户端，使用 GORM 保存和查询
+`base_migrations` 记录；目标库脚本仍使用 MySQL 多语句连接执行，不要求接入项目依赖
+kratos-admin 或 Wire。
 
 ## 自动填充的数据
 
@@ -283,7 +324,7 @@ client, cleanup, err := gormkit.NewGormClient(
 ```go
 var rows []ReportRow
 err := db.Scopes(gormkit.SkipDataIsolation).
-	Raw("SELECT tenant_id, COUNT(*) AS total FROM shop_order GROUP BY tenant_id").
+	Raw("SELECT tenant_id, COUNT(*) AS total FROM test GROUP BY tenant_id").
 	Scan(&rows).Error
 ```
 
