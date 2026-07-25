@@ -4,15 +4,28 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 )
 
+const migrationVersionFormatHint = "支持格式：纯数字（如 000001）、v0.0.1、v0.0.1-20260511170946、v0.0.1.20260511170946"
+
+var migrationVersionPattern = regexp.MustCompile(`^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:[-.]([0-9]{14}))?$`)
+
+// migrationVersion 表示迁移目录的可排序版本。
+type migrationVersion struct {
+	major     uint64
+	minor     uint64
+	patch     uint64
+	timestamp uint64
+}
+
 // migrationAsset 表示一个待执行的版本化迁移脚本。
 type migrationAsset struct {
-	// version 是解析后的数字版本，用于排序。
-	version uint
+	// version 是解析后的版本，用于排序。
+	version migrationVersion
 	// versionName 是原始版本目录名称，用于写入迁移记录。
 	versionName string
 	// upScripts 是按文件名排序的升级脚本集合。
@@ -39,20 +52,20 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 	if err != nil {
 		return nil, fmt.Errorf("读取迁移资源目录失败: %w", err)
 	}
-	versions := make(map[uint]string)
+	versions := make(map[migrationVersion]string)
 	assets := make([]migrationAsset, 0, len(entries))
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			return nil, fmt.Errorf("迁移资源 %s 必须放在版本目录中", entry.Name())
 		}
 		name := entry.Name()
-		var version uint
+		var version migrationVersion
 		version, err = parseMigrationVersion(name)
 		if err != nil {
 			return nil, fmt.Errorf("迁移目录 %s 版本无效: %w", name, err)
 		}
 		if existingName, exists := versions[version]; exists {
-			return nil, fmt.Errorf("迁移版本 %d 存在重复目录: %s、%s", version, existingName, name)
+			return nil, fmt.Errorf("迁移版本 %s 存在重复目录: %s、%s", name, existingName, name)
 		}
 		versions[version] = name
 		versionPath := path.Join(directory, name)
@@ -79,9 +92,6 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 			descriptionBuilder.Write(descriptionContent)
 		}
 		description := descriptionBuilder.String()
-		if strings.TrimSpace(description) == "" {
-			return nil, fmt.Errorf("迁移版本目录 %s 的描述文件不能为空", versionPath)
-		}
 		var upScripts []migrationScript
 		upScripts, err = readMigrationScripts(f, versionPath, upFileNames)
 		if err != nil {
@@ -104,7 +114,7 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 		return nil, fmt.Errorf("迁移目录 %s 未提供任何版本目录", directory)
 	}
 	sort.Slice(assets, func(index, other int) bool {
-		return assets[index].version < assets[other].version
+		return assets[index].version.less(assets[other].version)
 	})
 	return assets, nil
 }
@@ -153,20 +163,49 @@ func readMigrationScripts(f fs.FS, versionPath string, fileNames []string) ([]mi
 }
 
 // parseMigrationVersion 解析迁移版本目录名中的版本号。
-func parseMigrationVersion(baseName string) (uint, error) {
-	if baseName == "" {
-		return 0, fmt.Errorf("目录名不能为空")
-	}
-	for _, char := range baseName {
-		if char < '0' || char > '9' {
-			return 0, fmt.Errorf("目录名必须只包含数字")
-		}
-	}
+func parseMigrationVersion(baseName string) (migrationVersion, error) {
 	var err error
 	var version64 uint64
-	version64, err = strconv.ParseUint(baseName, 10, 32)
-	if err != nil || version64 == 0 {
-		return 0, fmt.Errorf("目录名不是有效版本号")
+	version64, err = strconv.ParseUint(baseName, 10, 64)
+	if err == nil && version64 > 0 {
+		return migrationVersion{patch: version64}, nil
 	}
-	return uint(version64), nil
+	matches := migrationVersionPattern.FindStringSubmatch(baseName)
+	if matches == nil {
+		return migrationVersion{}, fmt.Errorf("目录名 %q 格式无效，%s", baseName, migrationVersionFormatHint)
+	}
+	var version migrationVersion
+	version.major, err = strconv.ParseUint(matches[1], 10, 64)
+	if err != nil {
+		return migrationVersion{}, fmt.Errorf("目录名 %q 格式无效，%s", baseName, migrationVersionFormatHint)
+	}
+	version.minor, err = strconv.ParseUint(matches[2], 10, 64)
+	if err != nil {
+		return migrationVersion{}, fmt.Errorf("目录名 %q 格式无效，%s", baseName, migrationVersionFormatHint)
+	}
+	version.patch, err = strconv.ParseUint(matches[3], 10, 64)
+	if err != nil {
+		return migrationVersion{}, fmt.Errorf("目录名 %q 格式无效，%s", baseName, migrationVersionFormatHint)
+	}
+	if matches[4] != "" {
+		version.timestamp, err = strconv.ParseUint(matches[4], 10, 64)
+		if err != nil {
+			return migrationVersion{}, fmt.Errorf("目录名 %q 格式无效，%s", baseName, migrationVersionFormatHint)
+		}
+	}
+	return version, nil
+}
+
+// less 判断当前版本是否早于目标版本。
+func (version migrationVersion) less(other migrationVersion) bool {
+	if version.major != other.major {
+		return version.major < other.major
+	}
+	if version.minor != other.minor {
+		return version.minor < other.minor
+	}
+	if version.patch != other.patch {
+		return version.patch < other.patch
+	}
+	return version.timestamp < other.timestamp
 }
