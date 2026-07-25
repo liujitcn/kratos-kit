@@ -15,12 +15,20 @@ type migrationAsset struct {
 	version uint
 	// versionName 是原始版本目录名称，用于写入迁移记录。
 	versionName string
-	// name 是 SQL 文件对应的功能名称，用于错误信息。
-	name string
-	// sql 是待执行的升级脚本内容。
-	sql []byte
+	// upScripts 是按文件名排序的升级脚本集合。
+	upScripts []migrationScript
+	// downScripts 是按文件名排序的回退脚本集合。
+	downScripts []migrationScript
 	// description 是描述文件的完整文本内容。
 	description string
+}
+
+// migrationScript 表示一个待执行的升级 SQL 文件。
+type migrationScript struct {
+	// name 是 SQL 文件名，用于错误信息。
+	name string
+	// sql 是 SQL 文件内容。
+	sql []byte
 }
 
 // loadMigrationAssets 加载按版本目录组织的 SQL 脚本和升级描述文件。
@@ -53,38 +61,42 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 		if err != nil {
 			return nil, fmt.Errorf("读取迁移版本目录 %s 失败: %w", versionPath, err)
 		}
-		var upFileName string
-		var descriptionFileName string
-		upFileName, descriptionFileName, err = findMigrationFiles(versionPath, versionEntries)
+		var upFileNames []string
+		var downFileNames []string
+		var descriptionFileNames []string
+		upFileNames, downFileNames, descriptionFileNames, err = findMigrationFiles(versionPath, versionEntries)
 		if err != nil {
 			return nil, err
 		}
-		upFeatureName := strings.TrimSuffix(upFileName, ".up.sql")
-		descriptionFeatureName := strings.TrimSuffix(descriptionFileName, ".description.md")
-		if upFeatureName == "" || upFeatureName != descriptionFeatureName {
-			return nil, fmt.Errorf("迁移版本目录 %s 的 SQL 和描述文件功能名不一致", versionPath)
+		var descriptionBuilder strings.Builder
+		for _, descriptionFileName := range descriptionFileNames {
+			descriptionPath := path.Join(versionPath, descriptionFileName)
+			var descriptionContent []byte
+			descriptionContent, err = fs.ReadFile(f, descriptionPath)
+			if err != nil {
+				return nil, fmt.Errorf("读取迁移描述文件 %s 失败: %w", descriptionPath, err)
+			}
+			descriptionBuilder.Write(descriptionContent)
 		}
-		upPath := path.Join(versionPath, upFileName)
-		descriptionPath := path.Join(versionPath, descriptionFileName)
-		var sqlContent []byte
-		sqlContent, err = fs.ReadFile(f, upPath)
+		description := descriptionBuilder.String()
+		if strings.TrimSpace(description) == "" {
+			return nil, fmt.Errorf("迁移版本目录 %s 的描述文件不能为空", versionPath)
+		}
+		var upScripts []migrationScript
+		upScripts, err = readMigrationScripts(f, versionPath, upFileNames)
 		if err != nil {
-			return nil, fmt.Errorf("读取迁移脚本 %s 失败: %w", upPath, err)
+			return nil, err
 		}
-		var descriptionContent []byte
-		descriptionContent, err = fs.ReadFile(f, descriptionPath)
+		var downScripts []migrationScript
+		downScripts, err = readMigrationScripts(f, versionPath, downFileNames)
 		if err != nil {
-			return nil, fmt.Errorf("读取迁移描述文件 %s 失败: %w", descriptionPath, err)
-		}
-		description := strings.TrimSpace(string(descriptionContent))
-		if description == "" {
-			return nil, fmt.Errorf("迁移描述文件 %s 不能为空", descriptionPath)
+			return nil, err
 		}
 		assets = append(assets, migrationAsset{
 			version:     version,
 			versionName: name,
-			name:        upFeatureName,
-			sql:         sqlContent,
+			upScripts:   upScripts,
+			downScripts: downScripts,
 			description: description,
 		})
 	}
@@ -97,36 +109,47 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 	return assets, nil
 }
 
-// findMigrationFiles 校验版本目录并返回 SQL 与描述文件名。
-func findMigrationFiles(versionPath string, entries []fs.DirEntry) (string, string, error) {
-	var upFileName string
-	var descriptionFileName string
+// findMigrationFiles 校验版本目录并返回升级、回退 SQL 与描述文件名。
+func findMigrationFiles(versionPath string, entries []fs.DirEntry) ([]string, []string, []string, error) {
+	upFileNames := make([]string, 0)
+	downFileNames := make([]string, 0)
+	descriptionFileNames := make([]string, 0)
 	for _, entry := range entries {
 		if entry.IsDir() {
-			return "", "", fmt.Errorf("迁移版本目录 %s 不能包含子目录", versionPath)
+			return nil, nil, nil, fmt.Errorf("迁移版本目录 %s 不能包含子目录", versionPath)
 		}
 		switch {
 		case strings.HasSuffix(entry.Name(), ".up.sql"):
-			if upFileName != "" {
-				return "", "", fmt.Errorf("迁移版本目录 %s 包含多个 up.sql 文件", versionPath)
-			}
-			upFileName = entry.Name()
-		case strings.HasSuffix(entry.Name(), ".description.md"):
-			if descriptionFileName != "" {
-				return "", "", fmt.Errorf("迁移版本目录 %s 包含多个 description.md 文件", versionPath)
-			}
-			descriptionFileName = entry.Name()
+			upFileNames = append(upFileNames, entry.Name())
+		case strings.HasSuffix(entry.Name(), ".down.sql"):
+			downFileNames = append(downFileNames, entry.Name())
+		case strings.HasSuffix(entry.Name(), ".md"):
+			descriptionFileNames = append(descriptionFileNames, entry.Name())
 		default:
-			return "", "", fmt.Errorf("迁移版本目录 %s 中的文件名无效: %s", versionPath, entry.Name())
+			return nil, nil, nil, fmt.Errorf("迁移版本目录 %s 中的文件名无效: %s", versionPath, entry.Name())
 		}
 	}
-	if upFileName == "" {
-		return "", "", fmt.Errorf("迁移版本目录 %s 缺少 *.up.sql 文件", versionPath)
+	sort.Strings(upFileNames)
+	sort.Strings(downFileNames)
+	sort.Strings(descriptionFileNames)
+	return upFileNames, downFileNames, descriptionFileNames, nil
+}
+
+// readMigrationScripts 读取并组装指定目录下的迁移脚本。
+func readMigrationScripts(f fs.FS, versionPath string, fileNames []string) ([]migrationScript, error) {
+	scripts := make([]migrationScript, 0, len(fileNames))
+	for _, fileName := range fileNames {
+		filePath := path.Join(versionPath, fileName)
+		sqlContent, err := fs.ReadFile(f, filePath)
+		if err != nil {
+			return nil, fmt.Errorf("读取迁移脚本 %s 失败: %w", filePath, err)
+		}
+		scripts = append(scripts, migrationScript{
+			name: fileName,
+			sql:  sqlContent,
+		})
 	}
-	if descriptionFileName == "" {
-		return "", "", fmt.Errorf("迁移版本目录 %s 缺少 *.description.md 文件", versionPath)
-	}
-	return upFileName, descriptionFileName, nil
+	return scripts, nil
 }
 
 // parseMigrationVersion 解析迁移版本目录名中的版本号。

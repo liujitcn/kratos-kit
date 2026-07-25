@@ -153,15 +153,20 @@ client, cleanup, err := gormkit.NewGormClient(
 已注入的 GORM 客户端，并可通过 `Dependencies` 声明执行顺序。
 所有模块统一使用默认 `data.database` 中的 `base_migration` 表记录版本，使用
 `business` 字段区分模块，并保存 `description` 描述。资源目录最外层只放纯数字
-`NNNNNN` 版本目录，每个版本目录必须包含同一功能名的
-`<feature>.up.sql` 和 `<feature>.description.md`。
-脚本仍连接各自 `Target` 数据源执行，只有版本记录集中保存到默认数据库。
+`NNNNNN` 版本目录中的 `*.up.sql`、`*.down.sql` 和 `.md` 文件均为可选；所有 `.md` 文件
+按文件名排序后直接拼接为版本描述。`*.down.sql` 文件只保存，不参与当前升级执行。多个升级
+脚本按文件名排序，在同一个数据库事务中执行，任一脚本失败时回滚该版本的脚本。目录可以
+只有描述、只有脚本或完全为空；没有升级脚本时仍记录并标记该版本成功。脚本仍连接各自
+`Target` 数据源执行，只有版本记录集中保存到默认数据库。
 
 `base_migration` 对应的 `BaseMigration` 模型位于 `database/gorm/migration`，迁移包
 只负责使用，不会自动注册或建表；宿主项目（例如 kratos-admin）在 GORM 建表前注册该模型。
 默认 GORM 客户端在 `enable_migrate: true` 时通过 `AutoMigrate` 创建。迁移执行器不会再自行创建这张表；
 默认中心数据库客户端未注入或未开启 `enable_migrate` 时，所有版本化脚本都会跳过，
 目标客户端未注入或未开启时也会跳过该目标的脚本。接入项目不需要提前手工建表。
+`base_migration.up_sql` 保存本次版本实际执行的全部升级脚本，`down_sql` 预留给后续回退能力，
+当前不会执行回退脚本。升级脚本执行失败会保留失败记录，应用继续启动，并在后续启动时
+重试该版本。
 
 ```go
 // Migrations 返回业务模块的版本化迁移资源。

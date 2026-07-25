@@ -3,8 +3,10 @@ package migration
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	databaseGorm "github.com/liujitcn/kratos-kit/database/gorm"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -24,31 +26,49 @@ func applyMigrationAssets(
 	}
 	for _, asset := range assets {
 		status, exists := applied[asset.versionName]
-		if exists {
-			if status != true {
-				return fmt.Errorf("迁移版本 %s 处于失败状态", asset.versionName)
-			}
+		if exists && status {
 			continue
 		}
-		history := &baseMigration{
-			Business:    business,
-			Version:     asset.versionName,
-			Description: asset.description,
-			IsSuccess:   false,
+		upSQL := make([]string, 0, len(asset.upScripts))
+		for _, script := range asset.upScripts {
+			upSQL = append(upSQL, string(script.sql))
 		}
-		err = centralClient.WithContext(ctx).Create(history).Error
-		if err != nil {
-			return fmt.Errorf("记录迁移版本 %s 开始状态失败: %w", asset.versionName, err)
+		downSQL := make([]string, 0, len(asset.downScripts))
+		for _, script := range asset.downScripts {
+			downSQL = append(downSQL, string(script.sql))
 		}
-		err = targetClient.WithContext(ctx).Exec(string(asset.sql)).Error
+		if !exists {
+			history := &baseMigration{
+				Business:    business,
+				Version:     asset.versionName,
+				UpSql:       strings.Join(upSQL, "\n\n"),
+				DownSql:     strings.Join(downSQL, "\n\n"),
+				Description: asset.description,
+				IsSuccess:   false,
+			}
+			err = centralClient.WithContext(ctx).Create(history).Error
+			if err != nil {
+				return fmt.Errorf("记录迁移版本 %s 开始状态失败: %w", asset.versionName, err)
+			}
+		}
+		err = targetClient.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			for _, script := range asset.upScripts {
+				result := tx.Exec(string(script.sql))
+				if result.Error != nil {
+					return fmt.Errorf("执行迁移版本 %s 文件 %s 失败: %w", asset.versionName, script.name, result.Error)
+				}
+			}
+			return nil
+		})
 		if err != nil {
-			return fmt.Errorf("执行迁移版本 %s (%s) 失败: %w", asset.versionName, asset.name, err)
+			// 保留失败记录，允许应用先启动；后续启动时会继续重试该版本。
+			return nil
 		}
 		result := centralClient.WithContext(ctx).
 			Model(&baseMigration{}).
 			Where(&baseMigration{Business: business, Version: asset.versionName}).
 			Updates(map[string]interface{}{
-				"status": true,
+				"is_success": true,
 			})
 		if result.Error != nil {
 			err = result.Error
