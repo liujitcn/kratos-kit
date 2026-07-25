@@ -12,12 +12,8 @@ import (
 // DefaultTarget 表示默认业务数据库目标。
 const DefaultTarget = databaseGorm.DefaultClientName
 
-// MigrationSpec 描述一个模块提供的版本化迁移资源。
-type MigrationSpec struct {
-	// Name 表示迁移业务名称，并用于写入 base_migration.business。
-	Name string
-	// Target 表示迁移使用的数据源目标。
-	Target string
+// Migration 描述一个模块提供的版本化迁移资源。
+type Migration struct {
 	// FS 表示迁移脚本所在的嵌入文件系统。
 	FS fs.FS
 	// Path 表示迁移脚本在文件系统中的目录。
@@ -28,7 +24,10 @@ type MigrationSpec struct {
 
 // Contributor 表示可向应用贡献数据库迁移资源的模块。
 type Contributor interface {
-	Migrations() []MigrationSpec
+	// Name 返回迁移模块注册名称。
+	Name() string
+	// Migrations 返回迁移模块提供的版本化资源。
+	Migrations() []Migration
 }
 
 // AdditionalMigrations 表示由接入项目贡献的迁移模块集合。
@@ -75,7 +74,7 @@ func NewReady(_ *databaseGorm.Client) Ready {
 }
 
 // Run 执行指定迁移模块及其依赖模块。
-func (r *Runner) Run(ctx context.Context, name, target string) error {
+func (r *Runner) Run(ctx context.Context, name string, targetClient *databaseGorm.Client) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -86,21 +85,17 @@ func (r *Runner) Run(ctx context.Context, name, target string) error {
 	if !centralClient.MigrationEnabled() {
 		return nil
 	}
-	if target == "" {
-		target = DefaultTarget
-	}
-	targetClient, exists := r.clients[target]
-	if !exists || targetClient == nil || targetClient.DB == nil {
-		return fmt.Errorf("迁移目标数据库客户端未注入: %s", target)
+	if targetClient == nil || targetClient.DB == nil {
+		return fmt.Errorf("迁移目标数据库客户端不能为空")
 	}
 	if !targetClient.MigrationEnabled() {
 		return nil
 	}
-	if _, exists := r.registry.specs[name]; !exists {
+	if _, exists := r.registry.migrations[name]; !exists {
 		return fmt.Errorf("迁移模块未注册: %s", name)
 	}
 	visited := make(map[string]bool)
-	return r.runModule(ctx, centralClient, name, target, visited)
+	return r.runModule(ctx, centralClient, name, targetClient, visited)
 }
 
 // runModule 按依赖顺序执行迁移模块。
@@ -108,50 +103,43 @@ func (r *Runner) runModule(
 	ctx context.Context,
 	centralClient *databaseGorm.Client,
 	name string,
-	target string,
+	targetClient *databaseGorm.Client,
 	visited map[string]bool,
 ) error {
 	if visited[name] {
 		return nil
 	}
-	specs := r.registry.specs[name]
-	if len(specs) == 0 {
+	migrations := r.registry.migrations[name]
+	if len(migrations) == 0 {
 		return fmt.Errorf("迁移模块未提供资源: %s", name)
 	}
 	var err error
-	for _, dependency := range specs[0].Dependencies {
-		err = r.runModule(ctx, centralClient, dependency, "", visited)
+	for _, dependency := range migrations[0].Dependencies {
+		err = r.runModule(ctx, centralClient, dependency, centralClient, visited)
 		if err != nil {
 			return err
 		}
 	}
-	for _, spec := range specs {
-		effectiveTarget := spec.Target
-		if effectiveTarget == "" {
-			effectiveTarget = DefaultTarget
-		}
-		if target != "" {
-			effectiveTarget = target
-		}
-		targetClient := r.clients[effectiveTarget]
-		err = r.runSpec(ctx, centralClient, targetClient, spec)
+	for _, migration := range migrations {
+		err = r.runMigration(ctx, centralClient, targetClient, name, migration)
 		if err != nil {
-			return fmt.Errorf("执行迁移模块 %s 数据源 %s 失败: %w", name, effectiveTarget, err)
+			return fmt.Errorf("执行迁移模块 %s 数据源 %s 失败: %w", name, targetClient.Name(), err)
 		}
 	}
 	visited[name] = true
 	return nil
 }
 
-// runSpec 执行单个迁移资源目录，并将执行记录保存到默认数据源。
-func (r *Runner) runSpec(
+// runMigration 执行单个迁移资源目录，并将执行记录保存到默认数据源。
+func (r *Runner) runMigration(
 	ctx context.Context,
 	centralClient *databaseGorm.Client,
 	targetClient *databaseGorm.Client,
-	spec MigrationSpec,
+	moduleName string,
+	migration Migration,
 ) error {
 	if targetClient == nil || targetClient.DB == nil {
-		return fmt.Errorf("迁移模块 %s 数据库客户端不能为空", spec.Name)
+		return fmt.Errorf("迁移模块 %s 数据库客户端不能为空", moduleName)
 	}
 	if !targetClient.MigrationEnabled() {
 		return nil
@@ -162,17 +150,18 @@ func (r *Runner) runSpec(
 	}
 	targetDriver := targetClient.Dialector.Name()
 	if targetDriver != "mysql" {
-		return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", spec.Name, targetDriver)
+		return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", moduleName, targetDriver)
 	}
-	assets, err := loadMigrationAssets(spec.FS, spec.Path)
+	assets, err := loadMigrationAssets(migration.FS, migration.Path)
 	if err != nil {
 		return err
 	}
-	err = withMigrationLock(ctx, centralClient, spec.Name, func() error {
-		return applyMigrationAssets(ctx, centralClient, targetClient, spec.Name, assets)
+	business := targetClient.Name()
+	err = withMigrationLock(ctx, centralClient, business, func() error {
+		return applyMigrationAssets(ctx, centralClient, targetClient, business, assets)
 	})
 	if err != nil {
-		return fmt.Errorf("执行迁移模块 %s 失败: %w", spec.Name, err)
+		return fmt.Errorf("执行迁移模块 %s 失败: %w", moduleName, err)
 	}
 	return nil
 }

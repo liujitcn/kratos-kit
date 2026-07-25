@@ -149,8 +149,8 @@ client, cleanup, err := gormkit.NewGormClient(
 ## 版本化迁移
 
 `database/gorm/migration` 提供与 admin 无关的版本化迁移能力。业务模块通过
-`embed.FS` 提供按版本目录组织的迁移资源，使用 `Name` 标识模块、`Target` 选择
-已注入的 GORM 客户端，并可通过 `Dependencies` 声明执行顺序。
+`embed.FS` 提供按版本目录组织的迁移资源，通过 `Contributor.Name()` 标识模块，
+并可通过 `Dependencies` 声明执行顺序。
 所有模块统一使用默认 `data.database` 中的 `base_migration` 表记录版本，使用
 `business` 字段区分模块，并保存 `description` 描述。资源目录最外层只放纯数字
 版本目录支持兼容的纯数字格式（如 `000001`）以及 `v0.0.1`、
@@ -171,10 +171,16 @@ client, cleanup, err := gormkit.NewGormClient(
 重试该版本。
 
 ```go
+type contributor struct{}
+
+// Name 返回迁移模块名称。
+func (contributor) Name() string {
+	return "test"
+}
+
 // Migrations 返回业务模块的版本化迁移资源。
-func (contributor) Migrations() []migration.MigrationSpec {
-	return []migration.MigrationSpec{{
-		Name: "test", // 写入 base_migration.business。
+func (contributor) Migrations() []migration.Migration {
+	return []migration.Migration{{
 		FS:   migrationFS,
 		Path: "assets/mysql",
 	}}
@@ -186,16 +192,12 @@ registry, err := migration.NewRegistry(
 runner, err := migration.NewRunner(registry)
 // client 为宿主创建的默认 *gorm.Client。
 err = runner.SetClient(client)
-// shopClient 为可选的、名称为 shop 的其他数据源客户端。
-if shopClient != nil {
-    err = runner.SetClient(shopClient)
-}
-err = runner.Run(ctx, "test", migration.DefaultTarget)
+err = runner.Run(ctx, "test", client)
 ```
 
-迁移核心通过客户端名称选择脚本执行目标。名称为 `default` 的客户端使用 GORM
-保存和查询 `base_migration` 记录；其他名称的客户端只执行自身数据源脚本，不在
-自身数据库写入迁移记录。客户端的 `enable_migrate` 为 `false` 时跳过对应脚本，
+迁移核心使用 `Run` 传入的客户端执行脚本。名称为 `default` 的客户端使用 GORM
+保存和查询 `base_migration` 记录；依赖模块使用默认客户端执行。客户端的
+`enable_migrate` 为 `false` 时跳过对应脚本，
 不要求接入项目依赖 kratos-admin 或 Wire。
 
 ## 自动填充的数据
