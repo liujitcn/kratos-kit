@@ -1,13 +1,12 @@
 package data
 
-import (
-	authnEngine "github.com/liujitcn/kratos-kit/auth/authn/engine"
-)
+import authnEngine "github.com/liujitcn/kratos-kit/auth/authn/engine"
 
 const (
 	ClaimFieldTenantID   = "tid"
 	ClaimFieldTenantCode = "tcode"
 	ClaimFieldUserID     = "uid"
+	ClaimFieldUserCode   = "ucode"
 	ClaimFieldRoleID     = "rid"
 	ClaimFieldRoleName   = "rname"
 	ClaimFieldRoleCode   = "rcode"
@@ -21,6 +20,7 @@ type UserTokenPayload struct {
 	TenantId   int64
 	TenantCode string
 	UserId     int64
+	UserCode   string
 	UserName   string
 	RoleId     int64
 	RoleCode   string
@@ -47,6 +47,7 @@ func (t *UserTokenPayload) MakeAuthClaims() *authnEngine.AuthClaims {
 		ClaimFieldTenantID:            t.TenantId,
 		ClaimFieldTenantCode:          t.TenantCode,
 		ClaimFieldUserID:              t.UserId,
+		ClaimFieldUserCode:            t.UserCode,
 		ClaimFieldRoleID:              t.RoleId,
 		ClaimFieldRoleCode:            t.RoleCode,
 		ClaimFieldRoleName:            t.RoleName,
@@ -72,6 +73,10 @@ func (t *UserTokenPayload) ExtractAuthClaims(claims *authnEngine.AuthClaims) err
 		return err
 	}
 	t.UserId, err = claims.GetInt64(ClaimFieldUserID)
+	if err != nil {
+		return err
+	}
+	t.UserCode, err = claims.GetString(ClaimFieldUserCode)
 	if err != nil {
 		return err
 	}
