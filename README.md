@@ -22,7 +22,7 @@
 - `queue`：内存/Redis 队列封装
 - `locker`：Redis 分布式锁封装
 - `oss`：本地/FTP/MinIO/阿里云 OSS 封装
-- [`database/gorm`](database/gorm/README.md)：GORM 客户端封装，提供多数据库 driver、连接池、迁移与可观测性，并内置审计字段填充、租户隔离和角色数据范围过滤
+- [`database/gorm`](database/gorm/README.md)：GORM 客户端封装，提供多数据库 driver、连接池、迁移与可观测性，并内置审计字段填充、租户隔离和角色数据范围过滤；版本化迁移仅在脚本全部成功后记录，失败会记录错误并阻止应用启动
 - `database/ent`：Ent 底层数据库 driver 封装（含 `mysql`/`postgres`/`sqlite` driver 子模块，支持连接池配置、debug SQL 日志、迁移回调、表/字段注释与审计字段 mixin）
 - `broker`：消息发布订阅与 typed handler 封装
 - `workflow`：工作流引擎封装（含 `argo`、`conductor`、`goworkflows`、`temporal` 子模块），公共包只定义跨引擎一致的 `Client`/`Worker` 生命周期接口

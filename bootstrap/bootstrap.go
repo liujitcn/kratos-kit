@@ -122,6 +122,7 @@ func bootstrap(ctx *Context, initApp InitAppFunc) error {
 	// init app
 	app, cleanup, err := initApp(ctx)
 	if err != nil {
+		log.Error("初始化应用失败", "error", err)
 		return err
 	}
 	defer cleanup()

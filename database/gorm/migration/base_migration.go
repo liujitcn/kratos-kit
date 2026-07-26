@@ -13,7 +13,6 @@ type baseMigration struct {
 	UpSql       string    `gorm:"column:up_sql;type:longtext;comment:升级脚本" json:"up_sql"`                                                                   // 升级脚本
 	DownSql     string    `gorm:"column:down_sql;type:longtext;comment:回退脚本" json:"down_sql"`                                                               // 回退脚本
 	Description string    `gorm:"column:description;type:longtext;comment:升级描述" json:"description"`                                                         // 升级描述
-	IsSuccess   bool      `gorm:"column:is_success;type:tinyint(1);comment:是否成功" json:"is_success"`                                                         // 是否成功
 	CreatedAt   time.Time `gorm:"column:created_at;type:datetime;comment:创建时间" json:"created_at"`                                                           // 创建时间
 }
 
