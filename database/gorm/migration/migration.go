@@ -86,9 +86,6 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*dat
 	if !exists || centralClient == nil || centralClient.DB == nil {
 		return fmt.Errorf("迁移记录数据库客户端不能为空")
 	}
-	if !centralClient.MigrationEnabled() {
-		return nil
-	}
 	if _, exists := r.registry.migrations[name]; !exists {
 		return fmt.Errorf("迁移模块未注册: %s", name)
 	}
@@ -125,9 +122,6 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*dat
 	sort.Strings(targetNames)
 	for _, targetName := range targetNames {
 		targetClient := targets[targetName]
-		if !targetClient.MigrationEnabled() {
-			continue
-		}
 		targetDriver := targetClient.Driver()
 		if targetDriver != databaseTypeMySQL && targetDriver != databaseTypeDoris {
 			return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", name, targetDriver)
@@ -265,9 +259,6 @@ func (r *Runner) runMigration(
 ) error {
 	if targetClient == nil || targetClient.DB == nil {
 		return fmt.Errorf("迁移模块 %s 数据库客户端不能为空", moduleName)
-	}
-	if !targetClient.MigrationEnabled() {
-		return nil
 	}
 	centralDriver := centralClient.Driver()
 	if centralDriver != databaseTypeMySQL {
