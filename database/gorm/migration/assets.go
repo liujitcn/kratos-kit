@@ -10,7 +10,11 @@ import (
 	"strings"
 )
 
-const migrationVersionFormatHint = "支持格式：纯数字（如 000001）、v0.0.1、v0.0.1-20260511170946、v0.0.1.20260511170946"
+const (
+	migrationVersionFormatHint = "支持格式：纯数字（如 000001）、v0.0.1、v0.0.1-20260511170946、v0.0.1.20260511170946"
+	databaseTypeMySQL          = "mysql"
+	databaseTypeDoris          = "doris"
+)
 
 var migrationVersionPattern = regexp.MustCompile(`^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:[-.]([0-9]{14}))?$`)
 
@@ -28,7 +32,9 @@ type migrationAsset struct {
 	version migrationVersion
 	// versionName 是原始版本目录名称，用于写入迁移记录。
 	versionName string
-	// dataSource 是目标数据源名称；版本目录下的直系文件使用 default。
+	// databaseType 是脚本适用的真实数据库类型。
+	databaseType string
+	// dataSource 是目标数据源名称；数据库类型目录下的直系文件使用 default。
 	dataSource string
 	// upScripts 是按文件名排序的升级脚本集合。
 	upScripts []migrationScript
@@ -48,6 +54,8 @@ type migrationScript struct {
 
 // migrationTargetFiles 表示一个数据源对应的迁移文件集合。
 type migrationTargetFiles struct {
+	// databaseType 是脚本适用的真实数据库类型。
+	databaseType string
 	// dataSource 是目标数据源名称。
 	dataSource string
 	// path 是数据源文件所在目录。
@@ -56,7 +64,7 @@ type migrationTargetFiles struct {
 	entries []fs.DirEntry
 }
 
-// loadMigrationAssets 加载按版本目录组织的 SQL 脚本和升级描述文件。
+// loadMigrationAssets 加载按版本、数据库类型和数据源组织的 SQL 脚本及升级描述。
 func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 	var entries []fs.DirEntry
 	var err error
@@ -120,12 +128,13 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 				return nil, err
 			}
 			assets = append(assets, migrationAsset{
-				version:     version,
-				versionName: name,
-				dataSource:  targetFile.dataSource,
-				upScripts:   upScripts,
-				downScripts: downScripts,
-				description: descriptionBuilder.String(),
+				version:      version,
+				versionName:  name,
+				databaseType: targetFile.databaseType,
+				dataSource:   targetFile.dataSource,
+				upScripts:    upScripts,
+				downScripts:  downScripts,
+				description:  descriptionBuilder.String(),
 			})
 		}
 	}
@@ -139,15 +148,65 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 		if assets[other].version.less(assets[index].version) {
 			return false
 		}
+		if assets[index].databaseType != assets[other].databaseType {
+			return assets[index].databaseType < assets[other].databaseType
+		}
 		return assets[index].dataSource < assets[other].dataSource
 	})
 	return assets, nil
 }
 
-// findMigrationTargets 按版本目录下的直系文件和一级子目录划分数据源。
-func findMigrationTargets(f fs.FS, versionPath string, entries []fs.DirEntry) ([]migrationTargetFiles, error) {
+// findMigrationTargets 按数据库类型和数据源划分版本目录中的迁移文件。
+func findMigrationTargets(
+	f fs.FS,
+	versionPath string,
+	entries []fs.DirEntry,
+) ([]migrationTargetFiles, error) {
+	if len(entries) == 0 {
+		return nil, fmt.Errorf("迁移版本目录 %s 未提供数据库类型目录", versionPath)
+	}
+	targets := make([]migrationTargetFiles, 0, len(entries)+1)
+	var err error
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			return nil, fmt.Errorf("迁移版本目录 %s 必须按数据库类型存放脚本，发现直系文件 %s", versionPath, entry.Name())
+		}
+		databaseType := entry.Name()
+		if databaseType != databaseTypeMySQL && databaseType != databaseTypeDoris {
+			return nil, fmt.Errorf("迁移版本目录 %s 包含不支持的数据库类型 %s，仅支持 mysql、doris", versionPath, databaseType)
+		}
+		databasePath := path.Join(versionPath, databaseType)
+		var databaseEntries []fs.DirEntry
+		databaseEntries, err = fs.ReadDir(f, databasePath)
+		if err != nil {
+			return nil, fmt.Errorf("读取迁移数据库类型目录 %s 失败: %w", databasePath, err)
+		}
+		var databaseTargets []migrationTargetFiles
+		databaseTargets, err = findDatabaseMigrationTargets(f, databaseType, databasePath, databaseEntries)
+		if err != nil {
+			return nil, err
+		}
+		targets = append(targets, databaseTargets...)
+	}
+	sort.Slice(targets, func(index, other int) bool {
+		if targets[index].databaseType != targets[other].databaseType {
+			return targets[index].databaseType < targets[other].databaseType
+		}
+		return targets[index].dataSource < targets[other].dataSource
+	})
+	return targets, nil
+}
+
+// findDatabaseMigrationTargets 按直系文件和一级子目录划分一个数据库类型下的数据源。
+func findDatabaseMigrationTargets(
+	f fs.FS,
+	databaseType string,
+	databasePath string,
+	entries []fs.DirEntry,
+) ([]migrationTargetFiles, error) {
 	targets := make([]migrationTargetFiles, 0, len(entries)+1)
 	directEntries := make([]fs.DirEntry, 0, len(entries))
+	var err error
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			directEntries = append(directEntries, entry)
@@ -155,24 +214,27 @@ func findMigrationTargets(f fs.FS, versionPath string, entries []fs.DirEntry) ([
 		}
 		dataSource := entry.Name()
 		if dataSource == DefaultTarget {
-			return nil, fmt.Errorf("迁移版本目录 %s 不允许使用 default 子目录，默认数据源请直接放置文件", versionPath)
+			return nil, fmt.Errorf("迁移数据库类型目录 %s 不允许使用 default 子目录，默认数据源请直接放置文件", databasePath)
 		}
-		targetPath := path.Join(versionPath, dataSource)
-		targetEntries, err := fs.ReadDir(f, targetPath)
+		targetPath := path.Join(databasePath, dataSource)
+		var targetEntries []fs.DirEntry
+		targetEntries, err = fs.ReadDir(f, targetPath)
 		if err != nil {
 			return nil, fmt.Errorf("读取迁移数据源目录 %s 失败: %w", targetPath, err)
 		}
 		targets = append(targets, migrationTargetFiles{
-			dataSource: dataSource,
-			path:       targetPath,
-			entries:    targetEntries,
+			databaseType: databaseType,
+			dataSource:   dataSource,
+			path:         targetPath,
+			entries:      targetEntries,
 		})
 	}
 	if len(directEntries) > 0 || len(targets) == 0 {
 		targets = append(targets, migrationTargetFiles{
-			dataSource: DefaultTarget,
-			path:       versionPath,
-			entries:    directEntries,
+			databaseType: databaseType,
+			dataSource:   DefaultTarget,
+			path:         databasePath,
+			entries:      directEntries,
 		})
 	}
 	sort.Slice(targets, func(index, other int) bool {

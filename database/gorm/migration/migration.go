@@ -17,7 +17,7 @@ const DefaultTarget = databaseGorm.DefaultClientName
 type Migration struct {
 	// FS 表示迁移脚本所在的嵌入文件系统。
 	FS fs.FS
-	// Path 表示迁移脚本在文件系统中的目录。
+	// Path 表示迁移版本目录所在的资源根目录。
 	Path string
 	// Dependencies 表示当前迁移模块依赖的其他模块。
 	Dependencies []ModuleName
@@ -77,7 +77,7 @@ func NewReady(_ *databaseGorm.Client) Ready {
 // Run 执行指定迁移模块及其依赖模块。
 //
 // 不传目标客户端时，按版本目录中的数据源目录自动执行所有已注入客户端；
-// 传入一个目标客户端时，仅执行该客户端对应的数据源迁移。
+// 传入一个目标客户端时，仅执行该客户端对应数据库类型和数据源的迁移。
 func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*databaseGorm.Client) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -127,6 +127,25 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*dat
 		targetClient := targets[targetName]
 		if !targetClient.MigrationEnabled() {
 			continue
+		}
+		targetDriver := targetClient.Driver()
+		if targetDriver != databaseTypeMySQL && targetDriver != databaseTypeDoris {
+			return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", name, targetDriver)
+		}
+		hasMatchingAsset := false
+		for _, assets := range assetsByModule {
+			for _, asset := range assets {
+				if asset.dataSource == targetName && asset.databaseType == targetDriver {
+					hasMatchingAsset = true
+					break
+				}
+			}
+			if hasMatchingAsset {
+				break
+			}
+		}
+		if !hasMatchingAsset {
+			return fmt.Errorf("迁移模块 %s 及其依赖的数据源 %s 未提供数据库类型 %s 的迁移资源", name, targetName, targetDriver)
 		}
 		visited := make(map[ModuleName]bool)
 		err = r.runModule(ctx, centralClient, name, targetName, targetClient, visited, assetsByModule)
@@ -181,9 +200,15 @@ func (r *Runner) loadModuleAssets(
 			return nil, err
 		}
 		for _, asset := range loaded {
-			key := asset.dataSource + "\x00" + asset.versionName
+			key := asset.databaseType + "\x00" + asset.dataSource + "\x00" + asset.versionName
 			if assetKeys[key] {
-				return nil, fmt.Errorf("迁移模块 %s 数据源 %s 版本 %s 存在重复资源", name, asset.dataSource, asset.versionName)
+				return nil, fmt.Errorf(
+					"迁移模块 %s 数据库类型 %s 数据源 %s 版本 %s 存在重复资源",
+					name,
+					asset.databaseType,
+					asset.dataSource,
+					asset.versionName,
+				)
 			}
 			assetKeys[key] = true
 			assets = append(assets, asset)
@@ -218,7 +243,7 @@ func (r *Runner) runModule(
 		}
 	}
 	for _, asset := range assetsByModule[name] {
-		if asset.dataSource != dataSource {
+		if asset.dataSource != dataSource || asset.databaseType != targetClient.Driver() {
 			continue
 		}
 		err = r.runMigration(ctx, centralClient, targetClient, name, asset)
@@ -244,13 +269,22 @@ func (r *Runner) runMigration(
 	if !targetClient.MigrationEnabled() {
 		return nil
 	}
-	centralDriver := centralClient.Dialector.Name()
-	if centralDriver != "mysql" {
+	centralDriver := centralClient.Driver()
+	if centralDriver != databaseTypeMySQL {
 		return fmt.Errorf("迁移记录数据源暂不支持数据库驱动 %s", centralDriver)
 	}
-	targetDriver := targetClient.Dialector.Name()
-	if targetDriver != "mysql" {
+	targetDriver := targetClient.Driver()
+	if targetDriver != databaseTypeMySQL && targetDriver != databaseTypeDoris {
 		return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", moduleName, targetDriver)
+	}
+	if asset.databaseType != targetDriver {
+		return fmt.Errorf(
+			"迁移模块 %s 数据源 %s 的数据库类型为 %s，不能执行 %s 脚本",
+			moduleName,
+			asset.dataSource,
+			targetDriver,
+			asset.databaseType,
+		)
 	}
 	err := withMigrationLock(ctx, centralClient, moduleName, asset.dataSource, func() error {
 		return applyMigrationAssets(ctx, centralClient, targetClient, moduleName, asset.dataSource, []migrationAsset{asset})

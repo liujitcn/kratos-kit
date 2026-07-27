@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/migration
 go 1.26.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm v0.0.33
+	github.com/liujitcn/kratos-kit/database/gorm v0.0.35
 	gorm.io/gorm v1.31.1
 )
 
