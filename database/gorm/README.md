@@ -158,20 +158,29 @@ kit 只定义 `migration.ModuleName` 类型，不内置具体业务模块枚举�
 所有模块统一使用默认数据源中的 `base_migration` 表记录版本。单库配置使用
 `data.database`，命名多数据源配置使用 `data.databases.default`。记录使用
 `module` 区分迁移模块，使用 `data_source` 区分目标数据源，并保存 `description` 描述。
-资源目录最外层只放纯数字版本目录，支持兼容的纯数字格式（如 `000001`）以及
+资源目录最外层只放版本目录，支持兼容的纯数字格式（如 `000001`）以及
 `v0.0.1`、`v0.0.1-20260511170946`、`v0.0.1.20260511170946` 三种版本格式。
-版本目录下的直系文件属于 `default` 数据源；一级子目录名表示数据源名称，例如：
+每个版本目录下按真实数据库类型建立 `mysql` 或 `doris` 目录。数据库类型目录下的直系文件
+属于 `default` 数据源，一级子目录名表示数据源名称，例如：
 
 ```text
-assets/mysql/v0.0.1/
-  default-data.description.md
-  default-data.up.sql
-  shop/
-    shop.description.md
-    shop.up.sql
+assets/v0.0.1/
+  mysql/
+    default-data.description.md
+    default-data.up.sql
+    shop/
+      shop.description.md
+      shop.up.sql
+  doris/
+    default-data.description.md
+    default-data.up.sql
 ```
 
-每个数据源资源都会产生独立的 `module + data_source + version` 迁移记录。目录中的
+迁移执行器读取客户端配置声明的真实驱动，而不是只读取 GORM Dialector 名称，因此 Doris
+复用 MySQL Dialector 时仍只会执行 `doris` 目录中的脚本。目标客户端必须使用 `mysql` 或
+`doris` 驱动，并且模块必须提供与目标数据源、数据库类型匹配的资源，否则启动直接返回错误。
+
+每个数据源资源都会产生独立的 `module + data_source + version` 迁移记录。数据库类型目录中的
 `*.up.sql`、`*.down.sql` 和 `.md` 文件均为可选；所有 `.md` 文件按文件名排序后直接
 拼接为对应数据源的版本描述。`*.down.sql` 文件只保存，不参与当前升级执行。多个升级
 脚本按文件名排序，在同一个数据库事务中执行，任一脚本失败时回滚该版本的脚本并直接返回错误，
@@ -202,7 +211,7 @@ func (contributor) Name() migration.ModuleName {
 func (contributor) Migrations() []migration.Migration {
 	return []migration.Migration{{
 		FS:   migrationFS,
-		Path: "assets/mysql",
+		Path: "assets",
 	}}
 }
 

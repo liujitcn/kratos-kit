@@ -28,6 +28,8 @@ type Client struct {
 	*gormdb.DB
 	// name 是数据源名称，default 表示集中保存迁移记录的默认库。
 	name string
+	// driver 是配置声明的真实数据库驱动，用于区分复用同一 GORM Dialector 的数据库。
+	driver string
 	// migrateEnabled 表示当前数据源是否允许执行自动建表和版本化迁移。
 	migrateEnabled bool
 }
@@ -163,6 +165,7 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 	client := &Client{
 		DB:             db,
 		name:           clientLabel,
+		driver:         cfg.Driver,
 		migrateEnabled: cfg.GetEnableMigrate(),
 	}
 
@@ -195,6 +198,20 @@ func (c *Client) Name() string {
 		return DefaultClientName
 	}
 	return c.name
+}
+
+// Driver 返回配置声明的真实数据库驱动。
+func (c *Client) Driver() string {
+	if c == nil {
+		return ""
+	}
+	if c.driver != "" {
+		return c.driver
+	}
+	if c.DB != nil && c.Dialector != nil {
+		return c.Dialector.Name()
+	}
+	return ""
 }
 
 // registerCallbacks 按注册顺序将包级回调安装到 GORM 客户端。
