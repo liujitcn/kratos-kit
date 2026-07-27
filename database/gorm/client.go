@@ -230,7 +230,7 @@ func registerCallbacks(db *gormdb.DB) error {
 		}
 	}
 	for i, fn := range getCallbackRaws() {
-		err = db.Callback().Raw().Before("gorm:raw").Register(fmt.Sprintf("before_raw_%d", i), fn)
+		err = db.Callback().Raw().Before("gorm:raw").Register(fmt.Sprintf("before_raw_%d", i), fn) //nolint:forbidigo
 		if err != nil {
 			return err
 		}
