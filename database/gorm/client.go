@@ -30,7 +30,7 @@ type Client struct {
 	name string
 	// driver 是配置声明的真实数据库驱动，用于区分复用同一 GORM Dialector 的数据库。
 	driver string
-	// migrateEnabled 表示当前数据源是否允许执行自动建表和版本化迁移。
+	// migrateEnabled 表示当前数据源是否允许执行 GORM 自动迁移。
 	migrateEnabled bool
 }
 
@@ -67,7 +67,7 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 	}
 
 	source := cfg.Source
-	if cfg.GetEnableMigrate() && (cfg.Driver == "mysql" || cfg.Driver == "doris") {
+	if cfg.Driver == "mysql" || cfg.Driver == "doris" {
 		source = ensureMySQLMultiStatements(source)
 	}
 	db, err := gormdb.Open(gormDriver(source), &gormdb.Config{
@@ -187,7 +187,7 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 	return client, cleanup, nil
 }
 
-// MigrationEnabled 返回当前客户端是否允许执行结构迁移。
+// MigrationEnabled 返回当前客户端是否允许执行 GORM 自动迁移。
 func (c *Client) MigrationEnabled() bool {
 	return c != nil && c.migrateEnabled
 }
@@ -256,7 +256,7 @@ func registerCallbacks(db *gormdb.DB) error {
 	return nil
 }
 
-// ensureMySQLMultiStatements 为启用迁移的 MySQL 连接补充多语句执行参数。
+// ensureMySQLMultiStatements 为支持版本化 SQL 迁移的 MySQL 连接补充多语句执行参数。
 func ensureMySQLMultiStatements(source string) string {
 	lowerSource := strings.ToLower(source)
 	const disabledMultiStatements = "multistatements=false"

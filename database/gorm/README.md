@@ -12,6 +12,7 @@
 | 链路追踪 | `enable_trace: true` 时启用 GORM OpenTelemetry tracing 插件 |
 | Prometheus | `enable_metrics: true` 时启用 GORM Prometheus 插件 |
 | 自动迁移 | `enable_migrate: true` 时对已注册模型执行 `AutoMigrate` |
+| 版本化迁移 | 已注册的 `migration/assets` SQL 默认执行，不受 `enable_migrate` 影响 |
 | 表注释 | 自动迁移后为实现 `TableCommenter` 的已注册模型回填表注释 |
 | 审计字段 | 创建时填充 `created_by`、`updated_by`、`created_at`、`updated_at`；更新时刷新 `updated_by`、`updated_at` |
 | 租户隔离 | 自动填充 `tenant_id`，并为查询、更新、删除和关联查询追加租户条件 |
@@ -188,9 +189,10 @@ assets/v0.0.1/
 
 `base_migration` 对应的 `BaseMigration` 模型位于 `database/gorm/migration`。宿主项目
 应在默认客户端的 GORM 模型中注册该模型；默认客户端在 `enable_migrate: true` 时通过
-`AutoMigrate` 创建或更新表。默认中心数据库客户端未注入或未开启 `enable_migrate` 时，
-所有版本化脚本都会跳过；目录声明的数据源客户端未注入时返回错误，客户端未开启
-`enable_migrate` 时跳过该数据源脚本。
+`AutoMigrate` 创建或更新表。版本化 SQL 迁移不读取 `enable_migrate`，默认中心数据库
+客户端和目录声明的数据源客户端未注入时返回错误；默认库必须在执行脚本前已有
+`base_migration` 表。MySQL 和 Doris 客户端默认启用多语句执行，以支持一个迁移文件包含
+多条 SQL。
 `BaseMigration.DataSource` 映射数据库中的 `data_source` 列；迁移记录不保存成功失败状态，
 只有脚本全部成功后才会写入版本记录。
 `base_migration.up_sql` 保存本次版本实际执行的全部升级脚本，`down_sql` 预留给后续回退能力，
