@@ -3,8 +3,8 @@ module github.com/liujitcn/kratos-kit/broker/nats
 go 1.26.0
 
 require (
-	github.com/liujitcn/kratos-kit/broker v0.0.1
-	github.com/liujitcn/kratos-kit/tracing v0.0.7
+	github.com/liujitcn/kratos-kit/broker v0.0.8
+	github.com/liujitcn/kratos-kit/tracing v0.0.8
 	github.com/nats-io/nats.go v1.51.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
@@ -13,7 +13,6 @@ require (
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/go-kratos/kratos/v2 v2.9.2 // indirect
 	github.com/go-kratos/kratos/v3 v3.0.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

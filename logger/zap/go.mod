@@ -4,8 +4,8 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.22
-	github.com/liujitcn/kratos-kit/logger v0.0.26
+	github.com/liujitcn/kratos-kit/api v0.0.23
+	github.com/liujitcn/kratos-kit/logger v0.0.27
 	go.uber.org/zap v1.28.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )

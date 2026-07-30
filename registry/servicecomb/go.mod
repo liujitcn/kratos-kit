@@ -7,8 +7,8 @@ require (
 	github.com/go-chassis/sc-client v0.7.0
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/liujitcn/kratos-kit/api v0.0.22
-	github.com/liujitcn/kratos-kit/registry v0.0.19
+	github.com/liujitcn/kratos-kit/api v0.0.23
+	github.com/liujitcn/kratos-kit/registry v0.0.20
 )
 
 require (

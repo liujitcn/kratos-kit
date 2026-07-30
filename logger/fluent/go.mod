@@ -5,8 +5,8 @@ go 1.26.0
 require (
 	github.com/fluent/fluent-logger-golang v1.10.1
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.22
-	github.com/liujitcn/kratos-kit/logger v0.0.26
+	github.com/liujitcn/kratos-kit/api v0.0.23
+	github.com/liujitcn/kratos-kit/logger v0.0.27
 )
 
 require (

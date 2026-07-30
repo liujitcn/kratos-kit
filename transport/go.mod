@@ -2,7 +2,7 @@ module github.com/liujitcn/kratos-kit/transport
 
 go 1.26.0
 
-require github.com/liujitcn/kratos-kit/broker v0.0.7
+require github.com/liujitcn/kratos-kit/broker v0.0.8
 
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
@@ -13,7 +13,7 @@ require (
 	github.com/go-playground/form/v4 v4.3.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
-	github.com/liujitcn/kratos-kit/tracing v0.0.7 // indirect
+	github.com/liujitcn/kratos-kit/tracing v0.0.8 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect

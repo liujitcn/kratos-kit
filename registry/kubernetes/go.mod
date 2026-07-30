@@ -5,8 +5,8 @@ go 1.26.0
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/json-iterator/go v1.1.12
-	github.com/liujitcn/kratos-kit/api v0.0.22
-	github.com/liujitcn/kratos-kit/registry v0.0.19
+	github.com/liujitcn/kratos-kit/api v0.0.23
+	github.com/liujitcn/kratos-kit/registry v0.0.20
 	k8s.io/api v0.36.0
 	k8s.io/apimachinery v0.36.0
 	k8s.io/client-go v0.36.0

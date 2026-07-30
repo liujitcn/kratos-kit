@@ -5,9 +5,9 @@ go 1.26.0
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/google/uuid v1.6.0
-	github.com/liujitcn/kratos-kit/api v0.0.22
-	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.12
-	github.com/liujitcn/kratos-kit/utils v0.0.16
+	github.com/liujitcn/kratos-kit/api v0.0.23
+	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.13
+	github.com/liujitcn/kratos-kit/utils v0.0.17
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 )
 

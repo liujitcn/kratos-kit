@@ -242,10 +242,10 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/lightstep/lightstep-tracer-common/golang/gogo v0.0.0-20190605223551-bc2310a04743/go.mod h1:qklhhLq1aX+mtWk9cPHPzaBjWImj5ULL6C7HFJtXQMM=
 github.com/lightstep/lightstep-tracer-go v0.18.1/go.mod h1:jlF1pusYV4pidLvZ+XD0UBX0ZE6WURAspgAczcDHrL4=
-github.com/liujitcn/kratos-kit/api v0.0.22 h1:/Fx7bWtCnsH8frhtT/Yx+ULTMtuvQWrRMpsLaJh+Lg8=
-github.com/liujitcn/kratos-kit/api v0.0.22/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
-github.com/liujitcn/kratos-kit/logger v0.0.26 h1:FllKQl3s2x1cmVi1HbWJsjt9n06V6R5RXJOeBFNqZQc=
-github.com/liujitcn/kratos-kit/logger v0.0.26/go.mod h1:+LkVk6qmYmPcFAzhEslWjYy45fk4DGwoFvYW16jruvY=
+github.com/liujitcn/kratos-kit/api v0.0.23 h1:RZfGwIUQPRFGxZ3tbV55cIRkbbxWJJrvGNZ/fh/9V9g=
+github.com/liujitcn/kratos-kit/api v0.0.23/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
+github.com/liujitcn/kratos-kit/logger v0.0.27 h1:zEKIacvEueaQr3jaZxqDcARn4qnHvyx2ZTjaca4A19w=
+github.com/liujitcn/kratos-kit/logger v0.0.27/go.mod h1:7nNa/28kmHiAn56Fgo9w6qJetCfVGklxvzwIlJFIsls=
 github.com/lyft/protoc-gen-validate v0.0.13/go.mod h1:XbGvPuh87YZc5TdIa2/I4pLk0QoUACkjt2znoq26NVQ=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-isatty v0.0.3/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=

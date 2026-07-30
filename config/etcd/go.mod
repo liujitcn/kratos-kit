@@ -4,8 +4,8 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.22
-	github.com/liujitcn/kratos-kit/config v0.0.20
+	github.com/liujitcn/kratos-kit/api v0.0.23
+	github.com/liujitcn/kratos-kit/config v0.0.21
 	go.etcd.io/etcd/client/v3 v3.6.10
 	google.golang.org/grpc v1.81.0
 )

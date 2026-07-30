@@ -40,10 +40,10 @@ github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQL
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/leodido/go-urn v1.2.1/go.mod h1:zt4jvISO2HfUBqxjfIshjdMTYS56ZS/qv49ictyFfxY=
-github.com/liujitcn/kratos-kit/api v0.0.22 h1:/Fx7bWtCnsH8frhtT/Yx+ULTMtuvQWrRMpsLaJh+Lg8=
-github.com/liujitcn/kratos-kit/api v0.0.22/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
-github.com/liujitcn/kratos-kit/registry v0.0.19 h1:tqt26slaYCokORF2DyCQ6r7d+SQl7fjGJToiqGpR01c=
-github.com/liujitcn/kratos-kit/registry v0.0.19/go.mod h1:KzU4iqLascewWkyd8UPMQ15Mh3Z1DjAQGdyyZDe2TbY=
+github.com/liujitcn/kratos-kit/api v0.0.23 h1:RZfGwIUQPRFGxZ3tbV55cIRkbbxWJJrvGNZ/fh/9V9g=
+github.com/liujitcn/kratos-kit/api v0.0.23/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
+github.com/liujitcn/kratos-kit/registry v0.0.20 h1:zVNxpu/Lqz3rkkVn8wPp2ZtAr1AHk5oFgzBq4tgrv3Y=
+github.com/liujitcn/kratos-kit/registry v0.0.20/go.mod h1:N+gu1glMyEZqSx5wi5w5vIlpNDsAHYtoNghrNszT0Cg=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=
 github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
