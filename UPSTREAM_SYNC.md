@@ -75,5 +75,6 @@ Redis broker、空事务接口、重复 API Key/RBAC 模型及不完整 Cedar/AW
 ## 发布顺序
 
 仓库是多 module 工作区。发布时必须从无内部依赖的底层 module 开始，逐层执行：升级已发布
-的自有依赖、`GOWORK=off go mod tidy`、测试、提交、推送和打 tag。`go.work` 中的本地
-`replace` 只用于工作区联调，不能替代正式 module tag。
+的自有依赖、`GOWORK=off go mod tidy`、测试、提交、推送和打 tag。本轮发布过程中用于
+`metrics` 和 `oss/s3` 联调的临时 `replace`，已在底层正式 tag 发布并更新上层依赖后从
+`go.work` 移除。

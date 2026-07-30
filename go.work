@@ -116,7 +116,3 @@ use (
 	./workflow/goworkflows
 	./workflow/temporal
 )
-
-replace github.com/liujitcn/kratos-kit/metrics v0.0.1 => ./metrics
-
-replace github.com/liujitcn/kratos-kit/oss/s3 v0.0.1 => ./oss/s3

@@ -3,11 +3,11 @@ module github.com/liujitcn/kratos-kit
 go 1.26.0
 
 require (
-	github.com/liujitcn/kratos-kit/cache v0.0.15
-	github.com/liujitcn/kratos-kit/database/gorm v0.0.31
-	github.com/liujitcn/kratos-kit/locker v0.0.12
-	github.com/liujitcn/kratos-kit/oss v0.0.13
-	github.com/liujitcn/kratos-kit/queue v0.0.21
+	github.com/liujitcn/kratos-kit/cache v0.0.16
+	github.com/liujitcn/kratos-kit/database/gorm v0.0.37
+	github.com/liujitcn/kratos-kit/locker v0.0.13
+	github.com/liujitcn/kratos-kit/oss v0.0.14
+	github.com/liujitcn/kratos-kit/queue v0.0.22
 )
 
 require (
@@ -16,6 +16,25 @@ require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.30.0 // indirect
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.43.2 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.15 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.32.33 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.32 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.33 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.37 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.33 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.33 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.34 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.14 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.26 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.33 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.34 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.106.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.5.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.33.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.45.2 // indirect
+	github.com/aws/smithy-go v1.27.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bsm/redislock v0.9.4 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -45,15 +64,16 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.11 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/liujitcn/go-utils v0.0.31 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.22 // indirect
-	github.com/liujitcn/kratos-kit/auth v0.0.20 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.19 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.15 // indirect
-	github.com/liujitcn/kratos-kit/auth/authz v0.0.18 // indirect
-	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.14 // indirect
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.15 // indirect
-	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.12 // indirect
-	github.com/liujitcn/kratos-kit/utils v0.0.16 // indirect
+	github.com/liujitcn/kratos-kit/api v0.0.23 // indirect
+	github.com/liujitcn/kratos-kit/auth v0.0.23 // indirect
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.21 // indirect
+	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.17 // indirect
+	github.com/liujitcn/kratos-kit/auth/authz v0.0.20 // indirect
+	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.16 // indirect
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.16 // indirect
+	github.com/liujitcn/kratos-kit/oss/s3 v0.0.1 // indirect
+	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.13 // indirect
+	github.com/liujitcn/kratos-kit/utils v0.0.17 // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/minio/minio-go/v7 v7.1.0 // indirect
