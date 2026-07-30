@@ -40,9 +40,9 @@ api:
 # 一键生成全部接口产物（Go 代码）
 gen: api fmt
 
-# 统一打 tag：默认扫描根目录及子目录的 go.mod；可通过 MODULE=auth 指定起始目录递归扫描（不提交代码）
+# 统一打 tag：默认递归扫描；MODULE 指定起始目录，EXACT=1 时仅处理该 module（不提交代码）
 tag:
-	@python3 scripts/tag_release.py $(if $(MODULE),--path $(MODULE),)
+	@python3 scripts/tag_release.py $(if $(MODULE),--path $(MODULE),) $(if $(EXACT),--exact,)
 
 # 显示帮助
 help:

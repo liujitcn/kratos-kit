@@ -76,6 +76,11 @@ func (s *ClusterRedis) Get(key string) (string, error) {
 	return s.client.Get(context.TODO(), key).Result()
 }
 
+// GetDel 使用 Redis GETDEL 原子读取并删除缓存值。
+func (s *ClusterRedis) GetDel(key string) (string, error) {
+	return s.client.GetDel(context.TODO(), key).Result()
+}
+
 func (s *ClusterRedis) Set(key, value string, expire time.Duration) error {
 	return s.client.Set(context.TODO(), key, value, expire).Err()
 }

@@ -61,13 +61,10 @@ func VerifyState(store cache.Cache, state string) (*StatePayload, error) {
 	if store == nil || state == "" {
 		return nil, provider.ErrInvalidState
 	}
-	value, err := store.Get(stateKey(state))
+	value, err := store.GetDel(stateKey(state))
 	if err != nil {
 		return nil, provider.ErrInvalidState
 	}
-	defer func() {
-		_ = store.Del(stateKey(state))
-	}()
 
 	var payload StatePayload
 	err = json.Unmarshal([]byte(value), &payload)

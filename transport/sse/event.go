@@ -17,8 +17,47 @@ type Event struct {
 	Comment   []byte
 }
 
+// EventMetaOption 设置 SSE 事件元数据。
+type EventMetaOption func(event *Event)
+
+// WithEventID 设置事件重连标识。
+func WithEventID(id string) EventMetaOption {
+	return func(event *Event) {
+		if id != "" {
+			event.ID = []byte(id)
+		}
+	}
+}
+
+// WithEventName 设置事件名称。
+func WithEventName(name string) EventMetaOption {
+	return func(event *Event) {
+		if name != "" {
+			event.Event = []byte(name)
+		}
+	}
+}
+
+// WithEventRetry 设置客户端重连间隔字段。
+func WithEventRetry(retry string) EventMetaOption {
+	return func(event *Event) {
+		if retry != "" {
+			event.Retry = []byte(retry)
+		}
+	}
+}
+
+// WithEventComment 设置事件注释。
+func WithEventComment(comment string) EventMetaOption {
+	return func(event *Event) {
+		if comment != "" {
+			event.Comment = []byte(comment)
+		}
+	}
+}
+
 func (e *Event) hasContent() bool {
-	return len(e.ID) > 0 || len(e.Data) > 0 || len(e.Event) > 0 || len(e.Retry) > 0
+	return len(e.ID) > 0 || len(e.Data) > 0 || len(e.Event) > 0 || len(e.Retry) > 0 || len(e.Comment) > 0
 }
 
 func (e *Event) encodeBase64() {

@@ -9,12 +9,14 @@ type StreamManager struct {
 	mtx     sync.RWMutex
 }
 
+// NewStreamManager 创建并初始化事件流管理器。
 func NewStreamManager() *StreamManager {
 	return &StreamManager{
 		streams: make(StreamMap),
 	}
 }
 
+// Clean 关闭并移除全部事件流。
 func (s *StreamManager) Clean() {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -25,50 +27,64 @@ func (s *StreamManager) Clean() {
 	s.streams = make(StreamMap)
 }
 
+// Count 返回当前事件流数量。
 func (s *StreamManager) Count() int {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
+	s.mtx.RLock()
+	defer s.mtx.RUnlock()
 
 	return len(s.streams)
 }
 
+// Get 返回指定事件流，不存在时返回 nil。
 func (s *StreamManager) Get(streamId StreamID) *Stream {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
+	s.mtx.RLock()
+	defer s.mtx.RUnlock()
 
 	c, _ := s.streams[streamId]
 	return c
 }
 
+// Exist 判断指定事件流是否存在。
 func (s *StreamManager) Exist(streamId StreamID) bool {
 	stream := s.Get(streamId)
 	return stream != nil
 }
 
+// Range 遍历调用时刻的事件流快照。
 func (s *StreamManager) Range(fn func(*Stream)) {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
+	s.mtx.RLock()
+	streams := make([]*Stream, 0, len(s.streams))
+	for _, stream := range s.streams {
+		streams = append(streams, stream)
+	}
+	s.mtx.RUnlock()
 
-	for _, v := range s.streams {
-		fn(v)
+	for _, stream := range streams {
+		fn(stream)
 	}
 }
 
-func (s *StreamManager) Add(stream *Stream) {
+// Add 添加事件流；同名流已存在时关闭传入实例并返回原实例。
+func (s *StreamManager) Add(stream *Stream) *Stream {
 	if stream == nil {
-		return
+		return nil
 	}
 
-	if s.Exist(stream.StreamID()) {
-		return
-	}
-
-	//LogInfo("add stream: ", stream.StreamID())
 	s.mtx.Lock()
-	defer s.mtx.Unlock()
-	s.streams[stream.StreamID()] = stream
+	existing := s.streams[stream.StreamID()]
+	if existing == nil {
+		s.streams[stream.StreamID()] = stream
+	}
+	s.mtx.Unlock()
+
+	if existing != nil {
+		stream.close()
+		return existing
+	}
+	return stream
 }
 
+// RemoveWithID 关闭并移除指定事件流。
 func (s *StreamManager) RemoveWithID(streamId StreamID) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -79,6 +95,7 @@ func (s *StreamManager) RemoveWithID(streamId StreamID) {
 	}
 }
 
+// Remove 关闭并移除指定事件流实例。
 func (s *StreamManager) Remove(stream *Stream) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()

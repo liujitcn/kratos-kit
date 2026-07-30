@@ -63,6 +63,22 @@ func (s *Memory) Get(key string) (string, error) {
 	return item.Value, nil
 }
 
+// GetDel 原子读取并删除缓存值。
+func (s *Memory) GetDel(key string) (string, error) {
+	s.strMutex.Lock()
+	defer s.strMutex.Unlock()
+
+	item, ok := s.strItems[key]
+	if !ok {
+		return "", errors.New("key not found")
+	}
+	delete(s.strItems, key)
+	if time.Now().After(item.Expired) {
+		return "", errors.New("key expired")
+	}
+	return item.Value, nil
+}
+
 func (s *Memory) Set(key, value string, expire time.Duration) error {
 	s.strMutex.Lock()
 	defer s.strMutex.Unlock()

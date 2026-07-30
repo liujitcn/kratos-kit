@@ -17,7 +17,7 @@ import (
 )
 
 // NewAuthMiddleware 创建统一鉴权中间件，并按白名单规则决定鉴权链路。
-func NewAuthMiddleware(authenticator authnEngine.Authenticator,
+func NewAuthMiddleware(authenticator authnEngine.RequestAuthenticator,
 	authorizer authzEngine.Engine,
 	userToken *data.UserToken, cfg *configv1.Authentication_Jwt) middleware.Middleware {
 	fullAuth := middleware.Chain(
@@ -63,10 +63,10 @@ func mapAuthnError(err error) error {
 }
 
 // OptionalServer 为白名单接口补充可选认证解析。
-func OptionalServer(authenticator authnEngine.Authenticator, userToken *data.UserToken) middleware.Middleware {
+func OptionalServer(authenticator authnEngine.RequestAuthenticator, userToken *data.UserToken) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			authnClaims, err := authenticator.Authenticate(ctx, authnEngine.ContextTypeKratosMetaData)
+			authnClaims, err := authenticator.Authenticate(ctx, authnEngine.ContextTypeKratosMetaData, req)
 			if err != nil || authnClaims == nil {
 				return handler(ctx, req)
 			}

@@ -1,6 +1,6 @@
 # kratos-kit/swagger-ui
 
-`swagger-ui` 提供可嵌入到 Go HTTP 服务中的 Swagger UI 页面，适用于标准 `net/http` 与 Kratos HTTP Server。
+`swagger-ui` 提供可嵌入到 Go HTTP 服务中的 Swagger UI、ReDoc 页面和原始 OpenAPI 文档 handler，适用于标准 `net/http` 与 Kratos HTTP Server。
 
 模块路径：`github.com/liujitcn/kratos-kit/swagger-ui`
 
@@ -69,6 +69,25 @@ swaggerUI.RegisterOpenAPIServerWithOption(
 ```
 
 未设置 `WithOpenAPIAuthorizer` 或校验返回 `false` 时，接口返回 `401`；该注册方式不会创建 `/docs/` 或 `/docs/openapi.*` 路由。
+
+### 6. `NewRedocHandler` / `RegisterRedocServer`
+
+ReDoc 支持远程 URL、本地文件和内存数据三种文档来源，并与 Swagger UI 复用同一 module：
+
+```go
+handler, err := swaggerUI.RegisterRedocServer(
+	srv,
+	swaggerUI.WithRedocTitle("My API"),
+	swaggerUI.WithRedocBasePath("/redoc/"),
+	swaggerUI.WithRedocMemoryData(openapiBytes, "yaml"),
+	swaggerUI.WithRedocAuthorizer(func(r *http.Request) bool {
+		return validateAccessToken(r)
+	}),
+)
+```
+
+`NewRedocHandler` 返回普通 `http.Handler`，可直接挂到 `net/http`；`RegisterRedocServer`
+会按 `BasePath` 挂载到 Kratos HTTP Server。构造时必须且只能配置一个 OpenAPI 来源。
 
 ## Option 说明
 

@@ -32,7 +32,7 @@ func NewAuthenticator(opts ...Option) (engine.Authenticator, error) {
 }
 
 // Authenticate authenticates the token string and returns the claims.
-func (a *Authenticator) Authenticate(ctx context.Context, contextType engine.ContextType) (*engine.AuthClaims, error) {
+func (a *Authenticator) Authenticate(ctx context.Context, contextType engine.ContextType, _ any) (*engine.AuthClaims, error) {
 	tokenString, err := engine.AuthFromMD(ctx, engine.BearerWord, contextType)
 	if err != nil {
 		return nil, engine.ErrMissingBearerToken
@@ -67,7 +67,7 @@ func (a *Authenticator) AuthenticateToken(tokenString string) (*engine.AuthClaim
 }
 
 // CreateIdentityWithContext creates a signed token string from the claims and sets it to the context.
-func (a *Authenticator) CreateIdentityWithContext(ctx context.Context, contextType engine.ContextType, claims engine.AuthClaims) (context.Context, error) {
+func (a *Authenticator) CreateIdentityWithContext(ctx context.Context, contextType engine.ContextType, claims engine.AuthClaims, _ any) (context.Context, error) {
 	strToken, err := a.CreateIdentity(claims)
 	if err != nil {
 		return ctx, err

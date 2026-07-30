@@ -14,7 +14,7 @@ import (
 
 type UserToken struct {
 	cache         cache.Cache
-	authenticator authnEngine.Authenticator
+	authenticator authnEngine.IdentityCreator
 
 	accessTokenKeyPrefix  string
 	refreshTokenKeyPrefix string
@@ -25,7 +25,7 @@ type UserToken struct {
 
 func NewUserToken(
 	cache cache.Cache,
-	authenticator authnEngine.Authenticator,
+	authenticator authnEngine.IdentityCreator,
 	accessTokenKeyPrefix,
 	refreshTokenKeyPrefix string,
 	accessTokenExpires,

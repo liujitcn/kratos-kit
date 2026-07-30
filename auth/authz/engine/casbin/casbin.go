@@ -2,6 +2,7 @@ package casbin
 
 import (
 	"context"
+	"sync"
 
 	"github.com/go-kratos/kratos/v3/log"
 
@@ -28,8 +29,12 @@ func init() {
 }
 
 var _ engine.Engine = (*State)(nil)
+var _ engine.PolicyWriter = (*State)(nil)
 
+// State 保存 Casbin 模型、策略执行器和项目策略快照。
 type State struct {
+	policyMu sync.RWMutex
+
 	model    model.Model
 	policy   *Adapter
 	enforcer *stdCasbin.SyncedEnforcer
@@ -99,6 +104,7 @@ func (s *State) ProjectsAuthorized(ctx context.Context, subjects engine.Subjects
 				return nil, err
 			} else if allowed {
 				result = append(result, project)
+				break
 			}
 		}
 	}
@@ -122,6 +128,7 @@ func (s *State) FilterAuthorizedPairs(ctx context.Context, subjects engine.Subje
 				return nil, err
 			} else if allowed {
 				result = append(result, p)
+				break
 			}
 		}
 	}
@@ -130,7 +137,10 @@ func (s *State) FilterAuthorizedPairs(ctx context.Context, subjects engine.Subje
 
 // FilterAuthorizedProjects 过滤出主体具备访问权限的项目列表。
 func (s *State) FilterAuthorizedProjects(ctx context.Context, subjects engine.Subjects) (engine.Projects, error) {
-	result := make(engine.Projects, 0, len(s.projects))
+	s.policyMu.RLock()
+	projects := append(engine.Projects(nil), s.projects...)
+	s.policyMu.RUnlock()
+	result := make(engine.Projects, 0, len(projects))
 
 	tenant := tenantFromContext(ctx)
 	resource := engine.Resource(s.wildcardItem)
@@ -138,13 +148,14 @@ func (s *State) FilterAuthorizedProjects(ctx context.Context, subjects engine.Su
 
 	var err error
 	var allowed bool
-	for _, project := range s.projects {
+	for _, project := range projects {
 		for _, subject := range subjects {
 			if allowed, err = s.enforcer.EnforceWithMatcher(s.authorizedProjectsMatcher, string(tenant), string(subject), string(resource), string(action), string(project)); err != nil {
 				log.Error("casbin.authz.engine: failed to enforce policy with matcher", "error", err)
 				return nil, err
 			} else if allowed {
 				result = append(result, project)
+				break
 			}
 		}
 	}
@@ -174,9 +185,14 @@ func (s *State) IsAuthorized(ctx context.Context, subject engine.Subject, action
 
 // SetPolicies 更新策略并重新加载到 Casbin 执行器中。
 func (s *State) SetPolicies(_ context.Context, policyMap engine.PolicyMap, _ engine.RoleMap) error {
+	s.policyMu.Lock()
+	defer s.policyMu.Unlock()
+
 	s.policy.SetPolicies(policyMap)
 
-	if err := s.enforcer.LoadPolicy(); err != nil {
+	var err error
+	err = s.enforcer.LoadPolicy()
+	if err != nil {
 		log.Error("casbin.authz.engine: failed to load policy", "error", err)
 		return err
 	}
@@ -187,7 +203,7 @@ func (s *State) SetPolicies(_ context.Context, policyMap engine.PolicyMap, _ eng
 	if ok {
 		switch t := projects.(type) {
 		case engine.Projects:
-			s.projects = t
+			s.projects = append(engine.Projects(nil), t...)
 		}
 	}
 

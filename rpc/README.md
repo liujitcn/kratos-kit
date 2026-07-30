@@ -533,36 +533,56 @@ HTTP 与 gRPC 服务端支持以下开关（位于 `configv1.Server.Middleware`�
 - `enable_metadata` -> `metadata.Server()`
 - `limiter.name == "bbr"` -> `ratelimit`（BBR）
 
-gRPC 客户端支持以下开关（位于 `configv1.Client.Middleware`）：
+HTTP 与 gRPC 客户端支持以下开关（位于 `configv1.Client.Middleware`）：
 
 - `enable_recovery` -> `recovery.Recovery()`
 - `enable_tracing` -> `tracing.Client()`
 - `enable_metadata` -> `metadata.Client()`
+- `enable_circuit_breaker` -> Kratos v3 `circuitbreaker.Client()`
 
-说明：`enable_circuit_breaker` 字段目前在 `rpc` 包中尚未落地具体实现。
+服务端旧字段 `enable_circuit_breaker` 已废弃。Kratos v3 的熔断中间件用于
+客户端下游调用，不装配在 HTTP 或 gRPC 服务端。
+
+`server.grpc.custom_health` 为 `false` 时由 Kratos 注册并维护标准 gRPC
+health service；设为 `true` 时调用 `grpc.CustomHealth()`，由业务自行注册
+健康服务。
 
 ## validate 中间件
 
-`rpc/middleware/validate` 提供：
+`rpc` 不再维护重复的 validate 中间件。服务端开启 `enable_validate` 时，
+`rpc/server_middleware.go` 会使用 Kratos v3 的统一入口：
 
 ```go
-func ProtoValidate() middleware.Middleware
+validate.Validator(func(value any) error {
+    message, ok := value.(proto.Message)
+    if !ok {
+        return nil
+    }
+    return protovalidate.Validate(message)
+})
 ```
 
 校验逻辑：
 
 - 若请求实现 `proto.Message`，使用 `protovalidate.Validate` 校验。
-- 同时兼容旧式 `Validate() error` 接口。
-- 校验失败返回 `errors.BadRequest("VALIDATOR", err.Error())`。
+- Kratos `middleware/validate.Validator` 同时兼容旧式 `Validate() error` 接口。
+- Kratos 统一把校验错误转换为 `errors.BadRequest("VALIDATOR", err.Error())` 并保留 cause。
 
 ## requestid 中间件
 
 `rpc/middleware/requestid` 提供：
 
+- `Server(opts ...RequestIDOption) middleware.Middleware`
+- `Client(opts ...RequestIDOption) middleware.Middleware`
+- `WithRequestID(ctx context.Context, requestID string) context.Context`
+- `FromContext(ctx context.Context) string`
 - `NewRequestIDMiddleware(opts ...RequestIDOption) middleware.Middleware`
 - `GetRequestID(ctx context.Context) string`
 - `WithRequestIDHeader(name string)`
 - `WithRequestIDGenerator(f func() string)`
+
+`NewRequestIDMiddleware` 和 `GetRequestID` 仅保留旧调用兼容；新代码使用
+`Server` / `Client` 与 `FromContext`。
 
 行为说明：
 

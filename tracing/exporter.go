@@ -53,6 +53,9 @@ func NewZipkinExporter(_ context.Context, endpoint string) (traceSdk.SpanExporte
 
 // NewOtlpHttpExporter 创建OTLP/HTTP导出器，默认端口：4318
 func NewOtlpHttpExporter(ctx context.Context, endpoint string, insecure bool, options ...otlptracehttp.Option) (traceSdk.SpanExporter, error) {
+	if endpoint == "" {
+		endpoint = "localhost:4318"
+	}
 	var opts []otlptracehttp.Option
 	opts = append(opts, otlptracehttp.WithEndpoint(endpoint))
 
@@ -70,6 +73,9 @@ func NewOtlpHttpExporter(ctx context.Context, endpoint string, insecure bool, op
 
 // NewOtlpGrpcExporter 创建OTLP/gRPC导出器，默认端口：4317
 func NewOtlpGrpcExporter(ctx context.Context, endpoint string, insecure bool, options ...otlptracegrpc.Option) (traceSdk.SpanExporter, error) {
+	if endpoint == "" {
+		endpoint = "localhost:4317"
+	}
 	var opts []otlptracegrpc.Option
 	opts = append(opts, otlptracegrpc.WithEndpoint(endpoint))
 

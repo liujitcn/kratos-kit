@@ -13,6 +13,7 @@ func init() {
 }
 
 var _ engine.Engine = (*State)(nil)
+var _ engine.PolicyWriter = (*State)(nil)
 
 type State struct{}
 

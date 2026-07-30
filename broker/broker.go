@@ -2,7 +2,13 @@ package broker
 
 import (
 	"context"
+	"errors"
 	"fmt"
+)
+
+var (
+	// ErrRequestUnsupported 表示消息后端不支持请求响应语义。
+	ErrRequestUnsupported = errors.New("broker: request is unsupported")
 )
 
 // Broker defines the message broker interface
@@ -33,6 +39,14 @@ type Broker interface {
 
 	// Request sends a request message and waits for a response
 	Request(ctx context.Context, topic string, msg *Message, opts ...RequestOption) (*Message, error)
+}
+
+// UnsupportedRequester 为不支持请求响应的消息后端提供统一实现。
+type UnsupportedRequester struct{}
+
+// Request 返回可通过 errors.Is 判断的统一不支持错误。
+func (UnsupportedRequester) Request(_ context.Context, topic string, _ *Message, _ ...RequestOption) (*Message, error) {
+	return nil, fmt.Errorf("%w: %s", ErrRequestUnsupported, topic)
 }
 
 // Subscribe is a helper function to subscribe to a topic with a typed handler

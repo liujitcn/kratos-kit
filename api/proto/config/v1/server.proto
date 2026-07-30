@@ -38,8 +38,8 @@ message Server {
     bool enable_validate = 4;
     // enable_metadata 表示是否启用元数据中间件。
     bool enable_metadata = 5;
-    // enable_circuit_breaker 表示是否启用熔断器。
-    bool enable_circuit_breaker = 6;
+    // enable_circuit_breaker 已废弃；Kratos v3 仅提供客户端熔断器。
+    bool enable_circuit_breaker = 6 [deprecated = true];
 
     // limiter 为限流器配置。
     RateLimiter limiter = 10;
@@ -57,6 +57,12 @@ message Server {
       repeated string methods = 2;
       // origins 为允许的请求来源列表。
       repeated string origins = 3;
+      // exposed_headers 为允许浏览器读取的响应头列表。
+      repeated string exposed_headers = 4;
+      // allow_credentials 表示是否允许携带 Cookie 或认证信息。
+      bool allow_credentials = 5;
+      // max_age_seconds 为浏览器缓存预检响应的秒数。
+      int32 max_age_seconds = 6;
     }
 
     // network 为监听网络类型。

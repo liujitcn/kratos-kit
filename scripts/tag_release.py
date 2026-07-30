@@ -149,7 +149,13 @@ def normalize_module_dir(module_dir: str) -> str:
     return clean
 
 
-def resolve_target_dirs(module_path: str | None) -> list[str]:
+def resolve_target_dirs(module_path: str | None, exact: bool = False) -> list[str]:
+    if exact:
+        target = normalize_module_dir(module_path or ".")
+        if not (Path(target) / "go.mod").is_file():
+            raise RuntimeError(f"目录不存在 go.mod: {target}")
+        return [target]
+
     if not module_path:
         return module_dirs(".")
 
@@ -167,13 +173,18 @@ def main() -> int:
         dest="module_path",
         help="从指定相对目录开始递归检查 go.mod（包含当前目录与子目录）",
     )
+    parser.add_argument(
+        "--exact",
+        action="store_true",
+        help="仅处理 --path 指定的 module，不递归处理子 module",
+    )
     args = parser.parse_args()
 
     try:
         run(["git", "fetch", "origin", "--tags"])
         remote_ref = detect_remote_ref()
         print(f"远程分支引用: {remote_ref}")
-        targets = resolve_target_dirs(args.module_path)
+        targets = resolve_target_dirs(args.module_path, args.exact)
 
         pushed = False
         for d in targets:

@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	// KindCron 表示 Cron 虚拟传输类型。
 	KindCron = "cron"
 )
 

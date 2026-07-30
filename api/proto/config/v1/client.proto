@@ -33,6 +33,8 @@ message Client {
     bool enable_tracing = 3;
     // enable_metadata 表示是否启用元数据中间件。
     bool enable_metadata = 4;
+    // enable_circuit_breaker 表示是否启用 Kratos 客户端熔断器。
+    bool enable_circuit_breaker = 5;
 
     // auth 为 JWT 认证中间件配置。
     Auth auth = 10;

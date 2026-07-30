@@ -8,22 +8,17 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v3/selector"
-	"github.com/liujitcn/kratos-kit/auth/authn/engine/jwt"
-	authnMiddleware "github.com/liujitcn/kratos-kit/auth/authn/middleware"
 	"github.com/liujitcn/kratos-kit/rpc/middleware/requestid"
 	kitTracing "github.com/liujitcn/kratos-kit/tracing"
 	"github.com/liujitcn/kratos-kit/utils"
 	"google.golang.org/grpc"
 
-	"github.com/go-kratos/kratos/v3/log"
 	"github.com/go-kratos/kratos/v3/registry"
 
 	"github.com/go-kratos/kratos/v3/middleware"
 	"github.com/go-kratos/kratos/v3/middleware/metadata"
 	midRateLimit "github.com/go-kratos/kratos/v3/middleware/ratelimit"
 	"github.com/go-kratos/kratos/v3/middleware/recovery"
-
-	"github.com/liujitcn/kratos-kit/rpc/middleware/validate"
 
 	kratosGrpc "github.com/go-kratos/kratos/v3/transport/grpc"
 
@@ -66,6 +61,7 @@ func CreateGrpcClient(ctx context.Context, r registry.Discovery, serviceName str
 	return conn, nil
 }
 
+// initGrpcClientConfig 根据配置组装 Kratos gRPC 客户端选项。
 func initGrpcClientConfig(cfg *configv1.Bootstrap, options []kratosGrpc.ClientOption, mds ...middleware.Middleware) ([]kratosGrpc.ClientOption, error) {
 	if cfg == nil || cfg.Client == nil || cfg.Client.Grpc == nil {
 		return options, nil
@@ -79,31 +75,13 @@ func initGrpcClientConfig(cfg *configv1.Bootstrap, options []kratosGrpc.ClientOp
 	}
 	options = append(options, kratosGrpc.WithTimeout(timeout))
 
-	if mds == nil {
-		mds = make([]middleware.Middleware, 0)
-	}
 	middlewareCfg := grpcCfg.Middleware
+	var err error
+	mds, err = appendClientMiddlewares(middlewareCfg, mds)
+	if err != nil {
+		return nil, err
+	}
 	if middlewareCfg != nil {
-		if middlewareCfg.GetEnableRecovery() {
-			mds = append(mds, recovery.Recovery())
-		}
-		if middlewareCfg.GetEnableTracing() {
-			mds = append(mds, kitTracing.Client())
-		}
-		if middlewareCfg.GetEnableMetadata() {
-			mds = append(mds, metadata.Client())
-		}
-		authCfg := middlewareCfg.GetAuth()
-		if authCfg != nil {
-			authenticator, err := jwt.NewAuthenticator(
-				jwt.WithKey([]byte(authCfg.GetSecret())),
-				jwt.WithSigningMethod(authCfg.GetMethod()),
-			)
-			if err != nil {
-				log.Error("create jwt authenticator failed", "method", authCfg.GetMethod(), "error", err)
-			}
-			mds = append(mds, authnMiddleware.Client(authenticator))
-		}
 		selectorFilterCfg := middlewareCfg.GetSelectorFilter()
 		if selectorFilterCfg != nil {
 			// 负载均衡过滤器
@@ -128,7 +106,6 @@ func initGrpcClientConfig(cfg *configv1.Bootstrap, options []kratosGrpc.ClientOp
 
 	if grpcCfg.Tls != nil {
 		var tlsCfg *tls.Config
-		var err error
 
 		if tlsCfg, err = utils.LoadClientTlsConfig(grpcCfg.Tls); err != nil {
 			return nil, err
@@ -154,6 +131,7 @@ func CreateGrpcServer(cfg *configv1.Bootstrap, mds ...middleware.Middleware) (*k
 	return srv, nil
 }
 
+// initGrpcServerConfig 根据配置组装 Kratos gRPC 服务端选项。
 func initGrpcServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware) ([]kratosGrpc.ServerOption, error) {
 	if cfg == nil || cfg.Server == nil || cfg.Server.Grpc == nil {
 		return nil, nil
@@ -170,6 +148,7 @@ func initGrpcServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 	middlewareCfg := grpcCfg.Middleware
 
 	if middlewareCfg != nil {
+		mds = append([]middleware.Middleware{requestid.Server()}, mds...)
 		if middlewareCfg.GetEnableRecovery() {
 			mds = append(mds, recovery.Recovery())
 		}
@@ -177,9 +156,7 @@ func initGrpcServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 			mds = append(mds, kitTracing.Server())
 		}
 		if middlewareCfg.GetEnableValidate() {
-			mds = append(mds, validate.ProtoValidate())
-		}
-		if middlewareCfg.GetEnableCircuitBreaker() {
+			mds = append(mds, protoValidateMiddleware())
 		}
 		if middlewareCfg.Limiter != nil {
 			mds = append(mds, midRateLimit.Server())
@@ -187,10 +164,12 @@ func initGrpcServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 		if middlewareCfg.GetEnableMetadata() {
 			mds = append(mds, metadata.Server())
 		}
-		mds = append(mds, requestid.NewRequestIDMiddleware())
 	}
 
 	options = append(options, kratosGrpc.Middleware(mds...))
+	if grpcCfg.GetCustomHealth() {
+		options = append(options, kratosGrpc.CustomHealth())
+	}
 
 	if grpcCfg.Tls != nil {
 		var tlsCfg *tls.Config

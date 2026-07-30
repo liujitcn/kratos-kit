@@ -8,26 +8,35 @@
 
 当前依赖基线为 `github.com/go-kratos/kratos/v3 v3.0.0`，日志接口已迁移到 Kratos v3 的 `log/slog` 体系。
 
+与 `tx7do/go-wind-plugins` 的最终同步范围、Kratos v3 去重依据和源码位置见
+[go-wind-plugins 同步最终说明](UPSTREAM_SYNC.md)。
+
 - `api`：protobuf 定义与代码生成（`buf generate`）
 - `bootstrap`：应用启动入口（配置加载 + 日志 + 注册中心 + tracer + `kratos.App`）
-- `config`：本地/远程配置加载与工厂注册
+- `config`：本地/远程配置加载与工厂注册；额外提供直接实现 Kratos `config.Source` 的文件、HTTP、Redis、Vault、ZooKeeper 和 S3 配置源
 - `logger`：日志工厂（`std`/`zap`/`logrus`/`fluent`/`aliyun`/`tencent`/`zerolog`）
 - `registry`：注册发现工厂（`consul`/`etcd`/`eureka`/`kubernetes`/`nacos`/`polaris`/`servicecomb`/`zookeeper`）
 - `tracer`：OpenTelemetry TracerProvider 与 exporter 工厂（`std`/`zipkin`/`otlp-http`/`otlp-grpc`）
 - `tracing`：OpenTelemetry 追踪适配层
 - `ai`：AI 客户端与编排封装（含 `model`、`eino`、`langchaingo` 子模块）
-- `auth`：认证与鉴权封装（含 `authn`/`authz`、engine、middleware 子模块）
+- `auth`：认证与鉴权封装；认证支持 API Key、Basic、HMAC、JWT、mTLS、OAuth2、OIDC、Session，鉴权支持 Casbin、OPA、Cerbos 和 Zanzibar 适配端口
 - `oauth`：第三方 OAuth SDK 封装（直接使用 `api` 下 OAuth 配置，支持 GitHub、Gitee、Google、微信开放平台、微信公众号、微信小程序、企业微信、钉钉、飞书；闭环支持 state、PKCE、授权地址、code 换 token、用户信息，不包含业务登录态）
 - `cache`：内存/Redis 缓存封装
+- `circuitbreaker`：Kratos 客户端请求级熔断适配及 Hystrix、Vegas、Sentinel 实现
 - `queue`：内存/Redis 队列封装
 - `locker`：Redis 分布式锁封装
-- `oss`：本地/FTP/MinIO/阿里云 OSS 封装
+- `oss`：本地/FTP/MinIO/阿里云 OSS/AWS S3 及兼容对象存储封装
 - [`database/gorm`](database/gorm/README.md)：GORM 客户端封装，提供多数据库 driver、连接池、迁移与可观测性，并内置审计字段填充、租户隔离和角色数据范围过滤；版本化迁移仅在脚本全部成功后记录，失败会记录错误并阻止应用启动
 - `database/ent`：Ent 底层数据库 driver 封装（含 `mysql`/`postgres`/`sqlite` driver 子模块，支持连接池配置、debug SQL 日志、迁移回调、表/字段注释与审计字段 mixin）
-- `broker`：消息发布订阅与 typed handler 封装
+- `broker`：消息发布订阅与 typed handler 封装，通用 `TransportServer` 可把任意 broker 接入 Kratos 应用生命周期；`broker/nats` 通过共享实现支持 Core NATS、JetStream、队列订阅、请求响应和消息追踪
 - `workflow`：工作流引擎封装（含 `argo`、`conductor`、`goworkflows`、`temporal` 子模块），公共包只定义跨引擎一致的 `Client`/`Worker` 生命周期接口
 - `transport`：通用传输辅助（含 `keepalive`、`mcp`、`sse` 子模块）
 - `rpc`：Kratos HTTP、gRPC、MCP、SSE 服务端与客户端配置封装；MCP/SSE 各模式配置与创建方法见 [rpc/README.md](rpc/README.md)
+- `encoding`：直接适配 Kratos 的额外 codec（`avro`/`bson`/`cbor`/`flatbuffers`/`gob`/`thrift`/`toml`）；`msgpack`/`xml`/`yaml` 使用 Kratos v3 自带实现
+- `health`：应用级 readiness 检查聚合与 HTTP handler
+- `metrics`：Prometheus、OpenTelemetry OTLP、Datadog 指标适配
+- `retry`：支持 context、退避和抖动的通用重试
+- `ratelimit`：可注入 Kratos 服务端中间件的 Sentinel 和令牌桶限流器
 - `swagger-ui`：Swagger UI 嵌入与路由注册封装（支持 `net/http` 与 Kratos）
 - `pprof`：性能采样封装（当前支持 `pyroscope`）
 - `captcha`：验证码生成与存储封装
@@ -56,6 +65,26 @@ go get github.com/liujitcn/kratos-kit/tracer@latest
 go get github.com/liujitcn/kratos-kit/transport/mcp@latest
 go get github.com/liujitcn/kratos-kit/transport/sse@latest
 go get github.com/liujitcn/kratos-kit/rpc@latest
+go get github.com/liujitcn/kratos-kit/config/redis@latest
+go get github.com/liujitcn/kratos-kit/config/vault@latest
+go get github.com/liujitcn/kratos-kit/config/zookeeper@latest
+go get github.com/liujitcn/kratos-kit/config/oss@latest
+go get github.com/liujitcn/kratos-kit/encoding/avro@latest
+go get github.com/liujitcn/kratos-kit/encoding/bson@latest
+go get github.com/liujitcn/kratos-kit/encoding/cbor@latest
+go get github.com/liujitcn/kratos-kit/encoding/flatbuffers@latest
+go get github.com/liujitcn/kratos-kit/encoding/thrift@latest
+go get github.com/liujitcn/kratos-kit/health@latest
+go get github.com/liujitcn/kratos-kit/metrics/prometheus@latest
+go get github.com/liujitcn/kratos-kit/retry@latest
+go get github.com/liujitcn/kratos-kit/ratelimit/sentinel@latest
+go get github.com/liujitcn/kratos-kit/ratelimit/tokenbucket@latest
+go get github.com/liujitcn/kratos-kit/oss/s3@latest
+go get github.com/liujitcn/kratos-kit/auth/authn/engine/apikey@latest
+go get github.com/liujitcn/kratos-kit/auth/authn/engine/oidc@latest
+go get github.com/liujitcn/kratos-kit/auth/authz/engine/opa@latest
+go get github.com/liujitcn/kratos-kit/auth/authz/engine/cerbos@latest
+go get github.com/liujitcn/kratos-kit/broker/nats@latest
 go get github.com/liujitcn/kratos-kit/swagger-ui@latest
 go get github.com/liujitcn/kratos-kit/pprof@latest
 go get github.com/liujitcn/kratos-kit/oauth@latest
@@ -171,7 +200,10 @@ app-info 字段的优先级为：启动参数 → 传入的 `*configv1.AppInfo` 
 2. 若存在 `${configPath}/config.yaml`，先读取其中 `config.type`，再创建对应远程配置源并合并加载。
 3. 扫描 `configv1.Bootstrap` 及已注册的自定义配置结构。
 
-远程配置源类型由 `config.type` 决定，可选值见 `config/types.go`：`apollo`/`consul`/`etcd`/`kubernetes`/`nacos`/`polaris`。
+引导配置工厂支持的远程配置源类型由 `config.type` 决定，可选值见
+`config/types.go`：`apollo`/`consul`/`etcd`/`kubernetes`/`nacos`/`polaris`。
+独立模块 `config/fs`、`config/http`、`config/redis`、`config/vault`、
+`config/zookeeper`、`config/oss` 可直接作为 Kratos `config.Source` 使用。
 
 ## AI 配置
 

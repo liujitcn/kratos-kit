@@ -7,13 +7,12 @@
 package configv1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -164,6 +163,8 @@ type Client_Middleware struct {
 	EnableTracing bool `protobuf:"varint,3,opt,name=enable_tracing,json=enableTracing,proto3" json:"enable_tracing,omitempty"`
 	// enable_metadata 表示是否启用元数据中间件。
 	EnableMetadata bool `protobuf:"varint,4,opt,name=enable_metadata,json=enableMetadata,proto3" json:"enable_metadata,omitempty"`
+	// enable_circuit_breaker 表示是否启用 Kratos 客户端熔断器。
+	EnableCircuitBreaker bool `protobuf:"varint,5,opt,name=enable_circuit_breaker,json=enableCircuitBreaker,proto3" json:"enable_circuit_breaker,omitempty"`
 	// auth 为 JWT 认证中间件配置。
 	Auth *Client_Middleware_Auth `protobuf:"bytes,10,opt,name=auth,proto3" json:"auth,omitempty"`
 	// selector_filter 为负载均衡过滤器配置。
@@ -226,6 +227,13 @@ func (x *Client_Middleware) GetEnableTracing() bool {
 func (x *Client_Middleware) GetEnableMetadata() bool {
 	if x != nil {
 		return x.EnableMetadata
+	}
+	return false
+}
+
+func (x *Client_Middleware) GetEnableCircuitBreaker() bool {
+	if x != nil {
+		return x.EnableCircuitBreaker
 	}
 	return false
 }
@@ -878,18 +886,19 @@ var File_config_v1_client_proto protoreflect.FileDescriptor
 
 const file_config_v1_client_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/client.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\"\xc7\x13\n" +
+	"\x16config/v1/client.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\"\xfd\x13\n" +
 	"\x06Client\x12/\n" +
 	"\x04http\x18\x01 \x01(\v2\x16.config.v1.Client.HttpH\x00R\x04http\x88\x01\x01\x12/\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x16.config.v1.Client.GrpcH\x01R\x04grpc\x88\x01\x01\x12,\n" +
 	"\x03mcp\x18\x03 \x01(\v2\x15.config.v1.Client.McpH\x02R\x03mcp\x88\x01\x01\x12,\n" +
-	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Client.SseH\x03R\x03sse\x88\x01\x01\x1a\xc6\x03\n" +
+	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Client.SseH\x03R\x03sse\x88\x01\x01\x1a\xfc\x03\n" +
 	"\n" +
 	"Middleware\x12%\n" +
 	"\x0eenable_logging\x18\x01 \x01(\bR\renableLogging\x12'\n" +
 	"\x0fenable_recovery\x18\x02 \x01(\bR\x0eenableRecovery\x12%\n" +
 	"\x0eenable_tracing\x18\x03 \x01(\bR\renableTracing\x12'\n" +
-	"\x0fenable_metadata\x18\x04 \x01(\bR\x0eenableMetadata\x125\n" +
+	"\x0fenable_metadata\x18\x04 \x01(\bR\x0eenableMetadata\x124\n" +
+	"\x16enable_circuit_breaker\x18\x05 \x01(\bR\x14enableCircuitBreaker\x125\n" +
 	"\x04auth\x18\n" +
 	" \x01(\v2!.config.v1.Client.Middleware.AuthR\x04auth\x12T\n" +
 	"\x0fselector_filter\x18\v \x01(\v2+.config.v1.Client.Middleware.SelectorFilterR\x0eselectorFilter\x1a6\n" +

@@ -9,6 +9,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/liujitcn/go-utils v0.0.31
 	github.com/liujitcn/kratos-kit/api v0.0.22
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.19
 	github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.14
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.15
 	github.com/liujitcn/kratos-kit/tracing v0.0.7
@@ -39,7 +40,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.19 // indirect
 	github.com/liujitcn/kratos-kit/broker v0.0.7 // indirect
 	github.com/liujitcn/kratos-kit/transport v0.0.20 // indirect
 	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.9 // indirect

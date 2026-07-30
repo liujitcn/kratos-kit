@@ -52,13 +52,16 @@ type Server struct {
 	eventTTL   time.Duration
 	bufferSize int
 
-	encodeBase64 bool
-	splitData    bool
-	autoStream   bool
-	autoReplay   bool
+	encodeBase64    bool
+	splitData       bool
+	autoStream      bool
+	autoReplay      bool
+	corsAllowOrigin string
 
 	subscribeFunc   SubscriberFunction
 	unsubscribeFunc SubscriberFunction
+	authorizeFunc   AuthorizeFunc
+	tokenExtractor  TokenExtractor
 
 	streamMgr *StreamManager
 }
@@ -84,9 +87,11 @@ func newServer(opts ...ServerOption) *Server {
 		bufferSize:   DefaultBufferSize,
 		encodeBase64: false,
 
-		autoStream: false,
-		autoReplay: true,
-		headers:    map[string]string{},
+		autoStream:      false,
+		autoReplay:      true,
+		corsAllowOrigin: "*",
+		headers:         map[string]string{},
+		tokenExtractor:  DefaultTokenExtractor,
 
 		streamMgr: NewStreamManager(),
 	}
@@ -223,6 +228,7 @@ func (s *Server) listen() error {
 	return nil
 }
 
+// Publish 向指定流发布事件。
 func (s *Server) Publish(_ context.Context, streamId StreamID, event *Event) {
 	stream := s.streamMgr.Get(streamId)
 	if stream == nil {
@@ -235,6 +241,7 @@ func (s *Server) Publish(_ context.Context, streamId StreamID, event *Event) {
 	}
 }
 
+// TryPublish 尝试向指定流非阻塞发布事件。
 func (s *Server) TryPublish(_ context.Context, streamId StreamID, event *Event) bool {
 	stream := s.streamMgr.Get(streamId)
 	if stream == nil {
@@ -242,6 +249,8 @@ func (s *Server) TryPublish(_ context.Context, streamId StreamID, event *Event) 
 	}
 
 	select {
+	case <-stream.quit:
+		return false
 	case stream.event <- s.process(event):
 		return true
 	default:
@@ -249,22 +258,35 @@ func (s *Server) TryPublish(_ context.Context, streamId StreamID, event *Event) 
 	}
 }
 
+// PublishData 编码数据并发布到指定流。
 func (s *Server) PublishData(ctx context.Context, streamId StreamID, data MessagePayload) error {
-	event := &Event{}
-
-	if data != nil {
-		var err error
-		event.Data, err = broker.Marshal(s.codec, data)
-		if err != nil {
-			return err
-		}
+	event, err := s.marshalEvent(data)
+	if err != nil {
+		return err
 	}
-
 	s.Publish(ctx, streamId, event)
-
 	return nil
 }
 
+// PublishDataWithEventName 编码数据、设置事件名称并发布到指定流。
+func (s *Server) PublishDataWithEventName(ctx context.Context, streamId StreamID, eventName string, data MessagePayload) error {
+	return s.PublishDataWithMeta(ctx, streamId, data, WithEventName(eventName))
+}
+
+// PublishDataWithMeta 编码数据、设置事件元数据并发布到指定流。
+func (s *Server) PublishDataWithMeta(ctx context.Context, streamId StreamID, data MessagePayload, opts ...EventMetaOption) error {
+	event, err := s.marshalEvent(data)
+	if err != nil {
+		return err
+	}
+	for _, opt := range opts {
+		opt(event)
+	}
+	s.Publish(ctx, streamId, event)
+	return nil
+}
+
+// Notify 向所有流广播事件。
 func (s *Server) Notify(_ context.Context, event *Event) {
 	s.streamMgr.Range(func(stream *Stream) {
 		if stream == nil {
@@ -278,40 +300,42 @@ func (s *Server) Notify(_ context.Context, event *Event) {
 	})
 }
 
-func (s *Server) NotifyData(_ context.Context, data MessagePayload) error {
-	event := &Event{}
-
-	if data != nil {
-		var err error
-		event.Data, err = broker.Marshal(s.codec, data)
-		if err != nil {
-			return err
-		}
+// NotifyData 编码数据并向所有流广播。
+func (s *Server) NotifyData(ctx context.Context, data MessagePayload) error {
+	event, err := s.marshalEvent(data)
+	if err != nil {
+		return err
 	}
-
-	s.streamMgr.Range(func(stream *Stream) {
-		if stream == nil {
-			return
-		}
-
-		select {
-		case <-stream.quit:
-		case stream.event <- s.process(event):
-		}
-	})
-
+	s.Notify(ctx, event)
 	return nil
 }
 
-func (s *Server) run() {
+// NotifyDataWithEventName 编码数据、设置事件名称并向所有流广播。
+func (s *Server) NotifyDataWithEventName(ctx context.Context, eventName string, data MessagePayload) error {
+	return s.NotifyDataWithMeta(ctx, data, WithEventName(eventName))
 }
 
+// NotifyDataWithMeta 编码数据、设置事件元数据并向所有流广播。
+func (s *Server) NotifyDataWithMeta(ctx context.Context, data MessagePayload, opts ...EventMetaOption) error {
+	event, err := s.marshalEvent(data)
+	if err != nil {
+		return err
+	}
+	for _, opt := range opts {
+		opt(event)
+	}
+	s.Notify(ctx, event)
+	return nil
+}
+
+// createStream 创建并启动一个事件流。
 func (s *Server) createStream(streamId StreamID) *Stream {
 	stream := newStream(streamId, s.bufferSize, s.autoReplay, s.autoStream, s.subscribeFunc, s.unsubscribeFunc)
 	stream.run()
 	return stream
 }
 
+// CreateStream 创建事件流，已存在时返回原实例。
 func (s *Server) CreateStream(streamId StreamID) *Stream {
 	stream := s.streamMgr.Get(streamId)
 	if stream != nil {
@@ -319,15 +343,47 @@ func (s *Server) CreateStream(streamId StreamID) *Stream {
 	}
 
 	stream = s.createStream(streamId)
-
-	s.streamMgr.Add(stream)
-
-	return stream
+	return s.streamMgr.Add(stream)
 }
 
+// GetStream 返回指定事件流，不存在时返回 nil。
+func (s *Server) GetStream(streamId StreamID) *Stream {
+	return s.streamMgr.Get(streamId)
+}
+
+// RemoveStream 关闭并移除指定事件流。
+func (s *Server) RemoveStream(streamId StreamID) {
+	s.streamMgr.RemoveWithID(streamId)
+}
+
+// StreamCount 返回当前事件流数量。
+func (s *Server) StreamCount() int {
+	return s.streamMgr.Count()
+}
+
+// process 复制事件并应用服务端传输转换，避免广播时修改调用方对象。
 func (s *Server) process(event *Event) *Event {
-	if s.encodeBase64 {
-		event.encodeBase64()
+	if event == nil {
+		event = &Event{}
 	}
-	return event
+	processed := *event
+	processed.timestamp = time.Now()
+	if s.encodeBase64 {
+		processed.encodeBase64()
+	}
+	return &processed
+}
+
+// marshalEvent 将业务数据编码为 SSE 事件。
+func (s *Server) marshalEvent(data MessagePayload) (*Event, error) {
+	event := &Event{}
+	if data == nil {
+		return event, nil
+	}
+	encoded, err := broker.Marshal(s.codec, data)
+	if err != nil {
+		return nil, err
+	}
+	event.Data = encoded
+	return event, nil
 }

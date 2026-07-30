@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 )
 
+// prepareHeaderForSSE 写入事件流和跨域响应头。
 func (s *Server) prepareHeaderForSSE(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Add("Vary", "Origin")
+	w.Header().Set("Access-Control-Allow-Origin", s.corsAllowOrigin)
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Token, Last-Event-ID")
 
 	for k, v := range s.headers {
 		w.Header().Set(k, v)
@@ -23,6 +24,15 @@ func (s *Server) prepareHeaderForSSE(w http.ResponseWriter) {
 
 // ServeHTTP 从请求中解析 stream ID 并输出对应的 SSE 事件流。
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		w.Header().Add("Vary", "Origin")
+		w.Header().Set("Access-Control-Allow-Origin", s.corsAllowOrigin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Token, Last-Event-ID")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	streamID, err := s.resolveStreamID(r)
 	if err != nil {
 		writeError(w, err.Error(), http.StatusInternalServerError)
@@ -56,6 +66,20 @@ func (s *Server) serveStreamHTTP(w http.ResponseWriter, r *http.Request, streamI
 	if streamID == "" {
 		return http.StatusInternalServerError, fmt.Errorf("Please specify a stream!")
 	}
+	var err error
+	if s.authorizeFunc != nil {
+		token := ""
+		if s.tokenExtractor != nil {
+			token = s.tokenExtractor(r)
+		}
+		err = s.authorizeFunc(r, token)
+		if err != nil {
+			if isForbidden(err) {
+				return http.StatusForbidden, err
+			}
+			return http.StatusUnauthorized, err
+		}
+	}
 
 	s.prepareHeaderForSSE(w)
 
@@ -68,16 +92,12 @@ func (s *Server) serveStreamHTTP(w http.ResponseWriter, r *http.Request, streamI
 		stream = s.CreateStream(streamID)
 	}
 
-	eventId := 0
-	if id := r.Header.Get("Last-Event-ID"); id != "" {
-		var err error
-		eventId, err = strconv.Atoi(id)
-		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf("Last-Event-ID must be a number!")
-		}
-	}
+	eventId := r.Header.Get("Last-Event-ID")
 
-	sub := stream.addSubscriber(eventId, r.URL)
+	sub, registered := stream.addSubscriber(eventId, r)
+	if !registered {
+		return http.StatusGone, fmt.Errorf("Stream closed!")
+	}
 
 	go func() {
 		<-r.Context().Done()
@@ -93,7 +113,7 @@ func (s *Server) serveStreamHTTP(w http.ResponseWriter, r *http.Request, streamI
 	flusher.Flush()
 
 	for ev := range sub.connection {
-		if len(ev.Data) == 0 && len(ev.Comment) == 0 {
+		if !ev.hasContent() {
 			break
 		}
 
@@ -101,9 +121,11 @@ func (s *Server) serveStreamHTTP(w http.ResponseWriter, r *http.Request, streamI
 			continue
 		}
 
-		if len(ev.Data) > 0 {
+		if len(ev.ID) > 0 {
 			_, _ = writeData(w, FieldId, ev.ID)
+		}
 
+		if len(ev.Data) > 0 {
 			if s.splitData {
 				sd := bytes.Split(ev.Data, []byte("\n"))
 				for i := range sd {
@@ -116,14 +138,14 @@ func (s *Server) serveStreamHTTP(w http.ResponseWriter, r *http.Request, streamI
 					_, _ = writeData(w, FieldData, ev.Data)
 				}
 			}
+		}
 
-			if len(ev.Event) > 0 {
-				_, _ = writeData(w, FieldEvent, ev.Event)
-			}
+		if len(ev.Event) > 0 {
+			_, _ = writeData(w, FieldEvent, ev.Event)
+		}
 
-			if len(ev.Retry) > 0 {
-				_, _ = writeData(w, FieldRetry, ev.Retry)
-			}
+		if len(ev.Retry) > 0 {
+			_, _ = writeData(w, FieldRetry, ev.Retry)
 		}
 
 		if len(ev.Comment) > 0 {

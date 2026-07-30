@@ -42,6 +42,26 @@ message Oss {
     bool use_ssl = 10;
   }
 
+  // S3 描述 AWS S3 及兼容对象存储配置。
+  message S3 {
+    // endpoint 为自定义 S3 服务地址，AWS 官方服务可留空。
+    string endpoint = 1;
+    // region 为 AWS 区域，留空时使用 us-east-1。
+    string region = 2;
+    // access_key 为访问密钥。
+    string access_key = 3;
+    // secret_key 为秘密密钥。
+    string secret_key = 4;
+    // token 为临时凭证令牌。
+    string token = 5;
+    // bucket_name 为存储空间名称。
+    string bucket_name = 6;
+    // use_ssl 表示自定义 endpoint 未带协议时是否使用 HTTPS。
+    bool use_ssl = 7;
+    // force_path_style 表示是否使用路径风格 URL。
+    bool force_path_style = 8;
+  }
+
   // type 为对象存储类型。
   string type = 1;
   // root_directory 为存储空间根目录。
@@ -52,4 +72,6 @@ message Oss {
   optional Ftp ftp = 4;
   // minio 为 MinIO 对象存储配置。
   optional Minio minio = 5;
+  // s3 为 AWS S3 及兼容对象存储配置。
+  optional S3 s3 = 6;
 }

@@ -10,7 +10,7 @@ type Authenticator struct{}
 
 var _ engine.Authenticator = (*Authenticator)(nil)
 
-func (n Authenticator) Authenticate(_ context.Context, _ engine.ContextType) (*engine.AuthClaims, error) {
+func (n Authenticator) Authenticate(_ context.Context, _ engine.ContextType, _ any) (*engine.AuthClaims, error) {
 	return &engine.AuthClaims{}, nil
 }
 
@@ -18,7 +18,7 @@ func (n Authenticator) AuthenticateToken(_ string) (*engine.AuthClaims, error) {
 	return &engine.AuthClaims{}, nil
 }
 
-func (n Authenticator) CreateIdentityWithContext(ctx context.Context, _ engine.ContextType, _ engine.AuthClaims) (context.Context, error) {
+func (n Authenticator) CreateIdentityWithContext(ctx context.Context, _ engine.ContextType, _ engine.AuthClaims, _ any) (context.Context, error) {
 	return ctx, nil
 }
 

@@ -7,7 +7,6 @@ import (
 	"net/http/pprof"
 	"strings"
 
-	"github.com/go-kratos/kratos/v3/log"
 	"github.com/go-kratos/kratos/v3/registry"
 	"github.com/go-kratos/kratos/v3/selector"
 	selectorFilter "github.com/go-kratos/kratos/v3/selector/filter"
@@ -16,8 +15,6 @@ import (
 	selectorWrr "github.com/go-kratos/kratos/v3/selector/wrr"
 	kratosHttp "github.com/go-kratos/kratos/v3/transport/http"
 	"github.com/gorilla/handlers"
-	"github.com/liujitcn/kratos-kit/auth/authn/engine/jwt"
-	authnMiddleware "github.com/liujitcn/kratos-kit/auth/authn/middleware"
 	"github.com/liujitcn/kratos-kit/rpc/middleware/requestid"
 	kitTracing "github.com/liujitcn/kratos-kit/tracing"
 	"github.com/liujitcn/kratos-kit/utils"
@@ -28,7 +25,6 @@ import (
 	"github.com/go-kratos/kratos/v3/middleware/recovery"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	"github.com/liujitcn/kratos-kit/rpc/middleware/validate"
 )
 
 // CreateHttpClient 创建HTTP客户端
@@ -60,6 +56,7 @@ func CreateHttpClient(ctx context.Context, r registry.Discovery, serviceName str
 	return conn, nil
 }
 
+// initHttpClientConfig 根据配置组装 Kratos HTTP 客户端选项。
 func initHttpClientConfig(cfg *configv1.Bootstrap, options []kratosHttp.ClientOption, mds ...middleware.Middleware) ([]kratosHttp.ClientOption, error) {
 	if cfg == nil || cfg.Client == nil || cfg.Client.Http == nil {
 		return options, nil
@@ -73,33 +70,13 @@ func initHttpClientConfig(cfg *configv1.Bootstrap, options []kratosHttp.ClientOp
 	}
 	options = append(options, kratosHttp.WithTimeout(timeout))
 
-	if mds == nil {
-		mds = make([]middleware.Middleware, 0)
-	}
-
 	middlewareCfg := httpCfg.Middleware
-
+	var err error
+	mds, err = appendClientMiddlewares(middlewareCfg, mds)
+	if err != nil {
+		return nil, err
+	}
 	if middlewareCfg != nil {
-		if middlewareCfg.GetEnableRecovery() {
-			mds = append(mds, recovery.Recovery())
-		}
-		if middlewareCfg.GetEnableTracing() {
-			mds = append(mds, kitTracing.Client())
-		}
-		if middlewareCfg.GetEnableMetadata() {
-			mds = append(mds, metadata.Client())
-		}
-		authCfg := middlewareCfg.GetAuth()
-		if authCfg != nil {
-			authenticator, err := jwt.NewAuthenticator(
-				jwt.WithKey([]byte(authCfg.GetSecret())),
-				jwt.WithSigningMethod(authCfg.GetMethod()),
-			)
-			if err != nil {
-				log.Error("create jwt authenticator failed", "method", authCfg.GetMethod(), "error", err)
-			}
-			mds = append(mds, authnMiddleware.Client(authenticator))
-		}
 		selectorFilterCfg := middlewareCfg.GetSelectorFilter()
 		if selectorFilterCfg != nil {
 			// 负载均衡过滤器
@@ -124,7 +101,6 @@ func initHttpClientConfig(cfg *configv1.Bootstrap, options []kratosHttp.ClientOp
 
 	if httpCfg.Tls != nil {
 		var tlsCfg *tls.Config
-		var err error
 
 		if tlsCfg, err = utils.LoadClientTlsConfig(httpCfg.Tls); err != nil {
 			return nil, err
@@ -166,11 +142,26 @@ func initHttpServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 	options := make([]kratosHttp.ServerOption, 0)
 
 	if httpCfg.Cors != nil {
-		options = append(options, kratosHttp.Filter(handlers.CORS(
-			handlers.AllowedHeaders(httpCfg.Cors.Headers),
-			handlers.AllowedMethods(httpCfg.Cors.Methods),
-			handlers.AllowedOrigins(httpCfg.Cors.Origins),
-		)))
+		corsOptions := make([]handlers.CORSOption, 0, 6)
+		if len(httpCfg.Cors.Headers) > 0 {
+			corsOptions = append(corsOptions, handlers.AllowedHeaders(httpCfg.Cors.Headers))
+		}
+		if len(httpCfg.Cors.Methods) > 0 {
+			corsOptions = append(corsOptions, handlers.AllowedMethods(httpCfg.Cors.Methods))
+		}
+		if len(httpCfg.Cors.Origins) > 0 {
+			corsOptions = append(corsOptions, handlers.AllowedOrigins(httpCfg.Cors.Origins))
+		}
+		if len(httpCfg.Cors.ExposedHeaders) > 0 {
+			corsOptions = append(corsOptions, handlers.ExposedHeaders(httpCfg.Cors.ExposedHeaders))
+		}
+		if httpCfg.Cors.AllowCredentials {
+			corsOptions = append(corsOptions, handlers.AllowCredentials())
+		}
+		if httpCfg.Cors.MaxAgeSeconds > 0 {
+			corsOptions = append(corsOptions, handlers.MaxAge(int(httpCfg.Cors.MaxAgeSeconds)))
+		}
+		options = append(options, kratosHttp.Filter(handlers.CORS(corsOptions...)))
 	}
 
 	if mds == nil {
@@ -179,6 +170,7 @@ func initHttpServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 
 	middlewareCfg := httpCfg.Middleware
 	if middlewareCfg != nil {
+		mds = append([]middleware.Middleware{requestid.Server()}, mds...)
 		if middlewareCfg.GetEnableRecovery() {
 			mds = append(mds, recovery.Recovery())
 		}
@@ -186,9 +178,7 @@ func initHttpServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 			mds = append(mds, kitTracing.Server())
 		}
 		if middlewareCfg.GetEnableValidate() {
-			mds = append(mds, validate.ProtoValidate())
-		}
-		if middlewareCfg.GetEnableCircuitBreaker() {
+			mds = append(mds, protoValidateMiddleware())
 		}
 		if middlewareCfg.Limiter != nil {
 			mds = append(mds, midRateLimit.Server())
@@ -196,7 +186,6 @@ func initHttpServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 		if middlewareCfg.GetEnableMetadata() {
 			mds = append(mds, metadata.Server())
 		}
-		mds = append(mds, requestid.NewRequestIDMiddleware())
 	}
 
 	options = append(options, kratosHttp.Middleware(mds...))

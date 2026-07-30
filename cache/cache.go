@@ -11,6 +11,8 @@ import (
 
 type Cache interface {
 	Get(key string) (string, error)
+	// GetDel 原子读取并删除缓存值。
+	GetDel(key string) (string, error)
 	Set(key string, value string, expire time.Duration) error
 	Del(key string) error
 	Expire(key string, dur time.Duration) error

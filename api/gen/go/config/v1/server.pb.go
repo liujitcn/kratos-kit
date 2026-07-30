@@ -7,14 +7,13 @@
 package configv1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -346,7 +345,9 @@ type Server_Middleware struct {
 	EnableValidate bool `protobuf:"varint,4,opt,name=enable_validate,json=enableValidate,proto3" json:"enable_validate,omitempty"`
 	// enable_metadata 表示是否启用元数据中间件。
 	EnableMetadata bool `protobuf:"varint,5,opt,name=enable_metadata,json=enableMetadata,proto3" json:"enable_metadata,omitempty"`
-	// enable_circuit_breaker 表示是否启用熔断器。
+	// enable_circuit_breaker 已废弃；Kratos v3 仅提供客户端熔断器。
+	//
+	// Deprecated: Marked as deprecated in config/v1/server.proto.
 	EnableCircuitBreaker bool `protobuf:"varint,6,opt,name=enable_circuit_breaker,json=enableCircuitBreaker,proto3" json:"enable_circuit_breaker,omitempty"`
 	// limiter 为限流器配置。
 	Limiter *Server_Middleware_RateLimiter `protobuf:"bytes,10,opt,name=limiter,proto3" json:"limiter,omitempty"`
@@ -421,6 +422,7 @@ func (x *Server_Middleware) GetEnableMetadata() bool {
 	return false
 }
 
+// Deprecated: Marked as deprecated in config/v1/server.proto.
 func (x *Server_Middleware) GetEnableCircuitBreaker() bool {
 	if x != nil {
 		return x.EnableCircuitBreaker
@@ -1041,7 +1043,13 @@ type Server_Http_Cors struct {
 	// methods 为允许的请求方法列表。
 	Methods []string `protobuf:"bytes,2,rep,name=methods,proto3" json:"methods,omitempty"`
 	// origins 为允许的请求来源列表。
-	Origins       []string `protobuf:"bytes,3,rep,name=origins,proto3" json:"origins,omitempty"`
+	Origins []string `protobuf:"bytes,3,rep,name=origins,proto3" json:"origins,omitempty"`
+	// exposed_headers 为允许浏览器读取的响应头列表。
+	ExposedHeaders []string `protobuf:"bytes,4,rep,name=exposed_headers,json=exposedHeaders,proto3" json:"exposed_headers,omitempty"`
+	// allow_credentials 表示是否允许携带 Cookie 或认证信息。
+	AllowCredentials bool `protobuf:"varint,5,opt,name=allow_credentials,json=allowCredentials,proto3" json:"allow_credentials,omitempty"`
+	// max_age_seconds 为浏览器缓存预检响应的秒数。
+	MaxAgeSeconds int32 `protobuf:"varint,6,opt,name=max_age_seconds,json=maxAgeSeconds,proto3" json:"max_age_seconds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1095,6 +1103,27 @@ func (x *Server_Http_Cors) GetOrigins() []string {
 		return x.Origins
 	}
 	return nil
+}
+
+func (x *Server_Http_Cors) GetExposedHeaders() []string {
+	if x != nil {
+		return x.ExposedHeaders
+	}
+	return nil
+}
+
+func (x *Server_Http_Cors) GetAllowCredentials() bool {
+	if x != nil {
+		return x.AllowCredentials
+	}
+	return false
+}
+
+func (x *Server_Http_Cors) GetMaxAgeSeconds() int32 {
+	if x != nil {
+		return x.MaxAgeSeconds
+	}
+	return 0
 }
 
 // StreamableHttp 描述 Streamable HTTP MCP Handler 配置。
@@ -1456,20 +1485,20 @@ var File_config_v1_server_proto protoreflect.FileDescriptor
 
 const file_config_v1_server_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xef\x1e\n" +
+	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xf2\x1f\n" +
 	"\x06Server\x12/\n" +
 	"\x04http\x18\x01 \x01(\v2\x16.config.v1.Server.HttpH\x00R\x04http\x88\x01\x01\x12/\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x16.config.v1.Server.GrpcH\x01R\x04grpc\x88\x01\x01\x12,\n" +
 	"\x03mcp\x18\x03 \x01(\v2\x15.config.v1.Server.McpH\x02R\x03mcp\x88\x01\x01\x12,\n" +
-	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Server.SseH\x03R\x03sse\x88\x01\x01\x1a\xa5\x04\n" +
+	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Server.SseH\x03R\x03sse\x88\x01\x01\x1a\xa9\x04\n" +
 	"\n" +
 	"Middleware\x12%\n" +
 	"\x0eenable_logging\x18\x01 \x01(\bR\renableLogging\x12'\n" +
 	"\x0fenable_recovery\x18\x02 \x01(\bR\x0eenableRecovery\x12%\n" +
 	"\x0eenable_tracing\x18\x03 \x01(\bR\renableTracing\x12'\n" +
 	"\x0fenable_validate\x18\x04 \x01(\bR\x0eenableValidate\x12'\n" +
-	"\x0fenable_metadata\x18\x05 \x01(\bR\x0eenableMetadata\x124\n" +
-	"\x16enable_circuit_breaker\x18\x06 \x01(\bR\x14enableCircuitBreaker\x12B\n" +
+	"\x0fenable_metadata\x18\x05 \x01(\bR\x0eenableMetadata\x128\n" +
+	"\x16enable_circuit_breaker\x18\x06 \x01(\bB\x02\x18\x01R\x14enableCircuitBreaker\x12B\n" +
 	"\alimiter\x18\n" +
 	" \x01(\v2(.config.v1.Server.Middleware.RateLimiterR\alimiter\x12>\n" +
 	"\ametrics\x18\v \x01(\v2$.config.v1.Server.Middleware.MetricsR\ametrics\x1a!\n" +
@@ -1479,7 +1508,7 @@ const file_config_v1_server_proto_rawDesc = "" +
 	"\thistogram\x18\x01 \x01(\bR\thistogram\x12\x18\n" +
 	"\acounter\x18\x02 \x01(\bR\acounter\x12\x14\n" +
 	"\x05gauge\x18\x03 \x01(\bR\x05gauge\x12\x18\n" +
-	"\asummary\x18\x04 \x01(\bR\asummary\x1a\x9a\x03\n" +
+	"\asummary\x18\x04 \x01(\bR\asummary\x1a\x99\x04\n" +
 	"\x04Http\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
@@ -1491,11 +1520,14 @@ const file_config_v1_server_proto_rawDesc = "" +
 	"middleware\x12 \n" +
 	"\x03tls\x18\f \x01(\v2\x0e.config.v1.TlsR\x03tls\x12%\n" +
 	"\x0eenable_swagger\x18\x14 \x01(\bR\renableSwagger\x12!\n" +
-	"\fenable_pprof\x18\x15 \x01(\bR\venablePprof\x1aT\n" +
+	"\fenable_pprof\x18\x15 \x01(\bR\venablePprof\x1a\xd2\x01\n" +
 	"\x04Cors\x12\x18\n" +
 	"\aheaders\x18\x01 \x03(\tR\aheaders\x12\x18\n" +
 	"\amethods\x18\x02 \x03(\tR\amethods\x12\x18\n" +
-	"\aorigins\x18\x03 \x03(\tR\aorigins\x1a\xee\x01\n" +
+	"\aorigins\x18\x03 \x03(\tR\aorigins\x12'\n" +
+	"\x0fexposed_headers\x18\x04 \x03(\tR\x0eexposedHeaders\x12+\n" +
+	"\x11allow_credentials\x18\x05 \x01(\bR\x10allowCredentials\x12&\n" +
+	"\x0fmax_age_seconds\x18\x06 \x01(\x05R\rmaxAgeSeconds\x1a\xee\x01\n" +
 	"\x04Grpc\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +

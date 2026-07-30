@@ -8,15 +8,28 @@ use (
 	./api
 	./auth
 	./auth/authn
+	./auth/authn/engine/apikey
+	./auth/authn/engine/basicauth
+	./auth/authn/engine/hmac
 	./auth/authn/engine/jwt
+	./auth/authn/engine/mtls
+	./auth/authn/engine/oauth2
+	./auth/authn/engine/oidc
+	./auth/authn/engine/session
 	./auth/authn/middleware
 	./auth/authz
 	./auth/authz/engine/casbin
+	./auth/authz/engine/cerbos
+	./auth/authz/engine/opa
+	./auth/authz/engine/zanzibar
 	./auth/authz/middleware
 	./bootstrap
 	./broker
+	./broker/nats
 	./cache
 	./captcha
+	./circuitbreaker
+	./circuitbreaker/sentinel
 	./cmd/internal/utils
 	./cmd/protoc-gen-go-agent-tool
 	./cmd/protoc-gen-go-mcp-tool
@@ -25,16 +38,21 @@ use (
 	./config/apollo
 	./config/consul
 	./config/etcd
+	./config/fs
+	./config/http
 	./config/kubernetes
 	./config/nacos
+	./config/oss
 	./config/polaris
+	./config/redis
+	./config/vault
+	./config/zookeeper
 	./database/ent
 	./database/ent/driver
 	./database/ent/driver/mysql
 	./database/ent/driver/postgres
 	./database/ent/driver/sqlite
 	./database/gorm
-	./database/gorm/migration
 	./database/gorm/driver
 	./database/gorm/driver/bigquery
 	./database/gorm/driver/mysql
@@ -42,6 +60,15 @@ use (
 	./database/gorm/driver/postgres
 	./database/gorm/driver/sqlite
 	./database/gorm/driver/sqlserver
+	./database/gorm/migration
+	./encoding/avro
+	./encoding/bson
+	./encoding/cbor
+	./encoding/flatbuffers
+	./encoding/gob
+	./encoding/thrift
+	./encoding/toml
+	./health
 	./locker
 	./logger
 	./logger/aliyun
@@ -50,11 +77,18 @@ use (
 	./logger/tencent
 	./logger/zap
 	./logger/zerolog
+	./metrics
+	./metrics/datadog
+	./metrics/otel
+	./metrics/prometheus
 	./oauth
 	./oss
+	./oss/s3
 	./pprof
 	./queue
 	./queue/redisqueue
+	./ratelimit/sentinel
+	./ratelimit/tokenbucket
 	./registry
 	./registry/consul
 	./registry/etcd
@@ -64,6 +98,7 @@ use (
 	./registry/polaris
 	./registry/servicecomb
 	./registry/zookeeper
+	./retry
 	./rpc
 	./swagger-ui
 	./tracer
@@ -81,3 +116,7 @@ use (
 	./workflow/goworkflows
 	./workflow/temporal
 )
+
+replace github.com/liujitcn/kratos-kit/metrics v0.0.1 => ./metrics
+
+replace github.com/liujitcn/kratos-kit/oss/s3 v0.0.1 => ./oss/s3

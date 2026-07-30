@@ -1,6 +1,7 @@
 package sse
 
 import (
+	"net/http"
 	"net/url"
 	"sync"
 	"sync/atomic"
@@ -51,12 +52,15 @@ func (s *Stream) StreamID() StreamID {
 	return s.id
 }
 
+// run 启动流事件和订阅者的串行调度循环。
 func (s *Stream) run() {
 	go func(stream *Stream) {
 		for {
 			select {
 			case subscriber := <-stream.register:
 				stream.subscribers = append(stream.subscribers, subscriber)
+				atomic.AddInt32(&stream.subscriberCount, 1)
+				close(subscriber.registered)
 				if stream.autoReplay {
 					stream.eventLog.Replay(subscriber)
 				}
@@ -102,27 +106,53 @@ func (s *Stream) getSubIndex(sub *Subscriber) int {
 	return -1
 }
 
-func (s *Stream) addSubscriber(eventId int, url *url.URL) *Subscriber {
-	atomic.AddInt32(&s.subscriberCount, 1)
+// addSubscriber 注册订阅者并保留请求头和 URL 快照，流已关闭时返回 false。
+func (s *Stream) addSubscriber(eventId string, req *http.Request) (*Subscriber, bool) {
+	select {
+	case <-s.quit:
+		return nil, false
+	default:
+	}
 
+	var requestURL *url.URL
+	var header http.Header
+	if req != nil {
+		if req.URL != nil {
+			urlCopy := *req.URL
+			requestURL = &urlCopy
+		}
+		header = req.Header.Clone()
+	}
 	sub := &Subscriber{
 		eventId:    eventId,
 		quit:       s.deregister,
 		connection: make(chan *Event, 64),
-		URL:        url,
+		registered: make(chan struct{}),
+		streamDone: s.quit,
+		URL:        requestURL,
+		Header:     header,
 	}
 
 	if s.autoStream {
 		sub.removed = make(chan struct{}, 1)
 	}
 
-	s.register <- sub
+	select {
+	case s.register <- sub:
+	case <-s.quit:
+		return nil, false
+	}
+	select {
+	case <-sub.registered:
+	case <-s.quit:
+		return nil, false
+	}
 
 	if s.onSubscribe != nil {
 		go s.onSubscribe(s.id, sub)
 	}
 
-	return sub
+	return sub, true
 }
 
 func (s *Stream) removeSubscriber(i int) {

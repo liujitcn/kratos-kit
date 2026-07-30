@@ -3,6 +3,7 @@ module github.com/liujitcn/kratos-kit/swagger-ui
 go 1.26
 
 require (
+	github.com/mvrilo/go-redoc v0.1.5
 	github.com/swaggest/swgui v1.8.7
 	github.com/vearutop/statigz v1.5.0
 )

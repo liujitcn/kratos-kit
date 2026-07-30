@@ -78,6 +78,13 @@ func WithAutoReply(enable bool) ServerOption {
 	}
 }
 
+// WithAutoReplay 设置新订阅者是否按 Last-Event-ID 重放历史事件。
+func WithAutoReplay(enable bool) ServerOption {
+	return func(s *Server) {
+		s.autoReplay = enable
+	}
+}
+
 func WithSplitData(enable bool) ServerOption {
 	return func(s *Server) {
 		s.splitData = enable
@@ -87,6 +94,13 @@ func WithSplitData(enable bool) ServerOption {
 func WithHeaders(headers map[string]string) ServerOption {
 	return func(s *Server) {
 		s.headers = headers
+	}
+}
+
+// WithCORSAllowOrigin 设置 SSE 响应允许的跨域来源。
+func WithCORSAllowOrigin(origin string) ServerOption {
+	return func(s *Server) {
+		s.corsAllowOrigin = origin
 	}
 }
 
@@ -118,5 +132,19 @@ func WithStreamIdKey(key string) ServerOption {
 func WithStreamIDResolver(resolver StreamIDResolver) ServerOption {
 	return func(s *Server) {
 		s.streamIDResolver = resolver
+	}
+}
+
+// WithTokenExtractor 设置 SSE 请求的认证令牌提取函数。
+func WithTokenExtractor(extractor TokenExtractor) ServerOption {
+	return func(s *Server) {
+		s.tokenExtractor = extractor
+	}
+}
+
+// WithAuthorizeFunc 设置 SSE 订阅请求的授权函数。
+func WithAuthorizeFunc(authorize AuthorizeFunc) ServerOption {
+	return func(s *Server) {
+		s.authorizeFunc = authorize
 	}
 }
