@@ -2,7 +2,7 @@ module github.com/liujitcn/kratos-kit/auth/authz/engine/zanzibar
 
 go 1.26.0
 
-require github.com/liujitcn/kratos-kit/auth/authz v0.0.18
+require github.com/liujitcn/kratos-kit/auth/authz v0.0.20
 
 require (
 	golang.org/x/sys v0.44.0 // indirect

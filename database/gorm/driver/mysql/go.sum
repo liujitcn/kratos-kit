@@ -6,8 +6,8 @@ github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=
 github.com/jinzhu/now v1.1.5/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.15 h1:ZXuwOMIhdOOCzY+Ab1OdyYRUl4xPQH/K0qJfLQGbTsg=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.15/go.mod h1:GGWGxWX9LOe21vpZ8zlsM2fZ0BSrveIE2oqMMvzXQaI=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.16 h1:XIE1ql6ngbhkuzDd69fGbGoF8k6xjXaaBnmnLfYYkYs=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.16/go.mod h1:GGWGxWX9LOe21vpZ8zlsM2fZ0BSrveIE2oqMMvzXQaI=
 golang.org/x/text v0.37.0 h1:Cqjiwd9eSg8e0QAkyCaQTNHFIIzWtidPahFWR83rTrc=
 golang.org/x/text v0.37.0/go.mod h1:a5sjxXGs9hsn/AJVwuElvCAo9v8QYLzvavO5z2PiM38=
 gorm.io/driver/mysql v1.6.0 h1:eNbLmNTpPpTOVZi8MMxCi2aaIm0ZpInbORNXDwyLGvg=

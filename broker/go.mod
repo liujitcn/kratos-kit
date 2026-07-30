@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/tracing v0.0.7
+	github.com/liujitcn/kratos-kit/tracing v0.0.8
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
 )

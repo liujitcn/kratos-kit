@@ -6,7 +6,7 @@ require (
 	github.com/cloudwego/eino v0.9.2
 	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.1
 	github.com/eino-contrib/jsonschema v1.0.3
-	github.com/liujitcn/kratos-kit/api v0.0.22
+	github.com/liujitcn/kratos-kit/api v0.0.23
 )
 
 require (

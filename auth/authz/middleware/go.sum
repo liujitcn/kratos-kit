@@ -4,8 +4,8 @@ github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek
 github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/liujitcn/kratos-kit/auth/authz v0.0.18 h1:HVgVPGAL4mindu56Y3qBQxwaARpixp52aWdE8cuY9Fk=
-github.com/liujitcn/kratos-kit/auth/authz v0.0.18/go.mod h1:rhL/dfWNHS2+l25AOMx3KE7IsHyNs3kkMrgs9OqvGBA=
+github.com/liujitcn/kratos-kit/auth/authz v0.0.20 h1:ry8XKkh8Pq08OlUF5FPTWCKLFIh5nIgvrfwiq4+vWPg=
+github.com/liujitcn/kratos-kit/auth/authz v0.0.20/go.mod h1:rhL/dfWNHS2+l25AOMx3KE7IsHyNs3kkMrgs9OqvGBA=
 golang.org/x/net v0.54.0 h1:2zJIZAxAHV/OHCDTCOHAYehQzLfSXuf/5SoL/Dv6w/w=
 golang.org/x/net v0.54.0/go.mod h1:Sj4oj8jK6XmHpBZU/zWHw3BV3abl4Kvi+Ut7cQcY+cQ=
 golang.org/x/sys v0.44.0 h1:ildZl3J4uzeKP07r2F++Op7E9B29JRUy+a27EibtBTQ=

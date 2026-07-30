@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	entgo.io/ent v0.14.6
-	github.com/liujitcn/kratos-kit/database/ent/driver v0.0.4
+	github.com/liujitcn/kratos-kit/database/ent/driver v0.0.5
 	github.com/mattn/go-sqlite3 v1.14.34
 )
 

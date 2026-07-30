@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/tracer
 go 1.26.0
 
 require (
-	github.com/liujitcn/kratos-kit/api v0.0.22
+	github.com/liujitcn/kratos-kit/api v0.0.23
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.43.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.43.0

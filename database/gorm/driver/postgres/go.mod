@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/driver/postgres
 go 1.26.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.15
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.16
 	gorm.io/driver/postgres v1.6.0
 )
 

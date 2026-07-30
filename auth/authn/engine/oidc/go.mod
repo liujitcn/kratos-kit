@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/MicahParks/keyfunc/v3 v3.8.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.19
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.21
 )
 
 require (

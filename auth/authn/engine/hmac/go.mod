@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.19
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.21
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 )
 

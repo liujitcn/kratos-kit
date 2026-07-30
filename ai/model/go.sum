@@ -1,7 +1,7 @@
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/liujitcn/kratos-kit/api v0.0.22 h1:/Fx7bWtCnsH8frhtT/Yx+ULTMtuvQWrRMpsLaJh+Lg8=
-github.com/liujitcn/kratos-kit/api v0.0.22/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
+github.com/liujitcn/kratos-kit/api v0.0.23 h1:RZfGwIUQPRFGxZ3tbV55cIRkbbxWJJrvGNZ/fh/9V9g=
+github.com/liujitcn/kratos-kit/api v0.0.23/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
 github.com/sashabaranov/go-openai v1.41.2 h1:vfPRBZNMpnqu8ELsclWcAvF19lDNgh1t6TVfFFOPiSM=
 github.com/sashabaranov/go-openai v1.41.2/go.mod h1:lj5b/K+zjTSFxVLijLSTDZuP7adOgerWeFyZLUhAKRg=
 google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af h1:+5/Sw3GsDNlEmu7TfklWKPdQ0Ykja5VEmq2i817+jbI=

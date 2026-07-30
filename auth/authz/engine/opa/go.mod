@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/auth/authz/engine/opa
 go 1.26.0
 
 require (
-	github.com/liujitcn/kratos-kit/auth/authz v0.0.18
+	github.com/liujitcn/kratos-kit/auth/authz v0.0.20
 	github.com/open-policy-agent/opa v1.15.2
 )
 

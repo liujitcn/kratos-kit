@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/casbin/casbin/v2 v2.135.0
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/auth/authz v0.0.18
+	github.com/liujitcn/kratos-kit/auth/authz v0.0.20
 )
 
 require (

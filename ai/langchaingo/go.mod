@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/ai/langchaingo
 go 1.26.0
 
 require (
-	github.com/liujitcn/kratos-kit/api v0.0.22
+	github.com/liujitcn/kratos-kit/api v0.0.23
 	github.com/tmc/langchaingo v0.1.14
 )
 

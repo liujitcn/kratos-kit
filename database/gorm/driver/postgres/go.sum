@@ -13,8 +13,8 @@ github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=
 github.com/jinzhu/now v1.1.5/go.mod h1:d3SSVoowX0Lcu0IBviAWJpolVfI5UJVZZ7cO71lE/z8=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.15 h1:ZXuwOMIhdOOCzY+Ab1OdyYRUl4xPQH/K0qJfLQGbTsg=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.15/go.mod h1:GGWGxWX9LOe21vpZ8zlsM2fZ0BSrveIE2oqMMvzXQaI=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.16 h1:XIE1ql6ngbhkuzDd69fGbGoF8k6xjXaaBnmnLfYYkYs=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.16/go.mod h1:GGWGxWX9LOe21vpZ8zlsM2fZ0BSrveIE2oqMMvzXQaI=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
