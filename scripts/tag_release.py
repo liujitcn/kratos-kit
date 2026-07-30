@@ -97,10 +97,16 @@ def next_tag(latest: str | None, prefix: str) -> str:
 
 
 def has_remote_update(latest: str | None, remote_ref: str, module_dir: str) -> bool:
+    pathspecs = [module_dir]
+    pathspecs.extend(
+        f":(exclude){nested_dir}"
+        for nested_dir in module_dirs(module_dir)
+        if nested_dir != module_dir
+    )
     if latest:
-        count = run(["git", "rev-list", "--count", f"{latest}..{remote_ref}", "--", module_dir])
+        count = run(["git", "rev-list", "--count", f"{latest}..{remote_ref}", "--", *pathspecs])
     else:
-        count = run(["git", "rev-list", "--count", remote_ref, "--", module_dir])
+        count = run(["git", "rev-list", "--count", remote_ref, "--", *pathspecs])
     return int(count or "0") > 0
 
 
