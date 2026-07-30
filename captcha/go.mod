@@ -6,7 +6,7 @@ require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/liujitcn/go-utils v0.0.31
-	github.com/liujitcn/kratos-kit/cache v0.0.15
+	github.com/liujitcn/kratos-kit/cache v0.0.16
 	github.com/mojocn/base64Captcha v1.3.8
 	github.com/wenlng/go-captcha-assets v1.0.7
 	github.com/wenlng/go-captcha/v2 v2.0.5
@@ -19,8 +19,8 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.22 // indirect
-	github.com/liujitcn/kratos-kit/utils v0.0.16 // indirect
+	github.com/liujitcn/kratos-kit/api v0.0.23 // indirect
+	github.com/liujitcn/kratos-kit/utils v0.0.17 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.19.0 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.19.0 // indirect
 	github.com/redis/go-redis/v9 v9.19.0 // indirect

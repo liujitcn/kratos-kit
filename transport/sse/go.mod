@@ -5,8 +5,8 @@ go 1.26.0
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/gorilla/mux v1.8.1
-	github.com/liujitcn/kratos-kit/broker v0.0.7
-	github.com/liujitcn/kratos-kit/transport v0.0.20
+	github.com/liujitcn/kratos-kit/broker v0.0.8
+	github.com/liujitcn/kratos-kit/transport v0.0.21
 	gopkg.in/cenkalti/backoff.v1 v1.1.0
 )
 
@@ -18,7 +18,7 @@ require (
 	github.com/go-playground/form/v4 v4.3.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
-	github.com/liujitcn/kratos-kit/tracing v0.0.7 // indirect
+	github.com/liujitcn/kratos-kit/tracing v0.0.8 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect
