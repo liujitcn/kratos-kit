@@ -1554,6 +1554,7 @@ github.com/little-cui/etcdadpt v0.3.2/go.mod h1:HnRRpIrVEVNWobkiCvG2EHLWKKZ+L047
 github.com/liujitcn/kratos-kit/api v0.0.16/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
 github.com/liujitcn/kratos-kit/auth v0.0.14/go.mod h1:VflpPXKm02n0ypfFQ+Q0bmiQgR9HWCFk8In/ibqNJdA=
 github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.9/go.mod h1:h0G5awaspnF2tygB6paoSbJeUILMab4xUu3Y653aaaI=
+github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.16/go.mod h1:IZL7aA/wNvLUzwUCvjB0kzhdggkKipBqnEbfkVrbn+k=
 github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.10/go.mod h1:X/rFshoHejhD8WV6s034U0C4TdjALAkF9dM59XydMII=
 github.com/liujitcn/kratos-kit/auth/authz v0.0.16/go.mod h1:rhL/dfWNHS2+l25AOMx3KE7IsHyNs3kkMrgs9OqvGBA=
 github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.10/go.mod h1:+NkhZ0+DmDDRY7D4TwPnWWSLu6QOr/RsB6UZUihICOs=
@@ -1569,9 +1570,10 @@ github.com/liujitcn/kratos-kit/oss v0.0.10/go.mod h1:Z1mFZ2jCnqyObUsI3wKEtWYB99Q
 github.com/liujitcn/kratos-kit/queue v0.0.17/go.mod h1:LdRi2RY55tg9C6E5TPbV1H3+fctHfU7ifHRzuYeSJHA=
 github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.8/go.mod h1:SCPU1IITsJYkxWrncmsh6fkcK7IIPLCgePSyqjQ6lWc=
 github.com/liujitcn/kratos-kit/tracer v0.0.10/go.mod h1:jB8weZMePkL4/QVfXIAQuZUfjQk1jILwH/T5YjEd5Ek=
-github.com/liujitcn/kratos-kit/transport/keepalive v0.0.10/go.mod h1:697/E1yC9Nmo3+grrAXuWzyNC3kY3BBnnYZwG4eS7O8=
 github.com/liujitcn/kratos-kit/transport/mcp v0.0.8/go.mod h1:W63Mt5wsQmauQYafM83BIADDXO8KYmoL46o3qkx4v8o=
+github.com/liujitcn/kratos-kit/transport/mcp v0.0.12/go.mod h1:4NmtSjkkG84RRYizLOaW3FvaUcNwmpsithiGL3+qiE8=
 github.com/liujitcn/kratos-kit/transport/sse v0.0.5/go.mod h1:JZa25PvVewUZd+3oi21mRgc4jocXV4DExyzSkSjrHlE=
+github.com/liujitcn/kratos-kit/transport/sse v0.0.9/go.mod h1:Hjgys0b7viwz0p8qta2vNwVWeVOg/w/4sVL3EsADp68=
 github.com/liujitcn/kratos-kit/utils v0.0.13/go.mod h1:p1J4hqE50vciwv/SMWJ1ponR9aRI7ZmKGYYZyE7bRG0=
 github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0/go.mod h1:zJYVVT2jmtg6P3p1VtQj7WsuWi/y4VnjVBn7F8KPB3I=
 github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 h1:PpXWgLPs+Fqr325bN2FD2ISlRRztXibcX6e8f5FR5Dc=

@@ -8,14 +8,14 @@ require (
 	github.com/gorilla/handlers v1.5.2
 	github.com/json-iterator/go v1.1.12
 	github.com/liujitcn/go-utils v0.0.31
-	github.com/liujitcn/kratos-kit/api v0.0.22
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.19
-	github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.14
-	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.15
-	github.com/liujitcn/kratos-kit/tracing v0.0.7
-	github.com/liujitcn/kratos-kit/transport/mcp v0.0.11
-	github.com/liujitcn/kratos-kit/transport/sse v0.0.8
-	github.com/liujitcn/kratos-kit/utils v0.0.16
+	github.com/liujitcn/kratos-kit/api v0.0.23
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.21
+	github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.16
+	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.17
+	github.com/liujitcn/kratos-kit/tracing v0.0.8
+	github.com/liujitcn/kratos-kit/transport/mcp v0.0.12
+	github.com/liujitcn/kratos-kit/transport/sse v0.0.9
+	github.com/liujitcn/kratos-kit/utils v0.0.17
 	github.com/modelcontextprotocol/go-sdk v1.6.0
 	google.golang.org/grpc v1.81.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
@@ -40,9 +40,9 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
-	github.com/liujitcn/kratos-kit/broker v0.0.7 // indirect
-	github.com/liujitcn/kratos-kit/transport v0.0.20 // indirect
-	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.9 // indirect
+	github.com/liujitcn/kratos-kit/broker v0.0.8 // indirect
+	github.com/liujitcn/kratos-kit/transport v0.0.21 // indirect
+	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.10 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
