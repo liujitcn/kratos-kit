@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.9
+	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.10
 	github.com/modelcontextprotocol/go-sdk v1.6.0
 )
 
@@ -17,9 +17,9 @@ require (
 	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
-	github.com/liujitcn/kratos-kit/broker v0.0.7 // indirect
-	github.com/liujitcn/kratos-kit/tracing v0.0.7 // indirect
-	github.com/liujitcn/kratos-kit/transport v0.0.20 // indirect
+	github.com/liujitcn/kratos-kit/broker v0.0.8 // indirect
+	github.com/liujitcn/kratos-kit/tracing v0.0.8 // indirect
+	github.com/liujitcn/kratos-kit/transport v0.0.21 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/segmentio/encoding v0.5.4 // indirect
