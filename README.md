@@ -8,9 +8,6 @@
 
 当前依赖基线为 `github.com/go-kratos/kratos/v3 v3.0.0`，日志接口已迁移到 Kratos v3 的 `log/slog` 体系。
 
-与 `tx7do/go-wind-plugins` 的最终同步范围、Kratos v3 去重依据和源码位置见
-[go-wind-plugins 同步最终说明](UPSTREAM_SYNC.md)。
-
 - `api`：protobuf 定义与代码生成（`buf generate`）
 - `bootstrap`：应用启动入口（配置加载 + 日志 + 注册中心 + tracer + `kratos.App`）
 - `config`：本地/远程配置加载与工厂注册；额外提供直接实现 Kratos `config.Source` 的文件、HTTP、Redis、Vault、ZooKeeper 和 S3 配置源
