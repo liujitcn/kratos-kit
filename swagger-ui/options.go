@@ -6,6 +6,9 @@ import (
 	"github.com/liujitcn/kratos-kit/swagger-ui/internal/swagger"
 )
 
+// DefaultOpenAPIPath 是原始 OpenAPI 文档接口的默认路径。
+const DefaultOpenAPIPath = "/api/docs/openapi"
+
 type HandlerOption func(opt *swagger.Config)
 
 // WithTitle Title of an index file.
@@ -72,7 +75,7 @@ func WithMemoryData(content []byte, ext string) HandlerOption {
 	}
 }
 
-// WithOpenAPIPath 设置原始 OpenAPI 文档接口路径。
+// WithOpenAPIPath 设置原始 OpenAPI 文档接口路径，未设置时使用 DefaultOpenAPIPath。
 func WithOpenAPIPath(path string) HandlerOption {
 	return func(opt *swagger.Config) {
 		opt.OpenAPIPath = path

@@ -60,7 +60,6 @@ swaggerUI.RegisterSwaggerUIServerWithOption(
 ```go
 swaggerUI.RegisterOpenAPIServerWithOption(
 	srv,
-	swaggerUI.WithOpenAPIPath("/api/docs/openapi"),
 	swaggerUI.WithMemoryData(openapiBytes, "yaml"),
 	swaggerUI.WithOpenAPIAuthorizer(func(r *http.Request) bool {
 		return validateAccessToken(r)
@@ -68,7 +67,7 @@ swaggerUI.RegisterOpenAPIServerWithOption(
 )
 ```
 
-未设置 `WithOpenAPIAuthorizer` 或校验返回 `false` 时，接口返回 `401`；该注册方式不会创建 `/docs/` 或 `/docs/openapi.*` 路由。
+原始文档默认挂载到 `DefaultOpenAPIPath`（`/api/docs/openapi`），可通过 `WithOpenAPIPath` 覆盖。未设置 `WithOpenAPIAuthorizer` 或校验返回 `false` 时，接口返回 `401`；该注册方式不会创建 `/docs/` 或 `/docs/openapi.*` 路由。
 
 ### 6. `NewRedocHandler` / `RegisterRedocServer`
 
@@ -96,7 +95,8 @@ handler, err := swaggerUI.RegisterRedocServer(
 - `WithRemoteFileURL(url string)`：远程 OpenAPI 文档地址（JSON/YAML 均可）。
 - `WithLocalFile(filePath string)`：本地 OpenAPI 文件路径。
 - `WithMemoryData(content []byte, ext string)`：内存中的 OpenAPI 内容与扩展名（如 `json`、`yaml`）。
-- `WithOpenAPIPath(path string)`：原始 OpenAPI 文档接口路径，仅用于 `RegisterOpenAPIServerWithOption`。
+- `DefaultOpenAPIPath`：原始 OpenAPI 文档接口的默认路径 `/api/docs/openapi`。
+- `WithOpenAPIPath(path string)`：覆盖原始 OpenAPI 文档接口路径，仅用于 `RegisterOpenAPIServerWithOption`。
 - `WithOpenAPIAuthorizer(func(*http.Request) bool)`：原始 OpenAPI 文档接口的访问校验函数，仅用于 `RegisterOpenAPIServerWithOption`。
 - `WithShowTopBar(show bool)`：是否显示顶部导航栏。
 - `WithHideCurl(hide bool)`：是否隐藏 curl 代码片段。
@@ -178,7 +178,6 @@ swaggerUI.RegisterSwaggerUIServerWithOption(
 ```go
 swaggerUI.RegisterOpenAPIServerWithOption(
 	srv,
-	swaggerUI.WithOpenAPIPath("/api/docs/openapi"),
 	swaggerUI.WithMemoryData(openapiBytes, "yaml"),
 	swaggerUI.WithOpenAPIAuthorizer(func(r *http.Request) bool {
 		return validateAccessToken(r)

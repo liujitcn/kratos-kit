@@ -50,7 +50,7 @@ func RegisterOpenAPIServerWithOption[T openAPIHTTPServerInterface](srv T, handle
 		o(opts)
 	}
 	if opts.OpenAPIPath == "" {
-		panic("openapi path is required")
+		opts.OpenAPIPath = DefaultOpenAPIPath
 	}
 	if !strings.HasPrefix(opts.OpenAPIPath, "/") {
 		opts.OpenAPIPath = "/" + opts.OpenAPIPath
