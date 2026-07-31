@@ -1,0 +1,7 @@
+// Package middleware 提供当前项目的服务端中间件装配入口。
+package middleware
+
+import "github.com/google/wire"
+
+// ProviderSet 汇总服务端中间件依赖注入提供者。
+var ProviderSet = wire.NewSet()

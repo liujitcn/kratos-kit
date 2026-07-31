@@ -1,0 +1,58 @@
+// Package projectdocs 装载构建期生成的项目文档目录。
+package projectdocs
+
+import (
+	"encoding/json"
+	"fmt"
+	"sort"
+
+	"__MODULE_PATH__/projectdoc"
+)
+
+type catalog struct {
+	Projects []catalogProject `json:"projects"`
+}
+
+type catalogProject struct {
+	Documents   []projectdoc.Document `json:"documents"`
+	Directories []catalogDirectory    `json:"directories"`
+}
+
+type catalogDirectory struct {
+	Documents   []projectdoc.Document `json:"documents"`
+	Directories []catalogDirectory    `json:"directories"`
+}
+
+// Documents 解析并返回构建期内嵌的项目文档。
+func Documents() ([]projectdoc.Document, error) {
+	var value catalog
+	var err error
+	err = json.Unmarshal(CatalogData, &value)
+	if err != nil {
+		return nil, fmt.Errorf("解析项目文档目录: %w", err)
+	}
+	documents := make([]projectdoc.Document, 0)
+	for _, project := range value.Projects {
+		documents = append(documents, project.Documents...)
+		documents = appendDirectoryDocuments(documents, project.Directories)
+	}
+	sort.Slice(documents, func(left, right int) bool {
+		if documents[left].ProjectKey == documents[right].ProjectKey {
+			return documents[left].Path < documents[right].Path
+		}
+		return documents[left].ProjectKey < documents[right].ProjectKey
+	})
+	return documents, nil
+}
+
+// appendDirectoryDocuments 递归展开目录树中的项目文档。
+func appendDirectoryDocuments(
+	documents []projectdoc.Document,
+	directories []catalogDirectory,
+) []projectdoc.Document {
+	for _, directory := range directories {
+		documents = append(documents, directory.Documents...)
+		documents = appendDirectoryDocuments(documents, directory.Directories)
+	}
+	return documents
+}

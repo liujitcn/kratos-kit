@@ -1,0 +1,18 @@
+server:
+  http:
+    addr: :7001
+    timeout: 0s
+    middleware:
+      enable_logging: true
+      enable_recovery: true
+      enable_tracing: true
+      enable_validate: true
+
+  grpc:
+    addr: 0.0.0.0:6001
+    timeout: 10s
+    middleware:
+      enable_logging: true
+      enable_recovery: true
+      enable_tracing: true
+      enable_validate: true

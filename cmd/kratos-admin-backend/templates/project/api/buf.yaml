@@ -1,0 +1,30 @@
+version: v2
+
+modules:
+  - path: proto
+    lint:
+      use:
+        - STANDARD
+      except:
+        - ENUM_VALUE_PREFIX
+        - ENUM_ZERO_VALUE_SUFFIX
+        - RPC_REQUEST_RESPONSE_UNIQUE
+        - RPC_RESPONSE_STANDARD_NAME
+    breaking:
+      use:
+        - FILE
+
+deps:
+  - buf.build/liujitcn/kratos-common
+  - buf.build/googleapis/googleapis
+  - buf.build/kratos/apis
+  - buf.build/gnostic/gnostic
+  - buf.build/bufbuild/protovalidate
+
+breaking:
+  use:
+    - FILE
+
+lint:
+  use:
+    - DEFAULT

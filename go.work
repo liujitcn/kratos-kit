@@ -31,6 +31,8 @@ use (
 	./circuitbreaker
 	./circuitbreaker/sentinel
 	./cmd/internal/utils
+	./cmd/kratos-admin-backend
+	./cmd/project-docs
 	./cmd/protoc-gen-go-agent-tool
 	./cmd/protoc-gen-go-mcp-tool
 	./cmd/protoc-gen-go-service

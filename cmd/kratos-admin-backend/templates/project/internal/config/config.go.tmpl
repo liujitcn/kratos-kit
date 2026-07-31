@@ -1,0 +1,11 @@
+package config
+
+import (
+	bootstrapConfigv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	"github.com/liujitcn/kratos-kit/bootstrap"
+)
+
+// GetAppInfo 获取当前服务的应用信息。
+func GetAppInfo(ctx *bootstrap.Context) *bootstrapConfigv1.AppInfo {
+	return ctx.GetAppInfo()
+}

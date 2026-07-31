@@ -1,0 +1,25 @@
+// Package projectdoc 定义当前项目及扩展模块的项目文档贡献契约。
+package projectdoc
+
+// Document 表示一篇构建期收集的 Markdown 项目文档。
+type Document struct {
+	// ID 是由项目标识和文档路径生成的稳定编号。
+	ID string `json:"id"`
+	// ProjectKey 是与 OpenAPI 文档一致的项目标识。
+	ProjectKey string `json:"project_key"`
+	// ProjectName 是项目展示名称。
+	ProjectName string `json:"project_name"`
+	// Path 是文档相对于项目根目录的路径。
+	Path string `json:"path"`
+	// Content 是 Markdown 文档正文。
+	Content string `json:"content"`
+}
+
+// Contributor 表示可向当前项目贡献项目文档的扩展模块。
+type Contributor interface {
+	// ProjectDocuments 返回模块贡献的项目文档。
+	ProjectDocuments() []Document
+}
+
+// ConfiguredDocuments 表示调用方通过项目 Option 显式注入的项目文档。
+type ConfiguredDocuments []Document

@@ -1,0 +1,45 @@
+// Command server 启动当前后端项目。
+package main
+
+import (
+	"context"
+
+	backend "__MODULE_PATH__"
+
+	"github.com/go-kratos/kratos/v3"
+	bootstrapConfigv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	"github.com/liujitcn/kratos-kit/bootstrap"
+)
+
+var (
+	// Project 表示当前服务所属项目标识。
+	Project = "__PROJECT_NAME__"
+	// AppID 表示当前服务应用标识。
+	AppID = "__PROJECT_NAME__"
+	// Name 表示当前服务展示名称。
+	Name    = "__PROJECT_NAME__"
+	version = "dev"
+)
+
+// main 初始化应用信息并启动后端服务。
+func main() {
+	ctx := bootstrap.NewContext(
+		context.Background(),
+		&bootstrapConfigv1.AppInfo{
+			Project: Project,
+			AppId:   AppID,
+			Name:    Name,
+			Version: version,
+		},
+	)
+	var err error
+	err = bootstrap.RunApp(ctx, initApp)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// initApp 使用当前项目根包的装配结果创建独立应用。
+func initApp(ctx *bootstrap.Context) (*kratos.App, func(), error) {
+	return backend.NewApp(ctx)
+}
