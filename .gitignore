@@ -26,3 +26,12 @@ profile.cov
 # Editor/IDE
 .idea/
 .vscode/
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
