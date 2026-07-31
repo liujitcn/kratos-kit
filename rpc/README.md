@@ -135,8 +135,9 @@ _ = grpcSrv
 func CreateGrpcClient(ctx context.Context, r registry.Discovery, serviceName string, cfg *configv1.Bootstrap, mds ...middleware.Middleware) (grpc.ClientConnInterface, error)
 ```
 
-- 自动注入服务发现：`kratosGrpc.WithDiscovery(r)`。
-- 当 `serviceName` 不以 `discovery:///` 开头时，会自动补齐前缀。
+- `serviceName` 非空时保持服务发现语义；不带协议时自动补齐 `discovery:///`。
+- `serviceName` 为空时读取 `cfg.client.grpc.endpoint`；不带协议时自动补齐 `direct:///`。
+- `discovery:///` 地址必须传入 `registry.Discovery`，直连地址不依赖注册中心。
 - 从 `cfg.client.grpc` 读取 timeout、TLS 与中间件配置。
 - 通过 `kratosGrpc.DialInsecure` 建连；若配置了 TLS，会在 option 中设置 `WithTLSConfig`。
 
@@ -145,6 +146,7 @@ func CreateGrpcClient(ctx context.Context, r registry.Discovery, serviceName str
 ```yaml
 client:
   grpc:
+    endpoint: 127.0.0.1:9000
     timeout: 5s
     middleware:
       enable_recovery: true
@@ -156,6 +158,16 @@ client:
 
 ```go
 conn, err := rpc.CreateGrpcClient(ctx, discovery, "user.service", cfg)
+if err != nil {
+    return err
+}
+_ = conn
+```
+
+直连模式可以将 `serviceName` 和 `discovery` 设为空，由配置提供地址：
+
+```go
+conn, err := rpc.CreateGrpcClient(ctx, nil, "", cfg)
 if err != nil {
     return err
 }

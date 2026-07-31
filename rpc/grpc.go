@@ -32,18 +32,21 @@ import (
 
 const defaultTimeout = 5 * time.Second
 
-// CreateGrpcClient 创建GRPC客户端
+// CreateGrpcClient 根据服务名或配置地址创建 gRPC 客户端。
 func CreateGrpcClient(ctx context.Context, r registry.Discovery, serviceName string, cfg *configv1.Bootstrap, mds ...middleware.Middleware) (grpc.ClientConnInterface, error) {
 	var err error
 	var options []kratosGrpc.ClientOption
 
-	options = append(options, kratosGrpc.WithDiscovery(r))
-
 	var endpoint string
-	if strings.HasPrefix(serviceName, "discovery:///") {
-		endpoint = serviceName
-	} else {
-		endpoint = "discovery:///" + serviceName
+	endpoint, err = resolveGrpcClientEndpoint(serviceName, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if strings.HasPrefix(endpoint, "discovery:///") {
+		if r == nil {
+			return nil, fmt.Errorf("gRPC 客户端使用服务发现地址时 Discovery 不能为空: %s", endpoint)
+		}
+		options = append(options, kratosGrpc.WithDiscovery(r))
 	}
 	options = append(options, kratosGrpc.WithEndpoint(endpoint))
 
@@ -55,10 +58,32 @@ func CreateGrpcClient(ctx context.Context, r registry.Discovery, serviceName str
 	var conn grpc.ClientConnInterface
 	conn, err = kratosGrpc.NewClient(ctx, options...)
 	if err != nil {
-		return nil, fmt.Errorf("dial grpc client [%s] failed: %w", serviceName, err)
+		return nil, fmt.Errorf("dial grpc client [%s] failed: %w", endpoint, err)
 	}
 
 	return conn, nil
+}
+
+// resolveGrpcClientEndpoint 按显式服务名优先、配置地址回退的顺序解析客户端地址。
+func resolveGrpcClientEndpoint(serviceName string, cfg *configv1.Bootstrap) (string, error) {
+	if serviceName != "" {
+		if strings.Contains(serviceName, "://") {
+			return serviceName, nil
+		}
+		return "discovery:///" + serviceName, nil
+	}
+	if cfg == nil || cfg.GetClient() == nil || cfg.GetClient().GetGrpc() == nil {
+		return "", fmt.Errorf("gRPC 客户端服务名和配置地址不能同时为空")
+	}
+
+	endpoint := cfg.GetClient().GetGrpc().GetEndpoint()
+	if endpoint == "" {
+		return "", fmt.Errorf("gRPC 客户端服务名和配置地址不能同时为空")
+	}
+	if strings.Contains(endpoint, "://") {
+		return endpoint, nil
+	}
+	return "direct:///" + endpoint, nil
 }
 
 // initGrpcClientConfig 根据配置组装 Kratos gRPC 客户端选项。
