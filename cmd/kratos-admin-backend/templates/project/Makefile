@@ -4,10 +4,7 @@
 IMAGE ?= __PROJECT_NAME__
 TAG ?= latest
 BINARY ?= bin/server
-PROJECT_KEY ?= __PROJECT_NAME__
-PROJECT_NAME ?= __PROJECT_NAME__
 PROJECT_DOCS_BIN ?= project-docs
-PROJECT_DOC_ARGS ?= --source '$(PROJECT_KEY):$(PROJECT_NAME)=.'
 GO_BIN_DIR ?= $(shell GOBIN=$$(go env GOBIN); if [ -n "$$GOBIN" ]; then printf '%s' "$$GOBIN"; else printf '%s/bin' "$$(go env GOPATH)"; fi)
 
 # 初始化项目生成工具。
@@ -53,7 +50,7 @@ openapi:
 # 收集 README 和 docs 项目文档。
 project-docs:
 	@command -v "$(PROJECT_DOCS_BIN)" >/dev/null 2>&1 || (echo "project-docs not found. Run make cli first." && exit 1)
-	@"$(PROJECT_DOCS_BIN)" $(PROJECT_DOC_ARGS)
+	@"$(PROJECT_DOCS_BIN)"
 
 # 生成 Wire 依赖注入代码。
 wire:

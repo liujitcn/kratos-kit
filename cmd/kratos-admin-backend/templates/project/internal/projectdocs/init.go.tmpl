@@ -10,21 +10,23 @@ import (
 )
 
 type catalog struct {
-	Projects []catalogProject `json:"projects"`
+	Documents   []catalogDocument  `json:"documents"`
+	Directories []catalogDirectory `json:"directories"`
 }
 
-type catalogProject struct {
-	Documents   []projectdoc.Document `json:"documents"`
-	Directories []catalogDirectory    `json:"directories"`
+type catalogDocument struct {
+	Path      string `json:"path"`
+	Content   string `json:"content"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type catalogDirectory struct {
-	Documents   []projectdoc.Document `json:"documents"`
-	Directories []catalogDirectory    `json:"directories"`
+	Documents   []catalogDocument  `json:"documents"`
+	Directories []catalogDirectory `json:"directories"`
 }
 
-// Documents 解析并返回构建期内嵌的项目文档。
-func Documents() ([]projectdoc.Document, error) {
+// Documents 使用运行时项目信息解析构建期内嵌的项目文档。
+func Documents(projectKey, projectName string) ([]projectdoc.Document, error) {
 	var value catalog
 	var err error
 	err = json.Unmarshal(CatalogData, &value)
@@ -32,15 +34,10 @@ func Documents() ([]projectdoc.Document, error) {
 		return nil, fmt.Errorf("解析项目文档目录: %w", err)
 	}
 	documents := make([]projectdoc.Document, 0)
-	for _, project := range value.Projects {
-		documents = append(documents, project.Documents...)
-		documents = appendDirectoryDocuments(documents, project.Directories)
-	}
+	documents = appendDocuments(documents, value.Documents, projectKey, projectName)
+	documents = appendDirectoryDocuments(documents, value.Directories, projectKey, projectName)
 	sort.Slice(documents, func(left, right int) bool {
-		if documents[left].ProjectKey == documents[right].ProjectKey {
-			return documents[left].Path < documents[right].Path
-		}
-		return documents[left].ProjectKey < documents[right].ProjectKey
+		return documents[left].Path < documents[right].Path
 	})
 	return documents, nil
 }
@@ -49,10 +46,39 @@ func Documents() ([]projectdoc.Document, error) {
 func appendDirectoryDocuments(
 	documents []projectdoc.Document,
 	directories []catalogDirectory,
+	projectKey string,
+	projectName string,
 ) []projectdoc.Document {
 	for _, directory := range directories {
-		documents = append(documents, directory.Documents...)
-		documents = appendDirectoryDocuments(documents, directory.Directories)
+		documents = appendDocuments(documents, directory.Documents, projectKey, projectName)
+		documents = appendDirectoryDocuments(
+			documents,
+			directory.Directories,
+			projectKey,
+			projectName,
+		)
+	}
+	return documents
+}
+
+// appendDocuments 使用运行时项目信息转换并追加构建期文档。
+func appendDocuments(
+	documents []projectdoc.Document,
+	values []catalogDocument,
+	projectKey string,
+	projectName string,
+) []projectdoc.Document {
+	for _, value := range values {
+		documents = append(
+			documents,
+			projectdoc.NewDocument(
+				projectKey,
+				projectName,
+				value.Path,
+				value.Content,
+				value.UpdatedAt,
+			),
+		)
 	}
 	return documents
 }

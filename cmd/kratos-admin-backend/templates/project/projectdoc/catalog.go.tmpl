@@ -1,6 +1,13 @@
 // Package projectdoc 定义当前项目及扩展模块的项目文档贡献契约。
 package projectdoc
 
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"path"
+	"strings"
+)
+
 // Document 表示一篇构建期收集的 Markdown 项目文档。
 type Document struct {
 	// ID 是由项目标识和文档路径生成的稳定编号。
@@ -13,6 +20,23 @@ type Document struct {
 	Path string `json:"path"`
 	// Content 是 Markdown 文档正文。
 	Content string `json:"content"`
+	// UpdatedAt 是源 Markdown 文件的 RFC3339 更新时间。
+	UpdatedAt string `json:"updated_at"`
+}
+
+// NewDocument 使用运行时项目信息创建带稳定 ID 的项目文档。
+func NewDocument(projectKey, projectName, documentPath, content, updatedAt string) Document {
+	normalizedProjectKey := strings.TrimSpace(projectKey)
+	normalizedPath := strings.TrimPrefix(path.Clean(strings.ReplaceAll(documentPath, "\\", "/")), "./")
+	sum := sha256.Sum256([]byte(normalizedProjectKey + "\x00" + normalizedPath))
+	return Document{
+		ID:          hex.EncodeToString(sum[:16]),
+		ProjectKey:  normalizedProjectKey,
+		ProjectName: strings.TrimSpace(projectName),
+		Path:        normalizedPath,
+		Content:     content,
+		UpdatedAt:   updatedAt,
+	}
 }
 
 // Contributor 表示可向当前项目贡献项目文档的扩展模块。

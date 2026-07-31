@@ -40,7 +40,7 @@
 - `sdk`：SDK 初始化入口封装
 - `runtime`：运行时应用信息模型
 - `utils`：通用工具（TLS、Redis 配置辅助）
-- `cmd/project-docs`：构建期收集多项目根 docs、根 README 和管理端/应用端 README 的独立命令
+- `cmd/project-docs`：零参数收集当前项目约定 README 和根 docs 的独立命令
 - `cmd/kratos-admin-backend`：生成基于 kratos-admin Core 的空业务后端项目
 
 `database/gorm` 的 `Data` 配置支持 `database` 与 `databases` 两种形式。多个固定数据源应按名称分别创建客户端和 `data.Data`，每个客户端启动时主动校验连接；跨数据源事务、Join 与请求级动态切库不在该封装的职责范围内。
@@ -107,13 +107,17 @@ go get github.com/liujitcn/kratos-kit/workflow/temporal@latest
 go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
 ```
 
-执行时至少提供一个与 OpenAPI/Swagger 标识一致的项目来源；默认输出到当前目录下的
-`internal/projectdocs/assets/catalog.json`，并自动生成
-`internal/projectdocs/catalog_gen.go`。JSON 按项目和文件目录保存为递归树：
+命令从项目根目录扫描相对路径不超过三段的文件，只收集精确命名的
+`README.md`，以及任意 `docs` 目录中的 Markdown。普通项目输出到
+`internal/projectdocs`；包含 `backend` 的仓库输出到
+`backend/internal/projectdocs`：
 
 ```bash
-project-docs --source 'admin:系统管理=..'
+project-docs
 ```
+
+生成物不包含项目身份。服务加载后使用 `AppInfo.Project` 和 `AppInfo.Name`
+生成稳定文档 ID，并与 OpenAPI/Swagger 保持一致。
 
 后端项目生成命令使用 Go module 末段作为目标目录名，生成 Proto、biz、service、
 server、data、migration 和 projectdocs 分层骨架，并同时提供可挂载模块与独立应用

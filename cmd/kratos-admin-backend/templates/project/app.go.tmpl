@@ -119,14 +119,12 @@ func newRuntime(
 	_ []databaseGorm.ClientOption,
 	_ gormmigration.AdditionalMigrations,
 ) (*Runtime, func(), error) {
-	documents, err := internalprojectdocs.Documents()
+	documents, err := internalprojectdocs.Documents(
+		appInfo.GetProject(),
+		appInfo.GetName(),
+	)
 	if err != nil {
 		return nil, nil, err
-	}
-	// 内嵌文档归属于当前应用，构建产物中的项目字段仅供生成器校验。
-	for index := range documents {
-		documents[index].ProjectKey = appInfo.GetProject()
-		documents[index].ProjectName = appInfo.GetName()
 	}
 	documents = append(documents, configuredDocuments...)
 	for _, additionalModule := range additionalModules {

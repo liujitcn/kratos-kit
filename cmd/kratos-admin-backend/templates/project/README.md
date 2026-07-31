@@ -77,6 +77,8 @@ make build
 
 `api/gen/go`、`internal/cmd/server/assets/openapi.yaml`、
 `internal/projectdocs/assets/catalog.json`、`internal/projectdocs/catalog_gen.go`
-和 `wire_gen.go` 都是生成产物，不应手工修改；项目文档 JSON 按项目和文件目录保存
-为递归树。项目文档和后续业务模块提供的 OpenAPI/Swagger 文档都应使用启动入口
-`AppInfo` 的 `Project` 和 `Name` 作为项目标识与展示名称。
+和 `wire_gen.go` 都是生成产物，不应手工修改；项目文档 JSON 按文件目录保存为
+递归树，但不保存项目身份。服务加载后使用启动入口 `AppInfo` 的 `Project` 和
+`Name` 生成文档 ID、项目标识与展示名称，并与后续业务模块提供的
+OpenAPI/Swagger 文档保持一致。文档命令从项目根目录扫描相对路径不超过三段的
+文件，只收集精确命名的 `README.md`，以及任意 `docs` 目录中的 Markdown。

@@ -1,32 +1,40 @@
 # project-docs
 
-`project-docs` 在构建期收集一个或多个项目根目录的 `README.md`、
-`docs/**/*.md`，以及 `frontend/admin/README.md` 和
-`frontend/app/README.md`，生成可嵌入服务二进制的稳定 JSON 目录和 Go
-嵌入文件。其他层级的 `README.md` 和 `docs` 目录不会被收集。
+`project-docs` 是零参数的构建期文档收集命令，从项目根目录开始扫描相对路径
+不超过三段的文件，只处理以下 Markdown：
 
-JSON 目录按项目和文件目录保存为树形结构。每个项目节点分别包含根目录文档和
-`directories`，目录节点通过同名字段递归保存子目录：
+- 文件名精确为 `README.md` 的文件。
+- 任意父目录名为 `docs` 的 Markdown 文件。
+
+例如会收集 `README.md`、`backend/core/README.md`、
+`docs/guide/install.md` 和 `backend/docs/api.md`，不会收集路径超过三段的
+`backend/internal/agent/README.md` 或 `docs/guide/install/linux.md`。
+
+JSON 按文件目录保存为树形结构，项目身份不写入构建产物：
 
 ```json
 {
-  "projects": [
+  "documents": [
     {
-      "key": "admin",
-      "name": "系统管理",
+      "path": "README.md",
+      "content": "# kratos-admin",
+      "updated_at": "2026-07-31T08:00:00Z"
+    }
+  ],
+  "directories": [
+    {
+      "name": "docs",
+      "path": "docs",
       "documents": [],
-      "directories": [
-        {
-          "name": "docs",
-          "path": "docs",
-          "documents": [],
-          "directories": []
-        }
-      ]
+      "directories": []
     }
   ]
 }
 ```
+
+文档节点只记录项目内相对路径、源 Markdown 文件的 RFC3339 更新时间和正文。
+服务加载生成物后，使用 `AppInfo.Project` 和 `AppInfo.Name` 生成项目身份与稳定
+文档 ID。
 
 ## 安装
 
@@ -36,32 +44,10 @@ go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
 
 ## 使用
 
-每个 `--source` 使用 `OpenAPI-key:项目名称=项目根目录` 格式，并可重复传入：
-
 ```bash
-project-docs \
-  --source 'admin:系统管理=..' \
-  --source 'shop:商城=../../shop'
+project-docs
 ```
 
-默认输出到当前执行目录下的 `internal/projectdocs/assets/catalog.json`，并自动生成
-`internal/projectdocs/catalog_gen.go`。特殊场景可通过 `--output` 覆盖 JSON
-输出路径；非标准 JSON 路径默认不生成 Go 文件：
-
-```bash
-project-docs \
-  --source 'shop:商城=.' \
-  --output ./build/project-documents.json
-```
-
-自定义目录仍需生成 Go 嵌入文件时，同时使用 `--go-output`。JSON 文件必须位于
-Go 文件所在目录或其子目录，满足 `go:embed` 的路径限制：
-
-```bash
-project-docs \
-  --source 'shop:商城=.' \
-  --output ./internal/projectdocs/assets/shop.json \
-  --go-output ./internal/projectdocs/catalog_gen.go
-```
-
-文档 ID 由 OpenAPI 项目标识和项目内相对路径生成，修改文档内容不会改变 ID。
+普通项目输出到 `internal/projectdocs`。当前目录包含 `backend` 时，输出到
+`backend/internal/projectdocs`，用于 `kratos-admin` 这类前后端一体仓库。命令
+不接受任何参数；多模块文档由各模块分别生成，并在运行时通过 Contributor 聚合。

@@ -1,20 +1,21 @@
-// Command project-docs 收集一个或多个项目的指定 README 和根 docs Markdown 文档。
+// Command project-docs 收集当前项目约定范围内的 README 和 docs Markdown 文档。
 package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
 const (
-	defaultOutputPath      = "internal/projectdocs/assets/catalog.json"
-	defaultGoOutputPath    = "internal/projectdocs/catalog_gen.go"
+	defaultProjectDocsPath = "internal/projectdocs"
+	backendProjectDocsPath = "backend/internal/projectdocs"
+	maxSourcePathDepth     = 3
 	maxSourceDocumentBytes = 2 << 20
 )
 
@@ -30,13 +31,7 @@ var excludedDirectories = map[string]struct{}{
 	"vendor":       {},
 }
 
-type source struct {
-	key  string
-	name string
-	root string
-}
-
-// main 执行多项目文档收集命令。
+// main 执行当前项目文档收集命令。
 func main() {
 	err := run()
 	if err != nil {
@@ -45,46 +40,30 @@ func main() {
 	}
 }
 
-// run 解析参数、收集文档并写入目录构建产物。
+// run 收集当前项目文档并写入约定的目录构建产物。
 func run() error {
-	sources := make([]source, 0)
-	outputPath := defaultOutputPath
-	var goOutputPath string
-	flag.Func("source", "文档来源，格式为 OpenAPI-key:项目名称=项目根目录，可重复传入", func(value string) error {
-		project, root, found := strings.Cut(value, "=")
-		if !found || strings.TrimSpace(project) == "" || strings.TrimSpace(root) == "" {
-			return fmt.Errorf("无效的 --source %q，格式应为 OpenAPI-key:项目名称=项目根目录", value)
-		}
-		key, name, hasName := strings.Cut(project, ":")
-		if !hasName {
-			name = key
-		}
-		sources = append(sources, source{
-			key:  strings.TrimSpace(key),
-			name: strings.TrimSpace(name),
-			root: strings.TrimSpace(root),
-		})
-		return nil
-	})
-	flag.StringVar(&outputPath, "output", defaultOutputPath, "输出 catalog.json 路径")
-	flag.StringVar(&goOutputPath, "go-output", "", "输出 go:embed Go 文件路径；标准 catalog.json 路径下默认自动生成")
-	flag.Parse()
-	if len(sources) == 0 {
-		return fmt.Errorf("必须至少提供一个 --source")
+	if len(os.Args) > 1 {
+		return fmt.Errorf("project-docs 不接受命令行参数")
 	}
-	if goOutputPath == "" && filepath.Clean(outputPath) == filepath.Clean(defaultOutputPath) {
-		goOutputPath = defaultGoOutputPath
+	root, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("读取当前项目目录: %w", err)
 	}
-
-	documents := make([]document, 0)
-	var err error
-	for _, item := range sources {
-		var sourceDocuments []document
-		sourceDocuments, err = scanSource(item)
-		if err != nil {
-			return err
+	projectDocsPath := defaultProjectDocsPath
+	var backendInfo fs.FileInfo
+	backendInfo, err = os.Stat(filepath.Join(root, "backend"))
+	if err == nil {
+		if backendInfo.IsDir() {
+			projectDocsPath = backendProjectDocsPath
 		}
-		documents = append(documents, sourceDocuments...)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("检查 Backend 目录: %w", err)
+	}
+	outputPath := filepath.Join(root, projectDocsPath, "assets", "catalog.json")
+	goOutputPath := filepath.Join(root, projectDocsPath, "catalog_gen.go")
+	documents, err := scanSource(root)
+	if err != nil {
+		return err
 	}
 	var data []byte
 	data, err = marshalCatalog(documents)
@@ -95,57 +74,47 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	if goOutputPath != "" {
-		var goSource []byte
-		goSource, err = generateCatalogGoSource(goOutputPath, outputPath)
-		if err != nil {
-			return err
-		}
-		err = writeFileIfChanged(goOutputPath, goSource)
-		if err != nil {
-			return err
-		}
-		_, _ = fmt.Fprintf(
-			os.Stdout,
-			"已收集 %d 篇项目文档到 %s，并生成 %s\n",
-			len(documents),
-			outputPath,
-			goOutputPath,
-		)
-		return nil
+	var goSource []byte
+	goSource, err = generateCatalogGoSource(goOutputPath, outputPath)
+	if err != nil {
+		return err
 	}
-	_, _ = fmt.Fprintf(os.Stdout, "已收集 %d 篇项目文档到 %s\n", len(documents), outputPath)
+	err = writeFileIfChanged(goOutputPath, goSource)
+	if err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(
+		os.Stdout,
+		"已收集 %d 篇项目文档到 %s，并生成 %s\n",
+		len(documents),
+		outputPath,
+		goOutputPath,
+	)
 	return nil
 }
 
-// scanSource 扫描单个项目来源中的指定 README 和根 docs Markdown 文档。
-func scanSource(item source) ([]document, error) {
-	root, err := filepath.Abs(item.root)
+// scanSource 扫描当前项目约定范围内的 Markdown 文档。
+func scanSource(root string) ([]document, error) {
+	info, err := os.Stat(root)
 	if err != nil {
-		return nil, fmt.Errorf("解析项目 %s 根目录: %w", item.key, err)
-	}
-	var info fs.FileInfo
-	info, err = os.Stat(root)
-	if err != nil {
-		return nil, fmt.Errorf("读取项目 %s 根目录: %w", item.key, err)
+		return nil, fmt.Errorf("读取项目根目录: %w", err)
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("项目 %s 根目录不是目录: %s", item.key, root)
+		return nil, fmt.Errorf("项目根目录不是目录: %s", root)
 	}
 
 	documents := make([]document, 0)
 	err = filepath.WalkDir(root, func(filePath string, entry fs.DirEntry, entryErr error) error {
-		return collectSourceEntry(item, root, filePath, entry, entryErr, &documents)
+		return collectSourceEntry(root, filePath, entry, entryErr, &documents)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("扫描项目 %s 文档: %w", item.key, err)
+		return nil, fmt.Errorf("扫描项目文档: %w", err)
 	}
 	return documents, nil
 }
 
 // collectSourceEntry 处理目录遍历中的单个文件并追加可收集文档。
 func collectSourceEntry(
-	item source,
 	root string,
 	filePath string,
 	entry fs.DirEntry,
@@ -155,21 +124,24 @@ func collectSourceEntry(
 	if entryErr != nil {
 		return entryErr
 	}
-	if entry.IsDir() {
-		if filePath != root && shouldSkipDirectory(entry.Name()) {
-			return filepath.SkipDir
-		}
-		return nil
-	}
 	relativePath, err := filepath.Rel(root, filePath)
 	if err != nil {
 		return err
+	}
+	if entry.IsDir() {
+		if relativePath != "." {
+			segments := strings.Split(filepath.ToSlash(relativePath), "/")
+			if len(segments) >= maxSourcePathDepth || shouldSkipDirectory(relativePath) {
+				return filepath.SkipDir
+			}
+		}
+		return nil
 	}
 	if !shouldCollect(relativePath) {
 		return nil
 	}
 	var currentDocument document
-	currentDocument, err = readDocument(item.key, item.name, filePath, relativePath, entry)
+	currentDocument, err = readDocument(filePath, relativePath, entry)
 	if err != nil {
 		return err
 	}
@@ -177,8 +149,8 @@ func collectSourceEntry(
 	return nil
 }
 
-// readDocument 读取、校验并转换单篇 Markdown 文档。
-func readDocument(projectKey, projectName, filePath, relativePath string, entry fs.DirEntry) (document, error) {
+// readDocument 读取、校验并转换单篇 Markdown 文档及其更新时间。
+func readDocument(filePath, relativePath string, entry fs.DirEntry) (document, error) {
 	info, err := entry.Info()
 	if err != nil {
 		return document{}, err
@@ -196,10 +168,9 @@ func readDocument(projectKey, projectName, filePath, relativePath string, entry 
 	}
 	normalizedPath := filepath.ToSlash(relativePath)
 	return newDocument(
-		projectKey,
-		projectName,
 		normalizedPath,
 		string(content),
+		info.ModTime().UTC().Format(time.RFC3339),
 	), nil
 }
 
@@ -244,20 +215,29 @@ func writeFileIfChanged(outputPath string, data []byte) error {
 }
 
 // shouldSkipDirectory 判断目录是否属于依赖、构建或运行时产物。
-func shouldSkipDirectory(name string) bool {
-	_, excluded := excludedDirectories[name]
+func shouldSkipDirectory(relativePath string) bool {
+	normalizedPath := filepath.ToSlash(relativePath)
+	_, excluded := excludedDirectories[filepath.Base(normalizedPath)]
 	return excluded
 }
 
-// shouldCollect 判断相对路径是否属于约定的 README 或根 docs Markdown。
+// shouldCollect 判断三层范围内的文件是否为 README 或 docs Markdown。
 func shouldCollect(relativePath string) bool {
 	normalizedPath := filepath.ToSlash(relativePath)
-	switch normalizedPath {
-	case "README.md", "frontend/admin/README.md", "frontend/app/README.md":
+	segments := strings.Split(normalizedPath, "/")
+	if len(segments) > maxSourcePathDepth {
+		return false
+	}
+	if filepath.Base(normalizedPath) == "README.md" {
 		return true
 	}
 	if !strings.EqualFold(filepath.Ext(normalizedPath), ".md") {
 		return false
 	}
-	return strings.HasPrefix(normalizedPath, "docs/")
+	for _, segment := range segments[:len(segments)-1] {
+		if segment == "docs" {
+			return true
+		}
+	}
+	return false
 }

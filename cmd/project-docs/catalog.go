@@ -2,12 +2,9 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"path"
-	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -15,23 +12,13 @@ import (
 
 const maxDocumentContentBytes = 2 << 20
 
-var projectKeyPattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
-
 type document struct {
-	ID          string `json:"id"`
-	ProjectKey  string `json:"project_key"`
-	ProjectName string `json:"project_name"`
-	Path        string `json:"path"`
-	Content     string `json:"content"`
+	Path      string `json:"path"`
+	Content   string `json:"content"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type bundle struct {
-	Projects []catalogProject `json:"projects"`
-}
-
-type catalogProject struct {
-	Key         string             `json:"key"`
-	Name        string             `json:"name"`
 	Documents   []document         `json:"documents"`
 	Directories []catalogDirectory `json:"directories"`
 }
@@ -43,9 +30,7 @@ type catalogDirectory struct {
 	Directories []catalogDirectory `json:"directories"`
 }
 
-type catalogProjectBuilder struct {
-	key         string
-	name        string
+type catalogBuilder struct {
 	documents   []document
 	directories map[string]*catalogDirectoryBuilder
 }
@@ -57,27 +42,19 @@ type catalogDirectoryBuilder struct {
 	directories map[string]*catalogDirectoryBuilder
 }
 
-// newDocument 根据 OpenAPI 项目标识和相对路径创建带稳定 ID 的项目文档。
-func newDocument(projectKey, projectName, documentPath, content string) document {
-	normalizedProjectKey := strings.TrimSpace(projectKey)
-	normalizedProjectName := strings.TrimSpace(projectName)
-	normalizedPath := normalizePath(documentPath)
-	sum := sha256.Sum256([]byte(normalizedProjectKey + "\x00" + normalizedPath))
+// newDocument 根据相对路径创建构建期项目文档。
+func newDocument(documentPath, content, updatedAt string) document {
 	return document{
-		ID:          hex.EncodeToString(sum[:16]),
-		ProjectKey:  normalizedProjectKey,
-		ProjectName: normalizedProjectName,
-		Path:        normalizedPath,
-		Content:     content,
+		Path:      normalizePath(documentPath),
+		Content:   content,
+		UpdatedAt: updatedAt,
 	}
 }
 
 // marshalCatalog 校验项目文档并编码为稳定的目录构建产物。
 func marshalCatalog(documents []document) ([]byte, error) {
 	normalizedDocuments := make([]document, 0, len(documents))
-	documentIDs := make(map[string]struct{}, len(documents))
-	documentKeys := make(map[string]struct{}, len(documents))
-	projectNames := make(map[string]string)
+	documentPaths := make(map[string]struct{}, len(documents))
 	var err error
 	for _, currentDocument := range documents {
 		var normalizedDocument document
@@ -85,70 +62,40 @@ func marshalCatalog(documents []document) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		projectName, exists := projectNames[normalizedDocument.ProjectKey]
-		if exists && projectName != normalizedDocument.ProjectName {
-			return nil, fmt.Errorf(
-				"项目文档标识 %q 对应多个项目名称: %q、%q",
-				normalizedDocument.ProjectKey,
-				projectName,
-				normalizedDocument.ProjectName,
-			)
+		if _, exists := documentPaths[normalizedDocument.Path]; exists {
+			return nil, fmt.Errorf("项目文档路径重复: %s", normalizedDocument.Path)
 		}
-		documentKey := normalizedDocument.ProjectKey + "\x00" + normalizedDocument.Path
-		if _, exists = documentKeys[documentKey]; exists {
-			return nil, fmt.Errorf(
-				"项目文档路径重复: %s/%s",
-				normalizedDocument.ProjectKey,
-				normalizedDocument.Path,
-			)
-		}
-		if _, exists = documentIDs[normalizedDocument.ID]; exists {
-			return nil, fmt.Errorf("项目文档 ID 冲突: %s", normalizedDocument.ID)
-		}
-		projectNames[normalizedDocument.ProjectKey] = normalizedDocument.ProjectName
-		documentKeys[documentKey] = struct{}{}
-		documentIDs[normalizedDocument.ID] = struct{}{}
+		documentPaths[normalizedDocument.Path] = struct{}{}
 		normalizedDocuments = append(normalizedDocuments, normalizedDocument)
 	}
 	sort.Slice(normalizedDocuments, func(left, right int) bool {
-		if normalizedDocuments[left].ProjectKey == normalizedDocuments[right].ProjectKey {
-			return normalizedDocuments[left].Path < normalizedDocuments[right].Path
-		}
-		return normalizedDocuments[left].ProjectKey < normalizedDocuments[right].ProjectKey
+		return normalizedDocuments[left].Path < normalizedDocuments[right].Path
 	})
-	projects := buildCatalogProjects(normalizedDocuments)
 
 	var buffer bytes.Buffer
 	encoder := json.NewEncoder(&buffer)
 	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
-	err = encoder.Encode(bundle{Projects: projects})
+	err = encoder.Encode(buildCatalog(normalizedDocuments))
 	if err != nil {
 		return nil, fmt.Errorf("编码项目文档目录: %w", err)
 	}
 	return buffer.Bytes(), nil
 }
 
-// buildCatalogProjects 按项目和相对目录构建稳定的文档树。
-func buildCatalogProjects(documents []document) []catalogProject {
-	builders := make([]catalogProjectBuilder, 0)
-	var currentProject *catalogProjectBuilder
+// buildCatalog 按相对目录构建稳定的文档树。
+func buildCatalog(documents []document) bundle {
+	builder := catalogBuilder{
+		documents:   make([]document, 0),
+		directories: make(map[string]*catalogDirectoryBuilder),
+	}
 	for _, currentDocument := range documents {
-		if currentProject == nil || currentProject.key != currentDocument.ProjectKey {
-			builders = append(builders, catalogProjectBuilder{
-				key:         currentDocument.ProjectKey,
-				name:        currentDocument.ProjectName,
-				documents:   make([]document, 0),
-				directories: make(map[string]*catalogDirectoryBuilder),
-			})
-			currentProject = &builders[len(builders)-1]
-		}
 		segments := strings.Split(currentDocument.Path, "/")
 		if len(segments) == 1 {
-			currentProject.documents = append(currentProject.documents, currentDocument)
+			builder.documents = append(builder.documents, currentDocument)
 			continue
 		}
-		currentDirectories := currentProject.directories
+		currentDirectories := builder.directories
 		directoryPath := ""
 		var parentDirectory *catalogDirectoryBuilder
 		for _, directoryName := range segments[:len(segments)-1] {
@@ -168,17 +115,10 @@ func buildCatalogProjects(documents []document) []catalogProject {
 		}
 		parentDirectory.documents = append(parentDirectory.documents, currentDocument)
 	}
-
-	projects := make([]catalogProject, 0, len(builders))
-	for _, builder := range builders {
-		projects = append(projects, catalogProject{
-			Key:         builder.key,
-			Name:        builder.name,
-			Documents:   append(make([]document, 0, len(builder.documents)), builder.documents...),
-			Directories: buildCatalogDirectories(builder.directories),
-		})
+	return bundle{
+		Documents:   builder.documents,
+		Directories: buildCatalogDirectories(builder.directories),
 	}
-	return projects
 }
 
 // buildCatalogDirectories 将目录构建节点递归转换为按名称排序的目录树。
@@ -202,17 +142,8 @@ func buildCatalogDirectories(builders map[string]*catalogDirectoryBuilder) []cat
 	return directories
 }
 
-// validateDocument 校验文档字段并重建稳定 ID。
+// validateDocument 校验并规范化构建期文档字段。
 func validateDocument(currentDocument document) (document, error) {
-	if !projectKeyPattern.MatchString(strings.TrimSpace(currentDocument.ProjectKey)) {
-		return document{}, fmt.Errorf(
-			"项目文档标识 %q 必须与 OpenAPI key 一致，只能包含字母、数字、点、下划线和连字符",
-			currentDocument.ProjectKey,
-		)
-	}
-	if strings.TrimSpace(currentDocument.ProjectName) == "" {
-		return document{}, fmt.Errorf("项目文档缺少项目名称")
-	}
 	normalizedPath := normalizePath(currentDocument.Path)
 	if normalizedPath == "." ||
 		normalizedPath == "" ||
@@ -227,10 +158,9 @@ func validateDocument(currentDocument document) (document, error) {
 		return document{}, fmt.Errorf("项目文档超过 2 MiB: %s", normalizedPath)
 	}
 	return newDocument(
-		currentDocument.ProjectKey,
-		currentDocument.ProjectName,
 		normalizedPath,
 		currentDocument.Content,
+		currentDocument.UpdatedAt,
 	), nil
 }
 

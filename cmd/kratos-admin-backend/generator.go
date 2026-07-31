@@ -146,9 +146,9 @@ func renderProject(target string, tokens map[string]string) error {
 }
 
 // initializeProject 生成项目文档与 Wire 产物，并验证项目可以编译。
-func initializeProject(target, projectName string) error {
+func initializeProject(target, _ string) error {
 	var err error
-	err = generateProjectDocuments(target, projectName)
+	err = generateProjectDocuments(target)
 	if err != nil {
 		return err
 	}
@@ -168,19 +168,16 @@ func initializeProject(target, projectName string) error {
 }
 
 // generateProjectDocuments 通过 project-docs 生成项目文档目录和嵌入源码。
-func generateProjectDocuments(target, projectName string) error {
-	source := projectName + ":" + projectName + "=."
+func generateProjectDocuments(target string) error {
 	executable, err := exec.LookPath("project-docs")
 	if err == nil {
-		return runProjectCommand(target, executable, "--source", source)
+		return runProjectCommand(target, executable)
 	}
 	return runProjectCommand(
 		target,
 		"go",
 		"run",
 		"github.com/liujitcn/kratos-kit/cmd/project-docs@latest",
-		"--source",
-		source,
 	)
 }
 
