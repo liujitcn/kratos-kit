@@ -1,6 +1,6 @@
 # project-docs
 
-`project-docs` 是零参数的构建期文档收集命令，从项目根目录开始扫描相对路径
+`project-docs` 是构建期文档收集命令，从项目根目录开始扫描相对路径
 不超过三段的文件，只处理以下 Markdown：
 
 - 文件名精确为 `README.md` 的文件。
@@ -48,6 +48,15 @@ go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
 project-docs
 ```
 
-普通项目输出到 `internal/projectdocs`。当前目录包含 `backend` 时，输出到
-`backend/internal/projectdocs`，用于 `kratos-admin` 这类前后端一体仓库。命令
-不接受任何参数；多模块文档由各模块分别生成，并在运行时通过 Contributor 聚合。
+普通项目输出到 `internal/projectdocs`；当前目录包含 `backend` 时，默认输出到
+`backend/internal/docs`。输出目录下会生成 `assets/docs.json` 和
+`docs.go`，其中导出 `DocsData` 作为嵌入 JSON。
+
+可以通过 `--output` 或 `-o` 指定生成目录。相对路径以项目根目录为基准：
+
+```bash
+project-docs --output ./backend/internal/docs
+project-docs -o ./build/projectdocs
+```
+
+多模块文档由各模块分别生成，并在运行时通过 Contributor 聚合。

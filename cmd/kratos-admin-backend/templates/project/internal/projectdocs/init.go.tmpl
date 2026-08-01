@@ -29,7 +29,7 @@ type catalogDirectory struct {
 func Documents(projectKey, projectName string) ([]projectdoc.Document, error) {
 	var value catalog
 	var err error
-	err = json.Unmarshal(CatalogData, &value)
+	err = json.Unmarshal(DocsData, &value)
 	if err != nil {
 		return nil, fmt.Errorf("解析项目文档目录: %w", err)
 	}

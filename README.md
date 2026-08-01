@@ -108,12 +108,13 @@ go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
 ```
 
 命令从项目根目录扫描相对路径不超过三段的文件，只收集精确命名的
-`README.md`，以及任意 `docs` 目录中的 Markdown。普通项目输出到
-`internal/projectdocs`；包含 `backend` 的仓库输出到
-`backend/internal/projectdocs`：
+`README.md`，以及任意 `docs` 目录中的 Markdown。普通项目默认输出到
+`internal/projectdocs`；包含 `backend` 的仓库默认输出到 `backend/internal/docs`。
+也可以通过 `--output` 或 `-o` 指定生成目录：
 
 ```bash
 project-docs
+project-docs --output ./backend/internal/docs
 ```
 
 生成物不包含项目身份。服务加载后使用 `AppInfo.Project` 和 `AppInfo.Name`

@@ -3,6 +3,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -14,7 +15,9 @@ import (
 
 const (
 	defaultProjectDocsPath = "internal/projectdocs"
-	backendProjectDocsPath = "backend/internal/projectdocs"
+	backendProjectDocsPath = "backend/internal/docs"
+	docsAssetFileName      = "docs.json"
+	docsGoFileName         = "docs.go"
 	maxSourcePathDepth     = 3
 	maxSourceDocumentBytes = 2 << 20
 )
@@ -40,28 +43,41 @@ func main() {
 	}
 }
 
-// run 收集当前项目文档并写入约定的目录构建产物。
+// run 解析输出目录，收集当前项目文档并写入构建产物。
 func run() error {
-	if len(os.Args) > 1 {
-		return fmt.Errorf("project-docs 不接受命令行参数")
-	}
 	root, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("读取当前项目目录: %w", err)
 	}
-	projectDocsPath := defaultProjectDocsPath
-	var backendInfo fs.FileInfo
-	backendInfo, err = os.Stat(filepath.Join(root, "backend"))
-	if err == nil {
-		if backendInfo.IsDir() {
-			projectDocsPath = backendProjectDocsPath
-		}
-	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("检查 Backend 目录: %w", err)
+	var projectDocsPath string
+	var showHelp bool
+	projectDocsPath, showHelp, err = parseOutputDirectory()
+	if err != nil {
+		return err
 	}
-	outputPath := filepath.Join(root, projectDocsPath, "assets", "catalog.json")
-	goOutputPath := filepath.Join(root, projectDocsPath, "catalog_gen.go")
-	documents, err := scanSource(root)
+	if showHelp {
+		return nil
+	}
+	if projectDocsPath == "" {
+		projectDocsPath = defaultProjectDocsPath
+		var backendInfo fs.FileInfo
+		backendInfo, err = os.Stat(filepath.Join(root, "backend"))
+		if err == nil {
+			if backendInfo.IsDir() {
+				projectDocsPath = backendProjectDocsPath
+			}
+		} else if !os.IsNotExist(err) {
+			return fmt.Errorf("检查 Backend 目录: %w", err)
+		}
+	}
+	if !filepath.IsAbs(projectDocsPath) {
+		projectDocsPath = filepath.Join(root, projectDocsPath)
+	}
+	projectDocsPath = filepath.Clean(projectDocsPath)
+	outputPath := filepath.Join(projectDocsPath, "assets", docsAssetFileName)
+	goOutputPath := filepath.Join(projectDocsPath, docsGoFileName)
+	var documents []document
+	documents, err = scanSource(root)
 	if err != nil {
 		return err
 	}
@@ -91,6 +107,26 @@ func run() error {
 		goOutputPath,
 	)
 	return nil
+}
+
+// parseOutputDirectory 解析可选的项目文档生成目录参数。
+func parseOutputDirectory() (string, bool, error) {
+	flags := flag.NewFlagSet("project-docs", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	var outputDirectory string
+	flags.StringVar(&outputDirectory, "output", "", "项目文档生成目录，默认根据项目结构选择")
+	flags.StringVar(&outputDirectory, "o", "", "项目文档生成目录，默认根据项目结构选择")
+	err := flags.Parse(os.Args[1:])
+	if err != nil {
+		if err == flag.ErrHelp {
+			return "", true, nil
+		}
+		return "", false, fmt.Errorf("解析命令行参数: %w", err)
+	}
+	if flags.NArg() > 0 {
+		return "", false, fmt.Errorf("project-docs 不接受位置参数: %s", strings.Join(flags.Args(), " "))
+	}
+	return outputDirectory, false, nil
 }
 
 // scanSource 扫描当前项目约定范围内的 Markdown 文档。

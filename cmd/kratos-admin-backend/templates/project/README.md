@@ -76,7 +76,7 @@ make build
 ```
 
 `api/gen/go`、`internal/cmd/server/assets/openapi.yaml`、
-`internal/projectdocs/assets/catalog.json`、`internal/projectdocs/catalog_gen.go`
+`internal/projectdocs/assets/docs.json`、`internal/projectdocs/docs.go`
 和 `wire_gen.go` 都是生成产物，不应手工修改；项目文档 JSON 按文件目录保存为
 递归树，但不保存项目身份。服务加载后使用启动入口 `AppInfo` 的 `Project` 和
 `Name` 生成文档 ID、项目标识与展示名称，并与后续业务模块提供的
