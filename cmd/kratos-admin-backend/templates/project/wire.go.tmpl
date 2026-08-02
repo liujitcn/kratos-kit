@@ -1,7 +1,7 @@
 //go:build wireinject
 // +build wireinject
 
-package project
+package __PACKAGE_NAME__
 
 import (
 	"github.com/go-kratos/kratos/v3"
@@ -10,7 +10,7 @@ import (
 	databaseGorm "github.com/liujitcn/kratos-kit/database/gorm"
 	gormmigration "github.com/liujitcn/kratos-kit/database/gorm/migration"
 
-	"__MODULE_PATH__/projectdoc"
+	projectdoc "github.com/liujitcn/kratos-admin/backend/core/pkg/projectdoc"
 )
 
 // initModule 生成当前项目模块内部依赖装配代码。

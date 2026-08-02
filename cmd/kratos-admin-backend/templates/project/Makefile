@@ -50,7 +50,7 @@ openapi:
 # 收集 README 和 docs 项目文档。
 project-docs:
 	@command -v "$(PROJECT_DOCS_BIN)" >/dev/null 2>&1 || (echo "project-docs not found. Run make cli first." && exit 1)
-	@"$(PROJECT_DOCS_BIN)"
+	@"$(PROJECT_DOCS_BIN)" --output internal/docs
 
 # 生成 Wire 依赖注入代码。
 wire:

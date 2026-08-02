@@ -5,20 +5,25 @@ import (
 	"context"
 
 	backend "__MODULE_PATH__"
+	consts "__MODULE_PATH__/internal/const"
 
 	"github.com/go-kratos/kratos/v3"
 	bootstrapConfigv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/bootstrap"
+
+	// 注册默认数据库驱动和日志实现。
+	_ "github.com/liujitcn/kratos-kit/database/gorm/driver/mysql"
+	_ "github.com/liujitcn/kratos-kit/logger/zap"
 )
 
 var (
 	// Project 表示当前服务所属项目标识。
-	Project = "__PROJECT_NAME__"
+	Project = consts.PROJECT_KEY
 	// AppID 表示当前服务应用标识。
-	AppID = "__PROJECT_NAME__"
+	AppID = consts.PROJECT_KEY
 	// Name 表示当前服务展示名称。
-	Name    = "__PROJECT_NAME__"
-	version = "dev"
+	Name    = consts.PROJECT_NAME
+	version = "1.0.0"
 )
 
 // main 初始化应用信息并启动后端服务。

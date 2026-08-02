@@ -10,13 +10,14 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"golang.org/x/mod/module"
 )
 
 const (
 	templateRoot      = "templates/project"
-	coreModuleVersion = "v0.1.1"
+	coreModuleVersion = "v0.0.4"
 )
 
 var projectDirectories = []string{
@@ -31,7 +32,7 @@ var projectDirectories = []string{
 	"internal/data/gen/data",
 	"internal/data/gen/models",
 	"internal/data/gen/query",
-	"internal/projectdocs/assets",
+	"internal/docs/assets",
 	"internal/server/middleware",
 	"migration/assets/v0.0.1/mysql",
 }
@@ -88,6 +89,7 @@ func createProjectWithInitializer(
 	tokens := map[string]string{
 		"__MODULE_PATH__":         modulePath,
 		"__PROJECT_NAME__":        projectName,
+		"__PACKAGE_NAME__":        projectPackageName(projectName),
 		"__CORE_MODULE_VERSION__": coreModuleVersion,
 	}
 	err = renderProject(target, tokens)
@@ -171,13 +173,15 @@ func initializeProject(target, _ string) error {
 func generateProjectDocuments(target string) error {
 	executable, err := exec.LookPath("project-docs")
 	if err == nil {
-		return runProjectCommand(target, executable)
+		return runProjectCommand(target, executable, "--output", "internal/docs")
 	}
 	return runProjectCommand(
 		target,
 		"go",
 		"run",
 		"github.com/liujitcn/kratos-kit/cmd/project-docs@latest",
+		"--output",
+		"internal/docs",
 	)
 }
 
@@ -220,4 +224,27 @@ func renameTemplateFile(filePath string) string {
 	default:
 		return filePath
 	}
+}
+
+// projectPackageName 将项目目录名转换为合法且稳定的 Go 包名。
+func projectPackageName(projectName string) string {
+	var builder strings.Builder
+	for _, character := range projectName {
+		switch {
+		case character >= 'a' && character <= 'z':
+			builder.WriteRune(character)
+		case character >= 'A' && character <= 'Z':
+			builder.WriteRune(unicode.ToLower(character))
+		case character >= '0' && character <= '9' && builder.Len() > 0:
+			builder.WriteRune(character)
+		}
+	}
+	if builder.Len() == 0 {
+		return "project"
+	}
+	packageName := builder.String()
+	if packageName[0] >= '0' && packageName[0] <= '9' {
+		return "project" + packageName
+	}
+	return packageName
 }

@@ -28,12 +28,17 @@ __MODULE_PATH__
 │   ├── config
 │   ├── const
 │   ├── data
-│   ├── projectdocs
+│   ├── docs
 │   ├── server
 │   └── service
-├── migration/assets
-├── projectdoc
-├── app.go
+├── migration
+│   ├── assets
+│   └── migration.go
+├── bootstrap.go
+├── module.go
+├── module_provider.go
+├── module_runtime.go
+├── option.go
 ├── wire.go
 └── wire_gen.go
 ```
@@ -67,6 +72,10 @@ make run
 go run ./internal/cmd/server --conf ./configs
 ```
 
+启动入口默认注册 MySQL GORM 驱动和 Zap 日志实现，配置分别位于
+`configs/server.yaml` 和 `configs/logger.yaml`。新增其他数据库或配置中心时，在启动入口
+按需增加对应的实现包。
+
 ## 生成与验证
 
 ```bash
@@ -76,7 +85,7 @@ make build
 ```
 
 `api/gen/go`、`internal/cmd/server/assets/openapi.yaml`、
-`internal/projectdocs/assets/docs.json`、`internal/projectdocs/docs.go`
+`internal/docs/assets/docs.json`、`internal/docs/docs.go`
 和 `wire_gen.go` 都是生成产物，不应手工修改；项目文档 JSON 按文件目录保存为
 递归树，但不保存项目身份。服务加载后使用启动入口 `AppInfo` 的 `Project` 和
 `Name` 生成文档 ID、项目标识与展示名称，并与后续业务模块提供的

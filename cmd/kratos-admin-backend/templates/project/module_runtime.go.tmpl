@@ -1,0 +1,15 @@
+package __PACKAGE_NAME__
+
+import (
+	"github.com/liujitcn/kratos-admin/backend/core"
+	"github.com/liujitcn/kratos-admin/backend/core/pkg/projectdoc"
+)
+
+// ProjectDocuments 返回当前项目及扩展模块贡献的项目文档。
+func (r *Runtime) ProjectDocuments() []projectdoc.Document {
+	return append([]projectdoc.Document(nil), r.projectDocuments...)
+}
+
+var (
+	_ core.ProjectDocumentContributor = (*Runtime)(nil)
+)

@@ -40,7 +40,7 @@
 - `sdk`：SDK 初始化入口封装
 - `runtime`：运行时应用信息模型
 - `utils`：通用工具（TLS、Redis 配置辅助）
-- `cmd/project-docs`：零参数收集当前项目约定 README 和根 docs 的独立命令
+- `cmd/project-docs`：收集当前项目约定 README 和根 docs 的独立命令
 - `cmd/kratos-admin-backend`：生成基于 kratos-admin Core 的空业务后端项目
 
 `database/gorm` 的 `Data` 配置支持 `database` 与 `databases` 两种形式。多个固定数据源应按名称分别创建客户端和 `data.Data`，每个客户端启动时主动校验连接；跨数据源事务、Join 与请求级动态切库不在该封装的职责范围内。
@@ -121,7 +121,7 @@ project-docs --output ./backend/internal/docs
 生成稳定文档 ID，并与 OpenAPI/Swagger 保持一致。
 
 后端项目生成命令使用 Go module 末段作为目标目录名，生成 Proto、biz、service、
-server、data、migration 和 projectdocs 分层骨架，并同时提供可挂载模块与独立应用
+server、data、migration 和 docs 分层骨架，并同时提供可挂载模块与独立应用
 两套 Wire 装配入口：
 
 ```bash
