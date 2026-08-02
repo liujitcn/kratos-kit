@@ -179,7 +179,8 @@ assets/v0.0.1/
 
 迁移执行器读取客户端配置声明的真实驱动，而不是只读取 GORM Dialector 名称，因此 Doris
 复用 MySQL Dialector 时仍只会执行 `doris` 目录中的脚本。目标客户端必须使用 `mysql` 或
-`doris` 驱动，并且模块必须提供与目标数据源、数据库类型匹配的资源，否则启动直接返回错误。
+`doris` 驱动；目录名匹配已注入客户端时使用对应数据源，找不到匹配客户端时回退到 `default`，
+若默认客户端的驱动与脚本类型不匹配仍会直接返回错误。
 
 每个数据源资源都会产生独立的 `module + data_source + version` 迁移记录。数据库类型目录中的
 `*.up.sql`、`*.down.sql` 和 `.md` 文件均为可选；所有 `.md` 文件按文件名排序后直接
@@ -190,7 +191,7 @@ assets/v0.0.1/
 `base_migration` 对应的 `BaseMigration` 模型位于 `database/gorm/migration`。宿主项目
 应在默认客户端的 GORM 模型中注册该模型；默认客户端在 `enable_migrate: true` 时通过
 `AutoMigrate` 创建或更新表。版本化 SQL 迁移不读取 `enable_migrate`，默认中心数据库
-客户端和目录声明的数据源客户端未注入时返回错误；默认库必须在执行脚本前已有
+默认中心数据库客户端必须在执行脚本前注入；目录声明的数据源客户端未注入时回退到默认客户端。默认库必须在执行脚本前已有
 `base_migration` 表。MySQL 和 Doris 客户端默认启用多语句执行，以支持一个迁移文件包含
 多条 SQL。
 `BaseMigration.DataSource` 映射数据库中的 `data_source` 列；迁移记录不保存成功失败状态，
@@ -227,8 +228,8 @@ err = runner.SetClient(shopClient)
 err = runner.Run(ctx, moduleName)
 ```
 
-迁移核心按版本目录中的数据源名称查找已注入客户端。`Run(ctx, moduleName)` 执行模块的
-全部数据源资源；传入一个客户端时可只执行该数据源，例如
+迁移核心按版本目录中的数据源名称查找已注入客户端，未找到时使用 `default` 客户端。
+`Run(ctx, moduleName)` 执行模块的全部数据源资源；传入一个客户端时可只执行该数据源，例如
 `Run(ctx, moduleName, shopClient)`。依赖模块继承当前数据源，依赖模块如果也需要执行到
 `shop`，应在对应版本目录下提供 `shop` 子目录。不要求接入项目依赖 kratos-admin 或 Wire。
 

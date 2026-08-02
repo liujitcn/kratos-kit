@@ -76,7 +76,7 @@ func NewReady(_ *databaseGorm.Client) Ready {
 
 // Run 执行指定迁移模块及其依赖模块。
 //
-// 不传目标客户端时，按版本目录中的数据源目录自动执行所有已注入客户端；
+// 不传目标客户端时，按版本目录中的数据源目录查找客户端，未找到时回退到默认客户端；
 // 传入一个目标客户端时，仅执行该客户端对应数据库类型和数据源的迁移。
 func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*databaseGorm.Client) error {
 	r.mu.Lock()
@@ -86,7 +86,8 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*dat
 	if !exists || centralClient == nil || centralClient.DB == nil {
 		return fmt.Errorf("迁移记录数据库客户端不能为空")
 	}
-	if _, exists := r.registry.migrations[name]; !exists {
+	_, exists = r.registry.migrations[name]
+	if !exists {
 		return fmt.Errorf("迁移模块未注册: %s", name)
 	}
 	if len(targetClients) > 1 {
@@ -107,7 +108,12 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*dat
 	} else {
 		for _, assets := range assetsByModule {
 			for _, asset := range assets {
-				targetClient, exists := r.clients[asset.dataSource]
+				var targetClient *databaseGorm.Client
+				targetClient, exists = r.clients[asset.dataSource]
+				if !exists || targetClient == nil || targetClient.DB == nil {
+					// 迁移目录可以提前声明尚未配置的数据源，未匹配时统一落到默认数据源。
+					targetClient, exists = r.clients[DefaultTarget]
+				}
 				if !exists || targetClient == nil || targetClient.DB == nil {
 					return fmt.Errorf("迁移目标数据源客户端未注入: %s", asset.dataSource)
 				}
