@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package config.v1;
+
+import "google/protobuf/duration.proto";
+
+// Translator 描述机器翻译配置。
+message Translator {
+  // Google 描述 Google Cloud Translation 配置。
+  message Google {
+    // version 为 Google 翻译 API 版本，可选 v1、v2、v3。
+    string version = 1;
+    // api_key 为 Google Cloud API Key。
+    string api_key = 2;
+    // project_id 为 Google Cloud 项目 ID。
+    string project_id = 3;
+    // location 为 Google Cloud V3 区域。
+    string location = 4;
+    // parent 为 Google Cloud V3 的完整资源路径。
+    string parent = 5;
+  }
+
+  // Baidu 描述百度翻译配置。
+  message Baidu {
+    // app_id 为百度翻译应用 ID。
+    string app_id = 1;
+    // secret_key 为百度翻译密钥。
+    string secret_key = 2;
+  }
+
+  // Alibaba 描述阿里云机器翻译配置。
+  message Alibaba {
+    // access_key_id 为阿里云访问密钥 ID。
+    string access_key_id = 1;
+    // access_key_secret 为阿里云访问密钥。
+    string access_key_secret = 2;
+    // region_id 为阿里云区域，默认 cn-hangzhou。
+    string region_id = 3;
+  }
+
+  // Volc 描述火山引擎机器翻译配置。
+  message Volc {
+    // access_key 为火山引擎访问密钥。
+    string access_key = 1;
+    // secret_key 为火山引擎密钥。
+    string secret_key = 2;
+    // region 为火山引擎区域，默认 cn-north-1。
+    string region = 3;
+  }
+
+  // enabled 表示是否启用机器翻译。
+  bool enabled = 1;
+  // type 为翻译厂商类型，例如 google、baidu、alibaba、volc。
+  string type = 2;
+  // timeout 为单次翻译请求超时时间，默认 8 秒。
+  google.protobuf.Duration timeout = 3;
+  // options 为自定义 Provider 使用的扩展参数。
+  map<string, string> options = 4;
+  // google 为 Google 翻译配置。
+  optional Google google = 10;
+  // baidu 为百度翻译配置。
+  optional Baidu baidu = 11;
+  // alibaba 为阿里云机器翻译配置。
+  optional Alibaba alibaba = 12;
+  // volc 为火山引擎机器翻译配置。
+  optional Volc volc = 13;
+}

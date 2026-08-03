@@ -23,6 +23,7 @@
 - `queue`：内存/Redis 队列封装
 - `locker`：Redis 分布式锁封装
 - `oss`：本地/FTP/MinIO/阿里云 OSS/AWS S3 及兼容对象存储封装
+- `translator`：基于配置的统一机器翻译封装，内置 Google/百度/阿里云/火山引擎并支持自定义 Provider
 - [`database/gorm`](database/gorm/README.md)：GORM 客户端封装，提供多数据库 driver、连接池、迁移与可观测性，并内置审计字段填充、租户隔离和角色数据范围过滤；版本化迁移仅在脚本全部成功后记录，失败会记录错误并阻止应用启动
 - `database/ent`：Ent 底层数据库 driver 封装（含 `mysql`/`postgres`/`sqlite` driver 子模块，支持连接池配置、debug SQL 日志、迁移回调、表/字段注释与审计字段 mixin）
 - `broker`：消息发布订阅与 typed handler 封装，通用 `TransportServer` 可把任意 broker 接入 Kratos 应用生命周期；`broker/nats` 通过共享实现支持 Core NATS、JetStream、队列订阅、请求响应和消息追踪
@@ -87,6 +88,7 @@ go get github.com/liujitcn/kratos-kit/broker/nats@latest
 go get github.com/liujitcn/kratos-kit/swagger-ui@latest
 go get github.com/liujitcn/kratos-kit/pprof@latest
 go get github.com/liujitcn/kratos-kit/oauth@latest
+go get github.com/liujitcn/kratos-kit/translator@latest
 go get github.com/liujitcn/kratos-kit/ai/model@latest
 go get github.com/liujitcn/kratos-kit/ai/eino@latest
 go get github.com/liujitcn/kratos-kit/ai/langchaingo@latest

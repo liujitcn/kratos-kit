@@ -46,6 +46,10 @@
 - `nacos`
 - `polaris`
 
+启动配置还支持 `bootstrap.translator`，由 `github.com/liujitcn/kratos-kit/translator`
+按 `translator.type` 创建机器翻译 Provider。内置 `google`、`baidu`、`alibaba` 和
+`volc`，通用超时使用 `translator.timeout`；自定义 Provider 可通过模块注册接口扩展。
+
 ## 远程配置文件示例（config.yaml）
 
 下面示例展示如何在本地配置目录下启用远程配置源：

@@ -106,7 +106,7 @@ import "config/v1/tls.proto";
 import configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 ```
 
-启动配置 `configv1.Bootstrap` 当前包含 `server`、`client`、`data`、`trace`、`logger`、`registry`、`config`、`oss`、`notify`、`authn`、`authz`、`pprof` 与 `ai`。AI 配置使用 `configv1.AI`，其中 `AI.Model` 与上游 `kratos-bootstrap` 的模型配置保持一致；旧的 `Client.Llm` 配置已移除。OAuth 配置使用独立的 `configv1.OAuth`，由 `oauth.NewManager` 直接按 `providers` 配置创建 Provider。
+启动配置 `configv1.Bootstrap` 当前包含 `server`、`client`、`data`、`trace`、`logger`、`registry`、`config`、`oss`、`notify`、`authn`、`authz`、`pprof`、`ai`、`oauth` 与 `translator`。AI 配置使用 `configv1.AI`，其中 `AI.Model` 与上游 `kratos-bootstrap` 的模型配置保持一致；旧的 `Client.Llm` 配置已移除。OAuth 配置使用独立的 `configv1.OAuth`，由 `oauth.NewManager` 直接按 `providers` 配置创建 Provider。翻译配置使用 `configv1.Translator`，由 `translator` 模块按 `type` 选择具体厂商。
 
 `configv1.Data` 保留单数据库字段 `database`，并新增 `databases` map 用于按名称配置多个固定数据库；`Data.Database` 新增 `connection_timeout`，用于启动期连接校验。
 

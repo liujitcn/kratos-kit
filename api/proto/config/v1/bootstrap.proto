@@ -16,6 +16,7 @@ import "config/v1/pprof.proto";
 import "config/v1/registry.proto";
 import "config/v1/server.proto";
 import "config/v1/tracer.proto";
+import "config/v1/translator.proto";
 
 // Bootstrap 描述应用启动时加载的完整配置。
 message Bootstrap {
@@ -47,4 +48,6 @@ message Bootstrap {
   optional AI ai = 13;
   // oauth 为三方登录授权配置。
   optional OAuth oauth = 14;
+  // translator 为机器翻译配置。
+  optional Translator translator = 15;
 }

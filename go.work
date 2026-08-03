@@ -103,6 +103,7 @@ use (
 	./rpc
 	./swagger-ui
 	./tracer
+	./translator
 	./tracing
 	./transport
 	./transport/cron
