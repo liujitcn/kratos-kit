@@ -35,7 +35,6 @@ use (
 	./cmd/project-docs
 	./cmd/protoc-gen-go-agent-tool
 	./cmd/protoc-gen-go-mcp-tool
-	./cmd/protoc-gen-go-service
 	./config
 	./config/apollo
 	./config/consul
