@@ -1,16 +1,21 @@
 package tracing
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/sdk/resource"
 	traceSdk "go.opentelemetry.io/otel/sdk/trace"
 	semConv "go.opentelemetry.io/otel/semconv/v1.12.0"
 )
 
-// NewTracerProvider 创建一个链路追踪器
-func NewTracerProvider(exporterName, endpoint, serviceName, instanceId, version string, sampler float64) *traceSdk.TracerProvider {
+// NewTracerProvider 创建一个链路追踪器，并返回导出器或实例 ID 初始化错误。
+func NewTracerProvider(exporterName, endpoint, serviceName, instanceId, version string, sampler float64) (*traceSdk.TracerProvider, error) {
 	if instanceId == "" {
-		ud, _ := uuid.NewUUID()
+		ud, err := uuid.NewUUID()
+		if err != nil {
+			return nil, fmt.Errorf("tracing: create instance id: %w", err)
+		}
 		instanceId = ud.String()
 	}
 	if version == "" {
@@ -29,11 +34,11 @@ func NewTracerProvider(exporterName, endpoint, serviceName, instanceId, version 
 	if len(endpoint) > 0 {
 		exp, err := NewExporter(exporterName, endpoint, true)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("tracing: create exporter: %w", err)
 		}
 
 		opts = append(opts, traceSdk.WithBatcher(exp))
 	}
 
-	return traceSdk.NewTracerProvider(opts...)
+	return traceSdk.NewTracerProvider(opts...), nil
 }

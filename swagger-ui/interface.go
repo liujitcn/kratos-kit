@@ -19,12 +19,18 @@ type openAPIHTTPServerInterface interface {
 	Handle(path string, h http.Handler)
 }
 
-func RegisterSwaggerUIServer[T httpServerInterface](srv T, title, swaggerJSONPath string, basePath string) {
-	swaggerHandler := newHandler(title, swaggerJSONPath, basePath)
+// RegisterSwaggerUIServer 创建并注册 Swagger UI 处理器，并返回初始化错误。
+func RegisterSwaggerUIServer[T httpServerInterface](srv T, title, swaggerJSONPath string, basePath string) error {
+	swaggerHandler, err := newHandler(title, swaggerJSONPath, basePath)
+	if err != nil {
+		return err
+	}
 	srv.HandlePrefix(swaggerHandler.BasePath, swaggerHandler)
+	return nil
 }
 
-func RegisterSwaggerUIServerWithOption[T httpServerInterface](srv T, handlerOpts ...HandlerOption) {
+// RegisterSwaggerUIServerWithOption 根据选项创建并注册 Swagger UI 处理器，并返回初始化错误。
+func RegisterSwaggerUIServerWithOption[T httpServerInterface](srv T, handlerOpts ...HandlerOption) error {
 	opts := swagger.NewConfig()
 
 	for _, o := range handlerOpts {
@@ -32,18 +38,24 @@ func RegisterSwaggerUIServerWithOption[T httpServerInterface](srv T, handlerOpts
 	}
 
 	if opts.LocalOpenApiFile != "" {
-		registerOpenApiLocalFileRouter(srv, opts)
+		if err := registerOpenApiLocalFileRouter(srv, opts); err != nil {
+			return err
+		}
 	} else if len(opts.OpenApiData) != 0 {
 		registerOpenApiMemoryDataRouter(srv, opts)
 	}
 
-	swaggerHandler := newHandlerWithConfig(opts)
+	swaggerHandler, err := newHandlerWithConfig(opts)
+	if err != nil {
+		return err
+	}
 
 	srv.HandlePrefix(swaggerHandler.BasePath, swaggerHandler)
+	return nil
 }
 
 // RegisterOpenAPIServerWithOption 注册不包含 Swagger UI 静态页面的原始 OpenAPI 文档接口。
-func RegisterOpenAPIServerWithOption[T openAPIHTTPServerInterface](srv T, handlerOpts ...HandlerOption) {
+func RegisterOpenAPIServerWithOption[T openAPIHTTPServerInterface](srv T, handlerOpts ...HandlerOption) error {
 	opts := swagger.NewConfig()
 
 	for _, o := range handlerOpts {
@@ -58,23 +70,24 @@ func RegisterOpenAPIServerWithOption[T openAPIHTTPServerInterface](srv T, handle
 
 	_openAPIHandler, err := newOpenAPIHandlerWithConfig(opts)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	srv.Handle(opts.OpenAPIPath, _openAPIHandler)
+	return nil
 }
 
 // var _openJsonFileHandler = &openApiFileHandler{}
 
-func registerOpenApiLocalFileRouter[T httpServerInterface](srv T, cfg *swagger.Config) {
+func registerOpenApiLocalFileRouter[T httpServerInterface](srv T, cfg *swagger.Config) error {
 	var _openJsonFileHandler = &openApiFileHandler{}
 	err := _openJsonFileHandler.LoadFile(cfg.LocalOpenApiFile)
 	if err == nil {
 		pattern := strings.TrimRight(cfg.BasePath, "/") + "/openapi" + path.Ext(cfg.LocalOpenApiFile)
 		cfg.SwaggerJsonUrl = pattern
 		srv.Handle(pattern, _openJsonFileHandler)
-	} else {
-		fmt.Println("load openapi file failed: ", err)
+		return nil
 	}
+	return fmt.Errorf("load openapi file: %w", err)
 }
 
 func registerOpenApiMemoryDataRouter[T httpServerInterface](srv T, cfg *swagger.Config) {

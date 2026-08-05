@@ -57,16 +57,18 @@ func New(provider api.ProviderAPI, consumer api.ConsumerAPI, opts ...Option) (r 
 	}
 }
 
-func NewRegistryWithConfig(conf config.Configuration, opts ...Option) (r *Registry) {
+// NewRegistryWithConfig 根据 Polaris 配置创建注册发现实例，并返回初始化错误。
+func NewRegistryWithConfig(conf config.Configuration, opts ...Option) (*Registry, error) {
 	provider, err := api.NewProviderAPIByConfig(conf)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	consumer, err := api.NewConsumerAPIByConfig(conf)
+	var consumer api.ConsumerAPI
+	consumer, err = api.NewConsumerAPIByConfig(conf)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return New(provider, consumer, opts...)
+	return New(provider, consumer, opts...), nil
 }
 
 // Register the registration.

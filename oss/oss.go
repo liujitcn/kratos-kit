@@ -24,17 +24,8 @@ type OSS interface {
 	DeleteFile(filePath string) error
 }
 
-// NewOSS 创建对象存储；初始化失败时返回延迟报告错误的兼容实现。
-func NewOSS(cfg *configv1.Oss) OSS {
-	storage, err := NewOSSWithError(cfg)
-	if err != nil {
-		return &errorOSS{err: err}
-	}
-	return storage
-}
-
-// NewOSSWithError 创建对象存储并返回配置或客户端初始化错误。
-func NewOSSWithError(cfg *configv1.Oss) (OSS, error) {
+// NewOSS 创建对象存储，并返回配置或客户端初始化错误。
+func NewOSS(cfg *configv1.Oss) (OSS, error) {
 	if cfg == nil {
 		return local.NewOSS("./data"), nil
 	}
@@ -81,28 +72,4 @@ func NewOSSWithError(cfg *configv1.Oss) (OSS, error) {
 		}
 		return storage, nil
 	}
-}
-
-type errorOSS struct {
-	err error
-}
-
-// Upload 返回对象存储初始化错误。
-func (o *errorOSS) Upload(string, string, string) (string, error) {
-	return "", o.err
-}
-
-// UploadByByte 返回对象存储初始化错误。
-func (o *errorOSS) UploadByByte(string, string, []byte) (string, error) {
-	return "", o.err
-}
-
-// GetFileByte 返回对象存储初始化错误。
-func (o *errorOSS) GetFileByte(string) ([]byte, error) {
-	return nil, o.err
-}
-
-// DeleteFile 返回对象存储初始化错误。
-func (o *errorOSS) DeleteFile(string) error {
-	return o.err
 }

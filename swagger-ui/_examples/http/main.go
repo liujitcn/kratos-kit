@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	swaggerUI "github.com/liujitcn/kratos-kit/swagger-ui"
@@ -13,11 +14,14 @@ func main() {
 	//	"/docs/",
 	//)
 
-	swaggerHandler := swaggerUI.NewWithOption(
+	swaggerHandler, err := swaggerUI.NewWithOption(
 		swaggerUI.WithTitle("Petstore"),
 		swaggerUI.WithRemoteFileURL("https://petstore3.swagger.io/api/v3/openapi.yaml"),
 		swaggerUI.WithBasePath("/docs/"),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	//swaggerHandler := swaggerUI.NewWithOption(
 	//	swaggerUI.WithTitle("Petstore"),

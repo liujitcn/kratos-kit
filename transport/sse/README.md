@@ -158,11 +158,14 @@ const source = new EventSource("http://localhost:3000/sse")
 独立监听端口：
 
 ```go
-srv := sse.NewServer(
+srv, err := sse.NewServer(
     sse.WithAddress(":7002"),
     sse.WithPath("/events"),
     sse.WithAutoStream(true),
 )
+if err != nil {
+    return err
+}
 ```
 
 挂载到已有 HTTP 服务：

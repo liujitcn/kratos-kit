@@ -16,7 +16,8 @@ type apollo struct {
 	opt    *options
 }
 
-func NewSource(opts ...Option) config.Source {
+// NewSource 创建 Apollo 配置源，并返回客户端初始化错误。
+func NewSource(opts ...Option) (config.Source, error) {
 	op := options{}
 	for _, o := range opts {
 		o(&op)
@@ -33,9 +34,9 @@ func NewSource(opts ...Option) config.Source {
 		}, nil
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return &apollo{client: client, opt: &op}
+	return &apollo{client: client, opt: &op}, nil
 }
 
 func (e *apollo) load() []*config.KeyValue {

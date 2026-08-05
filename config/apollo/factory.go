@@ -17,7 +17,7 @@ func NewConfigSource(cfg *configv1.Config) (config.Source, error) {
 		return nil, nil
 	}
 
-	source := NewSource(
+	source, err := NewSource(
 		WithAppID(cfg.Apollo.AppId),
 		WithCluster(cfg.Apollo.Cluster),
 		WithEndpoint(cfg.Apollo.Endpoint),
@@ -25,5 +25,8 @@ func NewConfigSource(cfg *configv1.Config) (config.Source, error) {
 		WithSecret(cfg.Apollo.Secret),
 		WithEnableBackup(),
 	)
+	if err != nil {
+		return nil, err
+	}
 	return source, nil
 }

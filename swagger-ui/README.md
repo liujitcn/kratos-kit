@@ -17,7 +17,10 @@ go get github.com/liujitcn/kratos-kit/swagger-ui@latest
 最简方式，直接指定标题、OpenAPI 文档 URL 和挂载路径：
 
 ```go
-handler := swaggerUI.New("Petstore", "https://petstore3.swagger.io/api/v3/openapi.yaml", "/docs/")
+handler, err := swaggerUI.New("Petstore", "https://petstore3.swagger.io/api/v3/openapi.yaml", "/docs/")
+if err != nil {
+		panic(err)
+}
 ```
 
 ### 2. `NewWithOption`
@@ -25,11 +28,14 @@ handler := swaggerUI.New("Petstore", "https://petstore3.swagger.io/api/v3/openap
 通过 `Option` 构造 handler，适合需要定制 UI 行为的场景：
 
 ```go
-handler := swaggerUI.NewWithOption(
+handler, err := swaggerUI.NewWithOption(
 	swaggerUI.WithTitle("Petstore"),
 	swaggerUI.WithRemoteFileURL("https://petstore3.swagger.io/api/v3/openapi.yaml"),
 	swaggerUI.WithBasePath("/docs/"),
 )
+if err != nil {
+	panic(err)
+}
 ```
 
 ### 3. `RegisterSwaggerUIServer`
@@ -37,7 +43,9 @@ handler := swaggerUI.NewWithOption(
 把 Swagger UI 注册到实现了 `HandlePrefix` 的服务对象（例如 Kratos HTTP Server）：
 
 ```go
-swaggerUI.RegisterSwaggerUIServer(srv, "Petstore", "https://petstore3.swagger.io/api/v3/openapi.yaml", "/docs/")
+if err := swaggerUI.RegisterSwaggerUIServer(srv, "Petstore", "https://petstore3.swagger.io/api/v3/openapi.yaml", "/docs/"); err != nil {
+	panic(err)
+}
 ```
 
 ### 4. `RegisterSwaggerUIServerWithOption`
@@ -45,12 +53,14 @@ swaggerUI.RegisterSwaggerUIServer(srv, "Petstore", "https://petstore3.swagger.io
 带 `Option` 的注册方式，支持本地文件与内存数据自动注册文档路由：
 
 ```go
-swaggerUI.RegisterSwaggerUIServerWithOption(
+if err := swaggerUI.RegisterSwaggerUIServerWithOption(
 	srv,
 	swaggerUI.WithTitle("Petstore"),
 	swaggerUI.WithBasePath("/docs/"),
 	swaggerUI.WithLocalFile("./openapi.yaml"),
-)
+); err != nil {
+	panic(err)
+}
 ```
 
 ### 5. `RegisterOpenAPIServerWithOption`
@@ -58,13 +68,15 @@ swaggerUI.RegisterSwaggerUIServerWithOption(
 仅注册原始 OpenAPI 文档接口，不暴露 Swagger UI 页面。适合由前端内嵌 `swagger-ui-dist` 并自行管理访问控制的场景：
 
 ```go
-swaggerUI.RegisterOpenAPIServerWithOption(
+if err := swaggerUI.RegisterOpenAPIServerWithOption(
 	srv,
 	swaggerUI.WithMemoryData(openapiBytes, "yaml"),
 	swaggerUI.WithOpenAPIAuthorizer(func(r *http.Request) bool {
 		return validateAccessToken(r)
 	}),
-)
+); err != nil {
+	panic(err)
+}
 ```
 
 原始文档默认挂载到 `DefaultOpenAPIPath`（`/api/docs/openapi`），可通过 `WithOpenAPIPath` 覆盖。未设置 `WithOpenAPIAuthorizer` 或校验返回 `false` 时，接口返回 `401`；该注册方式不会创建 `/docs/` 或 `/docs/openapi.*` 路由。
@@ -118,11 +130,14 @@ import (
 )
 
 func main() {
-	h := swaggerUI.NewWithOption(
+	h, err := swaggerUI.NewWithOption(
 		swaggerUI.WithTitle("Petstore"),
 		swaggerUI.WithRemoteFileURL("https://petstore3.swagger.io/api/v3/openapi.yaml"),
 		swaggerUI.WithBasePath("/docs/"),
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	http.Handle("/docs/", h)
 	_ = http.ListenAndServe(":8080", http.DefaultServeMux)
@@ -139,8 +154,8 @@ import (
 	swaggerUI "github.com/liujitcn/kratos-kit/swagger-ui"
 )
 
-func RegisterDocs(srv *rest.Server) {
-	swaggerUI.RegisterSwaggerUIServerWithOption(
+func RegisterDocs(srv *rest.Server) error {
+	return swaggerUI.RegisterSwaggerUIServerWithOption(
 		srv,
 		swaggerUI.WithTitle("My API"),
 		swaggerUI.WithBasePath("/docs/"),
@@ -152,12 +167,14 @@ func RegisterDocs(srv *rest.Server) {
 ### Kratos + 本地文件
 
 ```go
-swaggerUI.RegisterSwaggerUIServerWithOption(
+if err := swaggerUI.RegisterSwaggerUIServerWithOption(
 	srv,
 	swaggerUI.WithTitle("My API"),
 	swaggerUI.WithBasePath("/docs/"),
 	swaggerUI.WithLocalFile("./openapi.yaml"),
-)
+); err != nil {
+	panic(err)
+}
 ```
 
 上述配置会自动注册文档路由（例如 `/docs/openapi.yaml`），并把 Swagger UI 指向该路由。
@@ -165,24 +182,28 @@ swaggerUI.RegisterSwaggerUIServerWithOption(
 ### Kratos + 内存数据
 
 ```go
-swaggerUI.RegisterSwaggerUIServerWithOption(
+if err := swaggerUI.RegisterSwaggerUIServerWithOption(
 	srv,
 	swaggerUI.WithTitle("My API"),
 	swaggerUI.WithBasePath("/docs/"),
 	swaggerUI.WithMemoryData(openapiBytes, "json"),
-)
+); err != nil {
+	panic(err)
+}
 ```
 
 ### Kratos + 受保护的原始 OpenAPI 文档
 
 ```go
-swaggerUI.RegisterOpenAPIServerWithOption(
+if err := swaggerUI.RegisterOpenAPIServerWithOption(
 	srv,
 	swaggerUI.WithMemoryData(openapiBytes, "yaml"),
 	swaggerUI.WithOpenAPIAuthorizer(func(r *http.Request) bool {
 		return validateAccessToken(r)
 	}),
-)
+); err != nil {
+	panic(err)
+}
 ```
 
 该方式仅提供 `/api/docs/openapi`，不会挂载 Swagger UI 静态页面。

@@ -22,7 +22,7 @@ func CreateSseServer(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) (*
 		return nil, err
 	}
 
-	return sseServer.NewServer(options...), nil
+	return sseServer.NewServer(options...)
 }
 
 // CreateSseHandler 创建可挂载到已有 HTTP 服务的 SSE 处理器。

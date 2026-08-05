@@ -66,11 +66,13 @@ type Server struct {
 	streamMgr *StreamManager
 }
 
-// NewServer 创建独立监听端口的 SSE 服务端。
-func NewServer(opts ...ServerOption) *Server {
+// NewServer 创建独立监听端口的 SSE 服务端，并返回监听初始化错误。
+func NewServer(opts ...ServerOption) (*Server, error) {
 	srv := newServer(opts...)
-	srv.err = srv.listen()
-	return srv
+	if err := srv.listen(); err != nil {
+		return nil, err
+	}
+	return srv, nil
 }
 
 // newServer 初始化 SSE 服务端基础配置，不主动占用监听端口。
