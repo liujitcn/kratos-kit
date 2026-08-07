@@ -208,7 +208,11 @@ func (x *Registry_Consul) GetHealthCheck() bool {
 type Registry_Etcd struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// endpoints 为服务端地址列表。
-	Endpoints     []string `protobuf:"bytes,1,rep,name=endpoints,proto3" json:"endpoints,omitempty"`
+	Endpoints []string `protobuf:"bytes,1,rep,name=endpoints,proto3" json:"endpoints,omitempty"`
+	// username 为 Etcd 认证用户名。
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// password 为 Etcd 认证密码。
+	Password      string `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -248,6 +252,20 @@ func (x *Registry_Etcd) GetEndpoints() []string {
 		return x.Endpoints
 	}
 	return nil
+}
+
+func (x *Registry_Etcd) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *Registry_Etcd) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
 }
 
 // ZooKeeper 描述 ZooKeeper 注册发现配置。
@@ -782,7 +800,7 @@ var File_config_v1_registry_proto protoreflect.FileDescriptor
 
 const file_config_v1_registry_proto_rawDesc = "" +
 	"\n" +
-	"\x18config/v1/registry.proto\x12\tconfig.v1\x1a\x1egoogle/protobuf/duration.proto\"\x87\x10\n" +
+	"\x18config/v1/registry.proto\x12\tconfig.v1\x1a\x1egoogle/protobuf/duration.proto\"\xbf\x10\n" +
 	"\bRegistry\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x127\n" +
 	"\x06consul\x18\x02 \x01(\v2\x1a.config.v1.Registry.ConsulH\x00R\x06consul\x88\x01\x01\x121\n" +
@@ -798,9 +816,11 @@ const file_config_v1_registry_proto_rawDesc = "" +
 	"\x06Consul\x12\x16\n" +
 	"\x06scheme\x18\x01 \x01(\tR\x06scheme\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\x12!\n" +
-	"\fhealth_check\x18\x03 \x01(\bR\vhealthCheck\x1a$\n" +
+	"\fhealth_check\x18\x03 \x01(\bR\vhealthCheck\x1a\\\n" +
 	"\x04Etcd\x12\x1c\n" +
-	"\tendpoints\x18\x01 \x03(\tR\tendpoints\x1a^\n" +
+	"\tendpoints\x18\x01 \x03(\tR\tendpoints\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\x1a^\n" +
 	"\tZooKeeper\x12\x1c\n" +
 	"\tendpoints\x18\x01 \x03(\tR\tendpoints\x123\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x1a\x82\x06\n" +

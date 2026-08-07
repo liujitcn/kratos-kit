@@ -20,6 +20,10 @@ message Registry {
   message Etcd {
     // endpoints 为服务端地址列表。
     repeated string endpoints = 1;
+    // username 为 Etcd 认证用户名。
+    string username = 2;
+    // password 为 Etcd 认证密码。
+    string password = 3;
   }
 
   // ZooKeeper 描述 ZooKeeper 注册发现配置。

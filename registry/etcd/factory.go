@@ -22,6 +22,8 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 
 	cfg := etcdClient.Config{
 		Endpoints: c.Etcd.Endpoints,
+		Username:  c.Etcd.Username,
+		Password:  c.Etcd.Password,
 	}
 
 	var err error
