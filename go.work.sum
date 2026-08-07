@@ -1833,6 +1833,7 @@ github.com/linode/linodego v1.9.3/go.mod h1:h6AuFR/JpqwwM/vkj7s8KV3iGN8/jxn+zc43
 github.com/little-cui/etcdadpt v0.3.2 h1:EBXPBxddZXTgWvGsIdAqqG6JCu1TouPNUhVVj9swt/s=
 github.com/little-cui/etcdadpt v0.3.2/go.mod h1:HnRRpIrVEVNWobkiCvG2EHLWKKZ+L047EcI29ma2zA4=
 github.com/liujitcn/kratos-kit/api v0.0.16/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
+github.com/liujitcn/kratos-kit/api v0.0.25/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
 github.com/liujitcn/kratos-kit/auth v0.0.14/go.mod h1:VflpPXKm02n0ypfFQ+Q0bmiQgR9HWCFk8In/ibqNJdA=
 github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.9/go.mod h1:h0G5awaspnF2tygB6paoSbJeUILMab4xUu3Y653aaaI=
 github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.10/go.mod h1:X/rFshoHejhD8WV6s034U0C4TdjALAkF9dM59XydMII=
