@@ -14,6 +14,8 @@ message Registry {
     string address = 2;
     // health_check 表示是否启用健康检查。
     bool health_check = 3;
+    // token 为 Consul ACL 访问令牌。
+    string token = 4;
   }
 
   // Etcd 描述 Etcd 注册发现配置。

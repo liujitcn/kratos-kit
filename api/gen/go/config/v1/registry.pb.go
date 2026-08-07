@@ -148,7 +148,9 @@ type Registry_Consul struct {
 	// address 为服务端地址。
 	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	// health_check 表示是否启用健康检查。
-	HealthCheck   bool `protobuf:"varint,3,opt,name=health_check,json=healthCheck,proto3" json:"health_check,omitempty"`
+	HealthCheck bool `protobuf:"varint,3,opt,name=health_check,json=healthCheck,proto3" json:"health_check,omitempty"`
+	// token 为 Consul ACL 访问令牌。
+	Token         string `protobuf:"bytes,4,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -202,6 +204,13 @@ func (x *Registry_Consul) GetHealthCheck() bool {
 		return x.HealthCheck
 	}
 	return false
+}
+
+func (x *Registry_Consul) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
 }
 
 // Etcd 描述 Etcd 注册发现配置。
@@ -800,7 +809,7 @@ var File_config_v1_registry_proto protoreflect.FileDescriptor
 
 const file_config_v1_registry_proto_rawDesc = "" +
 	"\n" +
-	"\x18config/v1/registry.proto\x12\tconfig.v1\x1a\x1egoogle/protobuf/duration.proto\"\xbf\x10\n" +
+	"\x18config/v1/registry.proto\x12\tconfig.v1\x1a\x1egoogle/protobuf/duration.proto\"\xd5\x10\n" +
 	"\bRegistry\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x127\n" +
 	"\x06consul\x18\x02 \x01(\v2\x1a.config.v1.Registry.ConsulH\x00R\x06consul\x88\x01\x01\x121\n" +
@@ -812,11 +821,12 @@ const file_config_v1_registry_proto_rawDesc = "" +
 	"kubernetes\x88\x01\x01\x127\n" +
 	"\x06eureka\x18\a \x01(\v2\x1a.config.v1.Registry.EurekaH\x05R\x06eureka\x88\x01\x01\x12:\n" +
 	"\apolaris\x18\b \x01(\v2\x1b.config.v1.Registry.PolarisH\x06R\apolaris\x88\x01\x01\x12F\n" +
-	"\vservicecomb\x18\t \x01(\v2\x1f.config.v1.Registry.ServicecombH\aR\vservicecomb\x88\x01\x01\x1a]\n" +
+	"\vservicecomb\x18\t \x01(\v2\x1f.config.v1.Registry.ServicecombH\aR\vservicecomb\x88\x01\x01\x1as\n" +
 	"\x06Consul\x12\x16\n" +
 	"\x06scheme\x18\x01 \x01(\tR\x06scheme\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\x12!\n" +
-	"\fhealth_check\x18\x03 \x01(\bR\vhealthCheck\x1a\\\n" +
+	"\fhealth_check\x18\x03 \x01(\bR\vhealthCheck\x12\x14\n" +
+	"\x05token\x18\x04 \x01(\tR\x05token\x1a\\\n" +
 	"\x04Etcd\x12\x1c\n" +
 	"\tendpoints\x18\x01 \x03(\tR\tendpoints\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
