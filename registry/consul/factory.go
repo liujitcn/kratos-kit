@@ -24,6 +24,7 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 	cfg := consulClient.DefaultConfig()
 	cfg.Address = c.Consul.GetAddress()
 	cfg.Scheme = c.Consul.GetScheme()
+	cfg.Token = c.Consul.GetToken()
 
 	var cli *consulClient.Client
 	var err error
