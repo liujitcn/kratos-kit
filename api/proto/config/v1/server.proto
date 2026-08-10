@@ -38,8 +38,6 @@ message Server {
     bool enable_validate = 4;
     // enable_metadata 表示是否启用元数据中间件。
     bool enable_metadata = 5;
-    // enable_circuit_breaker 已废弃；Kratos v3 仅提供客户端熔断器。
-    bool enable_circuit_breaker = 6 [deprecated = true];
 
     // limiter 为限流器配置。
     RateLimiter limiter = 10;

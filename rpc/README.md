@@ -552,8 +552,7 @@ HTTP 与 gRPC 客户端支持以下开关（位于 `configv1.Client.Middleware`�
 - `enable_metadata` -> `metadata.Client()`
 - `enable_circuit_breaker` -> Kratos v3 `circuitbreaker.Client()`
 
-服务端旧字段 `enable_circuit_breaker` 已废弃。Kratos v3 的熔断中间件用于
-客户端下游调用，不装配在 HTTP 或 gRPC 服务端。
+Kratos v3 的熔断中间件用于客户端下游调用，不装配在 HTTP 或 gRPC 服务端。
 
 `server.grpc.custom_health` 为 `false` 时由 Kratos 注册并维护标准 gRPC
 health service；设为 `true` 时调用 `grpc.CustomHealth()`，由业务自行注册

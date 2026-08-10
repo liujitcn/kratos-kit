@@ -345,10 +345,6 @@ type Server_Middleware struct {
 	EnableValidate bool `protobuf:"varint,4,opt,name=enable_validate,json=enableValidate,proto3" json:"enable_validate,omitempty"`
 	// enable_metadata 表示是否启用元数据中间件。
 	EnableMetadata bool `protobuf:"varint,5,opt,name=enable_metadata,json=enableMetadata,proto3" json:"enable_metadata,omitempty"`
-	// enable_circuit_breaker 已废弃；Kratos v3 仅提供客户端熔断器。
-	//
-	// Deprecated: Marked as deprecated in config/v1/server.proto.
-	EnableCircuitBreaker bool `protobuf:"varint,6,opt,name=enable_circuit_breaker,json=enableCircuitBreaker,proto3" json:"enable_circuit_breaker,omitempty"`
 	// limiter 为限流器配置。
 	Limiter *Server_Middleware_RateLimiter `protobuf:"bytes,10,opt,name=limiter,proto3" json:"limiter,omitempty"`
 	// metrics 为性能指标配置。
@@ -418,14 +414,6 @@ func (x *Server_Middleware) GetEnableValidate() bool {
 func (x *Server_Middleware) GetEnableMetadata() bool {
 	if x != nil {
 		return x.EnableMetadata
-	}
-	return false
-}
-
-// Deprecated: Marked as deprecated in config/v1/server.proto.
-func (x *Server_Middleware) GetEnableCircuitBreaker() bool {
-	if x != nil {
-		return x.EnableCircuitBreaker
 	}
 	return false
 }
@@ -1485,20 +1473,19 @@ var File_config_v1_server_proto protoreflect.FileDescriptor
 
 const file_config_v1_server_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xf2\x1f\n" +
+	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xb8\x1f\n" +
 	"\x06Server\x12/\n" +
 	"\x04http\x18\x01 \x01(\v2\x16.config.v1.Server.HttpH\x00R\x04http\x88\x01\x01\x12/\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x16.config.v1.Server.GrpcH\x01R\x04grpc\x88\x01\x01\x12,\n" +
 	"\x03mcp\x18\x03 \x01(\v2\x15.config.v1.Server.McpH\x02R\x03mcp\x88\x01\x01\x12,\n" +
-	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Server.SseH\x03R\x03sse\x88\x01\x01\x1a\xa9\x04\n" +
+	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Server.SseH\x03R\x03sse\x88\x01\x01\x1a\xef\x03\n" +
 	"\n" +
 	"Middleware\x12%\n" +
 	"\x0eenable_logging\x18\x01 \x01(\bR\renableLogging\x12'\n" +
 	"\x0fenable_recovery\x18\x02 \x01(\bR\x0eenableRecovery\x12%\n" +
 	"\x0eenable_tracing\x18\x03 \x01(\bR\renableTracing\x12'\n" +
 	"\x0fenable_validate\x18\x04 \x01(\bR\x0eenableValidate\x12'\n" +
-	"\x0fenable_metadata\x18\x05 \x01(\bR\x0eenableMetadata\x128\n" +
-	"\x16enable_circuit_breaker\x18\x06 \x01(\bB\x02\x18\x01R\x14enableCircuitBreaker\x12B\n" +
+	"\x0fenable_metadata\x18\x05 \x01(\bR\x0eenableMetadata\x12B\n" +
 	"\alimiter\x18\n" +
 	" \x01(\v2(.config.v1.Server.Middleware.RateLimiterR\alimiter\x12>\n" +
 	"\ametrics\x18\v \x01(\v2$.config.v1.Server.Middleware.MetricsR\ametrics\x1a!\n" +

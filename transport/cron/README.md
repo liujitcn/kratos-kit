@@ -49,7 +49,6 @@ go get github.com/liujitcn/kratos-kit/transport/cron
 | `WithGracefullyShutdown(enable bool)` | 是否等待正在执行的任务完成 |
 | `WithLocation(location *time.Location)` | 设置 Cron 表达式时区 |
 | `WithLogger(logger cron.Logger)` | 设置内部日志和 panic 恢复日志 |
-| `WithEnableKeepAlive(enable bool)` | 旧配置兼容，已废弃且不再生效 |
 
 ## 快速开始
 
@@ -154,7 +153,7 @@ cron server not started, please start server first
 ### 3. 不再创建独立 keepalive 服务
 
 Cron 没有网络监听需求，`Endpoint()` 固定返回 `cron://scheduler`。应用的 gRPC 健康检查由
-Kratos gRPC Server 自带的 health service 提供；`WithEnableKeepAlive` 仅保留源码兼容。
+Kratos gRPC Server 自带的 health service 提供。
 
 ### 4. 优雅关闭可配置
 

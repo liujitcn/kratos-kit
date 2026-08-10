@@ -9,12 +9,6 @@ import (
 // ServerOption 配置 Cron 服务。
 type ServerOption func(o *Server)
 
-// WithEnableKeepAlive 保留旧配置兼容，Cron 不再启动重复的 gRPC health 服务。
-// Deprecated: Cron 使用虚拟注册端点，健康检查应由应用现有的 Kratos gRPC Server 提供。
-func WithEnableKeepAlive(_ bool) ServerOption {
-	return func(*Server) {}
-}
-
 // WithGracefullyShutdown 设置停止时是否等待正在执行的任务完成。
 func WithGracefullyShutdown(enable bool) ServerOption {
 	return func(s *Server) {
