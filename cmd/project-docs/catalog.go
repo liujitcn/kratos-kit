@@ -13,9 +13,11 @@ import (
 const maxDocumentContentBytes = 2 << 20
 
 type document struct {
-	Path      string `json:"path"`
-	Content   string `json:"content"`
-	UpdatedAt string `json:"updated_at"`
+	Path              string            `json:"path"`
+	Content           string            `json:"content"`
+	LocalizedContents map[string]string `json:"localized_contents,omitempty"`
+	UpdatedAt         string            `json:"updated_at"`
+	Locale            string            `json:"-"`
 }
 
 type bundle struct {
@@ -157,11 +159,47 @@ func validateDocument(currentDocument document) (document, error) {
 	if len(currentDocument.Content) > maxDocumentContentBytes {
 		return document{}, fmt.Errorf("项目文档超过 2 MiB: %s", normalizedPath)
 	}
+	localizedContents := make(map[string]string, len(currentDocument.LocalizedContents))
+	locales := make(map[string]struct{}, len(currentDocument.LocalizedContents))
+	for localeValue, content := range currentDocument.LocalizedContents {
+		normalizedLocale := normalizeLocale(localeValue)
+		if normalizedLocale == "" {
+			return document{}, fmt.Errorf("项目文档语言代码不能为空: %s", normalizedPath)
+		}
+		if _, exists := locales[normalizedLocale]; exists {
+			return document{}, fmt.Errorf("项目文档语言版本重复: %s (%s)", normalizedPath, localeValue)
+		}
+		locales[normalizedLocale] = struct{}{}
+		if !utf8.ValidString(content) {
+			return document{}, fmt.Errorf("项目文档不是有效 UTF-8: %s (%s)", normalizedPath, localeValue)
+		}
+		if len(content) > maxDocumentContentBytes {
+			return document{}, fmt.Errorf("项目文档超过 2 MiB: %s (%s)", normalizedPath, localeValue)
+		}
+		localizedContents[localeValue] = content
+	}
 	return newDocument(
 		normalizedPath,
 		currentDocument.Content,
 		currentDocument.UpdatedAt,
-	), nil
+	).withLocalizedContents(localizedContents), nil
+}
+
+// withLocalizedContents 将语言版本复制到文档，避免目录持有外部可变 map。
+func (currentDocument document) withLocalizedContents(localizedContents map[string]string) document {
+	if len(localizedContents) == 0 {
+		return currentDocument
+	}
+	currentDocument.LocalizedContents = make(map[string]string, len(localizedContents))
+	for localeValue, content := range localizedContents {
+		currentDocument.LocalizedContents[localeValue] = content
+	}
+	return currentDocument
+}
+
+// normalizeLocale 将语言代码统一为大小写不敏感且使用连字符的形式。
+func normalizeLocale(localeValue string) string {
+	return strings.ToLower(strings.ReplaceAll(strings.TrimSpace(localeValue), "_", "-"))
 }
 
 // normalizePath 将各平台文件路径统一为项目内斜杠路径。

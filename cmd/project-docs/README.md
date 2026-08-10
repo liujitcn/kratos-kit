@@ -6,6 +6,10 @@
 - 文件名精确为 `README.md` 的文件。
 - 任意父目录名为 `docs` 的 Markdown 文件。
 
+同一路径可以通过文件名语言后缀提供翻译，例如 `README.en-US.md`、
+`docs/guide.zh-TW.md`。无后缀文件是默认正文，语言版本会聚合到同一个文档节点，
+不会在目录中重复显示。
+
 例如会收集 `README.md`、`backend/core/README.md`、
 `docs/guide/install.md` 和 `backend/docs/api.md`，不会收集路径超过三段的
 `backend/internal/agent/README.md` 或 `docs/guide/install/linux.md`。
@@ -18,6 +22,9 @@ JSON 按文件目录保存为树形结构，项目身份不写入构建产物：
     {
       "path": "README.md",
       "content": "# kratos-admin",
+      "localized_contents": {
+        "en-US": "# kratos-admin"
+      },
       "updated_at": "2026-07-31T08:00:00Z"
     }
   ],

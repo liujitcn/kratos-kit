@@ -112,6 +112,9 @@ go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
 命令从项目根目录扫描相对路径不超过三段的文件，只收集精确命名的
 `README.md`，以及任意 `docs` 目录中的 Markdown。普通项目默认输出到
 `internal/projectdocs`；包含 `backend` 的仓库默认输出到 `backend/internal/docs`。
+同一路径可以通过文件名语言后缀提供翻译，例如 `README.en-US.md` 或
+`docs/guide.zh-TW.md`；语言版本会聚合到同一个文档节点，并以
+`localized_contents` 字段输出。无后缀文件仍作为默认正文。
 也可以通过 `--output` 或 `-o` 指定生成目录：
 
 ```bash

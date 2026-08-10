@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -21,6 +23,8 @@ const (
 	maxSourcePathDepth     = 3
 	maxSourceDocumentBytes = 2 << 20
 )
+
+var localeSuffixPattern = regexp.MustCompile(`^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$`)
 
 var excludedDirectories = map[string]struct{}{
 	".git":         {},
@@ -78,6 +82,10 @@ func run() error {
 	goOutputPath := filepath.Join(projectDocsPath, docsGoFileName)
 	var documents []document
 	documents, err = scanSource(root)
+	if err != nil {
+		return err
+	}
+	documents, err = mergeLocalizedDocuments(documents)
 	if err != nil {
 		return err
 	}
@@ -203,11 +211,80 @@ func readDocument(filePath, relativePath string, entry fs.DirEntry) (document, e
 		return document{}, fmt.Errorf("文档不是有效 UTF-8: %s", relativePath)
 	}
 	normalizedPath := filepath.ToSlash(relativePath)
-	return newDocument(
-		normalizedPath,
-		string(content),
-		info.ModTime().UTC().Format(time.RFC3339),
-	), nil
+	basePath, localeValue := splitLocaleSuffix(normalizedPath)
+	return document{
+		Path:      basePath,
+		Content:   string(content),
+		Locale:    localeValue,
+		UpdatedAt: info.ModTime().UTC().Format(time.RFC3339),
+	}, nil
+}
+
+// mergeLocalizedDocuments 将同一路径的默认文档和语言版本合并为一个目录节点。
+func mergeLocalizedDocuments(documents []document) ([]document, error) {
+	merged := make(map[string]document, len(documents))
+	defaultDocuments := make(map[string]bool, len(documents))
+	for _, currentDocument := range documents {
+		currentDocument.Path = normalizePath(currentDocument.Path)
+		existing, exists := merged[currentDocument.Path]
+		if !exists {
+			existing = document{Path: currentDocument.Path}
+		}
+		if currentDocument.Locale == "" {
+			if defaultDocuments[currentDocument.Path] {
+				return nil, fmt.Errorf("项目文档路径重复: %s", currentDocument.Path)
+			}
+			existing.Content = currentDocument.Content
+			defaultDocuments[currentDocument.Path] = true
+		} else {
+			if existing.LocalizedContents == nil {
+				existing.LocalizedContents = make(map[string]string)
+			}
+			if hasLocalizedContent(existing.LocalizedContents, currentDocument.Locale) {
+				return nil, fmt.Errorf("项目文档语言版本重复: %s (%s)", currentDocument.Path, currentDocument.Locale)
+			}
+			existing.LocalizedContents[currentDocument.Locale] = currentDocument.Content
+		}
+		if currentDocument.UpdatedAt > existing.UpdatedAt {
+			existing.UpdatedAt = currentDocument.UpdatedAt
+		}
+		merged[currentDocument.Path] = existing
+	}
+	result := make([]document, 0, len(merged))
+	for _, currentDocument := range merged {
+		result = append(result, currentDocument)
+	}
+	return result, nil
+}
+
+// hasLocalizedContent 判断文档是否已包含等价语言代码的翻译正文。
+func hasLocalizedContent(contents map[string]string, localeValue string) bool {
+	normalizedLocale := normalizeLocale(localeValue)
+	for existingLocale := range contents {
+		if normalizeLocale(existingLocale) == normalizedLocale {
+			return true
+		}
+	}
+	return false
+}
+
+// splitLocaleSuffix 从 Markdown 文件名中提取语言后缀并返回稳定文档路径。
+func splitLocaleSuffix(documentPath string) (string, string) {
+	baseName := path.Base(documentPath)
+	if !strings.EqualFold(path.Ext(baseName), ".md") {
+		return documentPath, ""
+	}
+	stem := strings.TrimSuffix(baseName, path.Ext(baseName))
+	separator := strings.LastIndex(stem, ".")
+	if separator <= 0 {
+		return documentPath, ""
+	}
+	localeValue := strings.ReplaceAll(stem[separator+1:], "_", "-")
+	if !localeSuffixPattern.MatchString(localeValue) {
+		return documentPath, ""
+	}
+	baseName = stem[:separator] + ".md"
+	return path.Join(path.Dir(documentPath), baseName), localeValue
 }
 
 // writeFileIfChanged 仅在内容变化时原子替换生成文件。
