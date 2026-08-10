@@ -119,8 +119,8 @@ github.com/liujitcn/kratos-kit/transport/keepalive v0.0.10 h1:8NgakvKNtcLo1DFCEm
 github.com/liujitcn/kratos-kit/transport/keepalive v0.0.10/go.mod h1:697/E1yC9Nmo3+grrAXuWzyNC3kY3BBnnYZwG4eS7O8=
 github.com/liujitcn/kratos-kit/transport/mcp v0.0.12 h1:k4FiiBOQOIAlMdhmN+qogvGdXjUTkGqMCHq1p7MPAEw=
 github.com/liujitcn/kratos-kit/transport/mcp v0.0.12/go.mod h1:4NmtSjkkG84RRYizLOaW3FvaUcNwmpsithiGL3+qiE8=
-github.com/liujitcn/kratos-kit/transport/sse v0.0.9 h1:k/dOdcvXVPD8UZn/qDw7MUuN4AH77B4XMEY4X/SmKbA=
-github.com/liujitcn/kratos-kit/transport/sse v0.0.9/go.mod h1:Hjgys0b7viwz0p8qta2vNwVWeVOg/w/4sVL3EsADp68=
+github.com/liujitcn/kratos-kit/transport/sse v0.0.10 h1:xA8GyKNN4uS69EpmCZopy3nIiHzyVDywl42N/HykiS0=
+github.com/liujitcn/kratos-kit/transport/sse v0.0.10/go.mod h1:Hjgys0b7viwz0p8qta2vNwVWeVOg/w/4sVL3EsADp68=
 github.com/liujitcn/kratos-kit/utils v0.0.17 h1:EnoGxrKo3dVddtfr2GULtXVydnAHMQeBt+nO6nU96ws=
 github.com/liujitcn/kratos-kit/utils v0.0.17/go.mod h1:/j8JkRZVDIklsHigRZLCTt0p2beScZxgRSWWtQKSQTE=
 github.com/modelcontextprotocol/go-sdk v1.6.0 h1:PPLS3kn7WtOEnR+Af4X5H96SG0qSab8R/ZQT/HkhPkY=

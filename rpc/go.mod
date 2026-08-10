@@ -14,7 +14,7 @@ require (
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.17
 	github.com/liujitcn/kratos-kit/tracing v0.0.8
 	github.com/liujitcn/kratos-kit/transport/mcp v0.0.12
-	github.com/liujitcn/kratos-kit/transport/sse v0.0.9
+	github.com/liujitcn/kratos-kit/transport/sse v0.0.10
 	github.com/liujitcn/kratos-kit/utils v0.0.17
 	github.com/modelcontextprotocol/go-sdk v1.6.0
 	google.golang.org/grpc v1.81.0
