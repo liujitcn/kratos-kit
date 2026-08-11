@@ -38,7 +38,7 @@
 - `swagger-ui`：Swagger UI 嵌入与路由注册封装（支持 `net/http` 与 Kratos）
 - `pprof`：性能采样封装（当前支持 `pyroscope`）
 - `captcha`：验证码生成与存储封装
-- `sdk`：SDK 初始化入口封装
+- `sdk`：共享运行时入口，统一保存数据库、缓存、队列、OSS、锁和翻译器实例
 - `runtime`：运行时应用信息模型
 - `utils`：通用工具（TLS、Redis 配置辅助）
 - `cmd/project-docs`：收集当前项目约定 README 和根 docs 的独立命令
