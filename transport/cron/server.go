@@ -149,12 +149,12 @@ func (s *Server) Endpoint() (*url.URL, error) {
 }
 
 // NewTimerJob 添加定时任务，支持在服务启动前注册。
-func (s *Server) NewTimerJob(spec string, cmd func()) (cron.EntryID, error) {
+func (s *Server) NewTimerJob(spec Spec, cmd func()) (cron.EntryID, error) {
 	return s.addTimerJob(spec, cmd)
 }
 
 // StartTimerJob 添加并启动一个 cron 定时任务。
-func (s *Server) StartTimerJob(spec string, cmd func()) (cron.EntryID, error) {
+func (s *Server) StartTimerJob(spec Spec, cmd func()) (cron.EntryID, error) {
 	if !s.started.Load() {
 		return 0, errors.New("[Cron] server not started, please start server first")
 	}
@@ -162,12 +162,12 @@ func (s *Server) StartTimerJob(spec string, cmd func()) (cron.EntryID, error) {
 }
 
 // addTimerJob 向调度器注册定时任务并记录任务标识。
-func (s *Server) addTimerJob(spec string, cmd func()) (cron.EntryID, error) {
+func (s *Server) addTimerJob(spec Spec, cmd func()) (cron.EntryID, error) {
 	s.cronMu.Lock()
 	defer s.cronMu.Unlock()
 
 	// 添加任务
-	entryID, err := s.cronScheduler.AddFunc(spec, cmd)
+	entryID, err := s.cronScheduler.AddFunc(string(spec), cmd)
 	if err != nil {
 		log.Error("failed to add cron job", "error", err)
 		return 0, err

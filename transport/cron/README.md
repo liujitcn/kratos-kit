@@ -29,8 +29,8 @@ go get github.com/liujitcn/kratos-kit/transport/cron
 | `NewServer(opts ...ServerOption)` | 创建服务实例 |
 | `Start(ctx context.Context) error` | 启动调度器 |
 | `Stop(ctx context.Context) error` | 停止调度器并等待运行中的任务结束 |
-| `NewTimerJob(spec string, cmd func()) (cron.EntryID, error)` | 在启动前或启动后注册任务 |
-| `StartTimerJob(spec string, cmd func()) (cron.EntryID, error)` | 添加并启动任务 |
+| `NewTimerJob(spec Spec, cmd func()) (cron.EntryID, error)` | 在启动前或启动后注册任务 |
+| `StartTimerJob(spec Spec, cmd func()) (cron.EntryID, error)` | 添加并启动任务 |
 | `RemoveTimerJob(entryID cron.EntryID)` | 移除指定任务 |
 | `RemoveAllJobs()` | 移除全部任务 |
 | `StopTimerJob(entryID cron.EntryID)` | 停止指定任务 |

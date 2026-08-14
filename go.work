@@ -110,6 +110,7 @@ use (
 	./transport/hptimer
 	./transport/keepalive
 	./transport/mcp
+	./transport/queue
 	./transport/sse
 	./utils
 	./workflow
