@@ -17,10 +17,14 @@ type Runtime interface {
 	// GetInterface 按名称获取自定义实例。
 	GetInterface(string) any
 
-	// SetGormClient 设置默认数据库客户端。
-	SetGormClient(client *gorm.Client)
-	// GetGormClient 获取默认数据库客户端。
-	GetGormClient() *gorm.Client
+	// SetGormClients 设置数据库客户端集合。
+	SetGormClients(clients map[string]*gorm.Client)
+	// GetGormClients 获取数据库客户端集合。
+	GetGormClients() map[string]*gorm.Client
+	// GetDefaultGormClient 获取默认数据库客户端。
+	GetDefaultGormClient() *gorm.Client
+	// GetGormClient 按名称获取数据库客户端，未找到时回退到默认客户端。
+	GetGormClient(name string) *gorm.Client
 
 	// SetCache 设置缓存实例。
 	SetCache(cache.Cache)

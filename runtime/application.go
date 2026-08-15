@@ -16,12 +16,12 @@ import (
 type Application struct {
 	anyMap map[string]any
 
-	gormClient *gorm.Client
-	cache      cache.Cache
-	oss        oss.OSS
-	locker     locker.Locker
-	queue      queue.Queue
-	translator utilsTranslator.Translator
+	gormClients map[string]*gorm.Client
+	cache       cache.Cache
+	oss         oss.OSS
+	locker      locker.Locker
+	queue       queue.Queue
+	translator  utilsTranslator.Translator
 
 	mux sync.RWMutex
 }
@@ -29,7 +29,8 @@ type Application struct {
 // NewRuntime 创建空的共享运行时。
 func NewRuntime() Runtime {
 	return &Application{
-		anyMap: make(map[string]any),
+		anyMap:      make(map[string]any),
+		gormClients: make(map[string]*gorm.Client),
 	}
 }
 
@@ -47,18 +48,40 @@ func (e *Application) GetInterface(s string) any {
 	return e.anyMap[s]
 }
 
-// SetGormClient 设置默认数据库客户端。
-func (e *Application) SetGormClient(gormClient *gorm.Client) {
+// SetGormClients 设置数据库客户端集合。
+func (e *Application) SetGormClients(gormClients map[string]*gorm.Client) {
 	e.mux.Lock()
 	defer e.mux.Unlock()
-	e.gormClient = gormClient
+	e.gormClients = gormClients
 }
 
-// GetGormClient 获取默认数据库客户端。
-func (e *Application) GetGormClient() *gorm.Client {
-	e.mux.Lock()
-	defer e.mux.Unlock()
-	return e.gormClient
+// GetGormClients 获取数据库客户端集合。
+func (e *Application) GetGormClients() map[string]*gorm.Client {
+	e.mux.RLock()
+	defer e.mux.RUnlock()
+	clients := make(map[string]*gorm.Client, len(e.gormClients))
+	for name, client := range e.gormClients {
+		clients[name] = client
+	}
+	return clients
+}
+
+// GetDefaultGormClient 获取默认数据库客户端。
+func (e *Application) GetDefaultGormClient() *gorm.Client {
+	e.mux.RLock()
+	defer e.mux.RUnlock()
+	return e.gormClients[gorm.DefaultClientName]
+}
+
+// GetGormClient 按名称获取数据库客户端，未找到时回退到默认客户端。
+func (e *Application) GetGormClient(name string) *gorm.Client {
+	e.mux.RLock()
+	defer e.mux.RUnlock()
+	client, ok := e.gormClients[name]
+	if !ok || client == nil {
+		return e.gormClients[gorm.DefaultClientName]
+	}
+	return client
 }
 
 // SetCache 设置缓存实例。
