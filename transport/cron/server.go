@@ -3,6 +3,7 @@ package cron
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"sync"
 	"sync/atomic"
@@ -35,6 +36,8 @@ type Server struct {
 
 	entryIDs sync.Map     // 存储所有任务ID
 	cronMu   sync.RWMutex // cron 操作锁
+	taskMu   sync.RWMutex // 任务执行器注册锁
+	tasks    map[string]Task
 }
 
 // NewServer 创建 Cron 服务。
@@ -52,6 +55,7 @@ func NewServer(opts ...ServerOption) *Server {
 
 		cronLogger: cron.DefaultLogger,
 		entryIDs:   sync.Map{},
+		tasks:      make(map[string]Task),
 	}
 
 	srv.init(opts...)
@@ -146,6 +150,41 @@ func (s *Server) Stop(ctx context.Context) error {
 // Endpoint 返回 Cron 服务注册端点。
 func (s *Server) Endpoint() (*url.URL, error) {
 	return &url.URL{Scheme: KindCron, Host: "scheduler"}, nil
+}
+
+// RegisterTask 注册按名称调用的数据库任务执行器。
+func (s *Server) RegisterTask(tasks ...Task) error {
+	s.taskMu.Lock()
+	defer s.taskMu.Unlock()
+
+	registered := make(map[string]struct{}, len(tasks))
+	for _, item := range tasks {
+		if item.Name == "" {
+			return errors.New("[Cron] task name is empty")
+		}
+		if item.Exec == nil {
+			return fmt.Errorf("[Cron] task executor is nil: %s", item.Name)
+		}
+		if _, exists := s.tasks[item.Name]; exists {
+			return fmt.Errorf("[Cron] task name already registered: %s", item.Name)
+		}
+		if _, exists := registered[item.Name]; exists {
+			return fmt.Errorf("[Cron] task name already registered: %s", item.Name)
+		}
+		registered[item.Name] = struct{}{}
+	}
+	for _, item := range tasks {
+		s.tasks[item.Name] = item
+	}
+	return nil
+}
+
+// LookupTask 按名称查询数据库任务执行器。
+func (s *Server) LookupTask(name string) (Task, bool) {
+	s.taskMu.RLock()
+	task, exists := s.tasks[name]
+	s.taskMu.RUnlock()
+	return task, exists
 }
 
 // NewTimerJob 添加定时任务，支持在服务启动前注册。

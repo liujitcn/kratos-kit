@@ -3,9 +3,11 @@ package sse
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/go-kratos/kratos/v3/encoding"
@@ -64,6 +66,9 @@ type Server struct {
 	tokenExtractor  TokenExtractor
 
 	streamMgr *StreamManager
+
+	definitionMu sync.RWMutex
+	definitions  map[string]SSEStream
 }
 
 // NewServer 创建独立监听端口的 SSE 服务端，并返回监听初始化错误。
@@ -95,7 +100,8 @@ func newServer(opts ...ServerOption) *Server {
 		headers:         map[string]string{},
 		tokenExtractor:  DefaultTokenExtractor,
 
-		streamMgr: NewStreamManager(),
+		streamMgr:   NewStreamManager(),
+		definitions: make(map[string]SSEStream),
 	}
 
 	srv.streamIDResolver = ResolveStreamIDFromQuery(srv.streamIdKey)
@@ -157,6 +163,45 @@ func (s *Server) Endpoint() (*url.URL, error) {
 		return nil, err
 	}
 	return s.endpoint, nil
+}
+
+// RegisterStream 注册业务 SSE 流定义。
+func (s *Server) RegisterStream(streams ...SSEStream) error {
+	s.definitionMu.Lock()
+	defer s.definitionMu.Unlock()
+
+	registered := make(map[string]struct{}, len(streams))
+	for _, stream := range streams {
+		if stream == nil {
+			return fmt.Errorf("SSE stream is nil")
+		}
+		streamID := stream.ID()
+		if streamID == "" {
+			return fmt.Errorf("SSE stream ID is empty")
+		}
+		if _, exists := s.definitions[streamID]; exists {
+			return fmt.Errorf("SSE stream ID already registered: %s", streamID)
+		}
+		if _, exists := registered[streamID]; exists {
+			return fmt.Errorf("SSE stream ID already registered: %s", streamID)
+		}
+		registered[streamID] = struct{}{}
+	}
+	for _, stream := range streams {
+		s.definitions[stream.ID()] = stream
+	}
+	return nil
+}
+
+// StreamDefinitions 返回当前已注册的业务 SSE 流定义快照。
+func (s *Server) StreamDefinitions() []SSEStream {
+	s.definitionMu.RLock()
+	definitions := make([]SSEStream, 0, len(s.definitions))
+	for _, definition := range s.definitions {
+		definitions = append(definitions, definition)
+	}
+	s.definitionMu.RUnlock()
+	return definitions
 }
 
 func (s *Server) listenAndEndpoint() error {
