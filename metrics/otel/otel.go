@@ -1,4 +1,3 @@
-// Package otel 提供基于 OpenTelemetry OTLP exporter 的指标实现。
 package otel
 
 import (
