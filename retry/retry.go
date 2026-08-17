@@ -1,4 +1,3 @@
-// Package retry 提供与传输协议无关的重试能力。
 package retry
 
 import (
