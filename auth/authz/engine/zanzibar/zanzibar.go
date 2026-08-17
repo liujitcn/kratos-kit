@@ -1,4 +1,3 @@
-// Package zanzibar 提供适配 OpenFGA、Keto 等关系型鉴权服务的引擎。
 package zanzibar
 
 import (
