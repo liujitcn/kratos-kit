@@ -1,4 +1,3 @@
-// Package gob 将 Go 标准库 gob 注册为 Kratos codec。
 package gob
 
 import (
