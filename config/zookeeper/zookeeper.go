@@ -1,4 +1,3 @@
-// Package zookeeper 提供基于 ZooKeeper znode 的 Kratos 配置源。
 package zookeeper
 
 import (
