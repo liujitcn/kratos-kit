@@ -2,9 +2,9 @@ github.com/go-kratos/kratos/v3 v3.0.0 h1:dCXqKoeo2Bo9jgC72YfuwJ3g7bPCkHeVeNGyZQ5
 github.com/go-kratos/kratos/v3 v3.0.0/go.mod h1:8l+0M5UPlm/5hWLvS+wzxHRVRv6sHMG6Lgb4+rw1KIs=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/liujitcn/kratos-kit/api v0.0.23 h1:RZfGwIUQPRFGxZ3tbV55cIRkbbxWJJrvGNZ/fh/9V9g=
-github.com/liujitcn/kratos-kit/api v0.0.23/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
-github.com/liujitcn/kratos-kit/registry v0.0.20 h1:zVNxpu/Lqz3rkkVn8wPp2ZtAr1AHk5oFgzBq4tgrv3Y=
-github.com/liujitcn/kratos-kit/registry v0.0.20/go.mod h1:N+gu1glMyEZqSx5wi5w5vIlpNDsAHYtoNghrNszT0Cg=
-google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af h1:+5/Sw3GsDNlEmu7TfklWKPdQ0Ykja5VEmq2i817+jbI=
-google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+github.com/liujitcn/kratos-kit/api v0.0.28 h1:3PhXqb9oYdgzMCuIzBNgN45oOup9b97D0Bsj4r2ffiQ=
+github.com/liujitcn/kratos-kit/api v0.0.28/go.mod h1:OxJnIZeM6wwGjsheybFzOwgpHoZEu4SfPN+qhECXqF4=
+github.com/liujitcn/kratos-kit/registry v0.0.21 h1:skQ7yv6N0JOvZ5Nrgg1MV9y1wxtRNMT0lvExTqfEQ7k=
+github.com/liujitcn/kratos-kit/registry v0.0.21/go.mod h1:Z2cM7EAKx9L19pYQfswzoQujrL5WDgvSawfv6qOtReQ=
+google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=
+google.golang.org/protobuf v1.36.12/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
