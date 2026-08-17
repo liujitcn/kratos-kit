@@ -3,8 +3,6 @@ module github.com/liujitcn/kratos-kit/broker/nats
 go 1.26.0
 
 require (
-	github.com/liujitcn/kratos-kit/broker v0.0.8
-	github.com/liujitcn/kratos-kit/tracing v0.0.8
 	github.com/nats-io/nats.go v1.51.0
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
@@ -20,6 +18,8 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
+	github.com/liujitcn/kratos-kit/broker v0.0.9
+	github.com/liujitcn/kratos-kit/tracing v0.0.10
 	github.com/nats-io/nkeys v0.4.16 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
@@ -38,7 +38,7 @@ require (
 	golang.org/x/text v0.38.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260511170946-3700d4141b60 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260511170946-3700d4141b60 // indirect
-	google.golang.org/grpc v1.81.0 // indirect
+	google.golang.org/grpc v1.81.1 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
