@@ -44,8 +44,8 @@ JSON 按文件目录保存为树形结构，项目身份不写入构建产物：
 文档 ID。
 
 生成时只扫描和聚合项目中显式存在的语言 Markdown 文件，不执行网络翻译。
-上一次生成结果中，源文未变化的 `locale` 内容会被保留；源文变化后由独立的
-i18n 脚本重新补充。这样 Go 命令只负责收集文档，适合通过 `go install` 分发。
+上一次生成结果中，源文未变化的 `locale` 内容会被保留；源文变化后需要更新对应
+语言 Markdown 文件。这样 Go 命令只负责收集文档，适合通过 `go install` 分发。
 
 ## 安装
 
@@ -74,20 +74,6 @@ project-docs -o ./build/projectdocs
 
 ```bash
 project-docs --root /path/to/project --output /path/to/project/backend/internal/docs
-```
-
-多语言补充脚本位于 `cmd/i18n/project_docs.py`，读取已经生成的
-`assets/docs.json`，只为缺少的语言字段补充翻译，不重新扫描 Markdown，也不生成
-`docs.go`。它支持 Google V1、OpenCC、Markdown 代码和占位符保护；翻译端点可通过
-`I18N_TRANSLATE_ENDPOINT` 覆盖，离线模式使用 `--offline` 或 `I18N_OFFLINE=1`。
-
-```bash
-project-docs --output ./backend/internal/docs
-python3 ./cmd/i18n/project_docs.py \
-  --root . \
-  --output ./backend/internal/docs \
-  --source-locale zh-CN \
-  --locales en-US,zh-TW,ja-JP
 ```
 
 多模块文档由各模块分别生成，并在运行时通过 Contributor 聚合。
