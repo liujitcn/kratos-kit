@@ -1,4 +1,3 @@
-// Package fs 提供基于 io/fs.FS 的 Kratos 静态配置源。
 package fs
 
 import (
