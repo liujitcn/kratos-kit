@@ -2379,6 +2379,7 @@ github.com/liujitcn/go-utils/crypto v0.0.12/go.mod h1:lMw0GTk1N5ZX8cOKwD5/UnLLlJ
 github.com/liujitcn/kratos-kit/api v0.0.16/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
 github.com/liujitcn/kratos-kit/auth v0.0.14/go.mod h1:VflpPXKm02n0ypfFQ+Q0bmiQgR9HWCFk8In/ibqNJdA=
 github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.9/go.mod h1:h0G5awaspnF2tygB6paoSbJeUILMab4xUu3Y653aaaI=
+github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.17/go.mod h1:KSqpCRfu2RCYUjcf0FDxwCeZ2oIc55PEIO8JIRdhpi0=
 github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.10/go.mod h1:X/rFshoHejhD8WV6s034U0C4TdjALAkF9dM59XydMII=
 github.com/liujitcn/kratos-kit/auth/authz v0.0.16/go.mod h1:rhL/dfWNHS2+l25AOMx3KE7IsHyNs3kkMrgs9OqvGBA=
 github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.10/go.mod h1:+NkhZ0+DmDDRY7D4TwPnWWSLu6QOr/RsB6UZUihICOs=
@@ -2388,17 +2389,16 @@ github.com/liujitcn/kratos-kit/config v0.0.14/go.mod h1:RzHdXvOs6uBaHRRV5bt1Zwrd
 github.com/liujitcn/kratos-kit/database/gorm v0.0.24/go.mod h1:Zewb9BEqhVLNQAnT8Fk5i/SHkI906c/BYFHrhboBBPY=
 github.com/liujitcn/kratos-kit/database/gorm v0.0.33/go.mod h1:oVl384601SUdWOYM+G8DjT/Batc8VYsXYbdmHhVCGE4=
 github.com/liujitcn/kratos-kit/locker v0.0.9/go.mod h1:Cvlq140OYtan7FdEPfZ4JsNKcg4uKs1iNzVUzaue3cQ=
-github.com/liujitcn/kratos-kit/locker v0.0.14/go.mod h1:5qCek01Bul3NcPclNmeBBsclbBahqfzPFnzmW2xJpg0=
 github.com/liujitcn/kratos-kit/logger v0.0.21/go.mod h1:iNg7U22TxKkJVwEEVGJuS+nw1w6kRg2bFV7aN1yZdxI=
 github.com/liujitcn/kratos-kit/logger v0.0.23/go.mod h1:iNg7U22TxKkJVwEEVGJuS+nw1w6kRg2bFV7aN1yZdxI=
 github.com/liujitcn/kratos-kit/oss v0.0.10/go.mod h1:Z1mFZ2jCnqyObUsI3wKEtWYB99QR8V9y4VoucHDCcjg=
-github.com/liujitcn/kratos-kit/oss v0.0.16/go.mod h1:gnzTs+JynNcNsrjYxnb++oj3U4oNvooZq6p66Qr6lzk=
 github.com/liujitcn/kratos-kit/queue v0.0.17/go.mod h1:LdRi2RY55tg9C6E5TPbV1H3+fctHfU7ifHRzuYeSJHA=
-github.com/liujitcn/kratos-kit/queue v0.0.23/go.mod h1:/CzbieBR9VzsN9tv9M3g3GZCvqDamqcKRb3H9wSf9r4=
 github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.8/go.mod h1:SCPU1IITsJYkxWrncmsh6fkcK7IIPLCgePSyqjQ6lWc=
 github.com/liujitcn/kratos-kit/tracer v0.0.10/go.mod h1:jB8weZMePkL4/QVfXIAQuZUfjQk1jILwH/T5YjEd5Ek=
 github.com/liujitcn/kratos-kit/transport/mcp v0.0.8/go.mod h1:W63Mt5wsQmauQYafM83BIADDXO8KYmoL46o3qkx4v8o=
+github.com/liujitcn/kratos-kit/transport/mcp v0.0.13/go.mod h1:ewjVIB2A7uO3bXAYR7UahCw+zWzyGS+7gDoZB479m30=
 github.com/liujitcn/kratos-kit/transport/sse v0.0.5/go.mod h1:JZa25PvVewUZd+3oi21mRgc4jocXV4DExyzSkSjrHlE=
+github.com/liujitcn/kratos-kit/transport/sse v0.0.12/go.mod h1:7TOrh4AxSWLdN7LGjFrGrErYu09LA7ftnfcFYFb+LSk=
 github.com/liujitcn/kratos-kit/utils v0.0.13/go.mod h1:p1J4hqE50vciwv/SMWJ1ponR9aRI7ZmKGYYZyE7bRG0=
 github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0/go.mod h1:zJYVVT2jmtg6P3p1VtQj7WsuWi/y4VnjVBn7F8KPB3I=
 github.com/lyft/protoc-gen-star v0.6.0/go.mod h1:TGAoBVkt8w7MPG72TrKIu85MIdXwDuzJYeZuUPFPNwA=
@@ -3286,8 +3286,6 @@ golang.org/x/tools v0.41.0/go.mod h1:XSY6eDqxVNiYgezAVqqCeihT4j1U2CCsqvH3WhQpnlg
 golang.org/x/tools v0.42.0/go.mod h1:Ma6lCIwGZvHK6XtgbswSoWroEkhugApmsXyrUmBhfr0=
 golang.org/x/tools v0.43.0/go.mod h1:uHkMso649BX2cZK6+RpuIPXS3ho2hZo4FVwfoy1vIk0=
 golang.org/x/tools v0.47.0/go.mod h1:dFHnyTvFWY212G+h7ZY4Vsp/K3U4/7W9TyVaAul8uCA=
-golang.org/x/tools v0.48.0 h1:3+hClM1aLL5mjMKm5ovokw9epgRXPuu2tILgismM6RE=
-golang.org/x/tools v0.48.0/go.mod h1:08xX0orndb/F7jJxGDicx061tyd5pcMto75YMAXr6lk=
 golang.org/x/tools/go/expect v0.1.1-deprecated h1:jpBZDwmgPhXsKZC6WhL20P4b/wmnpsEAGHaNy0n/rJM=
 golang.org/x/tools/go/expect v0.1.1-deprecated/go.mod h1:eihoPOH+FgIqa3FpoTwguz/bVUSGBlGQU67vpBeOrBY=
 golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated h1:1h2MnaIAIXISqTFKdENegdpAgUXz6NrPEsbIeWaBRvM=
