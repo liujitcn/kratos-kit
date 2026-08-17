@@ -1,4 +1,3 @@
-// Package oss 提供基于 S3 兼容对象存储的 Kratos 配置源。
 package oss
 
 import (
