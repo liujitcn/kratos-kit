@@ -1,4 +1,3 @@
-// Package sentinel 提供并发安全的 Alibaba Sentinel 请求级熔断适配。
 package sentinel
 
 import (
