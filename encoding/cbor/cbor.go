@@ -1,4 +1,3 @@
-// Package cbor 将 RFC 8949 CBOR 编解码器注册为 Kratos codec。
 package cbor
 
 import (
