@@ -1,4 +1,3 @@
-// Package vault 提供基于 HashiCorp Vault 的 Kratos 配置源。
 package vault
 
 import (
