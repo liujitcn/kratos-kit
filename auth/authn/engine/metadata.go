@@ -79,6 +79,7 @@ func injectTokenToKratosContext(ctx context.Context, expectedScheme string, toke
 }
 
 func injectTokenToGrpcContext(ctx context.Context, expectedScheme string, tokenStr string) context.Context {
-	metautils.ExtractOutgoing(ctx).Set(HeaderAuthorize, formatToken(expectedScheme, tokenStr))
-	return ctx
+	metadata := metautils.ExtractOutgoing(ctx)
+	metadata.Set(HeaderAuthorize, formatToken(expectedScheme, tokenStr))
+	return metadata.ToOutgoing(ctx)
 }
