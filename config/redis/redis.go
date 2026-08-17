@@ -1,4 +1,3 @@
-// Package redis 提供基于 Redis Key 和 Pub/Sub 的 Kratos 配置源。
 package redis
 
 import (
