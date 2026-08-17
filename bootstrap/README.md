@@ -35,6 +35,8 @@ go run . \
 package main
 
 import (
+    "log/slog"
+
     "github.com/liujitcn/kratos-kit/bootstrap"
     configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 
@@ -67,7 +69,7 @@ var version string
 // go build -ldflags "-X main.version=x.y.z"
 
 func newApp(
-	lg log.Logger,
+	lg *slog.Logger,
 	re registry.Registrar,
 	hs *http.Server,
 ) *kratos.App {
