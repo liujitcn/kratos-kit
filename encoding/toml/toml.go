@@ -1,4 +1,3 @@
-// Package toml 将 TOML 编解码器注册为 Kratos codec。
 package toml
 
 import (
