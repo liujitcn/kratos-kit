@@ -1,4 +1,3 @@
-// Package s3 提供 AWS S3 及兼容对象存储客户端。
 package s3
 
 import (
