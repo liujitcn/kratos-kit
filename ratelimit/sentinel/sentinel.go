@@ -1,19 +1,19 @@
-// Package sentinel 提供适用于 Kratos 服务端中间件的 Sentinel 限流器。
 package sentinel
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	sentinelapi "github.com/alibaba/sentinel-golang/api"
 	"github.com/alibaba/sentinel-golang/core/base"
-	kratosRateLimit "github.com/go-kratos/kratos/v3/middleware/ratelimit"
 )
 
 // ErrEmptyResource 表示 Sentinel 资源名称为空。
 var ErrEmptyResource = errors.New("ratelimit/sentinel: resource is empty")
 
-var _ kratosRateLimit.Limiter = (*Limiter)(nil)
+// ErrLimited 表示 Sentinel 拒绝了本次请求。
+var ErrLimited = errors.New("rate limit exceeded")
 
 // Option 配置 Sentinel 限流器。
 type Option func(*options)
@@ -39,7 +39,7 @@ func WithEntryOptions(entryOpts ...sentinelapi.EntryOption) Option {
 	}
 }
 
-// Limiter 将 Sentinel 资源适配为 Kratos 限流器。
+// Limiter 将 Sentinel 资源适配为传输层限流器。
 type Limiter struct {
 	resource string
 	options  *options
@@ -64,19 +64,24 @@ func New(resource string, opts ...Option) (*Limiter, error) {
 	}, nil
 }
 
-// Allow 尝试进入 Sentinel 资源，并用 Kratos 完成回调结束本次 Entry。
-func (l *Limiter) Allow() (kratosRateLimit.DoneFunc, error) {
+// Allow 尝试进入 Sentinel 资源并立即结束本次 Entry。
+func (l *Limiter) Allow() (bool, error) {
 	entryOpts := make([]sentinelapi.EntryOption, 0, 1+len(l.options.entryOpts))
 	entryOpts = append(entryOpts, sentinelapi.WithTrafficType(l.options.trafficType))
 	entryOpts = append(entryOpts, l.options.entryOpts...)
 	entry, blockErr := l.entry(l.resource, entryOpts...)
 	if blockErr != nil {
-		return nil, fmt.Errorf("%w: %s", kratosRateLimit.ErrLimitExceed, blockErr.Error())
+		return false, fmt.Errorf("%w: %s", ErrLimited, blockErr.Error())
 	}
-	return func(info kratosRateLimit.DoneInfo) {
-		if info.Err != nil {
-			sentinelapi.TraceError(entry, info.Err)
-		}
-		entry.Exit()
-	}, nil
+	entry.Exit()
+	return true, nil
+}
+
+// Wait 检查 Sentinel 资源，Sentinel 本身不提供阻塞等待语义。
+func (l *Limiter) Wait(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	_, err := l.Allow()
+	return err
 }
