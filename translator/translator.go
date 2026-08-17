@@ -1,4 +1,3 @@
-// Package translator 提供基于配置的统一翻译模块。
 package translator
 
 import (
