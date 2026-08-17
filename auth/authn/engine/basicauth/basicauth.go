@@ -1,4 +1,3 @@
-// Package basicauth 提供 RFC 7617 Basic 认证器。
 package basicauth
 
 import (
