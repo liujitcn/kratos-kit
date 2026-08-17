@@ -1,4 +1,4 @@
-go 1.26.0
+go 1.26.3
 
 use (
 	.
@@ -88,6 +88,7 @@ use (
 	./pprof
 	./queue
 	./queue/redisqueue
+	./ratelimit
 	./ratelimit/sentinel
 	./ratelimit/tokenbucket
 	./registry
@@ -103,8 +104,8 @@ use (
 	./rpc
 	./swagger-ui
 	./tracer
-	./translator
 	./tracing
+	./translator
 	./transport
 	./transport/cron
 	./transport/hptimer
