@@ -1,4 +1,3 @@
-// Package oidc 提供基于 OpenID Connect discovery 和远程 JWKS 的认证器。
 package oidc
 
 import (
