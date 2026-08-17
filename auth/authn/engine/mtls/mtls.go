@@ -1,4 +1,3 @@
-// Package mtls 提供基于客户端 TLS 证书的认证器。
 package mtls
 
 import (
