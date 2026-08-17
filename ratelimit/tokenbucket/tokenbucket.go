@@ -1,19 +1,19 @@
-// Package tokenbucket 提供适用于 Kratos 服务端中间件的令牌桶限流器。
 package tokenbucket
 
 import (
+	"context"
 	"errors"
 
-	kratosRateLimit "github.com/go-kratos/kratos/v3/middleware/ratelimit"
 	"golang.org/x/time/rate"
 )
 
 // ErrInvalidConfig 表示速率或突发容量无效。
 var ErrInvalidConfig = errors.New("tokenbucket: rate and burst must be positive")
 
-var _ kratosRateLimit.Limiter = (*Limiter)(nil)
+// ErrLimited 表示没有可用令牌。
+var ErrLimited = errors.New("rate limit exceeded")
 
-// Limiter 使用 golang.org/x/time/rate 实现 Kratos 限流器。
+// Limiter 使用 golang.org/x/time/rate 实现限流器。
 type Limiter struct {
 	limiter *rate.Limiter
 }
@@ -28,10 +28,15 @@ func New(tokensPerSecond float64, burst int) (*Limiter, error) {
 	}, nil
 }
 
-// Allow 尝试消耗一个令牌，并返回 Kratos 请求完成回调。
-func (l *Limiter) Allow() (kratosRateLimit.DoneFunc, error) {
-	if !l.limiter.Allow() {
-		return nil, kratosRateLimit.ErrLimitExceed
+// Allow 尝试立即消耗一个令牌。
+func (l *Limiter) Allow() (bool, error) {
+	if l.limiter.Allow() {
+		return true, nil
 	}
-	return func(kratosRateLimit.DoneInfo) {}, nil
+	return false, ErrLimited
+}
+
+// Wait 等待直到获得一个令牌或上下文取消。
+func (l *Limiter) Wait(ctx context.Context) error {
+	return l.limiter.Wait(ctx)
 }
