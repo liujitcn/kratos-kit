@@ -1,4 +1,3 @@
-// Package thrift 为 Thrift 生成类型提供 Kratos 二进制 codec。
 package thrift
 
 import (
