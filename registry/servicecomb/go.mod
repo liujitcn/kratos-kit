@@ -7,8 +7,6 @@ require (
 	github.com/go-chassis/sc-client v0.7.0
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/liujitcn/kratos-kit/api v0.0.23
-	github.com/liujitcn/kratos-kit/registry v0.0.20
 )
 
 require (
@@ -20,9 +18,11 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/karlseguin/ccache/v2 v2.0.8 // indirect
+	github.com/liujitcn/kratos-kit/api v0.0.28
+	github.com/liujitcn/kratos-kit/registry v0.0.21
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
-	golang.org/x/net v0.54.0 // indirect
-	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
+	golang.org/x/net v0.55.0 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 )
