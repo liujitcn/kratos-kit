@@ -1,8 +1,3 @@
-// Package workflow 定义工作流引擎插件的公共接口。
-//
-// 每个引擎插件（argo、conductor、goworkflows、temporal）都会封装对应的原生
-// SDK 客户端，并实现 Client 接口。启动、取消、发送信号等无法统一抽象的能力，
-// 由各具体客户端类型自行暴露。
 package workflow
 
 // Client 是所有工作流引擎客户端的公共接口。
