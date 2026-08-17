@@ -1,4 +1,3 @@
-// Package cerbos 提供通过 Cerbos PDP HTTP API 执行鉴权的引擎。
 package cerbos
 
 import (
