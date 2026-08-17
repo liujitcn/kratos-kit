@@ -1,4 +1,3 @@
-// Package prometheus 提供基于 Prometheus client_golang 的指标实现。
 package prometheus
 
 import (
