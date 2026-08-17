@@ -1,4 +1,3 @@
-// Package health 提供应用级存活与就绪检查聚合能力。
 package health
 
 import (
