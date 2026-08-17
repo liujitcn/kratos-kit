@@ -1,4 +1,3 @@
-// Package bson 将 MongoDB BSON 编解码器注册为 Kratos codec。
 package bson
 
 import (
