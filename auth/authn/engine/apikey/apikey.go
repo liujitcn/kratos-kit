@@ -1,4 +1,3 @@
-// Package apikey 提供静态密钥或回调校验的 API Key 认证器。
 package apikey
 
 import (
