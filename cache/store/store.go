@@ -1,4 +1,3 @@
-// Package store 定义支持 context、原子消费、原子写入和批量操作的缓存契约。
 package store
 
 import (

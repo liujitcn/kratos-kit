@@ -1,4 +1,3 @@
-// Package local 提供基于 FreeCache 的进程内缓存。
 package local
 
 import (
