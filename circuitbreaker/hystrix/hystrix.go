@@ -1,4 +1,3 @@
-// Package hystrix 实现基于滑动窗口错误率的 Hystrix 风格熔断器。
 package hystrix
 
 import (

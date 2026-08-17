@@ -1,4 +1,3 @@
-// Package circuitbreaker 提供需要请求级完成令牌的 Kratos 客户端熔断适配。
 package circuitbreaker
 
 import (
@@ -6,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/go-kratos/kratos/v3/errors"
+	kratoserrors "github.com/go-kratos/kratos/v3/errors"
 	"github.com/go-kratos/kratos/v3/middleware"
 	kratosbreaker "github.com/go-kratos/kratos/v3/middleware/circuitbreaker"
 	"github.com/go-kratos/kratos/v3/transport"
@@ -122,7 +121,7 @@ func (g *breakerGroup) get(operation string) Breaker {
 // isFailure 判断错误是否应计入客户端熔断统计。
 func isFailure(err error) bool {
 	return err != nil &&
-		(errors.IsInternalServer(err) ||
-			errors.IsServiceUnavailable(err) ||
-			errors.IsGatewayTimeout(err))
+		(kratoserrors.IsInternalServer(err) ||
+			kratoserrors.IsServiceUnavailable(err) ||
+			kratoserrors.IsGatewayTimeout(err))
 }

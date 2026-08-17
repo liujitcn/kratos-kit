@@ -1,4 +1,3 @@
-// Package vegas 实现基于请求延迟膨胀的 Vegas 风格熔断器。
 package vegas
 
 import (
