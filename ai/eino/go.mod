@@ -6,7 +6,6 @@ require (
 	github.com/cloudwego/eino v0.9.2
 	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.1
 	github.com/eino-contrib/jsonschema v1.0.3
-	github.com/liujitcn/kratos-kit/api v0.0.28
 )
 
 require (
@@ -28,6 +27,7 @@ require (
 	github.com/goph/emperror v0.17.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
+	github.com/liujitcn/kratos-kit/api v0.0.28
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
