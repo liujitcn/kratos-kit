@@ -41,7 +41,8 @@
 - `sdk`：共享运行时入口，统一保存数据库、缓存、队列、OSS、锁和翻译器实例
 - `runtime`：运行时应用信息模型
 - `utils`：通用工具（TLS、Redis 配置辅助）
-- `cmd/project-docs`：收集当前项目约定 README 和根 docs 的独立命令
+- `cmd/project-docs`：收集当前项目约定 README 和根 docs 的 Go 命令
+- `cmd/i18n/project_docs.py`：为已生成的项目文档目录补充缺失语言
 - `cmd/kratos-admin-backend`：生成基于 kratos-admin Core 的空业务后端项目
 
 `database/gorm` 的 `Data` 配置支持 `database` 与 `databases` 两种形式。多个固定数据源应按名称分别创建客户端和 `data.Data`，每个客户端启动时主动校验连接；跨数据源事务、Join 与请求级动态切库不在该封装的职责范围内。
@@ -114,12 +115,24 @@ go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
 `internal/projectdocs`；包含 `backend` 的仓库默认输出到 `backend/internal/docs`。
 同一路径可以通过文件名语言后缀提供翻译，例如 `README.en-US.md` 或
 `docs/guide.zh-TW.md`；语言版本会聚合到同一个文档节点，并以
-`localized_contents` 字段输出。无后缀文件仍作为默认正文。
+`locale` 字段输出。无后缀文件仍作为默认正文。收集命令只使用显式存在的语言
+Markdown，并在源文未变化时保留上一次生成的 `locale` 内容；缺失语言由
+`cmd/i18n/project_docs.py` 在收集完成后补充。
 也可以通过 `--output` 或 `-o` 指定生成目录：
 
 ```bash
 project-docs
 project-docs --output ./backend/internal/docs
+```
+
+需要补充语言时，先生成 `docs.json`，再运行 Python 脚本：
+
+```bash
+python3 ./cmd/i18n/project_docs.py \
+  --root . \
+  --output ./backend/internal/docs \
+  --source-locale zh-CN \
+  --locales en-US,zh-TW,ja-JP
 ```
 
 生成物不包含项目身份。服务加载后使用 `AppInfo.Project` 和 `AppInfo.Name`

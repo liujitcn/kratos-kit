@@ -49,19 +49,27 @@ func main() {
 
 // run 解析输出目录，收集当前项目文档并写入构建产物。
 func run() error {
-	root, err := os.Getwd()
+	workingDirectory, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("读取当前项目目录: %w", err)
 	}
-	var projectDocsPath string
-	var showHelp bool
-	projectDocsPath, showHelp, err = parseOutputDirectory()
+	root := workingDirectory
+	var options projectDocsOptions
+	options, err = parseOptions()
 	if err != nil {
 		return err
 	}
-	if showHelp {
+	if options.showHelp {
 		return nil
 	}
+	if options.rootDirectory != "" {
+		root = options.rootDirectory
+		if !filepath.IsAbs(root) {
+			root = filepath.Join(workingDirectory, root)
+		}
+		root = filepath.Clean(root)
+	}
+	projectDocsPath := options.outputDirectory
 	if projectDocsPath == "" {
 		projectDocsPath = defaultProjectDocsPath
 		var backendInfo fs.FileInfo
@@ -86,6 +94,10 @@ func run() error {
 		return err
 	}
 	documents, err = mergeLocalizedDocuments(documents)
+	if err != nil {
+		return err
+	}
+	documents, err = mergeCachedLocalizedDocuments(outputPath, documents)
 	if err != nil {
 		return err
 	}
@@ -117,24 +129,37 @@ func run() error {
 	return nil
 }
 
-// parseOutputDirectory 解析可选的项目文档生成目录参数。
-func parseOutputDirectory() (string, bool, error) {
+type projectDocsOptions struct {
+	rootDirectory   string
+	outputDirectory string
+	showHelp        bool
+}
+
+// parseOptions 解析项目根目录和输出目录参数。
+func parseOptions() (projectDocsOptions, error) {
 	flags := flag.NewFlagSet("project-docs", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
+	options := projectDocsOptions{}
+	var rootDirectory string
+	flags.StringVar(&rootDirectory, "root", "", "项目根目录，默认使用当前目录")
 	var outputDirectory string
 	flags.StringVar(&outputDirectory, "output", "", "项目文档生成目录，默认根据项目结构选择")
 	flags.StringVar(&outputDirectory, "o", "", "项目文档生成目录，默认根据项目结构选择")
-	err := flags.Parse(os.Args[1:])
+	var err error
+	err = flags.Parse(os.Args[1:])
 	if err != nil {
 		if err == flag.ErrHelp {
-			return "", true, nil
+			options.showHelp = true
+			return options, nil
 		}
-		return "", false, fmt.Errorf("解析命令行参数: %w", err)
+		return projectDocsOptions{}, fmt.Errorf("解析命令行参数: %w", err)
 	}
 	if flags.NArg() > 0 {
-		return "", false, fmt.Errorf("project-docs 不接受位置参数: %s", strings.Join(flags.Args(), " "))
+		return projectDocsOptions{}, fmt.Errorf("project-docs 不接受位置参数: %s", strings.Join(flags.Args(), " "))
 	}
-	return outputDirectory, false, nil
+	options.rootDirectory = rootDirectory
+	options.outputDirectory = outputDirectory
+	return options, nil
 }
 
 // scanSource 扫描当前项目约定范围内的 Markdown 文档。
@@ -334,14 +359,15 @@ func shouldSkipDirectory(relativePath string) bool {
 	return excluded
 }
 
-// shouldCollect 判断三层范围内的文件是否为 README 或 docs Markdown。
+// shouldCollect 判断三层范围内的文件是否为 README（含语言版本）或 docs Markdown。
 func shouldCollect(relativePath string) bool {
 	normalizedPath := filepath.ToSlash(relativePath)
 	segments := strings.Split(normalizedPath, "/")
 	if len(segments) > maxSourcePathDepth {
 		return false
 	}
-	if filepath.Base(normalizedPath) == "README.md" {
+	basePath, _ := splitLocaleSuffix(normalizedPath)
+	if filepath.Base(basePath) == "README.md" {
 		return true
 	}
 	if !strings.EqualFold(filepath.Ext(normalizedPath), ".md") {

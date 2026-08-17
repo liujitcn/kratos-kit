@@ -15,7 +15,7 @@ const maxDocumentContentBytes = 2 << 20
 type document struct {
 	Path              string            `json:"path"`
 	Content           string            `json:"content"`
-	LocalizedContents map[string]string `json:"localized_contents,omitempty"`
+	LocalizedContents map[string]string `json:"locale,omitempty"`
 	UpdatedAt         string            `json:"updated_at"`
 	Locale            string            `json:"-"`
 }
