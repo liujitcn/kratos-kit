@@ -1,4 +1,3 @@
-// Package http 提供支持条件轮询的 Kratos HTTP 配置源。
 package http
 
 import (
