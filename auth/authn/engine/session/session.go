@@ -1,4 +1,3 @@
-// Package session 提供可插拔存储的会话认证器。
 package session
 
 import (
