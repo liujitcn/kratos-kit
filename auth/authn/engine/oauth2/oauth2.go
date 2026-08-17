@@ -1,4 +1,3 @@
-// Package oauth2 提供 RFC 7662 Token Introspection 认证器。
 package oauth2
 
 import (
