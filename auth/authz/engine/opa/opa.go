@@ -1,4 +1,3 @@
-// Package opa 提供基于 Open Policy Agent Rego 的本地鉴权引擎。
 package opa
 
 import (
