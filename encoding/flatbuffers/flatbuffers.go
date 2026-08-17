@@ -1,4 +1,3 @@
-// Package flatbuffers 为生成的 FlatBuffers 类型提供 Kratos codec 桥接。
 package flatbuffers
 
 import (
