@@ -1,7 +1,7 @@
-// Package hmac 提供绑定请求内容并防重放的 HMAC-SHA256 认证器。
 package hmac
 
 import (
+	"bytes"
 	"context"
 	cryptohmac "crypto/hmac"
 	"crypto/rand"
@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -283,7 +284,17 @@ func newMemoryReplayStore(now func() time.Time) *MemoryReplayStore {
 func canonicalRequest(ctx context.Context, request any) (string, error) {
 	method, requestPath, rawQuery, err := requestTarget(ctx)
 	if err != nil {
-		return "", err
+		if !errors.Is(err, ErrMissingTransport) {
+			return "", err
+		}
+		httpRequest, ok := request.(*http.Request)
+		if !ok {
+			return "", err
+		}
+		method, requestPath, rawQuery, err = httpRequestTarget(httpRequest)
+		if err != nil {
+			return "", err
+		}
 	}
 	var digest string
 	digest, err = requestDigest(request)
@@ -291,6 +302,18 @@ func canonicalRequest(ctx context.Context, request any) (string, error) {
 		return "", err
 	}
 	return strings.Join([]string{method, requestPath, rawQuery, digest}, "\n"), nil
+}
+
+// httpRequestTarget 从原生 HTTP 请求提取规范请求目标，供未经过 Kratos Filter 的中间件使用。
+func httpRequestTarget(request *http.Request) (string, string, string, error) {
+	if request == nil || request.URL == nil {
+		return "", "", "", ErrInvalidTransport
+	}
+	requestPath := request.URL.EscapedPath()
+	if requestPath == "" {
+		requestPath = "/"
+	}
+	return request.Method, requestPath, request.URL.Query().Encode(), nil
 }
 
 // requestTarget 从 Kratos 3.0 transport 提取规范请求目标。
@@ -328,7 +351,17 @@ func requestTarget(ctx context.Context) (string, string, string, error) {
 func requestDigest(request any) (string, error) {
 	var data []byte
 	var err error
-	if message, ok := request.(proto.Message); ok {
+	if httpRequest, ok := request.(*http.Request); ok {
+		if httpRequest == nil || httpRequest.Body == nil {
+			data = nil
+		} else {
+			data, err = io.ReadAll(httpRequest.Body)
+			if err != nil {
+				return "", fmt.Errorf("hmac: read request body: %w", err)
+			}
+			httpRequest.Body = io.NopCloser(bytes.NewReader(data))
+		}
+	} else if message, ok := request.(proto.Message); ok {
 		data, err = proto.MarshalOptions{Deterministic: true}.Marshal(message)
 	} else {
 		data, err = json.Marshal(request)
