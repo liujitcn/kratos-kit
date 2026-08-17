@@ -1,4 +1,3 @@
-// Package datadog 提供基于 DogStatsD 的指标实现。
 package datadog
 
 import (
