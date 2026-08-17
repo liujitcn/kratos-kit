@@ -1,4 +1,3 @@
-// Package avro 提供必须绑定 schema 的 Kratos Avro codec。
 package avro
 
 import (
