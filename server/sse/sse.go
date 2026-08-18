@@ -1,4 +1,4 @@
-package rpc
+package sse
 
 import (
 	"errors"
@@ -43,51 +43,6 @@ func CreateSseHandler(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) (
 // CreateSseHTTPHandler 创建标准 http.Handler 形式的 SSE 处理器。
 func CreateSseHTTPHandler(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) (http.Handler, error) {
 	return CreateSseHandler(cfg, opts...)
-}
-
-// CreateSseClient 创建 SSE 客户端。
-func CreateSseClient(endpoint string, opts ...sseServer.ClientOption) *sseServer.Client {
-	clientOptions := make([]func(*sseServer.Client), 0, len(opts))
-	for _, opt := range opts {
-		clientOptions = append(clientOptions, opt)
-	}
-
-	return sseServer.NewClient(endpoint, clientOptions...)
-}
-
-// CreateSseClientWithConfig 根据 client.sse 配置创建 SSE 客户端。
-func CreateSseClientWithConfig(cfg *configv1.Bootstrap, opts ...sseServer.ClientOption) (*sseServer.Client, error) {
-	endpoint := ""
-	if cfg != nil && cfg.Client != nil && cfg.Client.Sse != nil {
-		endpoint = cfg.Client.Sse.GetEndpoint()
-	}
-
-	client := CreateSseClient(endpoint, opts...)
-	if cfg == nil || cfg.Client == nil || cfg.Client.Sse == nil {
-		return client, nil
-	}
-
-	sseCfg := cfg.Client.Sse
-	if sseCfg.Timeout != nil {
-		client.Connection.Timeout = sseCfg.Timeout.AsDuration()
-	}
-	for key, val := range sseCfg.GetMetadata() {
-		client.Headers[key] = val
-	}
-	client.EncodingBase64 = sseCfg.GetEncodeBase64()
-	if sseCfg.Tls != nil {
-		tlsCfg, err := utils.LoadClientTlsConfig(sseCfg.Tls)
-		if err != nil {
-			return nil, err
-		}
-		if tlsCfg != nil {
-			client.Connection.Transport = &http.Transport{
-				TLSClientConfig: tlsCfg,
-			}
-		}
-	}
-
-	return client, nil
 }
 
 // validateSseServerTransport 校验 server.sse.transport 与当前构造函数匹配。

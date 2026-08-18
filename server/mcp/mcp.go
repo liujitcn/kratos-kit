@@ -1,4 +1,4 @@
-package rpc
+package mcp
 
 import (
 	"bytes"
@@ -11,11 +11,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
 	"strings"
-	"sync"
-	"time"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	mcpServer "github.com/liujitcn/kratos-kit/transport/mcp"
@@ -70,34 +66,6 @@ func CreateMcpSSEHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption
 		return nil, err
 	}
 	return srv.SSEHandler()
-}
-
-// CreateMcpClient 根据客户端配置创建 MCP 客户端会话。
-func CreateMcpClient(ctx context.Context, cfg *configv1.Bootstrap, opts ...func(*mcpsdk.ClientOptions)) (*mcpsdk.ClientSession, error) {
-	if cfg == nil || cfg.Client == nil || cfg.Client.Mcp == nil {
-		return nil, errors.New("mcp client config is nil")
-	}
-
-	mcpCfg := cfg.Client.Mcp
-	clientOptions := buildMcpClientOptions(opts...)
-	client := mcpsdk.NewClient(&mcpsdk.Implementation{
-		Name:    "mcp-client",
-		Version: "1.0.0",
-	}, clientOptions)
-
-	switch mcpCfg.GetTransport() {
-	// HTTP 分支使用 Streamable HTTP transport，对应服务端 NewStreamableHTTPHandler。
-	case configv1.Client_Mcp_UNSPECIFIED, configv1.Client_Mcp_HTTP:
-		return createMcpHTTPClientSession(ctx, client, mcpCfg.GetHttp())
-	// SSE 分支使用 Legacy SSE transport，对应服务端 NewSSEHandler。
-	case configv1.Client_Mcp_SSE:
-		return createMcpSSEClientSession(ctx, client, mcpCfg.GetSse())
-	// STDIO 分支启动子进程，并通过 stdin/stdout 建立 MCP IOTransport。
-	case configv1.Client_Mcp_STDIO:
-		return createMcpStdioClientSession(ctx, client, mcpCfg.GetStdio())
-	default:
-		return nil, fmt.Errorf("unsupported mcp transport: %s", mcpCfg.GetTransport())
-	}
 }
 
 // WithMcpServerOptions 转发底层官方 MCP SDK 服务端选项。
@@ -246,17 +214,6 @@ func sseOptionsFromConfig(cfg *configv1.Server_Mcp_LegacySse) *mcpsdk.SSEOptions
 	return &mcpsdk.SSEOptions{
 		DisableLocalhostProtection: cfg.GetDisableLocalhostProtection(),
 	}
-}
-
-// buildMcpClientOptions 构建官方 MCP SDK 客户端选项。
-func buildMcpClientOptions(opts ...func(*mcpsdk.ClientOptions)) *mcpsdk.ClientOptions {
-	clientOptions := &mcpsdk.ClientOptions{}
-	for _, opt := range opts {
-		if opt != nil {
-			opt(clientOptions)
-		}
-	}
-	return clientOptions
 }
 
 // callMcpHTTPTool 执行一个配置化 HTTP Tool。
@@ -582,164 +539,4 @@ func mcpHTTPToolIsAbsoluteURL(rawURL string) bool {
 		return false
 	}
 	return parsedURL.Scheme == "http" || parsedURL.Scheme == "https"
-}
-
-// createMcpHTTPClientSession 创建 Streamable HTTP MCP 客户端会话。
-func createMcpHTTPClientSession(ctx context.Context, client *mcpsdk.Client, httpCfg *configv1.Client_Mcp_Http) (*mcpsdk.ClientSession, error) {
-	if httpCfg == nil || httpCfg.GetEndpoint() == "" {
-		return nil, errors.New("mcp http endpoint is empty")
-	}
-
-	httpClient := buildMcpHTTPClient(httpCfg)
-	return client.Connect(ctx, &mcpsdk.StreamableClientTransport{
-		Endpoint:   httpCfg.GetEndpoint(),
-		HTTPClient: httpClient,
-	}, nil)
-}
-
-// createMcpSSEClientSession 创建 Legacy SSE MCP 客户端会话。
-func createMcpSSEClientSession(ctx context.Context, client *mcpsdk.Client, sseCfg *configv1.Client_Mcp_Sse) (*mcpsdk.ClientSession, error) {
-	if sseCfg == nil || sseCfg.GetEndpoint() == "" {
-		return nil, errors.New("mcp sse endpoint is empty")
-	}
-
-	httpClient := buildMcpHTTPClientWithOptions(sseCfg.GetHeaders(), sseCfg.GetTimeout())
-	return client.Connect(ctx, &mcpsdk.SSEClientTransport{
-		Endpoint:   sseCfg.GetEndpoint(),
-		HTTPClient: httpClient,
-	}, nil)
-}
-
-// createMcpStdioClientSession 创建 stdio MCP 客户端会话。
-func createMcpStdioClientSession(ctx context.Context, client *mcpsdk.Client, stdioCfg *configv1.Client_Mcp_Stdio) (*mcpsdk.ClientSession, error) {
-	if stdioCfg == nil || stdioCfg.GetCommand() == "" {
-		return nil, errors.New("mcp stdio command is empty")
-	}
-
-	cmd := exec.CommandContext(ctx, stdioCfg.GetCommand(), stdioCfg.GetArgs()...)
-	if stdioCfg.GetWorkDir() != "" {
-		cmd.Dir = stdioCfg.GetWorkDir()
-	}
-	cmd.Env = os.Environ()
-	for key, value := range stdioCfg.GetEnv() {
-		cmd.Env = append(cmd.Env, key+"="+value)
-	}
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	var stdout io.ReadCloser
-	stdout, err = cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-	if err = cmd.Start(); err != nil {
-		return nil, err
-	}
-
-	processTransport := &mcpStdioProcessTransport{
-		stdout: stdout,
-		stdin:  stdin,
-		cmd:    cmd,
-	}
-	var session *mcpsdk.ClientSession
-	session, err = client.Connect(ctx, &mcpsdk.IOTransport{
-		Reader: processTransport,
-		Writer: processTransport,
-	}, nil)
-	if err != nil {
-		_ = processTransport.Close()
-		return nil, err
-	}
-
-	return session, nil
-}
-
-// buildMcpHTTPClient 根据 MCP HTTP 配置构建客户端。
-func buildMcpHTTPClient(httpCfg *configv1.Client_Mcp_Http) *http.Client {
-	if httpCfg == nil {
-		return http.DefaultClient
-	}
-	return buildMcpHTTPClientWithOptions(httpCfg.GetHeaders(), httpCfg.GetTimeout())
-}
-
-// buildMcpHTTPClient 根据 MCP HTTP 类配置构建客户端。
-func buildMcpHTTPClientWithOptions(headers map[string]string, timeout interface{ AsDuration() time.Duration }) *http.Client {
-	httpClient := http.DefaultClient
-	if timeout != nil || len(headers) > 0 {
-		httpClient = &http.Client{
-			Transport: headerRoundTripper{
-				headers: headers,
-				base:    http.DefaultTransport,
-			},
-		}
-		if timeout != nil {
-			httpClient.Timeout = timeout.AsDuration()
-		}
-	}
-	return httpClient
-}
-
-type headerRoundTripper struct {
-	headers map[string]string
-	base    http.RoundTripper
-}
-
-type mcpStdioProcessTransport struct {
-	stdout io.ReadCloser
-	stdin  io.WriteCloser
-	cmd    *exec.Cmd
-
-	closeOnce sync.Once
-	closeErr  error
-}
-
-// Read 从 MCP stdio 子进程 stdout 读取消息。
-func (t *mcpStdioProcessTransport) Read(p []byte) (int, error) {
-	return t.stdout.Read(p)
-}
-
-// Write 向 MCP stdio 子进程 stdin 写入消息。
-func (t *mcpStdioProcessTransport) Write(p []byte) (int, error) {
-	return t.stdin.Write(p)
-}
-
-// Close 关闭 MCP stdio 会话并回收子进程。
-func (t *mcpStdioProcessTransport) Close() error {
-	t.closeOnce.Do(func() {
-		t.closeErr = errors.Join(t.stdin.Close(), t.stdout.Close())
-		if t.cmd != nil && t.cmd.Process != nil {
-			_ = t.cmd.Process.Kill()
-		}
-		if t.cmd != nil {
-			if waitErr := t.cmd.Wait(); waitErr != nil && !isExpectedStdioProcessExit(waitErr) {
-				t.closeErr = errors.Join(t.closeErr, waitErr)
-			}
-		}
-	})
-	return t.closeErr
-}
-
-// isExpectedStdioProcessExit 判断 stdio 子进程是否因会话关闭而退出。
-func isExpectedStdioProcessExit(err error) bool {
-	if err == nil || errors.Is(err, os.ErrProcessDone) {
-		return true
-	}
-	var exitErr *exec.ExitError
-	return errors.As(err, &exitErr)
-}
-
-// RoundTrip 在 MCP HTTP 客户端请求中注入配置里的固定请求头。
-func (h headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	cloned := req.Clone(req.Context())
-	for key, value := range h.headers {
-		cloned.Header.Set(key, value)
-	}
-	base := h.base
-	if base == nil {
-		base = http.DefaultTransport
-	}
-	return base.RoundTrip(cloned)
 }

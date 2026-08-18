@@ -29,7 +29,7 @@
 - `broker`：消息发布订阅与 typed handler 封装，通用 `TransportServer` 可把任意 broker 接入 Kratos 应用生命周期；`broker/nats` 通过共享实现支持 Core NATS、JetStream、队列订阅、请求响应和消息追踪
 - `workflow`：工作流引擎封装（含 `argo`、`conductor`、`goworkflows`、`temporal` 子模块），公共包只定义跨引擎一致的 `Client`/`Worker` 生命周期接口
 - `transport`：通用传输辅助（含 `keepalive`、`mcp`、`sse` 子模块）
-- `rpc`：Kratos HTTP、gRPC、MCP、SSE 服务端与客户端配置封装；MCP/SSE 各模式配置与创建方法见 [rpc/README.md](rpc/README.md)
+- `server/http`、`server/grpc`、`server/mcp`、`server/sse`：HTTP、gRPC、MCP、SSE 服务端配置封装，详细说明见 [server/README.md](server/README.md)
 - `encoding`：直接适配 Kratos 的额外 codec（`avro`/`bson`/`cbor`/`flatbuffers`/`gob`/`thrift`/`toml`）；`msgpack`/`xml`/`yaml` 使用 Kratos v3 自带实现
 - `health`：应用级 readiness 检查聚合与 HTTP handler
 - `metrics`：Prometheus、OpenTelemetry OTLP、Datadog 指标适配
@@ -64,7 +64,10 @@ go get github.com/liujitcn/kratos-kit/registry@latest
 go get github.com/liujitcn/kratos-kit/tracer@latest
 go get github.com/liujitcn/kratos-kit/transport/mcp@latest
 go get github.com/liujitcn/kratos-kit/transport/sse@latest
-go get github.com/liujitcn/kratos-kit/rpc@latest
+go get github.com/liujitcn/kratos-kit/server/http@latest
+go get github.com/liujitcn/kratos-kit/server/grpc@latest
+go get github.com/liujitcn/kratos-kit/server/mcp@latest
+go get github.com/liujitcn/kratos-kit/server/sse@latest
 go get github.com/liujitcn/kratos-kit/config/redis@latest
 go get github.com/liujitcn/kratos-kit/config/vault@latest
 go get github.com/liujitcn/kratos-kit/config/zookeeper@latest
@@ -327,7 +330,7 @@ make tag MODULE=auth/authn # 从 auth/authn 目录开始递归检查 go.mod 并�
 - [logger/README.md](logger/README.md)
 - [registry/README.md](registry/README.md)
 - [tracer/README.md](tracer/README.md)
-- [rpc/README.md](rpc/README.md)
+- [server/README.md](server/README.md)
 - [swagger-ui/README.md](swagger-ui/README.md)
 - [workflow/README.md](workflow/README.md)
 - [workflow/argo/README.md](workflow/argo/README.md)

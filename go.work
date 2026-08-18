@@ -101,7 +101,10 @@ use (
 	./registry/servicecomb
 	./registry/zookeeper
 	./retry
-	./rpc
+	./server/grpc
+	./server/http
+	./server/mcp
+	./server/sse
 	./swagger-ui
 	./tracer
 	./tracing
