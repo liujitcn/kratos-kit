@@ -20,6 +20,7 @@ type Memory struct {
 	running   atomic.Bool
 	closing   chan struct{}
 	closeOnce sync.Once
+	consumers sync.WaitGroup
 }
 
 // NewMemory 内存模式
@@ -89,6 +90,7 @@ func (s *Memory) Register(name string, fn data.ConsumerFunc) {
 		q = s.makeQueue()
 		s.queue.Store(name, q)
 	}
+	s.consumers.Add(1)
 	go s.consume(q, fn)
 }
 
@@ -103,6 +105,7 @@ func (s *Memory) Run() {
 	s.mutex.Unlock()
 	// 仅在首次启动时增加等待计数，避免重复 Run 导致 Shutdown 次数无法匹配。
 	s.wait.Wait()
+	s.consumers.Wait()
 }
 
 // Shutdown 关闭内存队列阻塞等待。
@@ -117,8 +120,14 @@ func (s *Memory) Shutdown() {
 	s.wait.Done()
 }
 
+// Wait 等待已注册的内存队列消费者退出。
+func (s *Memory) Wait() {
+	s.consumers.Wait()
+}
+
 // consume 执行消费者并在队列关闭或重试等待取消时退出。
 func (s *Memory) consume(q queueChan, consumer data.ConsumerFunc) {
+	defer s.consumers.Done()
 	for {
 		select {
 		case <-s.closing:

@@ -40,5 +40,8 @@ func NewQueue(redisConf *configv1.Data_Redis, queueConf *configv1.Data_Queue) (Q
 	return queue, func() {
 		log.Info("queue cleanup...")
 		queue.Shutdown()
+		if waiter, ok := queue.(interface{ Wait() }); ok {
+			waiter.Wait()
+		}
 	}, nil
 }
