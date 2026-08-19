@@ -11,8 +11,10 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/go-kratos/kratos/v3/log"
+	kitlogger "github.com/liujitcn/kratos-kit/logger"
 )
 
+// Logger 定义腾讯云日志 SDK 适配器能力。
 type Logger interface {
 	Log(level log.Level, keyvals ...any) error
 	GetProducer() *cls.AsyncProducerClient
@@ -22,40 +24,6 @@ type Logger interface {
 type tencentLog struct {
 	producer *cls.AsyncProducerClient
 	opts     *options
-}
-
-func (log *tencentLog) GetProducer() *cls.AsyncProducerClient {
-	return log.producer
-}
-
-func (log *tencentLog) Close() error {
-	return log.producer.Close(5000)
-}
-
-// Log 将 Kratos 日志级别和 key/value 字段写入腾讯云 CLS。
-func (log *tencentLog) Log(level log.Level, keyvals ...any) error {
-	if len(keyvals)%2 != 0 {
-		keyvals = append(keyvals, "")
-	}
-
-	contents := make([]*cls.Log_Content, 0, len(keyvals)/2+1)
-
-	contents = append(contents, &cls.Log_Content{
-		Key:   newString(slog.LevelKey),
-		Value: newString(level.String()),
-	})
-	for i := 0; i < len(keyvals); i += 2 {
-		contents = append(contents, &cls.Log_Content{
-			Key:   newString(toString(keyvals[i])),
-			Value: newString(toString(keyvals[i+1])),
-		})
-	}
-
-	logInst := &cls.Log{
-		Time:     proto.Int64(time.Now().Unix()),
-		Contents: contents,
-	}
-	return log.producer.SendLog(log.opts.topicID, logInst, nil)
 }
 
 // NewTencentLogger 创建腾讯云 CLS 日志适配器。
@@ -79,11 +47,63 @@ func NewTencentLogger(options ...Option) (Logger, error) {
 	}, nil
 }
 
+// Log 将统一解析后的结构化日志写入腾讯云 CLS。
+func (t *tencentLog) Log(level log.Level, keyvals ...any) error {
+	var entry kitlogger.Entry
+	var err error
+	entry, err = kitlogger.ParseLegacyEntry(keyvals...)
+	if err != nil {
+		return err
+	}
+
+	var contents = make([]*cls.Log_Content, 0, len(entry.Fields)+3)
+	contents = append(contents, &cls.Log_Content{
+		Key:   newString(slog.LevelKey),
+		Value: newString(level.String()),
+	})
+	if entry.Message != "" {
+		contents = append(contents, &cls.Log_Content{
+			Key:   newString(slog.MessageKey),
+			Value: newString(kitlogger.CleanANSI(entry.Message)),
+		})
+	}
+	var caller = kitlogger.FormatFileCaller(entry.Caller)
+	if caller != "" {
+		contents = append(contents, &cls.Log_Content{
+			Key:   newString(kitlogger.CallerKey),
+			Value: newString(caller),
+		})
+	}
+	for _, field := range entry.Fields {
+		contents = append(contents, &cls.Log_Content{
+			Key:   newString(field.Key),
+			Value: newString(kitlogger.CleanANSI(toString(field.Value))),
+		})
+	}
+
+	var logInst = &cls.Log{
+		Time:     proto.Int64(time.Now().Unix()),
+		Contents: contents,
+	}
+	return t.producer.SendLog(t.opts.topicID, logInst, nil)
+}
+
+// GetProducer 返回底层腾讯云日志 Producer。
+func (t *tencentLog) GetProducer() *cls.AsyncProducerClient {
+	return t.producer
+}
+
+// Close 关闭腾讯云日志 Producer。
+func (t *tencentLog) Close() error {
+	return t.producer.Close(5000)
+}
+
+// newString 将字符串转换为字符串指针。
 func newString(s string) *string {
 	return &s
 }
 
-// toString convert any type to string
+// toString 将任意字段值转换为字符串。
 func toString(v any) string {
 	var key string
 	if v == nil {

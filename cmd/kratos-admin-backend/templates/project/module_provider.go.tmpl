@@ -31,8 +31,13 @@ func newProjectDocumentCatalog(
 	appInfo *bootstrapConfigv1.AppInfo,
 	additionalDocuments coreProjectDoc.AdditionalDocuments,
 ) (*coreProjectDoc.Catalog, error) {
-	embeddedCatalog, err := coreProjectDoc.ParseCatalog(
-		docs.DocsData,
+	catalogData, err := docs.DocsFS.ReadFile("assets/docs.json")
+	if err != nil {
+		return nil, fmt.Errorf("读取内置项目文档目录: %w", err)
+	}
+	var embeddedCatalog *coreProjectDoc.Catalog
+	embeddedCatalog, err = coreProjectDoc.ParseCatalog(
+		catalogData,
 		appInfo.GetProject(),
 		appInfo.GetName(),
 	)

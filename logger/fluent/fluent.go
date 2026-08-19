@@ -2,6 +2,7 @@ package fluent
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"net/url"
 	"strconv"
@@ -9,29 +10,32 @@ import (
 	"github.com/fluent/fluent-logger-golang/fluent"
 
 	"github.com/go-kratos/kratos/v3/log"
+	kitlogger "github.com/liujitcn/kratos-kit/logger"
 )
 
-// Logger is fluent logger sdk.
+// Logger 封装 Fluent 日志 SDK。
 type Logger struct {
 	opts options
 	log  *fluent.Fluent
 }
 
-// NewFluentLogger new a std logger with options.
-// target:
+// NewFluentLogger 根据目标地址和选项创建 Fluent 日志适配器。
+// 支持以下目标地址：
 //
 //	tcp://127.0.0.1:24224
 //	unix://var/run/fluent/fluent.sock
 func NewFluentLogger(addr string, opts ...Option) (*Logger, error) {
-	option := options{}
+	var option = options{}
 	for _, o := range opts {
 		o(&option)
 	}
-	u, err := url.Parse(addr)
+	var parsedURL *url.URL
+	var err error
+	parsedURL, err = url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
-	c := fluent.Config{
+	var config = fluent.Config{
 		Timeout:            option.timeout,
 		WriteTimeout:       option.writeTimeout,
 		BufferLimit:        option.bufferLimit,
@@ -42,55 +46,63 @@ func NewFluentLogger(addr string, opts ...Option) (*Logger, error) {
 		Async:              option.async,
 		ForceStopAsyncSend: option.forceStopAsyncSend,
 	}
-	switch u.Scheme {
+	switch parsedURL.Scheme {
 	case "tcp":
-		host, port, err2 := net.SplitHostPort(u.Host)
-		if err2 != nil {
-			return nil, err2
-		}
-		if c.FluentPort, err = strconv.Atoi(port); err != nil {
+		var host string
+		var port string
+		host, port, err = net.SplitHostPort(parsedURL.Host)
+		if err != nil {
 			return nil, err
 		}
-		c.FluentNetwork = u.Scheme
-		c.FluentHost = host
+		config.FluentPort, err = strconv.Atoi(port)
+		if err != nil {
+			return nil, err
+		}
+		config.FluentNetwork = parsedURL.Scheme
+		config.FluentHost = host
 	case "unix":
-		c.FluentNetwork = u.Scheme
-		c.FluentSocketPath = u.Path
+		config.FluentNetwork = parsedURL.Scheme
+		config.FluentSocketPath = parsedURL.Path
 	default:
-		return nil, fmt.Errorf("unknown network: %s", u.Scheme)
+		return nil, fmt.Errorf("unknown network: %s", parsedURL.Scheme)
 	}
-	fl, err := fluent.New(c)
+	var fluentLogger *fluent.Fluent
+	fluentLogger, err = fluent.New(config)
 	if err != nil {
 		return nil, err
 	}
 	return &Logger{
 		opts: option,
-		log:  fl,
+		log:  fluentLogger,
 	}, nil
 }
 
-// Log 输出 key/value 格式日志到 fluent。
+// Log 将统一解析后的结构化日志写入 Fluent。
 func (l *Logger) Log(level log.Level, keyvals ...any) error {
-	if len(keyvals) == 0 {
-		return nil
-	}
-	if len(keyvals)%2 != 0 {
-		keyvals = append(keyvals, "KEYVALS UNPAIRED")
-	}
-
-	data := make(map[string]string, len(keyvals)/2+1)
-
-	for i := 0; i < len(keyvals); i += 2 {
-		data[fmt.Sprint(keyvals[i])] = fmt.Sprint(keyvals[i+1])
+	var entry kitlogger.Entry
+	var err error
+	entry, err = kitlogger.ParseLegacyEntry(keyvals...)
+	if err != nil {
+		return err
 	}
 
-	if err := l.log.Post(level.String(), data); err != nil {
-		println(err)
+	var data = make(map[string]string, len(entry.Fields)+3)
+	data[slog.LevelKey] = level.String()
+	if entry.Message != "" {
+		data[slog.MessageKey] = kitlogger.CleanANSI(entry.Message)
 	}
-	return nil
+	var caller = kitlogger.FormatFileCaller(entry.Caller)
+	if caller != "" {
+		data[kitlogger.CallerKey] = caller
+	}
+	for _, field := range entry.Fields {
+		data[field.Key] = kitlogger.CleanANSI(fmt.Sprint(field.Value))
+	}
+
+	return l.log.Post(level.String(), data)
 }
 
-// Close the logger.
+// Close 关闭 Fluent 日志连接。
 func (l *Logger) Close() error {
 	return l.log.Close()
 }

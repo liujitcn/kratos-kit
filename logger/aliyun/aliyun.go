@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/go-kratos/kratos/v3/log"
+	kitlogger "github.com/liujitcn/kratos-kit/logger"
 )
 
 // Logger 定义阿里云日志 SDK 适配器能力。
@@ -26,41 +27,7 @@ type aliyunLog struct {
 	opts     *options
 }
 
-func (a *aliyunLog) GetProducer() *producer.Producer {
-	return a.producer
-}
-
-func (a *aliyunLog) Close() error {
-	return a.producer.Close(5000)
-}
-
-// Log 将 Kratos 日志级别和 key/value 字段写入阿里云日志服务。
-func (a *aliyunLog) Log(level log.Level, keyvals ...any) error {
-	if len(keyvals)%2 != 0 {
-		keyvals = append(keyvals, "")
-	}
-
-	contents := make([]*sls.LogContent, 0, len(keyvals)/2+1)
-
-	contents = append(contents, &sls.LogContent{
-		Key:   newString(slog.LevelKey),
-		Value: newString(level.String()),
-	})
-	for i := 0; i < len(keyvals); i += 2 {
-		contents = append(contents, &sls.LogContent{
-			Key:   newString(toString(keyvals[i])),
-			Value: newString(toString(keyvals[i+1])),
-		})
-	}
-
-	logInst := &sls.Log{
-		Time:     proto.Uint32(uint32(time.Now().Unix())),
-		Contents: contents,
-	}
-	return a.producer.SendLog(a.opts.project, a.opts.logstore, "", "", logInst)
-}
-
-// NewAliyunLog new aliyun logger with options.
+// NewAliyunLog 根据配置创建阿里云日志适配器。
 func NewAliyunLog(options ...Option) (Logger, error) {
 	opts := defaultOptions()
 	for _, o := range options {
@@ -70,8 +37,6 @@ func NewAliyunLog(options ...Option) (Logger, error) {
 	producerConfig := producer.GetDefaultProducerConfig()
 	producerConfig.Endpoint = opts.endpoint
 
-	//producerConfig.AccessKeyID = opts.accessKey
-	//producerConfig.AccessKeySecret = opts.accessSecret
 	producerConfig.CredentialsProvider = sls.NewStaticCredentialsProvider(opts.accessKey, opts.accessSecret, opts.securityToken)
 
 	producerInst, err := producer.NewProducer(producerConfig)
@@ -86,12 +51,63 @@ func NewAliyunLog(options ...Option) (Logger, error) {
 	}, nil
 }
 
-// newString string convert to *string
+// Log 将统一解析后的结构化日志写入阿里云日志服务。
+func (a *aliyunLog) Log(level log.Level, keyvals ...any) error {
+	var entry kitlogger.Entry
+	var err error
+	entry, err = kitlogger.ParseLegacyEntry(keyvals...)
+	if err != nil {
+		return err
+	}
+
+	var contents = make([]*sls.LogContent, 0, len(entry.Fields)+3)
+	contents = append(contents, &sls.LogContent{
+		Key:   newString(slog.LevelKey),
+		Value: newString(level.String()),
+	})
+	if entry.Message != "" {
+		contents = append(contents, &sls.LogContent{
+			Key:   newString(slog.MessageKey),
+			Value: newString(kitlogger.CleanANSI(entry.Message)),
+		})
+	}
+	var caller = kitlogger.FormatFileCaller(entry.Caller)
+	if caller != "" {
+		contents = append(contents, &sls.LogContent{
+			Key:   newString(kitlogger.CallerKey),
+			Value: newString(caller),
+		})
+	}
+	for _, field := range entry.Fields {
+		contents = append(contents, &sls.LogContent{
+			Key:   newString(field.Key),
+			Value: newString(kitlogger.CleanANSI(toString(field.Value))),
+		})
+	}
+
+	var logInst = &sls.Log{
+		Time:     proto.Uint32(uint32(time.Now().Unix())),
+		Contents: contents,
+	}
+	return a.producer.SendLog(a.opts.project, a.opts.logstore, "", "", logInst)
+}
+
+// GetProducer 返回底层阿里云日志 Producer。
+func (a *aliyunLog) GetProducer() *producer.Producer {
+	return a.producer
+}
+
+// Close 关闭阿里云日志 Producer。
+func (a *aliyunLog) Close() error {
+	return a.producer.Close(5000)
+}
+
+// newString 将字符串转换为字符串指针。
 func newString(s string) *string {
 	return &s
 }
 
-// toString convert any type to string
+// toString 将任意字段值转换为字符串。
 func toString(v any) string {
 	var key string
 	if v == nil {

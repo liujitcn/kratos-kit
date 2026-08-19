@@ -15,6 +15,11 @@ func NewStdoutWriter() io.Writer {
 	return os.Stdout
 }
 
+// NewStderrWriter 返回默认的 stderr writer。
+func NewStderrWriter() io.Writer {
+	return os.Stderr
+}
+
 // NewConsoleWriter 返回 zerolog.ConsoleWriter，timeFormat 为空时使用 zerolog 时间格式。
 func NewConsoleWriter(timeFormat string) io.Writer {
 	if timeFormat == "" {
@@ -67,6 +72,7 @@ func NewMultiWriter(writers ...io.Writer) io.Writer {
 // 支持的 kinds:
 //
 //	"stdout"       -> NewStdoutWriter()
+//	"stderr"       -> NewStderrWriter()
 //	"console"      -> NewConsoleWriter (params["timeFormat"] string)
 //	"file"         -> NewFileWriter (path 必填，params 可选: "mode" os.FileMode)
 //	"lumberjack"   -> NewLumberjackWriter (path 必填, params: "maxSizeMB" int, "maxBackups" int, "maxAge" int, "compress" bool)
@@ -77,6 +83,9 @@ func NewWriter(kind, path string, params map[string]any) (io.Writer, error) {
 	switch kind {
 	case "stdout":
 		return NewStdoutWriter(), nil
+
+	case "stderr":
+		return NewStderrWriter(), nil
 
 	case "console":
 		tf := ""
