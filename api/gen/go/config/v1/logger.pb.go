@@ -225,8 +225,18 @@ type Logger_Logrus struct {
 	DisableColors bool `protobuf:"varint,4,opt,name=disable_colors,json=disableColors,proto3" json:"disable_colors,omitempty"`
 	// disable_timestamp 表示是否禁用时间戳。
 	DisableTimestamp bool `protobuf:"varint,5,opt,name=disable_timestamp,json=disableTimestamp,proto3" json:"disable_timestamp,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// filepath 为日志文件目录；为空时仅输出到控制台。
+	Filepath string `protobuf:"bytes,6,opt,name=filepath,proto3" json:"filepath,omitempty"`
+	// max_size 为日志文件大小上限，单位 MB。
+	MaxSize int32 `protobuf:"varint,7,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	// max_age 为日志文件保留天数。
+	MaxAge int32 `protobuf:"varint,8,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
+	// max_backups 为最大保留日志文件数量。
+	MaxBackups int32 `protobuf:"varint,9,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
+	// enable_console 表示配置文件输出时是否同时输出到控制台。
+	EnableConsole bool `protobuf:"varint,10,opt,name=enable_console,json=enableConsole,proto3" json:"enable_console,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Logger_Logrus) Reset() {
@@ -290,6 +300,41 @@ func (x *Logger_Logrus) GetDisableColors() bool {
 func (x *Logger_Logrus) GetDisableTimestamp() bool {
 	if x != nil {
 		return x.DisableTimestamp
+	}
+	return false
+}
+
+func (x *Logger_Logrus) GetFilepath() string {
+	if x != nil {
+		return x.Filepath
+	}
+	return ""
+}
+
+func (x *Logger_Logrus) GetMaxSize() int32 {
+	if x != nil {
+		return x.MaxSize
+	}
+	return 0
+}
+
+func (x *Logger_Logrus) GetMaxAge() int32 {
+	if x != nil {
+		return x.MaxAge
+	}
+	return 0
+}
+
+func (x *Logger_Logrus) GetMaxBackups() int32 {
+	if x != nil {
+		return x.MaxBackups
+	}
+	return 0
+}
+
+func (x *Logger_Logrus) GetEnableConsole() bool {
+	if x != nil {
+		return x.EnableConsole
 	}
 	return false
 }
@@ -499,10 +544,18 @@ type Logger_Zerolog struct {
 	LevelFieldName string `protobuf:"bytes,4,opt,name=level_field_name,json=levelFieldName,proto3" json:"level_field_name,omitempty"`
 	// message_field_name 为日志消息字段名称。
 	MessageFieldName string `protobuf:"bytes,5,opt,name=message_field_name,json=messageFieldName,proto3" json:"message_field_name,omitempty"`
-	// writer 为输出目标，默认 stdout，可选 stdout、stderr、file。
+	// writer 为输出目标，默认 stdout，可选 stdout、stderr、console、file、lumberjack。
 	Writer string `protobuf:"bytes,6,opt,name=writer,proto3" json:"writer,omitempty"`
-	// filepath 为 writer=file 时的日志文件地址。
-	Filepath      string `protobuf:"bytes,7,opt,name=filepath,proto3" json:"filepath,omitempty"`
+	// filepath 为 writer=file 或 lumberjack 时的日志文件目录。
+	Filepath string `protobuf:"bytes,7,opt,name=filepath,proto3" json:"filepath,omitempty"`
+	// max_size 为日志文件大小上限，单位 MB。
+	MaxSize int32 `protobuf:"varint,8,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	// max_age 为日志文件保留天数。
+	MaxAge int32 `protobuf:"varint,9,opt,name=max_age,json=maxAge,proto3" json:"max_age,omitempty"`
+	// max_backups 为最大保留日志文件数量。
+	MaxBackups int32 `protobuf:"varint,10,opt,name=max_backups,json=maxBackups,proto3" json:"max_backups,omitempty"`
+	// enable_console 表示文件输出时是否同时输出到控制台。
+	EnableConsole bool `protobuf:"varint,11,opt,name=enable_console,json=enableConsole,proto3" json:"enable_console,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -586,12 +639,39 @@ func (x *Logger_Zerolog) GetFilepath() string {
 	return ""
 }
 
+func (x *Logger_Zerolog) GetMaxSize() int32 {
+	if x != nil {
+		return x.MaxSize
+	}
+	return 0
+}
+
+func (x *Logger_Zerolog) GetMaxAge() int32 {
+	if x != nil {
+		return x.MaxAge
+	}
+	return 0
+}
+
+func (x *Logger_Zerolog) GetMaxBackups() int32 {
+	if x != nil {
+		return x.MaxBackups
+	}
+	return 0
+}
+
+func (x *Logger_Zerolog) GetEnableConsole() bool {
+	if x != nil {
+		return x.EnableConsole
+	}
+	return false
+}
+
 var File_config_v1_logger_proto protoreflect.FileDescriptor
 
 const file_config_v1_logger_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/logger.proto\x12\tconfig.v1\"\xd6\n" +
-	"\n" +
+	"\x16config/v1/logger.proto\x12\tconfig.v1\"\xea\f\n" +
 	"\x06Logger\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12,\n" +
 	"\x03zap\x18\x02 \x01(\v2\x15.config.v1.Logger.ZapH\x00R\x03zap\x88\x01\x01\x125\n" +
@@ -607,13 +687,20 @@ const file_config_v1_logger_proto_rawDesc = "" +
 	"\amax_age\x18\x04 \x01(\x05R\x06maxAge\x12\x1f\n" +
 	"\vmax_backups\x18\x05 \x01(\x05R\n" +
 	"maxBackups\x12%\n" +
-	"\x0eenable_console\x18\x06 \x01(\bR\renableConsole\x1a\xbb\x01\n" +
+	"\x0eenable_console\x18\x06 \x01(\bR\renableConsole\x1a\xd3\x02\n" +
 	"\x06Logrus\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1c\n" +
 	"\tformatter\x18\x02 \x01(\tR\tformatter\x12)\n" +
 	"\x10timestamp_format\x18\x03 \x01(\tR\x0ftimestampFormat\x12%\n" +
 	"\x0edisable_colors\x18\x04 \x01(\bR\rdisableColors\x12+\n" +
-	"\x11disable_timestamp\x18\x05 \x01(\bR\x10disableTimestamp\x1a$\n" +
+	"\x11disable_timestamp\x18\x05 \x01(\bR\x10disableTimestamp\x12\x1a\n" +
+	"\bfilepath\x18\x06 \x01(\tR\bfilepath\x12\x19\n" +
+	"\bmax_size\x18\a \x01(\x05R\amaxSize\x12\x17\n" +
+	"\amax_age\x18\b \x01(\x05R\x06maxAge\x12\x1f\n" +
+	"\vmax_backups\x18\t \x01(\x05R\n" +
+	"maxBackups\x12%\n" +
+	"\x0eenable_console\x18\n" +
+	" \x01(\bR\renableConsole\x1a$\n" +
 	"\x06Fluent\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x1a\x82\x01\n" +
 	"\x06Aliyun\x12\x1a\n" +
@@ -627,7 +714,7 @@ const file_config_v1_logger_proto_rawDesc = "" +
 	"\btopic_id\x18\x02 \x01(\tR\atopicId\x12\x1d\n" +
 	"\n" +
 	"access_key\x18\x03 \x01(\tR\taccessKey\x12#\n" +
-	"\raccess_secret\x18\x04 \x01(\tR\faccessSecret\x1a\x89\x02\n" +
+	"\raccess_secret\x18\x04 \x01(\tR\faccessSecret\x1a\x85\x03\n" +
 	"\aZerolog\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12*\n" +
 	"\x11time_field_format\x18\x02 \x01(\tR\x0ftimeFieldFormat\x120\n" +
@@ -635,7 +722,13 @@ const file_config_v1_logger_proto_rawDesc = "" +
 	"\x10level_field_name\x18\x04 \x01(\tR\x0elevelFieldName\x12,\n" +
 	"\x12message_field_name\x18\x05 \x01(\tR\x10messageFieldName\x12\x16\n" +
 	"\x06writer\x18\x06 \x01(\tR\x06writer\x12\x1a\n" +
-	"\bfilepath\x18\a \x01(\tR\bfilepathB\x06\n" +
+	"\bfilepath\x18\a \x01(\tR\bfilepath\x12\x19\n" +
+	"\bmax_size\x18\b \x01(\x05R\amaxSize\x12\x17\n" +
+	"\amax_age\x18\t \x01(\x05R\x06maxAge\x12\x1f\n" +
+	"\vmax_backups\x18\n" +
+	" \x01(\x05R\n" +
+	"maxBackups\x12%\n" +
+	"\x0eenable_console\x18\v \x01(\bR\renableConsoleB\x06\n" +
 	"\x04_zapB\t\n" +
 	"\a_logrusB\t\n" +
 	"\a_fluentB\t\n" +

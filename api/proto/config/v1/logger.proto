@@ -32,6 +32,16 @@ message Logger {
     bool disable_colors = 4;
     // disable_timestamp 表示是否禁用时间戳。
     bool disable_timestamp = 5;
+    // filepath 为日志文件目录；为空时仅输出到控制台。
+    string filepath = 6;
+    // max_size 为日志文件大小上限，单位 MB。
+    int32 max_size = 7;
+    // max_age 为日志文件保留天数。
+    int32 max_age = 8;
+    // max_backups 为最大保留日志文件数量。
+    int32 max_backups = 9;
+    // enable_console 表示配置文件输出时是否同时输出到控制台。
+    bool enable_console = 10;
   }
 
   // Fluent 描述 Fluent 日志配置。
@@ -76,10 +86,18 @@ message Logger {
     string level_field_name = 4;
     // message_field_name 为日志消息字段名称。
     string message_field_name = 5;
-    // writer 为输出目标，默认 stdout，可选 stdout、stderr、file。
+    // writer 为输出目标，默认 stdout，可选 stdout、stderr、console、file、lumberjack。
     string writer = 6;
-    // filepath 为 writer=file 时的日志文件地址。
+    // filepath 为 writer=file 或 lumberjack 时的日志文件目录。
     string filepath = 7;
+    // max_size 为日志文件大小上限，单位 MB。
+    int32 max_size = 8;
+    // max_age 为日志文件保留天数。
+    int32 max_age = 9;
+    // max_backups 为最大保留日志文件数量。
+    int32 max_backups = 10;
+    // enable_console 表示文件输出时是否同时输出到控制台。
+    bool enable_console = 11;
   }
 
   // type 为日志组件类型。
