@@ -6,9 +6,9 @@
 - 文件名精确为 `README.md` 的文件。
 - 任意父目录名为 `docs` 的 Markdown 文件。
 
-同一路径可以通过文件名语言后缀提供翻译，例如 `README.en-US.md`、
-`docs/guide.zh-TW.md`。无后缀文件是默认正文，语言版本会聚合到同一个文档节点，
-不会在目录中重复显示。
+命令只把无语言后缀的 Markdown 收集到默认目录；`README.en-US.md`、
+`docs/guide.zh-TW.md` 等带语言后缀文件不参与默认目录。语言目录由下游翻译工具
+根据 `docs.json` 生成 `docs.<locale>.json`。
 
 例如会收集 `README.md`、`backend/core/README.md`、
 `docs/guide/install.md` 和 `backend/docs/api.md`，不会收集路径超过三段的
@@ -22,9 +22,6 @@ JSON 按文件目录保存为树形结构，项目身份不写入构建产物：
     {
       "path": "README.md",
       "content": "# kratos-admin",
-      "locale": {
-        "en-US": "# kratos-admin"
-      },
       "updated_at": "2026-07-31T08:00:00Z"
     }
   ],
@@ -43,9 +40,8 @@ JSON 按文件目录保存为树形结构，项目身份不写入构建产物：
 服务加载生成物后，使用 `AppInfo.Project` 和 `AppInfo.Name` 生成项目身份与稳定
 文档 ID。
 
-生成时只扫描和聚合项目中显式存在的语言 Markdown 文件，不执行网络翻译。
-上一次生成结果中，源文未变化的 `locale` 内容会被保留；源文变化后需要更新对应
-语言 Markdown 文件。这样 Go 命令只负责收集文档，适合通过 `go install` 分发。
+生成命令不执行网络翻译，也不写入 `locale` 字段。默认目录与语言目录使用相同的
+稳定文档路径，运行时可以据此按请求语言选择整份目录树和文档正文。
 
 ## 安装
 
@@ -61,7 +57,8 @@ project-docs
 
 普通项目输出到 `internal/projectdocs`；当前目录包含 `backend` 时，默认输出到
 `backend/internal/docs`。输出目录下会生成 `assets/docs.json` 和
-`docs.go`，其中导出 `DocsData` 作为嵌入 JSON。
+`docs.go`。生成的 Go 包导出默认目录 `DocsData`，并通过 `DocsFS` 嵌入构建时已经
+存在的全部 `assets/docs*.json`。
 
 可以通过 `--output` 或 `-o` 指定生成目录。相对路径以项目根目录为基准：
 
