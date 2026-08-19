@@ -169,8 +169,14 @@ type Client_Middleware struct {
 	Auth *Client_Middleware_Auth `protobuf:"bytes,10,opt,name=auth,proto3" json:"auth,omitempty"`
 	// selector_filter 为负载均衡过滤器配置。
 	SelectorFilter *Client_Middleware_SelectorFilter `protobuf:"bytes,11,opt,name=selector_filter,json=selectorFilter,proto3" json:"selector_filter,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// retry 为一元 RPC 客户端重试配置，存在时启用重试。
+	Retry *Client_Middleware_Retry `protobuf:"bytes,12,opt,name=retry,proto3" json:"retry,omitempty"`
+	// rate_limiter 为客户端限流配置，存在时启用限流。
+	RateLimiter *Client_Middleware_RateLimiter `protobuf:"bytes,13,opt,name=rate_limiter,json=rateLimiter,proto3" json:"rate_limiter,omitempty"`
+	// metrics 为客户端指标配置，存在时启用指标采集。
+	Metrics       *Client_Middleware_Metrics `protobuf:"bytes,14,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Client_Middleware) Reset() {
@@ -248,6 +254,27 @@ func (x *Client_Middleware) GetAuth() *Client_Middleware_Auth {
 func (x *Client_Middleware) GetSelectorFilter() *Client_Middleware_SelectorFilter {
 	if x != nil {
 		return x.SelectorFilter
+	}
+	return nil
+}
+
+func (x *Client_Middleware) GetRetry() *Client_Middleware_Retry {
+	if x != nil {
+		return x.Retry
+	}
+	return nil
+}
+
+func (x *Client_Middleware) GetRateLimiter() *Client_Middleware_RateLimiter {
+	if x != nil {
+		return x.RateLimiter
+	}
+	return nil
+}
+
+func (x *Client_Middleware) GetMetrics() *Client_Middleware_Metrics {
+	if x != nil {
+		return x.Metrics
 	}
 	return nil
 }
@@ -681,6 +708,279 @@ func (x *Client_Middleware_SelectorFilter) GetBalancer() string {
 	return ""
 }
 
+// Retry 描述一元 RPC 客户端重试配置，配置后启用重试拦截器。
+type Client_Middleware_Retry struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// max_attempts 为最大尝试次数，包含首次请求；零值使用默认值 3。
+	MaxAttempts uint32 `protobuf:"varint,1,opt,name=max_attempts,json=maxAttempts,proto3" json:"max_attempts,omitempty"`
+	// initial_backoff 为首次重试前的等待时间；未配置时使用默认值 200ms。
+	InitialBackoff *durationpb.Duration `protobuf:"bytes,2,opt,name=initial_backoff,json=initialBackoff,proto3" json:"initial_backoff,omitempty"`
+	// max_backoff 为单次退避等待时间上限；未配置时使用默认值 10s。
+	MaxBackoff *durationpb.Duration `protobuf:"bytes,3,opt,name=max_backoff,json=maxBackoff,proto3" json:"max_backoff,omitempty"`
+	// backoff_factor 为指数退避倍数；零值使用默认值 2。
+	BackoffFactor float64 `protobuf:"fixed64,4,opt,name=backoff_factor,json=backoffFactor,proto3" json:"backoff_factor,omitempty"`
+	// max_total_wait 为全部尝试和等待的总时长上限；未配置时不限制。
+	MaxTotalWait *durationpb.Duration `protobuf:"bytes,5,opt,name=max_total_wait,json=maxTotalWait,proto3" json:"max_total_wait,omitempty"`
+	// idempotent_prefixes 为允许重试的方法名前缀；为空时使用 Get、List、Search。
+	IdempotentPrefixes []string `protobuf:"bytes,6,rep,name=idempotent_prefixes,json=idempotentPrefixes,proto3" json:"idempotent_prefixes,omitempty"`
+	// retry_codes 为触发重试的 gRPC 状态码名称；为空时仅重试 UNAVAILABLE。
+	RetryCodes []string `protobuf:"bytes,7,rep,name=retry_codes,json=retryCodes,proto3" json:"retry_codes,omitempty"`
+	// skip_methods 为跳过重试的完整 gRPC 方法名。
+	SkipMethods   []string `protobuf:"bytes,8,rep,name=skip_methods,json=skipMethods,proto3" json:"skip_methods,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Client_Middleware_Retry) Reset() {
+	*x = Client_Middleware_Retry{}
+	mi := &file_config_v1_client_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Client_Middleware_Retry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Client_Middleware_Retry) ProtoMessage() {}
+
+func (x *Client_Middleware_Retry) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_client_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Client_Middleware_Retry.ProtoReflect.Descriptor instead.
+func (*Client_Middleware_Retry) Descriptor() ([]byte, []int) {
+	return file_config_v1_client_proto_rawDescGZIP(), []int{0, 0, 2}
+}
+
+func (x *Client_Middleware_Retry) GetMaxAttempts() uint32 {
+	if x != nil {
+		return x.MaxAttempts
+	}
+	return 0
+}
+
+func (x *Client_Middleware_Retry) GetInitialBackoff() *durationpb.Duration {
+	if x != nil {
+		return x.InitialBackoff
+	}
+	return nil
+}
+
+func (x *Client_Middleware_Retry) GetMaxBackoff() *durationpb.Duration {
+	if x != nil {
+		return x.MaxBackoff
+	}
+	return nil
+}
+
+func (x *Client_Middleware_Retry) GetBackoffFactor() float64 {
+	if x != nil {
+		return x.BackoffFactor
+	}
+	return 0
+}
+
+func (x *Client_Middleware_Retry) GetMaxTotalWait() *durationpb.Duration {
+	if x != nil {
+		return x.MaxTotalWait
+	}
+	return nil
+}
+
+func (x *Client_Middleware_Retry) GetIdempotentPrefixes() []string {
+	if x != nil {
+		return x.IdempotentPrefixes
+	}
+	return nil
+}
+
+func (x *Client_Middleware_Retry) GetRetryCodes() []string {
+	if x != nil {
+		return x.RetryCodes
+	}
+	return nil
+}
+
+func (x *Client_Middleware_Retry) GetSkipMethods() []string {
+	if x != nil {
+		return x.SkipMethods
+	}
+	return nil
+}
+
+// RateLimiter 描述客户端令牌桶限流配置，配置后启用限流拦截器。
+type Client_Middleware_RateLimiter struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tokens_per_second 为每秒补充的令牌数量，必须大于 0。
+	TokensPerSecond float64 `protobuf:"fixed64,1,opt,name=tokens_per_second,json=tokensPerSecond,proto3" json:"tokens_per_second,omitempty"`
+	// burst 为令牌桶突发容量，必须大于 0。
+	Burst uint32 `protobuf:"varint,2,opt,name=burst,proto3" json:"burst,omitempty"`
+	// wait 表示无可用令牌时等待放行，而不是立即拒绝请求。
+	Wait bool `protobuf:"varint,3,opt,name=wait,proto3" json:"wait,omitempty"`
+	// skip_methods 为跳过限流的完整 gRPC 方法名。
+	SkipMethods   []string `protobuf:"bytes,4,rep,name=skip_methods,json=skipMethods,proto3" json:"skip_methods,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Client_Middleware_RateLimiter) Reset() {
+	*x = Client_Middleware_RateLimiter{}
+	mi := &file_config_v1_client_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Client_Middleware_RateLimiter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Client_Middleware_RateLimiter) ProtoMessage() {}
+
+func (x *Client_Middleware_RateLimiter) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_client_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Client_Middleware_RateLimiter.ProtoReflect.Descriptor instead.
+func (*Client_Middleware_RateLimiter) Descriptor() ([]byte, []int) {
+	return file_config_v1_client_proto_rawDescGZIP(), []int{0, 0, 3}
+}
+
+func (x *Client_Middleware_RateLimiter) GetTokensPerSecond() float64 {
+	if x != nil {
+		return x.TokensPerSecond
+	}
+	return 0
+}
+
+func (x *Client_Middleware_RateLimiter) GetBurst() uint32 {
+	if x != nil {
+		return x.Burst
+	}
+	return 0
+}
+
+func (x *Client_Middleware_RateLimiter) GetWait() bool {
+	if x != nil {
+		return x.Wait
+	}
+	return false
+}
+
+func (x *Client_Middleware_RateLimiter) GetSkipMethods() []string {
+	if x != nil {
+		return x.SkipMethods
+	}
+	return nil
+}
+
+// Metrics 描述客户端 RPC 指标配置，配置后启用 Prometheus 指标拦截器。
+type Client_Middleware_Metrics struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// namespace 为 Prometheus 指标命名空间。
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// subsystem 为 Prometheus 指标子系统；为空时使用 grpc_client。
+	Subsystem string `protobuf:"bytes,2,opt,name=subsystem,proto3" json:"subsystem,omitempty"`
+	// request_counter_name 为请求计数器名称；为空时使用 grpc_requests_total。
+	RequestCounterName string `protobuf:"bytes,3,opt,name=request_counter_name,json=requestCounterName,proto3" json:"request_counter_name,omitempty"`
+	// latency_histogram_name 为耗时直方图名称；为空时使用 grpc_request_duration_seconds。
+	LatencyHistogramName string `protobuf:"bytes,4,opt,name=latency_histogram_name,json=latencyHistogramName,proto3" json:"latency_histogram_name,omitempty"`
+	// in_flight_gauge_name 为进行中请求指标名称；为空时使用 grpc_requests_in_flight。
+	InFlightGaugeName string `protobuf:"bytes,5,opt,name=in_flight_gauge_name,json=inFlightGaugeName,proto3" json:"in_flight_gauge_name,omitempty"`
+	// skip_methods 为跳过指标记录的完整 gRPC 方法名。
+	SkipMethods   []string `protobuf:"bytes,6,rep,name=skip_methods,json=skipMethods,proto3" json:"skip_methods,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Client_Middleware_Metrics) Reset() {
+	*x = Client_Middleware_Metrics{}
+	mi := &file_config_v1_client_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Client_Middleware_Metrics) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Client_Middleware_Metrics) ProtoMessage() {}
+
+func (x *Client_Middleware_Metrics) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_client_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Client_Middleware_Metrics.ProtoReflect.Descriptor instead.
+func (*Client_Middleware_Metrics) Descriptor() ([]byte, []int) {
+	return file_config_v1_client_proto_rawDescGZIP(), []int{0, 0, 4}
+}
+
+func (x *Client_Middleware_Metrics) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *Client_Middleware_Metrics) GetSubsystem() string {
+	if x != nil {
+		return x.Subsystem
+	}
+	return ""
+}
+
+func (x *Client_Middleware_Metrics) GetRequestCounterName() string {
+	if x != nil {
+		return x.RequestCounterName
+	}
+	return ""
+}
+
+func (x *Client_Middleware_Metrics) GetLatencyHistogramName() string {
+	if x != nil {
+		return x.LatencyHistogramName
+	}
+	return ""
+}
+
+func (x *Client_Middleware_Metrics) GetInFlightGaugeName() string {
+	if x != nil {
+		return x.InFlightGaugeName
+	}
+	return ""
+}
+
+func (x *Client_Middleware_Metrics) GetSkipMethods() []string {
+	if x != nil {
+		return x.SkipMethods
+	}
+	return nil
+}
+
 // Stdio 描述 stdio 子进程传输配置。
 type Client_Mcp_Stdio struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -698,7 +998,7 @@ type Client_Mcp_Stdio struct {
 
 func (x *Client_Mcp_Stdio) Reset() {
 	*x = Client_Mcp_Stdio{}
-	mi := &file_config_v1_client_proto_msgTypes[11]
+	mi := &file_config_v1_client_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -710,7 +1010,7 @@ func (x *Client_Mcp_Stdio) String() string {
 func (*Client_Mcp_Stdio) ProtoMessage() {}
 
 func (x *Client_Mcp_Stdio) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_client_proto_msgTypes[11]
+	mi := &file_config_v1_client_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -769,7 +1069,7 @@ type Client_Mcp_Http struct {
 
 func (x *Client_Mcp_Http) Reset() {
 	*x = Client_Mcp_Http{}
-	mi := &file_config_v1_client_proto_msgTypes[12]
+	mi := &file_config_v1_client_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -781,7 +1081,7 @@ func (x *Client_Mcp_Http) String() string {
 func (*Client_Mcp_Http) ProtoMessage() {}
 
 func (x *Client_Mcp_Http) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_client_proto_msgTypes[12]
+	mi := &file_config_v1_client_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -833,7 +1133,7 @@ type Client_Mcp_Sse struct {
 
 func (x *Client_Mcp_Sse) Reset() {
 	*x = Client_Mcp_Sse{}
-	mi := &file_config_v1_client_proto_msgTypes[13]
+	mi := &file_config_v1_client_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -845,7 +1145,7 @@ func (x *Client_Mcp_Sse) String() string {
 func (*Client_Mcp_Sse) ProtoMessage() {}
 
 func (x *Client_Mcp_Sse) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_client_proto_msgTypes[13]
+	mi := &file_config_v1_client_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -886,12 +1186,12 @@ var File_config_v1_client_proto protoreflect.FileDescriptor
 
 const file_config_v1_client_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/client.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\"\xfd\x13\n" +
+	"\x16config/v1/client.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\"\xdb\x1b\n" +
 	"\x06Client\x12/\n" +
 	"\x04http\x18\x01 \x01(\v2\x16.config.v1.Client.HttpH\x00R\x04http\x88\x01\x01\x12/\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x16.config.v1.Client.GrpcH\x01R\x04grpc\x88\x01\x01\x12,\n" +
 	"\x03mcp\x18\x03 \x01(\v2\x15.config.v1.Client.McpH\x02R\x03mcp\x88\x01\x01\x12,\n" +
-	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Client.SseH\x03R\x03sse\x88\x01\x01\x1a\xfc\x03\n" +
+	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Client.SseH\x03R\x03sse\x88\x01\x01\x1a\xda\v\n" +
 	"\n" +
 	"Middleware\x12%\n" +
 	"\x0eenable_logging\x18\x01 \x01(\bR\renableLogging\x12'\n" +
@@ -901,13 +1201,39 @@ const file_config_v1_client_proto_rawDesc = "" +
 	"\x16enable_circuit_breaker\x18\x05 \x01(\bR\x14enableCircuitBreaker\x125\n" +
 	"\x04auth\x18\n" +
 	" \x01(\v2!.config.v1.Client.Middleware.AuthR\x04auth\x12T\n" +
-	"\x0fselector_filter\x18\v \x01(\v2+.config.v1.Client.Middleware.SelectorFilterR\x0eselectorFilter\x1a6\n" +
+	"\x0fselector_filter\x18\v \x01(\v2+.config.v1.Client.Middleware.SelectorFilterR\x0eselectorFilter\x128\n" +
+	"\x05retry\x18\f \x01(\v2\".config.v1.Client.Middleware.RetryR\x05retry\x12K\n" +
+	"\frate_limiter\x18\r \x01(\v2(.config.v1.Client.Middleware.RateLimiterR\vrateLimiter\x12>\n" +
+	"\ametrics\x18\x0e \x01(\v2$.config.v1.Client.Middleware.MetricsR\ametrics\x1a6\n" +
 	"\x04Auth\x12\x16\n" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x16\n" +
 	"\x06secret\x18\x02 \x01(\tR\x06secret\x1aS\n" +
 	"\x0eSelectorFilter\x12%\n" +
 	"\x0efilter_version\x18\x01 \x01(\tR\rfilterVersion\x12\x1a\n" +
-	"\bbalancer\x18\x02 \x01(\tR\bbalancer\x1a\xb6\x02\n" +
+	"\bbalancer\x18\x02 \x01(\tR\bbalancer\x1a\x87\x03\n" +
+	"\x05Retry\x12!\n" +
+	"\fmax_attempts\x18\x01 \x01(\rR\vmaxAttempts\x12B\n" +
+	"\x0finitial_backoff\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x0einitialBackoff\x12:\n" +
+	"\vmax_backoff\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\n" +
+	"maxBackoff\x12%\n" +
+	"\x0ebackoff_factor\x18\x04 \x01(\x01R\rbackoffFactor\x12?\n" +
+	"\x0emax_total_wait\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\fmaxTotalWait\x12/\n" +
+	"\x13idempotent_prefixes\x18\x06 \x03(\tR\x12idempotentPrefixes\x12\x1f\n" +
+	"\vretry_codes\x18\a \x03(\tR\n" +
+	"retryCodes\x12!\n" +
+	"\fskip_methods\x18\b \x03(\tR\vskipMethods\x1a\x86\x01\n" +
+	"\vRateLimiter\x12*\n" +
+	"\x11tokens_per_second\x18\x01 \x01(\x01R\x0ftokensPerSecond\x12\x14\n" +
+	"\x05burst\x18\x02 \x01(\rR\x05burst\x12\x12\n" +
+	"\x04wait\x18\x03 \x01(\bR\x04wait\x12!\n" +
+	"\fskip_methods\x18\x04 \x03(\tR\vskipMethods\x1a\x81\x02\n" +
+	"\aMetrics\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x1c\n" +
+	"\tsubsystem\x18\x02 \x01(\tR\tsubsystem\x120\n" +
+	"\x14request_counter_name\x18\x03 \x01(\tR\x12requestCounterName\x124\n" +
+	"\x16latency_histogram_name\x18\x04 \x01(\tR\x14latencyHistogramName\x12/\n" +
+	"\x14in_flight_gauge_name\x18\x05 \x01(\tR\x11inFlightGaugeName\x12!\n" +
+	"\fskip_methods\x18\x06 \x03(\tR\vskipMethods\x1a\xb6\x02\n" +
 	"\x04Http\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x123\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12<\n" +
@@ -991,7 +1317,7 @@ func file_config_v1_client_proto_rawDescGZIP() []byte {
 }
 
 var file_config_v1_client_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_config_v1_client_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_config_v1_client_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_config_v1_client_proto_goTypes = []any{
 	(Client_Mcp_Transport)(0),                // 0: config.v1.Client.Mcp.Transport
 	(*Client)(nil),                           // 1: config.v1.Client
@@ -1002,17 +1328,20 @@ var file_config_v1_client_proto_goTypes = []any{
 	(*Client_Mcp)(nil),                       // 6: config.v1.Client.Mcp
 	(*Client_Middleware_Auth)(nil),           // 7: config.v1.Client.Middleware.Auth
 	(*Client_Middleware_SelectorFilter)(nil), // 8: config.v1.Client.Middleware.SelectorFilter
-	nil,                                      // 9: config.v1.Client.Http.MetadataEntry
-	nil,                                      // 10: config.v1.Client.Grpc.MetadataEntry
-	nil,                                      // 11: config.v1.Client.Sse.MetadataEntry
-	(*Client_Mcp_Stdio)(nil),                 // 12: config.v1.Client.Mcp.Stdio
-	(*Client_Mcp_Http)(nil),                  // 13: config.v1.Client.Mcp.Http
-	(*Client_Mcp_Sse)(nil),                   // 14: config.v1.Client.Mcp.Sse
-	nil,                                      // 15: config.v1.Client.Mcp.Stdio.EnvEntry
-	nil,                                      // 16: config.v1.Client.Mcp.Http.HeadersEntry
-	nil,                                      // 17: config.v1.Client.Mcp.Sse.HeadersEntry
-	(*durationpb.Duration)(nil),              // 18: google.protobuf.Duration
-	(*Tls)(nil),                              // 19: config.v1.Tls
+	(*Client_Middleware_Retry)(nil),          // 9: config.v1.Client.Middleware.Retry
+	(*Client_Middleware_RateLimiter)(nil),    // 10: config.v1.Client.Middleware.RateLimiter
+	(*Client_Middleware_Metrics)(nil),        // 11: config.v1.Client.Middleware.Metrics
+	nil,                                      // 12: config.v1.Client.Http.MetadataEntry
+	nil,                                      // 13: config.v1.Client.Grpc.MetadataEntry
+	nil,                                      // 14: config.v1.Client.Sse.MetadataEntry
+	(*Client_Mcp_Stdio)(nil),                 // 15: config.v1.Client.Mcp.Stdio
+	(*Client_Mcp_Http)(nil),                  // 16: config.v1.Client.Mcp.Http
+	(*Client_Mcp_Sse)(nil),                   // 17: config.v1.Client.Mcp.Sse
+	nil,                                      // 18: config.v1.Client.Mcp.Stdio.EnvEntry
+	nil,                                      // 19: config.v1.Client.Mcp.Http.HeadersEntry
+	nil,                                      // 20: config.v1.Client.Mcp.Sse.HeadersEntry
+	(*durationpb.Duration)(nil),              // 21: google.protobuf.Duration
+	(*Tls)(nil),                              // 22: config.v1.Tls
 }
 var file_config_v1_client_proto_depIdxs = []int32{
 	3,  // 0: config.v1.Client.http:type_name -> config.v1.Client.Http
@@ -1021,31 +1350,37 @@ var file_config_v1_client_proto_depIdxs = []int32{
 	5,  // 3: config.v1.Client.sse:type_name -> config.v1.Client.Sse
 	7,  // 4: config.v1.Client.Middleware.auth:type_name -> config.v1.Client.Middleware.Auth
 	8,  // 5: config.v1.Client.Middleware.selector_filter:type_name -> config.v1.Client.Middleware.SelectorFilter
-	18, // 6: config.v1.Client.Http.timeout:type_name -> google.protobuf.Duration
-	2,  // 7: config.v1.Client.Http.middleware:type_name -> config.v1.Client.Middleware
-	19, // 8: config.v1.Client.Http.tls:type_name -> config.v1.Tls
-	9,  // 9: config.v1.Client.Http.metadata:type_name -> config.v1.Client.Http.MetadataEntry
-	18, // 10: config.v1.Client.Grpc.timeout:type_name -> google.protobuf.Duration
-	2,  // 11: config.v1.Client.Grpc.middleware:type_name -> config.v1.Client.Middleware
-	19, // 12: config.v1.Client.Grpc.tls:type_name -> config.v1.Tls
-	10, // 13: config.v1.Client.Grpc.metadata:type_name -> config.v1.Client.Grpc.MetadataEntry
-	18, // 14: config.v1.Client.Sse.timeout:type_name -> google.protobuf.Duration
-	19, // 15: config.v1.Client.Sse.tls:type_name -> config.v1.Tls
-	11, // 16: config.v1.Client.Sse.metadata:type_name -> config.v1.Client.Sse.MetadataEntry
-	0,  // 17: config.v1.Client.Mcp.transport:type_name -> config.v1.Client.Mcp.Transport
-	12, // 18: config.v1.Client.Mcp.stdio:type_name -> config.v1.Client.Mcp.Stdio
-	13, // 19: config.v1.Client.Mcp.http:type_name -> config.v1.Client.Mcp.Http
-	14, // 20: config.v1.Client.Mcp.sse:type_name -> config.v1.Client.Mcp.Sse
-	15, // 21: config.v1.Client.Mcp.Stdio.env:type_name -> config.v1.Client.Mcp.Stdio.EnvEntry
-	16, // 22: config.v1.Client.Mcp.Http.headers:type_name -> config.v1.Client.Mcp.Http.HeadersEntry
-	18, // 23: config.v1.Client.Mcp.Http.timeout:type_name -> google.protobuf.Duration
-	17, // 24: config.v1.Client.Mcp.Sse.headers:type_name -> config.v1.Client.Mcp.Sse.HeadersEntry
-	18, // 25: config.v1.Client.Mcp.Sse.timeout:type_name -> google.protobuf.Duration
-	26, // [26:26] is the sub-list for method output_type
-	26, // [26:26] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	9,  // 6: config.v1.Client.Middleware.retry:type_name -> config.v1.Client.Middleware.Retry
+	10, // 7: config.v1.Client.Middleware.rate_limiter:type_name -> config.v1.Client.Middleware.RateLimiter
+	11, // 8: config.v1.Client.Middleware.metrics:type_name -> config.v1.Client.Middleware.Metrics
+	21, // 9: config.v1.Client.Http.timeout:type_name -> google.protobuf.Duration
+	2,  // 10: config.v1.Client.Http.middleware:type_name -> config.v1.Client.Middleware
+	22, // 11: config.v1.Client.Http.tls:type_name -> config.v1.Tls
+	12, // 12: config.v1.Client.Http.metadata:type_name -> config.v1.Client.Http.MetadataEntry
+	21, // 13: config.v1.Client.Grpc.timeout:type_name -> google.protobuf.Duration
+	2,  // 14: config.v1.Client.Grpc.middleware:type_name -> config.v1.Client.Middleware
+	22, // 15: config.v1.Client.Grpc.tls:type_name -> config.v1.Tls
+	13, // 16: config.v1.Client.Grpc.metadata:type_name -> config.v1.Client.Grpc.MetadataEntry
+	21, // 17: config.v1.Client.Sse.timeout:type_name -> google.protobuf.Duration
+	22, // 18: config.v1.Client.Sse.tls:type_name -> config.v1.Tls
+	14, // 19: config.v1.Client.Sse.metadata:type_name -> config.v1.Client.Sse.MetadataEntry
+	0,  // 20: config.v1.Client.Mcp.transport:type_name -> config.v1.Client.Mcp.Transport
+	15, // 21: config.v1.Client.Mcp.stdio:type_name -> config.v1.Client.Mcp.Stdio
+	16, // 22: config.v1.Client.Mcp.http:type_name -> config.v1.Client.Mcp.Http
+	17, // 23: config.v1.Client.Mcp.sse:type_name -> config.v1.Client.Mcp.Sse
+	21, // 24: config.v1.Client.Middleware.Retry.initial_backoff:type_name -> google.protobuf.Duration
+	21, // 25: config.v1.Client.Middleware.Retry.max_backoff:type_name -> google.protobuf.Duration
+	21, // 26: config.v1.Client.Middleware.Retry.max_total_wait:type_name -> google.protobuf.Duration
+	18, // 27: config.v1.Client.Mcp.Stdio.env:type_name -> config.v1.Client.Mcp.Stdio.EnvEntry
+	19, // 28: config.v1.Client.Mcp.Http.headers:type_name -> config.v1.Client.Mcp.Http.HeadersEntry
+	21, // 29: config.v1.Client.Mcp.Http.timeout:type_name -> google.protobuf.Duration
+	20, // 30: config.v1.Client.Mcp.Sse.headers:type_name -> config.v1.Client.Mcp.Sse.HeadersEntry
+	21, // 31: config.v1.Client.Mcp.Sse.timeout:type_name -> google.protobuf.Duration
+	32, // [32:32] is the sub-list for method output_type
+	32, // [32:32] is the sub-list for method input_type
+	32, // [32:32] is the sub-list for extension type_name
+	32, // [32:32] is the sub-list for extension extendee
+	0,  // [0:32] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_client_proto_init() }
@@ -1061,7 +1396,7 @@ func file_config_v1_client_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_client_proto_rawDesc), len(file_config_v1_client_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

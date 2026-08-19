@@ -28,8 +28,6 @@ use (
 	./broker/nats
 	./cache
 	./captcha
-	./circuitbreaker
-	./circuitbreaker/sentinel
 	./cmd/internal/utils
 	./cmd/kratos-admin-backend
 	./cmd/project-docs

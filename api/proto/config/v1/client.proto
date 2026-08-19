@@ -25,6 +25,54 @@ message Client {
       string balancer = 2;
     }
 
+    // Retry 描述一元 RPC 客户端重试配置，配置后启用重试拦截器。
+    message Retry {
+      // max_attempts 为最大尝试次数，包含首次请求；零值使用默认值 3。
+      uint32 max_attempts = 1;
+      // initial_backoff 为首次重试前的等待时间；未配置时使用默认值 200ms。
+      google.protobuf.Duration initial_backoff = 2;
+      // max_backoff 为单次退避等待时间上限；未配置时使用默认值 10s。
+      google.protobuf.Duration max_backoff = 3;
+      // backoff_factor 为指数退避倍数；零值使用默认值 2。
+      double backoff_factor = 4;
+      // max_total_wait 为全部尝试和等待的总时长上限；未配置时不限制。
+      google.protobuf.Duration max_total_wait = 5;
+      // idempotent_prefixes 为允许重试的方法名前缀；为空时使用 Get、List、Search。
+      repeated string idempotent_prefixes = 6;
+      // retry_codes 为触发重试的 gRPC 状态码名称；为空时仅重试 UNAVAILABLE。
+      repeated string retry_codes = 7;
+      // skip_methods 为跳过重试的完整 gRPC 方法名。
+      repeated string skip_methods = 8;
+    }
+
+    // RateLimiter 描述客户端令牌桶限流配置，配置后启用限流拦截器。
+    message RateLimiter {
+      // tokens_per_second 为每秒补充的令牌数量，必须大于 0。
+      double tokens_per_second = 1;
+      // burst 为令牌桶突发容量，必须大于 0。
+      uint32 burst = 2;
+      // wait 表示无可用令牌时等待放行，而不是立即拒绝请求。
+      bool wait = 3;
+      // skip_methods 为跳过限流的完整 gRPC 方法名。
+      repeated string skip_methods = 4;
+    }
+
+    // Metrics 描述客户端 RPC 指标配置，配置后启用 Prometheus 指标拦截器。
+    message Metrics {
+      // namespace 为 Prometheus 指标命名空间。
+      string namespace = 1;
+      // subsystem 为 Prometheus 指标子系统；为空时使用 grpc_client。
+      string subsystem = 2;
+      // request_counter_name 为请求计数器名称；为空时使用 grpc_requests_total。
+      string request_counter_name = 3;
+      // latency_histogram_name 为耗时直方图名称；为空时使用 grpc_request_duration_seconds。
+      string latency_histogram_name = 4;
+      // in_flight_gauge_name 为进行中请求指标名称；为空时使用 grpc_requests_in_flight。
+      string in_flight_gauge_name = 5;
+      // skip_methods 为跳过指标记录的完整 gRPC 方法名。
+      repeated string skip_methods = 6;
+    }
+
     // enable_logging 表示是否启用日志中间件。
     bool enable_logging = 1;
     // enable_recovery 表示是否启用异常恢复中间件。
@@ -40,6 +88,12 @@ message Client {
     Auth auth = 10;
     // selector_filter 为负载均衡过滤器配置。
     SelectorFilter selector_filter = 11;
+    // retry 为一元 RPC 客户端重试配置，存在时启用重试。
+    Retry retry = 12;
+    // rate_limiter 为客户端限流配置，存在时启用限流。
+    RateLimiter rate_limiter = 13;
+    // metrics 为客户端指标配置，存在时启用指标采集。
+    Metrics metrics = 14;
   }
 
   // Http 描述 HTTP 客户端配置。

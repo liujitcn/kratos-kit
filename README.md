@@ -19,7 +19,6 @@
 - `auth`：认证与鉴权封装；认证支持 API Key、Basic、HMAC、JWT、mTLS、OAuth2、OIDC、Session，鉴权支持 Casbin、OPA、Cerbos 和 Zanzibar 适配端口
 - `oauth`：第三方 OAuth SDK 封装（直接使用 `api` 下 OAuth 配置，支持 GitHub、Gitee、Google、微信开放平台、微信公众号、微信小程序、企业微信、钉钉、飞书；闭环支持 state、PKCE、授权地址、code 换 token、用户信息，不包含业务登录态）
 - `cache`：内存/Redis 缓存封装
-- `circuitbreaker`：Kratos 客户端请求级熔断适配及 Hystrix、Vegas、Sentinel 实现
 - `queue`：内存/Redis 队列封装
 - `locker`：Redis 分布式锁封装
 - `oss`：本地/FTP/MinIO/阿里云 OSS/AWS S3 及兼容对象存储封装

@@ -11,6 +11,7 @@ import (
 	kratosHttp "github.com/go-kratos/kratos/v3/transport/http"
 	"github.com/gorilla/handlers"
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	httpResponse "github.com/liujitcn/kratos-kit/server/http/internal/response"
 	httpRequestID "github.com/liujitcn/kratos-kit/server/http/middleware/requestid"
 	kitTracing "github.com/liujitcn/kratos-kit/tracing"
 	"github.com/liujitcn/kratos-kit/utils"
@@ -22,7 +23,7 @@ func CreateHttpServer(cfg *configv1.Bootstrap, mds ...middleware.Middleware) (*k
 	if err != nil {
 		return nil, err
 	}
-	options = append(options, kratosHttp.ResponseEncoder(protoJSONResponseEncoder))
+	options = append(options, kratosHttp.ResponseEncoder(httpResponse.ProtoJSONEncoder))
 
 	srv := kratosHttp.NewServer(options...)
 
