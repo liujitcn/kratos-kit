@@ -6,10 +6,10 @@ github.com/go-kratos/kratos/v3 v3.0.0 h1:dCXqKoeo2Bo9jgC72YfuwJ3g7bPCkHeVeNGyZQ5
 github.com/go-kratos/kratos/v3 v3.0.0/go.mod h1:8l+0M5UPlm/5hWLvS+wzxHRVRv6sHMG6Lgb4+rw1KIs=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/liujitcn/kratos-kit/api v0.0.28 h1:3PhXqb9oYdgzMCuIzBNgN45oOup9b97D0Bsj4r2ffiQ=
-github.com/liujitcn/kratos-kit/api v0.0.28/go.mod h1:OxJnIZeM6wwGjsheybFzOwgpHoZEu4SfPN+qhECXqF4=
-github.com/liujitcn/kratos-kit/logger v0.0.28 h1:5fghxCouroefQKFZ4grOHrEHHrV50gQhEpZ9Jl+ESFc=
-github.com/liujitcn/kratos-kit/logger v0.0.28/go.mod h1:YhzNbgd3AdX/nEnI1Wpf8p4rwikW0VBGJk11Sg/Z2Ic=
+github.com/liujitcn/kratos-kit/api v0.0.30 h1:5Ym0hV9oY67VgMlPc3dMGEhtoKTOwSfhEy4kfseHNmE=
+github.com/liujitcn/kratos-kit/api v0.0.30/go.mod h1:OxJnIZeM6wwGjsheybFzOwgpHoZEu4SfPN+qhECXqF4=
+github.com/liujitcn/kratos-kit/logger v0.0.29 h1:beHOf98K+TxtuuHVWr7p+Ca/PLCLgcnMIGRGNJ2+7VE=
+github.com/liujitcn/kratos-kit/logger v0.0.29/go.mod h1:YhzNbgd3AdX/nEnI1Wpf8p4rwikW0VBGJk11Sg/Z2Ic=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.9.4 h1:TsZE7l11zFCLZnZ+teH4Umoq5BhEIfIzfRDZ1Uzql2w=

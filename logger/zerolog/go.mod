@@ -11,8 +11,8 @@ require (
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.28
-	github.com/liujitcn/kratos-kit/logger v0.0.28
+	github.com/liujitcn/kratos-kit/api v0.0.30
+	github.com/liujitcn/kratos-kit/logger v0.0.29
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect
