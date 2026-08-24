@@ -28,7 +28,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
 	github.com/liujitcn/kratos-kit/api v0.0.30
-	github.com/liujitcn/kratos-kit/config v0.0.23
+	github.com/liujitcn/kratos-kit/config v0.0.24
 	github.com/liujitcn/kratos-kit/logger v0.0.29
 	github.com/liujitcn/kratos-kit/registry v0.0.21
 	github.com/liujitcn/kratos-kit/tracer v0.0.15

@@ -50,8 +50,8 @@ github.com/liujitcn/go-utils v0.0.31 h1:ixhlyxWgRlbCbYItrvFs7cp8EB4qxli1cCVFUNZ9
 github.com/liujitcn/go-utils v0.0.31/go.mod h1:jB5HqQaSLJxfXVVzhRhA0Ie1B9nf1FmgAvMYQyLH/QI=
 github.com/liujitcn/kratos-kit/api v0.0.30 h1:5Ym0hV9oY67VgMlPc3dMGEhtoKTOwSfhEy4kfseHNmE=
 github.com/liujitcn/kratos-kit/api v0.0.30/go.mod h1:OxJnIZeM6wwGjsheybFzOwgpHoZEu4SfPN+qhECXqF4=
-github.com/liujitcn/kratos-kit/config v0.0.23 h1:P6IkmI7+69Fjv+1FHtaDusKs1JptlaS7LggBG+XEUQk=
-github.com/liujitcn/kratos-kit/config v0.0.23/go.mod h1:uDR5Tb2mHe0Wu+mZ3uT98vTCy36Aww2qYtkEh4FNczM=
+github.com/liujitcn/kratos-kit/config v0.0.24 h1:o4jos9859+6Bf9TNVvP8K06c9AT2mn5rmHqJk051dWI=
+github.com/liujitcn/kratos-kit/config v0.0.24/go.mod h1:uDR5Tb2mHe0Wu+mZ3uT98vTCy36Aww2qYtkEh4FNczM=
 github.com/liujitcn/kratos-kit/logger v0.0.29 h1:beHOf98K+TxtuuHVWr7p+Ca/PLCLgcnMIGRGNJ2+7VE=
 github.com/liujitcn/kratos-kit/logger v0.0.29/go.mod h1:YhzNbgd3AdX/nEnI1Wpf8p4rwikW0VBGJk11Sg/Z2Ic=
 github.com/liujitcn/kratos-kit/registry v0.0.21 h1:skQ7yv6N0JOvZ5Nrgg1MV9y1wxtRNMT0lvExTqfEQ7k=

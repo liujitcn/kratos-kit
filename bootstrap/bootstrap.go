@@ -90,7 +90,7 @@ func bootstrap(ctx *Context, initApp InitAppFunc) error {
 	var err error
 
 	// load configs
-	if err = bConfig.LoadBootstrapConfig(flags.Conf); err != nil {
+	if err = bConfig.LoadBootstrapConfigWithEnv(flags.Conf, flags.Env); err != nil {
 		return err
 	}
 

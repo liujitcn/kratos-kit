@@ -29,6 +29,24 @@ go run . \
 
 对应长参数为 `--project`、`--app-id`、`--instance-id`、`--name` 和 `--version`，短参数分别为 `-p`、`-a`、`-i`、`-n` 和 `-v`；未传入的字段继续从 `AppInfo` 或默认值补齐。
 
+## 运行环境配置
+
+`--env`（短参数 `-e`）用于选择配置目录中的环境覆盖文件，默认值为 `dev`。基础文件始终加载，`<name>.<env>.yaml` 在基础文件之后加载并覆盖同名字段，其他环境文件会被忽略。
+
+```text
+configs/
+├── data.yaml
+├── data.dev.yaml
+└── data.prod.yaml
+```
+
+```bash
+go run . --conf configs --env dev
+go run . -c configs -e prod
+```
+
+如果 `data.prod.yaml` 不存在，`env=prod` 会直接使用 `data.yaml`。环境覆盖文件可以只配置与基础文件不同的字段。
+
 ## 使用示例
 
 ```go
