@@ -2385,13 +2385,12 @@ github.com/liujitcn/go-utils v0.0.35 h1:m6FZkp0YgIxg/Do8H+ERRaYEi2y17Jk5VHx8FVu+
 github.com/liujitcn/go-utils v0.0.35/go.mod h1:XxYpo2Ia5Vmwukv/rffUh0mlCaEru4xWUjzdsi9BhZs=
 github.com/liujitcn/go-utils v0.0.37 h1:HafYxfwt7TPZzN8Wmcj4f35Vety8NFJbH+qzaQOQy4Y=
 github.com/liujitcn/go-utils v0.0.37/go.mod h1:7QojK9b2R4p0wrBPYTkkK7372mGVUhO8QseAZpHuhOs=
+github.com/liujitcn/go-utils v0.0.38/go.mod h1:7QojK9b2R4p0wrBPYTkkK7372mGVUhO8QseAZpHuhOs=
 github.com/liujitcn/go-utils/crypto v0.0.2/go.mod h1:/crQqoUHEiX7kHxfQnGq7GQRwK6dfPfXcpWbTWUPK8E=
 github.com/liujitcn/go-utils/crypto v0.0.12 h1:S8DgF541QGLaCVzVwxVB8Dx2b87nTvDZyf9J31wJkFM=
 github.com/liujitcn/go-utils/crypto v0.0.12/go.mod h1:lMw0GTk1N5ZX8cOKwD5/UnLLlJBxzGoKf7kmqUpDbvA=
 github.com/liujitcn/go-utils/http v0.0.7 h1:pvETXv8WjI8n5qBuWCe2mPpaDMFXXctyZbuZL7wBpBg=
 github.com/liujitcn/go-utils/http v0.0.7/go.mod h1:QCQuRcuDgGJ+FE49zIi2i+AcpPS6YT2be0otKS7Fc6g=
-github.com/liujitcn/go-utils/translator v0.0.4 h1:P2cGkwf/TXb5GBz/SYnahijBZSMw/o1fYkV138DyCvI=
-github.com/liujitcn/go-utils/translator v0.0.4/go.mod h1:c7K/fvl1m/YcSTI33929VoesSTD1Lx5olMsMIXaJnUA=
 github.com/liujitcn/kratos-kit/api v0.0.16/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
 github.com/liujitcn/kratos-kit/auth v0.0.14/go.mod h1:VflpPXKm02n0ypfFQ+Q0bmiQgR9HWCFk8In/ibqNJdA=
 github.com/liujitcn/kratos-kit/auth/authn/engine/jwt v0.0.9/go.mod h1:h0G5awaspnF2tygB6paoSbJeUILMab4xUu3Y653aaaI=
