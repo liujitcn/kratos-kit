@@ -14,10 +14,10 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 var (
@@ -60,20 +60,20 @@ type Config struct {
 // Client 定义对象存储使用的 S3 SDK 能力。
 type Client interface {
 	// PutObject 上传一个对象。
-	PutObject(context.Context, *awss3.PutObjectInput, ...func(*awss3.Options)) (*awss3.PutObjectOutput, error)
+	PutObject(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error)
 	// GetObject 下载一个对象。
-	GetObject(context.Context, *awss3.GetObjectInput, ...func(*awss3.Options)) (*awss3.GetObjectOutput, error)
+	GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error)
 	// DeleteObject 删除一个对象。
-	DeleteObject(context.Context, *awss3.DeleteObjectInput, ...func(*awss3.Options)) (*awss3.DeleteObjectOutput, error)
+	DeleteObject(context.Context, *s3.DeleteObjectInput, ...func(*s3.Options)) (*s3.DeleteObjectOutput, error)
 }
 
 // uploader 定义非 seekable 输入使用的分片上传能力。
 type uploader interface {
-	Upload(context.Context, *awss3.PutObjectInput, ...func(*manager.Uploader)) (*manager.UploadOutput, error)
+	Upload(context.Context, *s3.PutObjectInput, ...func(*manager.Uploader)) (*manager.UploadOutput, error)
 }
 
 // NewClient 根据配置创建 AWS S3 SDK 客户端。
-func NewClient(ctx context.Context, cfg *Config) (*awss3.Client, error) {
+func NewClient(ctx context.Context, cfg *Config) (*s3.Client, error) {
 	if cfg == nil {
 		return nil, ErrNilConfig
 	}
@@ -81,14 +81,14 @@ func NewClient(ctx context.Context, cfg *Config) (*awss3.Client, error) {
 	if region == "" {
 		region = "us-east-1"
 	}
-	loadOpts := []func(*awsconfig.LoadOptions) error{awsconfig.WithRegion(region)}
+	loadOpts := []func(*config.LoadOptions) error{config.WithRegion(region)}
 	if cfg.AccessKey != "" || cfg.SecretKey != "" || cfg.Token != "" {
-		loadOpts = append(loadOpts, awsconfig.WithCredentialsProvider(
+		loadOpts = append(loadOpts, config.WithCredentialsProvider(
 			credentials.NewStaticCredentialsProvider(cfg.AccessKey, cfg.SecretKey, cfg.Token),
 		))
 	}
 
-	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, loadOpts...)
+	awsCfg, err := config.LoadDefaultConfig(ctx, loadOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("s3: load AWS config: %w", err)
 	}
@@ -97,7 +97,7 @@ func NewClient(ctx context.Context, cfg *Config) (*awss3.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return awss3.NewFromConfig(awsCfg, func(options *awss3.Options) {
+	return s3.NewFromConfig(awsCfg, func(options *s3.Options) {
 		options.UsePathStyle = cfg.ForcePathStyle
 		if endpoint != "" {
 			options.BaseEndpoint = aws.String(endpoint)
@@ -144,7 +144,7 @@ func (s *Storage) Bucket() string {
 }
 
 // PutObject 上传一个对象。
-func (s *Storage) PutObject(ctx context.Context, key string, body io.Reader, contentType string) (*awss3.PutObjectOutput, error) {
+func (s *Storage) PutObject(ctx context.Context, key string, body io.Reader, contentType string) (*s3.PutObjectOutput, error) {
 	if s.client == nil {
 		return nil, ErrNilClient
 	}
@@ -158,7 +158,7 @@ func (s *Storage) PutObject(ctx context.Context, key string, body io.Reader, con
 		return nil, ErrNilObjectBody
 	}
 
-	input := &awss3.PutObjectInput{
+	input := &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
 		Body:   body,
@@ -175,7 +175,7 @@ func (s *Storage) PutObject(ctx context.Context, key string, body io.Reader, con
 		return nil, fmt.Errorf("s3: prepare object %s: %w", key, err)
 	}
 	input.ContentLength = aws.Int64(size)
-	var output *awss3.PutObjectOutput
+	var output *s3.PutObjectOutput
 	output, err = s.client.PutObject(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("s3: put s3://%s/%s: %w", s.bucket, key, err)
@@ -184,7 +184,7 @@ func (s *Storage) PutObject(ctx context.Context, key string, body io.Reader, con
 }
 
 // putObjectStream 使用 AWS 分片 uploader 流式上传非 seekable 请求体。
-func (s *Storage) putObjectStream(ctx context.Context, key string, input *awss3.PutObjectInput) (*awss3.PutObjectOutput, error) {
+func (s *Storage) putObjectStream(ctx context.Context, key string, input *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
 	objectUploader := s.uploader
 	if objectUploader == nil {
 		uploadClient, ok := s.client.(manager.UploadAPIClient)
@@ -201,7 +201,7 @@ func (s *Storage) putObjectStream(ctx context.Context, key string, input *awss3.
 }
 
 // GetObject 下载一个对象，调用方负责关闭返回值的 Body。
-func (s *Storage) GetObject(ctx context.Context, key string) (*awss3.GetObjectOutput, error) {
+func (s *Storage) GetObject(ctx context.Context, key string) (*s3.GetObjectOutput, error) {
 	if s.client == nil {
 		return nil, ErrNilClient
 	}
@@ -211,7 +211,7 @@ func (s *Storage) GetObject(ctx context.Context, key string) (*awss3.GetObjectOu
 	if key == "" {
 		return nil, ErrEmptyObjectKey
 	}
-	output, err := s.client.GetObject(ctx, &awss3.GetObjectInput{
+	output, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
 	})
@@ -232,7 +232,7 @@ func (s *Storage) DeleteObject(ctx context.Context, key string) error {
 	if key == "" {
 		return ErrEmptyObjectKey
 	}
-	_, err := s.client.DeleteObject(ctx, &awss3.DeleteObjectInput{
+	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
 	})
@@ -378,8 +378,8 @@ func readerSize(reader io.ReadSeeker) (int64, error) {
 }
 
 // uploadOutput 将分片 uploader 输出映射为现有 PutObject 返回类型。
-func uploadOutput(output *manager.UploadOutput) *awss3.PutObjectOutput {
-	result := &awss3.PutObjectOutput{
+func uploadOutput(output *manager.UploadOutput) *s3.PutObjectOutput {
+	result := &s3.PutObjectOutput{
 		ChecksumCRC32:        output.ChecksumCRC32,
 		ChecksumCRC32C:       output.ChecksumCRC32C,
 		ChecksumCRC64NVME:    output.ChecksumCRC64NVME,

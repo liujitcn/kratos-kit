@@ -3,7 +3,7 @@ package hmac
 import (
 	"bytes"
 	"context"
-	cryptohmac "crypto/hmac"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -382,7 +382,7 @@ func parseToken(token string) (string, string, string, string, error) {
 
 // sign 计算请求绑定的十六进制 HMAC-SHA256 签名。
 func sign(secret string, keyID string, timestamp string, nonce string, canonical string) string {
-	hash := cryptohmac.New(sha256.New, []byte(secret))
+	hash := hmac.New(sha256.New, []byte(secret))
 	// hash.Hash.Write 按接口约定始终返回 nil 错误。
 	_, _ = hash.Write([]byte(keyID + "." + timestamp + "." + nonce + "\n" + canonical))
 	return hex.EncodeToString(hash.Sum(nil))
@@ -390,7 +390,7 @@ func sign(secret string, keyID string, timestamp string, nonce string, canonical
 
 // subtleEqual 使用恒定时间比较两个签名。
 func subtleEqual(actual string, expected string) bool {
-	return cryptohmac.Equal([]byte(actual), []byte(expected))
+	return hmac.Equal([]byte(actual), []byte(expected))
 }
 
 // newNonce 创建密码学安全的十六进制 nonce。

@@ -5,14 +5,14 @@ import (
 	"errors"
 	"sync"
 
-	traceSdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 )
 
 // ExporterFactory is a creator function that returns a SpanExporter given a context and tracer config.
 // Implementations may read additional fields from cfg (headers, tls, auth, etc.).
-type ExporterFactory func(ctx context.Context, cfg *configv1.Tracer) (traceSdk.SpanExporter, error)
+type ExporterFactory func(ctx context.Context, cfg *configv1.Tracer) (trace.SpanExporter, error)
 
 var (
 	// registry holds named exporter factories (concurrent-safe)
@@ -22,21 +22,21 @@ var (
 
 func init() {
 	// register built-in exporters
-	RegisterExporter(string(Zipkin), func(ctx context.Context, cfg *configv1.Tracer) (traceSdk.SpanExporter, error) {
+	RegisterExporter(string(Zipkin), func(ctx context.Context, cfg *configv1.Tracer) (trace.SpanExporter, error) {
 		return NewZipkinExporter(ctx, cfg.GetEndpoint())
 	})
-	RegisterExporter(string(OtlpHttp), func(ctx context.Context, cfg *configv1.Tracer) (traceSdk.SpanExporter, error) {
+	RegisterExporter(string(OtlpHttp), func(ctx context.Context, cfg *configv1.Tracer) (trace.SpanExporter, error) {
 		return NewOtlpHttpExporter(ctx, cfg.GetEndpoint(), cfg.GetInsecure())
 	})
-	RegisterExporter(string(OtlpGrpc), func(ctx context.Context, cfg *configv1.Tracer) (traceSdk.SpanExporter, error) {
+	RegisterExporter(string(OtlpGrpc), func(ctx context.Context, cfg *configv1.Tracer) (trace.SpanExporter, error) {
 		return NewOtlpGrpcExporter(ctx, cfg.GetEndpoint(), cfg.GetInsecure())
 	})
-	RegisterExporter(string(Std), func(ctx context.Context, cfg *configv1.Tracer) (traceSdk.SpanExporter, error) {
+	RegisterExporter(string(Std), func(ctx context.Context, cfg *configv1.Tracer) (trace.SpanExporter, error) {
 		return NewStdoutExporter(ctx)
 	})
 
 	// legacy/unsupported entries can be mapped to explicit errors
-	RegisterExporter(string(Jaeger), func(ctx context.Context, cfg *configv1.Tracer) (traceSdk.SpanExporter, error) {
+	RegisterExporter(string(Jaeger), func(ctx context.Context, cfg *configv1.Tracer) (trace.SpanExporter, error) {
 		return nil, errors.New("tracer: jaeger exporter is not supported in this build; use otlp-http or otlp-grpc instead")
 	})
 }

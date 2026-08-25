@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/liujitcn/kratos-kit/auth"
-	gormdb "gorm.io/gorm"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -48,7 +48,7 @@ func init() {
 }
 
 // addDataScopeWhere 为当前查询、更新和删除语句追加角色数据范围条件。
-func addDataScopeWhere(db *gormdb.DB) {
+func addDataScopeWhere(db *gorm.DB) {
 	if shouldSkipDataIsolation(db) || db == nil || db.Statement == nil || db.Error != nil {
 		return
 	}
@@ -89,7 +89,7 @@ func addDataScopeWhere(db *gormdb.DB) {
 }
 
 // dataScopeForStatement 从当前 GORM 语句上下文读取角色数据范围。
-func dataScopeForStatement(db *gormdb.DB) (dataScopeIdentity, bool, error) {
+func dataScopeForStatement(db *gorm.DB) (dataScopeIdentity, bool, error) {
 	if db == nil || db.Statement == nil {
 		return dataScopeIdentity{}, false, ErrDataScopeContextMissing
 	}
@@ -124,7 +124,7 @@ func (i dataScopeIdentity) hasTenantScope() bool {
 }
 
 // dataScopeExpr 根据当前模型选择数据范围过滤表达式。
-func dataScopeExpr(db *gormdb.DB, identity dataScopeIdentity) clause.Expression {
+func dataScopeExpr(db *gorm.DB, identity dataScopeIdentity) clause.Expression {
 	// 部门表直接按照部门范围展示，不按创建人字段过滤。
 	if isDataScopeDeptTable(db) {
 		return dataScopeDeptExprForTable(identity, clause.CurrentTable)
@@ -133,7 +133,7 @@ func dataScopeExpr(db *gormdb.DB, identity dataScopeIdentity) clause.Expression 
 }
 
 // isDataScopeDeptTable 判断当前语句是否操作部门表。
-func isDataScopeDeptTable(db *gormdb.DB) bool {
+func isDataScopeDeptTable(db *gorm.DB) bool {
 	if db == nil || db.Statement == nil {
 		return false
 	}
@@ -144,7 +144,7 @@ func isDataScopeDeptTable(db *gormdb.DB) bool {
 }
 
 // isDataScopeUserTable 判断当前语句是否操作用户表。
-func isDataScopeUserTable(db *gormdb.DB) bool {
+func isDataScopeUserTable(db *gorm.DB) bool {
 	if db == nil || db.Statement == nil {
 		return false
 	}
@@ -155,7 +155,7 @@ func isDataScopeUserTable(db *gormdb.DB) bool {
 }
 
 // hasDataScopeCreatedByField 判断当前模型是否包含创建人字段。
-func hasDataScopeCreatedByField(db *gormdb.DB, scopedTables map[string]struct{}) bool {
+func hasDataScopeCreatedByField(db *gorm.DB, scopedTables map[string]struct{}) bool {
 	if db == nil || db.Statement == nil {
 		return false
 	}
@@ -169,13 +169,13 @@ func hasDataScopeCreatedByField(db *gormdb.DB, scopedTables map[string]struct{})
 }
 
 // dataScopeTables 返回所有注册模型中需要数据范围隔离的表名。
-func dataScopeTables(db *gormdb.DB) (map[string]struct{}, error) {
+func dataScopeTables(db *gorm.DB) (map[string]struct{}, error) {
 	_, tables, err := getIsolationTables(db)
 	return tables, err
 }
 
 // hasDataScopeJoin 判断当前语句是否关联了需要数据范围隔离的表。
-func hasDataScopeJoin(db *gormdb.DB, scopedTables map[string]struct{}) bool {
+func hasDataScopeJoin(db *gorm.DB, scopedTables map[string]struct{}) bool {
 	match := func(reference sqlTableReference) bool {
 		return isDataScopeTableReference(reference, scopedTables)
 	}
@@ -183,7 +183,7 @@ func hasDataScopeJoin(db *gormdb.DB, scopedTables map[string]struct{}) bool {
 }
 
 // applyDataScopeJoinConditions 将关联表数据范围条件写入 JOIN ON，并返回兜底条件。
-func applyDataScopeJoinConditions(db *gormdb.DB, identity dataScopeIdentity, scopedTables map[string]struct{}) []clause.Expression {
+func applyDataScopeJoinConditions(db *gorm.DB, identity dataScopeIdentity, scopedTables map[string]struct{}) []clause.Expression {
 	match := func(reference sqlTableReference) bool {
 		return isDataScopeTableReference(reference, scopedTables)
 	}

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-kratos/kratos/v3/config"
-	fileKratos "github.com/go-kratos/kratos/v3/config/file"
+	"github.com/go-kratos/kratos/v3/config/file"
 	"github.com/go-kratos/kratos/v3/log"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
@@ -17,7 +17,7 @@ const remoteConfigSourceConfigFile = "config.yaml"
 
 // NewFileConfigSource 创建一个本地文件配置源
 func NewFileConfigSource(filePath string) config.Source {
-	return fileKratos.NewSource(filePath)
+	return file.NewSource(filePath)
 }
 
 // NewConfigProvider 创建加载完整目录的配置，保留原有加载行为。

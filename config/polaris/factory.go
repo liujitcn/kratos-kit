@@ -3,7 +3,7 @@ package polaris
 import (
 	"github.com/go-kratos/kratos/v3/config"
 
-	polarisApi "github.com/polarismesh/polaris-go"
+	"github.com/polarismesh/polaris-go"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	bConfig "github.com/liujitcn/kratos-kit/config"
@@ -19,7 +19,7 @@ func NewConfigSource(cfg *configv1.Config) (config.Source, error) {
 		return nil, nil
 	}
 
-	configApi, err := polarisApi.NewConfigAPI()
+	configApi, err := polaris.NewConfigAPI()
 	if err != nil {
 		return nil, err
 	}

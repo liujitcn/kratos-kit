@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"slices"
 
-	sentinelapi "github.com/alibaba/sentinel-golang/api"
+	"github.com/alibaba/sentinel-golang/api"
 	"github.com/alibaba/sentinel-golang/core/base"
 )
 
@@ -21,10 +21,10 @@ type Option func(*options)
 
 type options struct {
 	trafficType base.TrafficType
-	entryOpts   []sentinelapi.EntryOption
+	entryOpts   []api.EntryOption
 }
 
-type entryFunc func(string, ...sentinelapi.EntryOption) (*base.SentinelEntry, *base.BlockError)
+type entryFunc func(string, ...api.EntryOption) (*base.SentinelEntry, *base.BlockError)
 
 // WithTrafficType 设置 Sentinel 流量类型。
 func WithTrafficType(trafficType base.TrafficType) Option {
@@ -34,7 +34,7 @@ func WithTrafficType(trafficType base.TrafficType) Option {
 }
 
 // WithEntryOptions 设置额外的 Sentinel Entry 选项。
-func WithEntryOptions(entryOpts ...sentinelapi.EntryOption) Option {
+func WithEntryOptions(entryOpts ...api.EntryOption) Option {
 	return func(o *options) {
 		o.entryOpts = slices.Clone(entryOpts)
 	}
@@ -61,14 +61,14 @@ func New(resource string, opts ...Option) (*Limiter, error) {
 	return &Limiter{
 		resource: resource,
 		options:  cfg,
-		entry:    sentinelapi.Entry,
+		entry:    api.Entry,
 	}, nil
 }
 
 // Allow 尝试进入 Sentinel 资源并立即结束本次 Entry。
 func (l *Limiter) Allow() (bool, error) {
-	entryOpts := make([]sentinelapi.EntryOption, 0, 1+len(l.options.entryOpts))
-	entryOpts = append(entryOpts, sentinelapi.WithTrafficType(l.options.trafficType))
+	entryOpts := make([]api.EntryOption, 0, 1+len(l.options.entryOpts))
+	entryOpts = append(entryOpts, api.WithTrafficType(l.options.trafficType))
 	entryOpts = append(entryOpts, l.options.entryOpts...)
 	entry, blockErr := l.entry(l.resource, entryOpts...)
 	if blockErr != nil {

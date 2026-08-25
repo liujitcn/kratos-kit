@@ -10,8 +10,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
-	traceSdk "go.opentelemetry.io/otel/sdk/trace"
-	semConv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 )
@@ -19,12 +19,12 @@ import (
 var (
 	// tpInstance holds the currently active global tracer provider (interface type, nil-able)
 	tpMu       sync.Mutex
-	tpInstance *traceSdk.TracerProvider
+	tpInstance *trace.TracerProvider
 )
 
 // NewTracerExporter 构建 exporter：优先使用注册表中的 factory。
 // exporterName 不能为空，cfg 传入给 factory 用于读取 endpoint/insecure/headers 等信息。
-func NewTracerExporter(ctx context.Context, cfg *configv1.Tracer) (traceSdk.SpanExporter, error) {
+func NewTracerExporter(ctx context.Context, cfg *configv1.Tracer) (trace.SpanExporter, error) {
 	if cfg == nil {
 		return nil, errors.New("tracer: tracer cfg is nil")
 	}
@@ -61,7 +61,7 @@ func NewTracerProvider(ctx context.Context, cfg *configv1.Tracer, appInfo *confi
 }
 
 // NewTracerProviderWithShutdown 返回 (tp, shutdownFunc, error)，推荐在 main 中使用并在退出时调用 shutdownFunc(ctx)
-func NewTracerProviderWithShutdown(ctx context.Context, cfg *configv1.Tracer, appInfo *configv1.AppInfo) (*traceSdk.TracerProvider, func(context.Context) error, error) {
+func NewTracerProviderWithShutdown(ctx context.Context, cfg *configv1.Tracer, appInfo *configv1.AppInfo) (*trace.TracerProvider, func(context.Context) error, error) {
 	if cfg == nil || appInfo == nil {
 		return nil, func(context.Context) error { return nil }, nil
 	}
@@ -76,13 +76,13 @@ func NewTracerProviderWithShutdown(ctx context.Context, cfg *configv1.Tracer, ap
 		env = "dev"
 	}
 
-	opts := []traceSdk.TracerProviderOption{
-		traceSdk.WithSampler(traceSdk.ParentBased(traceSdk.TraceIDRatioBased(sampler))),
-		traceSdk.WithResource(resource.NewSchemaless(
-			semConv.ServiceNamespaceKey.String(appInfo.GetProject()),
-			semConv.ServiceNameKey.String(appInfo.GetAppId()),
-			semConv.ServiceVersionKey.String(appInfo.GetVersion()),
-			semConv.ServiceInstanceIDKey.String(appInfo.GetInstanceId()),
+	opts := []trace.TracerProviderOption{
+		trace.WithSampler(trace.ParentBased(trace.TraceIDRatioBased(sampler))),
+		trace.WithResource(resource.NewSchemaless(
+			semconv.ServiceNamespaceKey.String(appInfo.GetProject()),
+			semconv.ServiceNameKey.String(appInfo.GetAppId()),
+			semconv.ServiceVersionKey.String(appInfo.GetVersion()),
+			semconv.ServiceInstanceIDKey.String(appInfo.GetInstanceId()),
 			attribute.String("service.env", env),
 		)),
 	}
@@ -94,10 +94,10 @@ func NewTracerProviderWithShutdown(ctx context.Context, cfg *configv1.Tracer, ap
 		if err != nil {
 			return nil, nil, err
 		}
-		opts = append(opts, traceSdk.WithBatcher(exp))
+		opts = append(opts, trace.WithBatcher(exp))
 	}
 
-	tp := traceSdk.NewTracerProvider(opts...)
+	tp := trace.NewTracerProvider(opts...)
 
 	// defensive check (NewTracerProvider does not return nil in normal cases)
 	if tp == nil {

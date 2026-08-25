@@ -3,7 +3,7 @@ package etcd
 import (
 	"github.com/go-kratos/kratos/v3/registry"
 
-	etcdClient "go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	baseRegistry "github.com/liujitcn/kratos-kit/registry"
@@ -20,15 +20,15 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 		return nil, nil
 	}
 
-	cfg := etcdClient.Config{
+	cfg := clientv3.Config{
 		Endpoints: c.Etcd.Endpoints,
 		Username:  c.Etcd.Username,
 		Password:  c.Etcd.Password,
 	}
 
 	var err error
-	var cli *etcdClient.Client
-	if cli, err = etcdClient.New(cfg); err != nil {
+	var cli *clientv3.Client
+	if cli, err = clientv3.New(cfg); err != nil {
 		return nil, err
 	}
 

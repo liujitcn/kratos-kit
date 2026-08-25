@@ -12,10 +12,10 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	kratosRegistry "github.com/go-kratos/kratos/v3/registry"
+	"github.com/go-kratos/kratos/v3/registry"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	bConfig "github.com/liujitcn/kratos-kit/config"
+	"github.com/liujitcn/kratos-kit/config"
 )
 
 // Context 引导上下文
@@ -24,8 +24,8 @@ type Context struct {
 	appInfo       *configv1.AppInfo   // 应用信息
 	appInfoConfig *configv1.AppInfo   // 调用方传入的原始应用信息
 
-	logger    *slog.Logger             // 日志记录器
-	registrar kratosRegistry.Registrar // 服务注册器
+	logger    *slog.Logger       // 日志记录器
+	registrar registry.Registrar // 服务注册器
 
 	customConfig sync.Map // 自定义配置项
 	values       sync.Map // 自定义值存储
@@ -233,7 +233,7 @@ func (c *Context) PrintAppInfo() {
 	}
 }
 
-func (c *Context) GetRegistrar() kratosRegistry.Registrar {
+func (c *Context) GetRegistrar() registry.Registrar {
 	return c.registrar
 }
 
@@ -249,7 +249,7 @@ func (c *Context) RegisterCustomConfig(key string, cfg proto.Message) {
 
 	c.customConfig.Store(key, cfg)
 
-	bConfig.RegisterConfig(cfg)
+	config.RegisterConfig(cfg)
 }
 
 // SetCustomConfig 存入自定义配置

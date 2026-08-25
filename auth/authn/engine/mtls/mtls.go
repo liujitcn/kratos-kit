@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/go-kratos/kratos/v3/transport"
-	kratosHTTP "github.com/go-kratos/kratos/v3/transport/http"
+	"github.com/go-kratos/kratos/v3/transport/http"
 	"github.com/liujitcn/kratos-kit/auth/authn/engine"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
@@ -148,7 +148,7 @@ func peerCertificate(ctx context.Context) (*x509.Certificate, bool) {
 		return certificate, true
 	}
 	if transporter, ok := transport.FromServerContext(ctx); ok {
-		if httpTransporter, matched := transporter.(kratosHTTP.Transporter); matched {
+		if httpTransporter, matched := transporter.(http.Transporter); matched {
 			request := httpTransporter.Request()
 			if request.TLS != nil && len(request.TLS.PeerCertificates) > 0 {
 				return request.TLS.PeerCertificates[0], true

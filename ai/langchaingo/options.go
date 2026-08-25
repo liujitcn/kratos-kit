@@ -3,28 +3,28 @@ package langchaingo
 import (
 	"net/http"
 
-	lcOllama "github.com/tmc/langchaingo/llms/ollama"
-	lcOpenAI "github.com/tmc/langchaingo/llms/openai"
+	"github.com/tmc/langchaingo/llms/ollama"
+	"github.com/tmc/langchaingo/llms/openai"
 )
 
 // Option 是 LangChainGo 模型客户端的可选配置项。
 type Option func(*options)
 
 type options struct {
-	openAIOpts []lcOpenAI.Option
-	ollamaOpts []lcOllama.Option
+	openAIOpts []openai.Option
+	ollamaOpts []ollama.Option
 	httpClient *http.Client
 }
 
 // WithOpenAIOptions 追加 LangChainGo OpenAI 原生选项。
-func WithOpenAIOptions(opts ...lcOpenAI.Option) Option {
+func WithOpenAIOptions(opts ...openai.Option) Option {
 	return func(o *options) {
 		o.openAIOpts = append(o.openAIOpts, opts...)
 	}
 }
 
 // WithOllamaOptions 追加 LangChainGo Ollama 原生选项。
-func WithOllamaOptions(opts ...lcOllama.Option) Option {
+func WithOllamaOptions(opts ...ollama.Option) Option {
 	return func(o *options) {
 		o.ollamaOpts = append(o.ollamaOpts, opts...)
 	}

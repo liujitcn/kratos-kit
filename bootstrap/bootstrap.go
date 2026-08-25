@@ -9,9 +9,9 @@ import (
 	"github.com/go-kratos/kratos/v3/log"
 	"github.com/go-kratos/kratos/v3/transport"
 
-	bConfig "github.com/liujitcn/kratos-kit/config"
-	bLogger "github.com/liujitcn/kratos-kit/logger"
-	bRegistry "github.com/liujitcn/kratos-kit/registry"
+	"github.com/liujitcn/kratos-kit/config"
+	"github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/registry"
 	"github.com/liujitcn/kratos-kit/tracer"
 )
 
@@ -34,8 +34,8 @@ func NewApp(ctx *Context, srv ...transport.Server) *kratos.App {
 	if ctx.appInfo.AppId != "" {
 		registerName := ctx.appInfo.Project + "/" + ctx.appInfo.AppId
 		// 根据注册中心类型规范化 AppId
-		if bConfig.GetBootstrapConfig().Registry != nil && bConfig.GetBootstrapConfig().Registry.GetType() != "" {
-			registerName = bRegistry.NormalizeForRegistry(registerName, bConfig.GetBootstrapConfig().Registry.GetType())
+		if config.GetBootstrapConfig().Registry != nil && config.GetBootstrapConfig().Registry.GetType() != "" {
+			registerName = registry.NormalizeForRegistry(registerName, config.GetBootstrapConfig().Registry.GetType())
 		}
 		opts = append(opts, kratos.Name(registerName))
 	}
@@ -90,18 +90,18 @@ func bootstrap(ctx *Context, initApp InitAppFunc) error {
 	var err error
 
 	// load configs
-	if err = bConfig.LoadBootstrapConfigWithEnv(flags.Conf, flags.Env); err != nil {
+	if err = config.LoadBootstrapConfigWithEnv(flags.Conf, flags.Env); err != nil {
 		return err
 	}
 
 	// get bootstrap config
-	ctx.config = bConfig.GetBootstrapConfig()
+	ctx.config = config.GetBootstrapConfig()
 	if ctx.config == nil {
 		return fmt.Errorf("bootstrap config is nil")
 	}
 
 	// init logger
-	ctx.logger = bLogger.NewLoggerProvider(ctx.config.Logger, ctx.appInfo)
+	ctx.logger = logger.NewLoggerProvider(ctx.config.Logger, ctx.appInfo)
 	if ctx.logger == nil {
 		return fmt.Errorf("init logger failed")
 	}
@@ -109,7 +109,7 @@ func bootstrap(ctx *Context, initApp InitAppFunc) error {
 	log.SetDefault(ctx.logger)
 
 	// init registrar
-	ctx.registrar, err = bRegistry.NewRegistrar(ctx.config.Registry)
+	ctx.registrar, err = registry.NewRegistrar(ctx.config.Registry)
 	if err != nil {
 		return err
 	}

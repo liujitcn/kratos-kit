@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v3/config"
-	vaultapi "github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/api"
 )
 
 const defaultPollInterval = 30 * time.Second
@@ -70,7 +70,7 @@ func WithFormat(format string) Option {
 }
 
 // New 创建 Vault 配置源。
-func New(client *vaultapi.Client, opts ...Option) (config.Source, error) {
+func New(client *api.Client, opts ...Option) (config.Source, error) {
 	if client == nil {
 		return nil, errors.New("config/vault: client is nil")
 	}
@@ -94,7 +94,7 @@ func New(client *vaultapi.Client, opts ...Option) (config.Source, error) {
 
 type source struct {
 	mu        sync.Mutex
-	client    *vaultapi.Client
+	client    *api.Client
 	options   *options
 	lastValue []byte
 }

@@ -1,6 +1,6 @@
 package data
 
-import authnEngine "github.com/liujitcn/kratos-kit/auth/authn/engine"
+import "github.com/liujitcn/kratos-kit/auth/authn/engine"
 
 const (
 	ClaimFieldTenantID   = "tid"
@@ -30,7 +30,7 @@ type UserTokenPayload struct {
 	DataScope  int32
 }
 
-func NewUserTokenPayloadWithClaims(claims *authnEngine.AuthClaims) (*UserTokenPayload, error) {
+func NewUserTokenPayloadWithClaims(claims *engine.AuthClaims) (*UserTokenPayload, error) {
 	userToken := &UserTokenPayload{}
 
 	if err := userToken.ExtractAuthClaims(claims); err != nil {
@@ -41,24 +41,24 @@ func NewUserTokenPayloadWithClaims(claims *authnEngine.AuthClaims) (*UserTokenPa
 }
 
 // MakeAuthClaims 构建认证声明
-func (t *UserTokenPayload) MakeAuthClaims() *authnEngine.AuthClaims {
-	return &authnEngine.AuthClaims{
-		authnEngine.ClaimFieldSubject: t.UserName,
-		ClaimFieldTenantID:            t.TenantId,
-		ClaimFieldTenantCode:          t.TenantCode,
-		ClaimFieldUserID:              t.UserId,
-		ClaimFieldUserCode:            t.UserCode,
-		ClaimFieldRoleID:              t.RoleId,
-		ClaimFieldRoleCode:            t.RoleCode,
-		ClaimFieldRoleName:            t.RoleName,
-		ClaimFieldDeptID:              t.DeptId,
-		ClaimFieldDeptName:            t.DeptName,
-		ClaimFieldDataScope:           t.DataScope,
+func (t *UserTokenPayload) MakeAuthClaims() *engine.AuthClaims {
+	return &engine.AuthClaims{
+		engine.ClaimFieldSubject: t.UserName,
+		ClaimFieldTenantID:       t.TenantId,
+		ClaimFieldTenantCode:     t.TenantCode,
+		ClaimFieldUserID:         t.UserId,
+		ClaimFieldUserCode:       t.UserCode,
+		ClaimFieldRoleID:         t.RoleId,
+		ClaimFieldRoleCode:       t.RoleCode,
+		ClaimFieldRoleName:       t.RoleName,
+		ClaimFieldDeptID:         t.DeptId,
+		ClaimFieldDeptName:       t.DeptName,
+		ClaimFieldDataScope:      t.DataScope,
 	}
 }
 
 // ExtractAuthClaims 解析认证声明
-func (t *UserTokenPayload) ExtractAuthClaims(claims *authnEngine.AuthClaims) error {
+func (t *UserTokenPayload) ExtractAuthClaims(claims *engine.AuthClaims) error {
 	var err error
 	t.UserName, err = claims.GetSubject()
 	if err != nil {

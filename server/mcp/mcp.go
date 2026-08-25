@@ -14,14 +14,14 @@ import (
 	"strings"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	mcpServer "github.com/liujitcn/kratos-kit/transport/mcp"
+	"github.com/liujitcn/kratos-kit/transport/mcp"
 	"github.com/liujitcn/kratos-kit/utils"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // CreateMcpServer 创建独立监听的 MCP 服务端。
-func CreateMcpServer(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (*mcpServer.Server, error) {
-	options := []mcpServer.ServerOption{mcpServer.WithServerType(mcpServer.ServerTypeHTTP)}
+func CreateMcpServer(cfg *configv1.Bootstrap, opts ...mcp.ServerOption) (*mcp.Server, error) {
+	options := []mcp.ServerOption{mcp.WithServerType(mcp.ServerTypeHTTP)}
 	var err error
 	options, err = initMcpServerConfig(cfg, options, opts...)
 	if err != nil {
@@ -31,27 +31,27 @@ func CreateMcpServer(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (*
 }
 
 // CreateMcpSSEServer 创建独立监听的 Legacy SSE MCP 服务端。
-func CreateMcpSSEServer(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (*mcpServer.Server, error) {
+func CreateMcpSSEServer(cfg *configv1.Bootstrap, opts ...mcp.ServerOption) (*mcp.Server, error) {
 	options, err := initMcpServerConfig(cfg, nil, opts...)
 	if err != nil {
 		return nil, err
 	}
-	options = append(options, mcpServer.WithServerType(mcpServer.ServerTypeSSE))
+	options = append(options, mcp.WithServerType(mcp.ServerTypeSSE))
 	return newConfiguredMcpServer(cfg, options...)
 }
 
 // CreateMcpHandler 创建可挂载到已有 HTTP 服务的 MCP 服务端。
-func CreateMcpHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (*mcpServer.Server, error) {
+func CreateMcpHandler(cfg *configv1.Bootstrap, opts ...mcp.ServerOption) (*mcp.Server, error) {
 	options, err := initMcpServerConfig(cfg, nil, opts...)
 	if err != nil {
 		return nil, err
 	}
-	options = append(options, mcpServer.WithServerType(mcpServer.ServerTypeInProcess))
+	options = append(options, mcp.WithServerType(mcp.ServerTypeInProcess))
 	return newConfiguredMcpServer(cfg, options...)
 }
 
 // CreateMcpHTTPHandler 创建标准 http.Handler 形式的 MCP Streamable HTTP 处理器。
-func CreateMcpHTTPHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (http.Handler, error) {
+func CreateMcpHTTPHandler(cfg *configv1.Bootstrap, opts ...mcp.ServerOption) (http.Handler, error) {
 	srv, err := CreateMcpHandler(cfg, opts...)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func CreateMcpHTTPHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOptio
 }
 
 // CreateMcpSSEHandler 创建标准 http.Handler 形式的 MCP Legacy SSE 处理器。
-func CreateMcpSSEHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (http.Handler, error) {
+func CreateMcpSSEHandler(cfg *configv1.Bootstrap, opts ...mcp.ServerOption) (http.Handler, error) {
 	srv, err := CreateMcpHandler(cfg, opts...)
 	if err != nil {
 		return nil, err
@@ -69,19 +69,19 @@ func CreateMcpSSEHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption
 }
 
 // WithMcpServerOptions 转发底层官方 MCP SDK 服务端选项。
-func WithMcpServerOptions(opts ...func(*mcpsdk.ServerOptions)) mcpServer.ServerOption {
+func WithMcpServerOptions(opts ...func(*mcpsdk.ServerOptions)) mcp.ServerOption {
 	serverOptions := &mcpsdk.ServerOptions{}
 	for _, opt := range opts {
 		if opt != nil {
 			opt(serverOptions)
 		}
 	}
-	return mcpServer.WithServerOptions(serverOptions)
+	return mcp.WithServerOptions(serverOptions)
 }
 
 // initMcpServerConfig 根据 server.mcp 配置构建 MCP 服务端选项。
-func initMcpServerConfig(cfg *configv1.Bootstrap, options []mcpServer.ServerOption, opts ...mcpServer.ServerOption) ([]mcpServer.ServerOption, error) {
-	serverOptions := make([]mcpServer.ServerOption, 0, len(options)+len(opts)+12)
+func initMcpServerConfig(cfg *configv1.Bootstrap, options []mcp.ServerOption, opts ...mcp.ServerOption) ([]mcp.ServerOption, error) {
+	serverOptions := make([]mcp.ServerOption, 0, len(options)+len(opts)+12)
 	serverOptions = append(serverOptions, options...)
 	if cfg == nil || cfg.Server == nil || cfg.Server.Mcp == nil {
 		return append(serverOptions, opts...), nil
@@ -93,28 +93,28 @@ func initMcpServerConfig(cfg *configv1.Bootstrap, options []mcpServer.ServerOpti
 		return nil, err
 	}
 	if serverType != "" {
-		serverOptions = append(serverOptions, mcpServer.WithServerType(serverType))
+		serverOptions = append(serverOptions, mcp.WithServerType(serverType))
 	}
 	if mcpCfg.GetNetwork() != "" {
-		serverOptions = append(serverOptions, mcpServer.WithNetwork(mcpCfg.GetNetwork()))
+		serverOptions = append(serverOptions, mcp.WithNetwork(mcpCfg.GetNetwork()))
 	}
 	if mcpCfg.GetAddr() != "" {
-		serverOptions = append(serverOptions, mcpServer.WithListenAddress(mcpCfg.GetAddr()))
+		serverOptions = append(serverOptions, mcp.WithListenAddress(mcpCfg.GetAddr()))
 	}
 	if mcpCfg.GetPath() != "" {
-		serverOptions = append(serverOptions, mcpServer.WithHandlerPath(mcpCfg.GetPath()))
+		serverOptions = append(serverOptions, mcp.WithHandlerPath(mcpCfg.GetPath()))
 	}
 	if mcpCfg.GetShutdownTimeout() != nil {
-		serverOptions = append(serverOptions, mcpServer.WithShutdownTimeout(mcpCfg.GetShutdownTimeout().AsDuration()))
+		serverOptions = append(serverOptions, mcp.WithShutdownTimeout(mcpCfg.GetShutdownTimeout().AsDuration()))
 	}
 	if mcpCfg.EnableKeepalive != nil {
-		serverOptions = append(serverOptions, mcpServer.WithEnableKeepAlive(mcpCfg.GetEnableKeepalive()))
+		serverOptions = append(serverOptions, mcp.WithEnableKeepAlive(mcpCfg.GetEnableKeepalive()))
 	}
 	if mcpCfg.GetStreamableHttp() != nil {
-		serverOptions = append(serverOptions, mcpServer.WithStreamableHTTPOptions(streamableHTTPOptionsFromConfig(mcpCfg.GetStreamableHttp())))
+		serverOptions = append(serverOptions, mcp.WithStreamableHTTPOptions(streamableHTTPOptionsFromConfig(mcpCfg.GetStreamableHttp())))
 	}
 	if mcpCfg.GetLegacySse() != nil {
-		serverOptions = append(serverOptions, mcpServer.WithSSEOptions(sseOptionsFromConfig(mcpCfg.GetLegacySse())))
+		serverOptions = append(serverOptions, mcp.WithSSEOptions(sseOptionsFromConfig(mcpCfg.GetLegacySse())))
 	}
 	if mcpCfg.GetTls() != nil {
 		var tlsCfg *tls.Config
@@ -123,7 +123,7 @@ func initMcpServerConfig(cfg *configv1.Bootstrap, options []mcpServer.ServerOpti
 			return nil, err
 		}
 		if tlsCfg != nil {
-			serverOptions = append(serverOptions, mcpServer.WithTLSConfig(tlsCfg))
+			serverOptions = append(serverOptions, mcp.WithTLSConfig(tlsCfg))
 		}
 	}
 
@@ -131,8 +131,8 @@ func initMcpServerConfig(cfg *configv1.Bootstrap, options []mcpServer.ServerOpti
 }
 
 // newConfiguredMcpServer 创建 MCP 服务端，并注册配置化 HTTP Tool。
-func newConfiguredMcpServer(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (*mcpServer.Server, error) {
-	srv := mcpServer.NewServer(opts...)
+func newConfiguredMcpServer(cfg *configv1.Bootstrap, opts ...mcp.ServerOption) (*mcp.Server, error) {
+	srv := mcp.NewServer(opts...)
 	if cfg == nil || cfg.Server == nil || cfg.Server.Mcp == nil {
 		return srv, nil
 	}
@@ -144,7 +144,7 @@ func newConfiguredMcpServer(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOpt
 }
 
 // RegisterMcpHTTPTools 注册通过 server.mcp.http_tools 配置声明的 HTTP MCP Tool。
-func RegisterMcpHTTPTools(srv *mcpServer.Server, tools []*configv1.Server_Mcp_HttpTool) error {
+func RegisterMcpHTTPTools(srv *mcp.Server, tools []*configv1.Server_Mcp_HttpTool) error {
 	if len(tools) == 0 {
 		return nil
 	}
@@ -173,18 +173,18 @@ func RegisterMcpHTTPTools(srv *mcpServer.Server, tools []*configv1.Server_Mcp_Ht
 }
 
 // mcpServerTypeFromConfig 将配置枚举转换为 transport/mcp 的服务类型。
-func mcpServerTypeFromConfig(transport configv1.Server_Mcp_Transport) (mcpServer.ServerType, error) {
+func mcpServerTypeFromConfig(transport configv1.Server_Mcp_Transport) (mcp.ServerType, error) {
 	switch transport {
 	case configv1.Server_Mcp_UNSPECIFIED:
 		return "", nil
 	case configv1.Server_Mcp_HTTP:
-		return mcpServer.ServerTypeHTTP, nil
+		return mcp.ServerTypeHTTP, nil
 	case configv1.Server_Mcp_SSE:
-		return mcpServer.ServerTypeSSE, nil
+		return mcp.ServerTypeSSE, nil
 	case configv1.Server_Mcp_STDIO:
-		return mcpServer.ServerTypeStdio, nil
+		return mcp.ServerTypeStdio, nil
 	case configv1.Server_Mcp_IN_PROCESS:
-		return mcpServer.ServerTypeInProcess, nil
+		return mcp.ServerTypeInProcess, nil
 	default:
 		return "", fmt.Errorf("unsupported mcp server transport: %s", transport.String())
 	}

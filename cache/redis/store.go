@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	goredis "github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
 
-	cacheStore "github.com/liujitcn/kratos-kit/cache/store"
+	"github.com/liujitcn/kratos-kit/cache/store"
 )
 
 // StoreOption 配置 Redis Store。
@@ -25,7 +25,7 @@ func WithStoreKeyPrefix(prefix string) StoreOption {
 
 // NewStore 创建基于 Redis UniversalClient 的现代缓存实现。
 // Store 不接管 client 生命周期，Close 不会关闭底层 Redis 客户端。
-func NewStore(client goredis.UniversalClient, opts ...StoreOption) *Store {
+func NewStore(client redis.UniversalClient, opts ...StoreOption) *Store {
 	cfg := &storeConfig{}
 	for _, opt := range opts {
 		opt(cfg)
@@ -38,17 +38,17 @@ func NewStore(client goredis.UniversalClient, opts ...StoreOption) *Store {
 
 // Store 是支持 context、GetDel、SetNX 和批量操作的 Redis 缓存。
 type Store struct {
-	client goredis.UniversalClient
+	client redis.UniversalClient
 	cfg    *storeConfig
 }
 
-var _ cacheStore.Store = (*Store)(nil)
+var _ store.Store = (*Store)(nil)
 
 // Get 获取缓存值。
 func (s *Store) Get(ctx context.Context, key string) ([]byte, error) {
 	value, err := s.client.Get(ctx, s.prefix(key)).Bytes()
-	if err == goredis.Nil {
-		return nil, cacheStore.ErrNotFound
+	if err == redis.Nil {
+		return nil, store.ErrNotFound
 	}
 	return value, err
 }
@@ -56,8 +56,8 @@ func (s *Store) Get(ctx context.Context, key string) ([]byte, error) {
 // GetDel 使用 Redis GETDEL 原子读取并删除缓存值。
 func (s *Store) GetDel(ctx context.Context, key string) ([]byte, error) {
 	value, err := s.client.GetDel(ctx, s.prefix(key)).Bytes()
-	if err == goredis.Nil {
-		return nil, cacheStore.ErrNotFound
+	if err == redis.Nil {
+		return nil, store.ErrNotFound
 	}
 	return value, err
 }
@@ -117,13 +117,13 @@ func (s *Store) GetMulti(ctx context.Context, keys []string) ([][]byte, error) {
 		}
 	}
 	if missing {
-		return values, cacheStore.ErrNotFound
+		return values, store.ErrNotFound
 	}
 	return values, nil
 }
 
 // SetMulti 使用 Pipeline 批量写入缓存值。
-func (s *Store) SetMulti(ctx context.Context, items []cacheStore.Item) error {
+func (s *Store) SetMulti(ctx context.Context, items []store.Item) error {
 	if len(items) == 0 {
 		return nil
 	}

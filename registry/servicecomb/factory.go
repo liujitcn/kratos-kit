@@ -3,7 +3,7 @@ package servicecomb
 import (
 	"github.com/go-kratos/kratos/v3/registry"
 
-	servicecombClient "github.com/go-chassis/sc-client"
+	"github.com/go-chassis/sc-client"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	baseRegistry "github.com/liujitcn/kratos-kit/registry"
@@ -20,13 +20,13 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 		return nil, nil
 	}
 
-	cfg := servicecombClient.Options{
+	cfg := sc.Options{
 		Endpoints: c.Servicecomb.Endpoints,
 	}
 
-	var cli *servicecombClient.Client
+	var cli *sc.Client
 	var err error
-	if cli, err = servicecombClient.NewClient(cfg); err != nil {
+	if cli, err = sc.NewClient(cfg); err != nil {
 		return nil, err
 	}
 

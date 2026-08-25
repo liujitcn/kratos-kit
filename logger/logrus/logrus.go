@@ -4,7 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/go-kratos/kratos/v3/log"
-	kitlogger "github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/logger"
 )
 
 type loggerTarget struct {
@@ -23,7 +23,7 @@ func NewLogrusLogger(logrusLogger *logrus.Logger) *Logger {
 	return &Logger{
 		targets: []loggerTarget{{
 			log:          logrusLogger,
-			formatCaller: kitlogger.FormatConsoleCaller,
+			formatCaller: logger.FormatConsoleCaller,
 		}},
 	}
 }
@@ -34,9 +34,9 @@ func (l *Logger) Log(level log.Level, keyvals ...any) error {
 		return nil
 	}
 
-	var entry kitlogger.Entry
+	var entry logger.Entry
 	var err error
-	entry, err = kitlogger.ParseLegacyEntry(keyvals...)
+	entry, err = logger.ParseLegacyEntry(keyvals...)
 	if err != nil {
 		return err
 	}
@@ -53,12 +53,12 @@ func (l *Logger) Log(level log.Level, keyvals ...any) error {
 		}
 		var caller = target.formatCaller(entry.Caller)
 		if caller != "" {
-			fields[kitlogger.CallerKey] = caller
+			fields[logger.CallerKey] = caller
 		}
 
 		var message = entry.Message
 		if target.cleanANSI {
-			message = kitlogger.CleanANSI(message)
+			message = logger.CleanANSI(message)
 		}
 		target.log.WithFields(fields).Log(logrusLevel, message)
 	}
@@ -93,5 +93,5 @@ func cleanFieldValue(value any, cleanANSI bool) any {
 	if !ok {
 		return value
 	}
-	return kitlogger.CleanANSI(text)
+	return logger.CleanANSI(text)
 }

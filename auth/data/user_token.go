@@ -7,14 +7,14 @@ import (
 	"uuid"
 
 	"github.com/go-kratos/kratos/v3/log"
-	authnEngine "github.com/liujitcn/kratos-kit/auth/authn/engine"
+	"github.com/liujitcn/kratos-kit/auth/authn/engine"
 	"github.com/liujitcn/kratos-kit/cache"
 	"github.com/redis/go-redis/v9"
 )
 
 type UserToken struct {
 	cache         cache.Cache
-	authenticator authnEngine.IdentityCreator
+	authenticator engine.IdentityCreator
 
 	accessTokenKeyPrefix  string
 	refreshTokenKeyPrefix string
@@ -25,7 +25,7 @@ type UserToken struct {
 
 func NewUserToken(
 	cache cache.Cache,
-	authenticator authnEngine.IdentityCreator,
+	authenticator engine.IdentityCreator,
 	accessTokenKeyPrefix,
 	refreshTokenKeyPrefix string,
 	accessTokenExpires,

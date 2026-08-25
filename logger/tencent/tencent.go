@@ -7,22 +7,22 @@ import (
 	"strconv"
 	"time"
 
-	cls "github.com/tencentcloud/tencentcloud-cls-sdk-go"
+	tencentcloud_cls_sdk_go "github.com/tencentcloud/tencentcloud-cls-sdk-go"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/go-kratos/kratos/v3/log"
-	kitlogger "github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/logger"
 )
 
 // Logger 定义腾讯云日志 SDK 适配器能力。
 type Logger interface {
 	Log(level log.Level, keyvals ...any) error
-	GetProducer() *cls.AsyncProducerClient
+	GetProducer() *tencentcloud_cls_sdk_go.AsyncProducerClient
 	Close() error
 }
 
 type tencentLog struct {
-	producer *cls.AsyncProducerClient
+	producer *tencentcloud_cls_sdk_go.AsyncProducerClient
 	opts     *options
 }
 
@@ -32,11 +32,11 @@ func NewTencentLogger(options ...Option) (Logger, error) {
 	for _, o := range options {
 		o(opts)
 	}
-	producerConfig := cls.GetDefaultAsyncProducerClientConfig()
+	producerConfig := tencentcloud_cls_sdk_go.GetDefaultAsyncProducerClientConfig()
 	producerConfig.AccessKeyID = opts.accessKey
 	producerConfig.AccessKeySecret = opts.accessSecret
 	producerConfig.Endpoint = opts.endpoint
-	producerInst, err := cls.NewAsyncProducerClient(producerConfig)
+	producerInst, err := tencentcloud_cls_sdk_go.NewAsyncProducerClient(producerConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -49,39 +49,39 @@ func NewTencentLogger(options ...Option) (Logger, error) {
 
 // Log 将统一解析后的结构化日志写入腾讯云 CLS。
 func (t *tencentLog) Log(level log.Level, keyvals ...any) error {
-	var entry kitlogger.Entry
+	var entry logger.Entry
 	var err error
-	entry, err = kitlogger.ParseLegacyEntry(keyvals...)
+	entry, err = logger.ParseLegacyEntry(keyvals...)
 	if err != nil {
 		return err
 	}
 
-	var contents = make([]*cls.Log_Content, 0, len(entry.Fields)+3)
-	contents = append(contents, &cls.Log_Content{
+	var contents = make([]*tencentcloud_cls_sdk_go.Log_Content, 0, len(entry.Fields)+3)
+	contents = append(contents, &tencentcloud_cls_sdk_go.Log_Content{
 		Key:   new(slog.LevelKey),
 		Value: new(level.String()),
 	})
 	if entry.Message != "" {
-		contents = append(contents, &cls.Log_Content{
+		contents = append(contents, &tencentcloud_cls_sdk_go.Log_Content{
 			Key:   new(slog.MessageKey),
-			Value: new(kitlogger.CleanANSI(entry.Message)),
+			Value: new(logger.CleanANSI(entry.Message)),
 		})
 	}
-	var caller = kitlogger.FormatFileCaller(entry.Caller)
+	var caller = logger.FormatFileCaller(entry.Caller)
 	if caller != "" {
-		contents = append(contents, &cls.Log_Content{
-			Key:   new(kitlogger.CallerKey),
+		contents = append(contents, &tencentcloud_cls_sdk_go.Log_Content{
+			Key:   new(logger.CallerKey),
 			Value: new(caller),
 		})
 	}
 	for _, field := range entry.Fields {
-		contents = append(contents, &cls.Log_Content{
+		contents = append(contents, &tencentcloud_cls_sdk_go.Log_Content{
 			Key:   new(field.Key),
-			Value: new(kitlogger.CleanANSI(toString(field.Value))),
+			Value: new(logger.CleanANSI(toString(field.Value))),
 		})
 	}
 
-	var logInst = &cls.Log{
+	var logInst = &tencentcloud_cls_sdk_go.Log{
 		Time:     proto.Int64(time.Now().Unix()),
 		Contents: contents,
 	}
@@ -89,7 +89,7 @@ func (t *tencentLog) Log(level log.Level, keyvals ...any) error {
 }
 
 // GetProducer 返回底层腾讯云日志 Producer。
-func (t *tencentLog) GetProducer() *cls.AsyncProducerClient {
+func (t *tencentLog) GetProducer() *tencentcloud_cls_sdk_go.AsyncProducerClient {
 	return t.producer
 }
 

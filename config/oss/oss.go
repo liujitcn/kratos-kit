@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-kratos/kratos/v3/config"
 )
 
@@ -20,8 +20,8 @@ const defaultPollInterval = 30 * time.Second
 
 // Client 定义配置源使用的 S3 客户端能力。
 type Client interface {
-	GetObject(context.Context, *awss3.GetObjectInput, ...func(*awss3.Options)) (*awss3.GetObjectOutput, error)
-	HeadObject(context.Context, *awss3.HeadObjectInput, ...func(*awss3.Options)) (*awss3.HeadObjectOutput, error)
+	GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error)
+	HeadObject(context.Context, *s3.HeadObjectInput, ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
 }
 
 // Option 配置 S3 对象存储配置源。
@@ -130,7 +130,7 @@ func (s *source) Watch() (config.Watcher, error) {
 
 // load 下载对象并返回内容指纹。
 func (s *source) load(ctx context.Context) ([]byte, string, error) {
-	output, err := s.client.GetObject(ctx, &awss3.GetObjectInput{
+	output, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.options.bucket),
 		Key:    aws.String(s.options.key),
 	})
@@ -152,7 +152,7 @@ func (s *source) load(ctx context.Context) ([]byte, string, error) {
 
 // head 获取当前对象内容指纹。
 func (s *source) head(ctx context.Context) (string, error) {
-	output, err := s.client.HeadObject(ctx, &awss3.HeadObjectInput{
+	output, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
 		Bucket: aws.String(s.options.bucket),
 		Key:    aws.String(s.options.key),
 	})

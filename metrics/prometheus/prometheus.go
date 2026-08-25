@@ -6,7 +6,7 @@ import (
 	"slices"
 	"sync"
 
-	prom "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/liujitcn/kratos-kit/metrics"
 )
@@ -19,22 +19,22 @@ type Option func(*config)
 type config struct {
 	namespace string
 	subsystem string
-	registry  prom.Registerer
+	registry  prometheus.Registerer
 }
 
 type counter struct {
 	labels []string
-	vector *prom.CounterVec
+	vector *prometheus.CounterVec
 }
 
 type histogram struct {
 	labels []string
-	vector *prom.HistogramVec
+	vector *prometheus.HistogramVec
 }
 
 type gauge struct {
 	labels []string
-	vector *prom.GaugeVec
+	vector *prometheus.GaugeVec
 }
 
 // WithNamespace 设置指标命名空间。
@@ -52,7 +52,7 @@ func WithSubsystem(subsystem string) Option {
 }
 
 // WithRegistry 设置自定义 Prometheus 注册器。
-func WithRegistry(registry prom.Registerer) Option {
+func WithRegistry(registry prometheus.Registerer) Option {
 	return func(config *config) {
 		if registry != nil {
 			config.registry = registry
@@ -64,8 +64,8 @@ func WithRegistry(registry prom.Registerer) Option {
 type Provider struct {
 	namespace  string
 	subsystem  string
-	registerer prom.Registerer
-	gatherer   prom.Gatherer
+	registerer prometheus.Registerer
+	gatherer   prometheus.Gatherer
 
 	mu         sync.Mutex
 	counters   map[string]counter
@@ -75,17 +75,17 @@ type Provider struct {
 
 // New 创建使用独立 Registry 的 Provider。
 func New(options ...Option) (*Provider, error) {
-	registry := prom.NewRegistry()
+	registry := prometheus.NewRegistry()
 	return newProvider(registry, registry, options...), nil
 }
 
 // NewWithDefaultRegistry 创建默认注册到进程全局 Registry 的 Provider。
 func NewWithDefaultRegistry(options ...Option) (*Provider, error) {
-	return newProvider(prom.DefaultRegisterer, prom.DefaultGatherer, options...), nil
+	return newProvider(prometheus.DefaultRegisterer, prometheus.DefaultGatherer, options...), nil
 }
 
 // Registry 返回 Provider 对应的指标采集器。
-func (p *Provider) Registry() prom.Gatherer {
+func (p *Provider) Registry() prometheus.Gatherer {
 	return p.gatherer
 }
 
@@ -95,7 +95,7 @@ func (p *Provider) Counter(_ context.Context, name string, value int64, labels m
 	instrument, ok := p.counters[name]
 	if !ok {
 		labelNames := sortedLabelNames(labels)
-		vector := prom.NewCounterVec(prom.CounterOpts{
+		vector := prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: p.namespace,
 			Subsystem: p.subsystem,
 			Name:      name,
@@ -106,7 +106,7 @@ func (p *Provider) Counter(_ context.Context, name string, value int64, labels m
 			return
 		}
 		var typeOK bool
-		vector, typeOK = collector.(*prom.CounterVec)
+		vector, typeOK = collector.(*prometheus.CounterVec)
 		if !typeOK {
 			p.mu.Unlock()
 			return
@@ -119,7 +119,7 @@ func (p *Provider) Counter(_ context.Context, name string, value int64, labels m
 		return
 	}
 	p.mu.Unlock()
-	var metric prom.Counter
+	var metric prometheus.Counter
 	var err error
 	metric, err = instrument.vector.GetMetricWith(labels)
 	if err == nil {
@@ -133,7 +133,7 @@ func (p *Provider) Histogram(_ context.Context, name string, value float64, labe
 	instrument, ok := p.histograms[name]
 	if !ok {
 		labelNames := sortedLabelNames(labels)
-		vector := prom.NewHistogramVec(prom.HistogramOpts{
+		vector := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: p.namespace,
 			Subsystem: p.subsystem,
 			Name:      name,
@@ -144,7 +144,7 @@ func (p *Provider) Histogram(_ context.Context, name string, value float64, labe
 			return
 		}
 		var typeOK bool
-		vector, typeOK = collector.(*prom.HistogramVec)
+		vector, typeOK = collector.(*prometheus.HistogramVec)
 		if !typeOK {
 			p.mu.Unlock()
 			return
@@ -157,7 +157,7 @@ func (p *Provider) Histogram(_ context.Context, name string, value float64, labe
 		return
 	}
 	p.mu.Unlock()
-	var metric prom.Observer
+	var metric prometheus.Observer
 	var err error
 	metric, err = instrument.vector.GetMetricWith(labels)
 	if err == nil {
@@ -171,7 +171,7 @@ func (p *Provider) Gauge(_ context.Context, name string, value float64, labels m
 	instrument, ok := p.gauges[name]
 	if !ok {
 		labelNames := sortedLabelNames(labels)
-		vector := prom.NewGaugeVec(prom.GaugeOpts{
+		vector := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: p.namespace,
 			Subsystem: p.subsystem,
 			Name:      name,
@@ -182,7 +182,7 @@ func (p *Provider) Gauge(_ context.Context, name string, value float64, labels m
 			return
 		}
 		var typeOK bool
-		vector, typeOK = collector.(*prom.GaugeVec)
+		vector, typeOK = collector.(*prometheus.GaugeVec)
 		if !typeOK {
 			p.mu.Unlock()
 			return
@@ -195,7 +195,7 @@ func (p *Provider) Gauge(_ context.Context, name string, value float64, labels m
 		return
 	}
 	p.mu.Unlock()
-	var metric prom.Gauge
+	var metric prometheus.Gauge
 	var err error
 	metric, err = instrument.vector.GetMetricWith(labels)
 	if err == nil {
@@ -205,8 +205,8 @@ func (p *Provider) Gauge(_ context.Context, name string, value float64, labels m
 
 // newProvider 使用指定的默认注册器创建 Provider。
 func newProvider(
-	defaultRegisterer prom.Registerer,
-	defaultGatherer prom.Gatherer,
+	defaultRegisterer prometheus.Registerer,
+	defaultGatherer prometheus.Gatherer,
 	options ...Option,
 ) *Provider {
 	config := &config{registry: defaultRegisterer}
@@ -214,7 +214,7 @@ func newProvider(
 		option(config)
 	}
 	gatherer := defaultGatherer
-	if customGatherer, ok := config.registry.(prom.Gatherer); ok {
+	if customGatherer, ok := config.registry.(prometheus.Gatherer); ok {
 		gatherer = customGatherer
 	}
 	return &Provider{
@@ -229,12 +229,12 @@ func newProvider(
 }
 
 // register 注册 collector，并复用已经存在的同类型 collector。
-func (p *Provider) register(collector prom.Collector) (prom.Collector, bool) {
+func (p *Provider) register(collector prometheus.Collector) (prometheus.Collector, bool) {
 	err := p.registerer.Register(collector)
 	if err == nil {
 		return collector, true
 	}
-	alreadyRegistered, ok := errors.AsType[prom.AlreadyRegisteredError](err)
+	alreadyRegistered, ok := errors.AsType[prometheus.AlreadyRegisteredError](err)
 	if ok {
 		return alreadyRegistered.ExistingCollector, true
 	}

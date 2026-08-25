@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/liujitcn/kratos-kit/auth"
-	gormdb "gorm.io/gorm"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -29,7 +29,7 @@ func init() {
 }
 
 // SkipDataIsolation 显式跳过租户和角色数据范围隔离，仅供可信的系统任务使用。
-func SkipDataIsolation(db *gormdb.DB) *gormdb.DB {
+func SkipDataIsolation(db *gorm.DB) *gorm.DB {
 	if db == nil {
 		return nil
 	}
@@ -37,7 +37,7 @@ func SkipDataIsolation(db *gormdb.DB) *gormdb.DB {
 }
 
 // shouldSkipDataIsolation 判断当前语句是否需要跳过数据隔离。
-func shouldSkipDataIsolation(db *gormdb.DB) bool {
+func shouldSkipDataIsolation(db *gorm.DB) bool {
 	if db == nil {
 		return false
 	}
@@ -61,7 +61,7 @@ func shouldSkipDataIsolation(db *gormdb.DB) bool {
 }
 
 // rejectUnsafeRawStatement 拒绝进入查询回调的原生 SQL。
-func rejectUnsafeRawStatement(db *gormdb.DB) bool {
+func rejectUnsafeRawStatement(db *gorm.DB) bool {
 	if db == nil || db.Statement == nil || db.Statement.SQL.Len() == 0 {
 		return false
 	}
@@ -73,7 +73,7 @@ func rejectUnsafeRawStatement(db *gormdb.DB) bool {
 }
 
 // rejectRawDataIsolation 拒绝未显式跳过数据隔离的原生 SQL。
-func rejectRawDataIsolation(db *gormdb.DB) {
+func rejectRawDataIsolation(db *gorm.DB) {
 	if shouldSkipDataIsolation(db) || db == nil || db.Error != nil {
 		return
 	}
@@ -81,7 +81,7 @@ func rejectRawDataIsolation(db *gormdb.DB) {
 }
 
 // addDataIsolationError 为支持错误返回的调用保留原错误，Row 查询则改为恒不命中。
-func addDataIsolationError(db *gormdb.DB, err error) {
+func addDataIsolationError(db *gorm.DB, err error) {
 	if db == nil || err == nil || denySingleRowQuery(db) {
 		return
 	}
@@ -89,7 +89,7 @@ func addDataIsolationError(db *gormdb.DB, err error) {
 }
 
 // denySingleRowQuery 为 Row 查询追加恒不命中的条件，避免 GORM 因回调错误返回 nil。
-func denySingleRowQuery(db *gormdb.DB) bool {
+func denySingleRowQuery(db *gorm.DB) bool {
 	if !isSingleRowQuery(db) {
 		return false
 	}
@@ -102,7 +102,7 @@ func denySingleRowQuery(db *gormdb.DB) bool {
 }
 
 // denyRawSingleRowQuery 将无法安全改写的 Raw Row 查询替换为跨方言恒不命中的 SQL。
-func denyRawSingleRowQuery(db *gormdb.DB) bool {
+func denyRawSingleRowQuery(db *gorm.DB) bool {
 	if !isSingleRowQuery(db) {
 		return false
 	}
@@ -121,7 +121,7 @@ func denyRawSingleRowQuery(db *gormdb.DB) bool {
 }
 
 // isSingleRowQuery 判断当前语句是否由 GORM Row API 发起。
-func isSingleRowQuery(db *gormdb.DB) bool {
+func isSingleRowQuery(db *gorm.DB) bool {
 	if db == nil || db.Statement == nil {
 		return false
 	}

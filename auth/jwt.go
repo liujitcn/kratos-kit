@@ -9,7 +9,7 @@ import (
 	"github.com/go-kratos/kratos/v3/middleware"
 	"github.com/go-kratos/kratos/v3/transport"
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	authnEngine "github.com/liujitcn/kratos-kit/auth/authn/engine"
+	"github.com/liujitcn/kratos-kit/auth/authn/engine"
 	authnMiddleware "github.com/liujitcn/kratos-kit/auth/authn/middleware"
 	authzEngine "github.com/liujitcn/kratos-kit/auth/authz/engine"
 	authzMiddleware "github.com/liujitcn/kratos-kit/auth/authz/middleware"
@@ -17,7 +17,7 @@ import (
 )
 
 // NewAuthMiddleware 创建统一鉴权中间件，并按白名单规则决定鉴权链路。
-func NewAuthMiddleware(authenticator authnEngine.RequestAuthenticator,
+func NewAuthMiddleware(authenticator engine.RequestAuthenticator,
 	authorizer authzEngine.Engine,
 	userToken *data.UserToken, cfg *configv1.Authentication_Jwt) middleware.Middleware {
 	fullAuth := middleware.Chain(
@@ -53,20 +53,20 @@ func NewAuthMiddleware(authenticator authnEngine.RequestAuthenticator,
 
 // mapAuthnError 将底层认证错误转换为对外稳定的访问令牌错误。
 func mapAuthnError(err error) error {
-	if errors.Is(err, authnEngine.ErrMissingBearerToken) {
+	if errors.Is(err, engine.ErrMissingBearerToken) {
 		return ErrAccessTokenNotExist
 	}
-	if errors.Is(err, authnEngine.ErrTokenExpired) {
+	if errors.Is(err, engine.ErrTokenExpired) {
 		return ErrAccessTokenExpired
 	}
 	return authnMiddleware.ErrUnauthorized
 }
 
 // OptionalServer 为白名单接口补充可选认证解析。
-func OptionalServer(authenticator authnEngine.RequestAuthenticator, userToken *data.UserToken) middleware.Middleware {
+func OptionalServer(authenticator engine.RequestAuthenticator, userToken *data.UserToken) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			authnClaims, err := authenticator.Authenticate(ctx, authnEngine.ContextTypeKratosMetaData, req)
+			authnClaims, err := authenticator.Authenticate(ctx, engine.ContextTypeKratosMetaData, req)
 			if err != nil || authnClaims == nil {
 				return handler(ctx, req)
 			}

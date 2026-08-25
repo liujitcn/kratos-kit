@@ -8,9 +8,9 @@ import (
 
 	"github.com/golang/freetype/truetype"
 	assetchars "github.com/wenlng/go-captcha-assets/bindata/chars"
-	assetfont "github.com/wenlng/go-captcha-assets/resources/fonts/fzshengsksjw"
-	assetimages "github.com/wenlng/go-captcha-assets/resources/imagesv2"
-	assettiles "github.com/wenlng/go-captcha-assets/resources/tiles"
+	"github.com/wenlng/go-captcha-assets/resources/fonts/fzshengsksjw"
+	"github.com/wenlng/go-captcha-assets/resources/imagesv2"
+	"github.com/wenlng/go-captcha-assets/resources/tiles"
 	"github.com/wenlng/go-captcha/v2/slide"
 	"golang.org/x/image/font/gofont/goregular"
 )
@@ -48,7 +48,7 @@ func defaultThumbBackground(width, height int) image.Image {
 
 // defaultBackgrounds 返回 GoCaptcha 官方内嵌主图资源，加载失败时回退到本地生成背景。
 func defaultBackgrounds(width, height int) []image.Image {
-	images, err := assetimages.GetImages()
+	images, err := imagesv2.GetImages()
 	// 官方素材不可用时使用本地生成背景，避免外部资源问题阻断验证码生成。
 	if err != nil || len(images) == 0 {
 		return []image.Image{defaultBackground(width, height)}
@@ -63,7 +63,7 @@ func defaultThumbBackgrounds(width, height int) []image.Image {
 
 // defaultSlideGraphs 创建默认滑动拼图图块资源。
 func defaultSlideGraphs() []*slide.GraphImage {
-	graphs, err := assettiles.GetTiles()
+	graphs, err := tiles.GetTiles()
 	// 官方拼图素材加载成功时转换为 go-captcha 需要的资源类型。
 	if err == nil && len(graphs) > 0 {
 		newGraphs := make([]*slide.GraphImage, 0, len(graphs))
@@ -118,7 +118,7 @@ func defaultPuzzleImage(fill color.RGBA) image.Image {
 
 // defaultFonts 返回默认验证码字体。
 func defaultFonts() []*truetype.Font {
-	font, err := assetfont.GetFont()
+	font, err := fzshengsksjw.GetFont()
 	// 优先使用 GoCaptcha 官方字体，让点击文字验证码具备更好的中文展示效果。
 	if err == nil && font != nil {
 		return []*truetype.Font{font}

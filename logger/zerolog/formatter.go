@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	kitlogger "github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/logger"
 )
 
 type textWriter struct {
@@ -79,7 +79,7 @@ func (w *textWriter) Write(data []byte) (int, error) {
 	}
 	if len(values) > 0 {
 		var fields string
-		fields, err = kitlogger.FormatFields(values)
+		fields, err = logger.FormatFields(values)
 		if err != nil {
 			return 0, fmt.Errorf("encode zerolog fields: %w", err)
 		}

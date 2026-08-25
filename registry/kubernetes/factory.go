@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-kratos/kratos/v3/registry"
 
-	k8s "k8s.io/client-go/kubernetes"
-	k8sRest "k8s.io/client-go/rest"
-	k8sTools "k8s.io/client-go/tools/clientcmd"
-	k8sUtil "k8s.io/client-go/util/homedir"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	baseRegistry "github.com/liujitcn/kratos-kit/registry"
@@ -25,17 +25,17 @@ func NewRegistry(cfg *configv1.Registry) (*Registry, error) {
 		return nil, nil
 	}
 
-	restConfig, err := k8sRest.InClusterConfig()
+	restConfig, err := rest.InClusterConfig()
 	if err != nil {
-		home := k8sUtil.HomeDir()
+		home := homedir.HomeDir()
 		kubeConfig := filepath.Join(home, ".kube", "config")
-		restConfig, err = k8sTools.BuildConfigFromFlags("", kubeConfig)
+		restConfig, err = clientcmd.BuildConfigFromFlags("", kubeConfig)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	clientSet, err := k8s.NewForConfig(restConfig)
+	clientSet, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}

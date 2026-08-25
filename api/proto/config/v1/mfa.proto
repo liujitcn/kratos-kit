@@ -6,10 +6,33 @@ import "google/protobuf/duration.proto";
 
 // Mfa 描述多因素认证配置。
 message Mfa {
+  // Totp 描述基于时间的一次性密码配置。
+  message Totp {
+    // issuer 为 TOTP 验证器显示的发行方名称，默认值为 Kratos Admin。
+    string issuer = 1;
+    // period 为 TOTP 动态口令周期，单位秒，默认值为 30 秒。
+    uint32 period = 2;
+    // skew 为 TOTP 允许的时间窗口偏移，默认值为 1 个周期。
+    uint32 skew = 3;
+    // secret_size 为 TOTP 密钥字节数，默认值为 20 字节。
+    uint32 secret_size = 4;
+    // digits 为 TOTP 动态口令位数，默认值为 6 位。
+    uint32 digits = 5;
+    // algorithm 为 TOTP 哈希算法，默认值为 SHA1。
+    string algorithm = 6;
+  }
+
+  // Webauthn 描述 WebAuthn 依赖方配置。
+  message Webauthn {
+    // rp_id 为 WebAuthn 依赖方标识，生产环境应配置为业务域名。
+    string rp_id = 1;
+    // rp_origins 为允许发起 WebAuthn ceremony 的来源列表。
+    repeated string rp_origins = 2;
+  }
+
   // encryption_key 为 MFA 加密密钥，要求为 base64 编码的 32 字节密钥。
   string encryption_key = 1;
-  // issuer 为 TOTP 验证器显示的发行方名称，默认值为 Kratos Admin。
-  string issuer = 2;
+  reserved 2;
   // login_challenge_expire 为登录挑战有效期，默认值为 5 分钟。
   google.protobuf.Duration login_challenge_expire = 3;
   // setup_ticket_expire 为 MFA 绑定票据有效期，默认值为 10 分钟。
@@ -20,18 +43,11 @@ message Mfa {
   uint32 recovery_code_count = 6;
   // recovery_code_length 为单个恢复码长度，默认值为 10 位。
   uint32 recovery_code_length = 7;
-  // totp_period 为 TOTP 动态口令周期，单位秒，默认值为 30 秒。
-  uint32 totp_period = 8;
-  // totp_skew 为 TOTP 允许的时间窗口偏移，默认值为 1 个周期。
-  uint32 totp_skew = 9;
-  // totp_secret_size 为 TOTP 密钥字节数，默认值为 20 字节。
-  uint32 totp_secret_size = 10;
-  // totp_digits 为 TOTP 动态口令位数，默认值为 6 位。
-  uint32 totp_digits = 11;
-  // totp_algorithm 为 TOTP 哈希算法，默认值为 SHA1。
-  string totp_algorithm = 12;
-  // webauthn_rp_id 为 WebAuthn 依赖方标识，生产环境应配置为业务域名。
-  string webauthn_rp_id = 13;
-  // webauthn_rp_origins 为允许发起 WebAuthn ceremony 的来源列表。
-  repeated string webauthn_rp_origins = 14;
+  // totp 为基于时间的一次性密码配置。
+  optional Totp totp = 8;
+  // webauthn 为 WebAuthn 依赖方配置。
+  optional Webauthn webauthn = 9;
+
+  reserved 10 to 14;
+  reserved "issuer", "totp_period", "totp_skew", "totp_secret_size", "totp_digits", "totp_algorithm", "webauthn_rp_id", "webauthn_rp_origins";
 }

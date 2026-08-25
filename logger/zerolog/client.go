@@ -11,13 +11,13 @@ import (
 	"github.com/rs/zerolog"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	kitlogger "github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/logger"
 )
 
 const defaultTimeFieldFormat = "2006-01-02 15:04:05.000"
 
 func init() {
-	_ = kitlogger.Register(kitlogger.Zerolog, func(cfg *configv1.Logger) (*slog.Logger, error) {
+	_ = logger.Register(logger.Zerolog, func(cfg *configv1.Logger) (*slog.Logger, error) {
 		return NewLogger(cfg)
 	})
 }
@@ -43,9 +43,9 @@ func NewLogger(cfg *configv1.Logger) (*slog.Logger, error) {
 	}
 	switch writerKind {
 	case "stdout", "console":
-		wrapped.targets = append(wrapped.targets, newLoggerTarget(os.Stdout, level, kitlogger.FormatConsoleCaller, false, true))
+		wrapped.targets = append(wrapped.targets, newLoggerTarget(os.Stdout, level, logger.FormatConsoleCaller, false, true))
 	case "stderr":
-		wrapped.targets = append(wrapped.targets, newLoggerTarget(os.Stderr, level, kitlogger.FormatConsoleCaller, false, true))
+		wrapped.targets = append(wrapped.targets, newLoggerTarget(os.Stderr, level, logger.FormatConsoleCaller, false, true))
 	case "file", "lumberjack":
 		if cfg.Zerolog.Filepath == "" {
 			return nil, fmt.Errorf("zerolog filepath is required for %s writer", writerKind)
@@ -61,15 +61,15 @@ func NewLogger(cfg *configv1.Logger) (*slog.Logger, error) {
 			int(cfg.Zerolog.MaxAge),
 			true,
 		)
-		wrapped.targets = append(wrapped.targets, newLoggerTarget(fileWriter, level, kitlogger.FormatFileCaller, true, false))
+		wrapped.targets = append(wrapped.targets, newLoggerTarget(fileWriter, level, logger.FormatFileCaller, true, false))
 		if cfg.Zerolog.EnableConsole {
-			wrapped.targets = append(wrapped.targets, newLoggerTarget(os.Stdout, level, kitlogger.FormatConsoleCaller, false, true))
+			wrapped.targets = append(wrapped.targets, newLoggerTarget(os.Stdout, level, logger.FormatConsoleCaller, false, true))
 		}
 	default:
 		return nil, fmt.Errorf("unsupported zerolog writer: %s", writerKind)
 	}
 
-	return kitlogger.NewLegacyLogger(wrapped), nil
+	return logger.NewLegacyLogger(wrapped), nil
 }
 
 // configureGlobals 应用 zerolog 的全局字段名和时间格式配置。

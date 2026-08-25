@@ -3,13 +3,13 @@ package runtime
 import (
 	"sync"
 
-	utilsTranslator "github.com/liujitcn/go-utils/translator"
+	"github.com/liujitcn/go-utils/translator"
 	"github.com/liujitcn/kratos-kit/cache"
 	"github.com/liujitcn/kratos-kit/database/gorm"
 	"github.com/liujitcn/kratos-kit/locker"
 	"github.com/liujitcn/kratos-kit/oss"
 	"github.com/liujitcn/kratos-kit/queue"
-	queueData "github.com/liujitcn/kratos-kit/queue/data"
+	"github.com/liujitcn/kratos-kit/queue/data"
 )
 
 // Application 保存业务系统共享的基础设施实例。
@@ -21,7 +21,7 @@ type Application struct {
 	oss         oss.OSS
 	locker      locker.Locker
 	queue       queue.Queue
-	translator  utilsTranslator.Translator
+	translator  translator.Translator
 
 	mux sync.RWMutex
 }
@@ -137,22 +137,22 @@ func (e *Application) GetQueue() queue.Queue {
 }
 
 // SetTranslator 设置翻译器。
-func (e *Application) SetTranslator(translatorValue utilsTranslator.Translator) {
+func (e *Application) SetTranslator(translatorValue translator.Translator) {
 	e.mux.Lock()
 	defer e.mux.Unlock()
 	e.translator = translatorValue
 }
 
 // GetTranslator 获取翻译器。
-func (e *Application) GetTranslator() utilsTranslator.Translator {
+func (e *Application) GetTranslator() translator.Translator {
 	e.mux.RLock()
 	defer e.mux.RUnlock()
 	return e.translator
 }
 
 // GetStreamMessage 创建队列流消息。
-func (e *Application) GetStreamMessage(id string, value map[string]interface{}) (queueData.Message, error) {
-	return queueData.Message{
+func (e *Application) GetStreamMessage(id string, value map[string]interface{}) (data.Message, error) {
+	return data.Message{
 		ID:         id,
 		Values:     value,
 		ErrorCount: 0,

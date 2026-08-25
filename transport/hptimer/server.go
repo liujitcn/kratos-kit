@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v3/log"
-	kratosTransport "github.com/go-kratos/kratos/v3/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 	"github.com/liujitcn/kratos-kit/transport/keepalive"
 )
 
 var (
-	_ kratosTransport.Server     = (*Server)(nil)
-	_ kratosTransport.Endpointer = (*Server)(nil)
+	_ transport.Server     = (*Server)(nil)
+	_ transport.Endpointer = (*Server)(nil)
 )
 
 type Server struct {

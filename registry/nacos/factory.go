@@ -3,9 +3,9 @@ package nacos
 import (
 	"github.com/go-kratos/kratos/v3/registry"
 
-	nacosClients "github.com/nacos-group/nacos-sdk-go/v2/clients"
-	nacosConstant "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	nacosVo "github.com/nacos-group/nacos-sdk-go/v2/vo"
+	"github.com/nacos-group/nacos-sdk-go/v2/clients"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	baseRegistry "github.com/liujitcn/kratos-kit/registry"
@@ -22,11 +22,11 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 		return nil, nil
 	}
 
-	srvConf := []nacosConstant.ServerConfig{
-		*nacosConstant.NewServerConfig(c.Nacos.Address, c.Nacos.Port),
+	srvConf := []constant.ServerConfig{
+		*constant.NewServerConfig(c.Nacos.Address, c.Nacos.Port),
 	}
 
-	cliConf := nacosConstant.ClientConfig{
+	cliConf := constant.ClientConfig{
 		NamespaceId: c.Nacos.NamespaceId,
 		RegionId:    c.Nacos.RegionId, // 地域ID
 		AppName:     c.Nacos.AppName,
@@ -53,8 +53,8 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 		ContextPath: c.Nacos.ContextPath,
 	}
 
-	cli, err := nacosClients.NewNamingClient(
-		nacosVo.NacosClientParam{
+	cli, err := clients.NewNamingClient(
+		vo.NacosClientParam{
 			ClientConfig:  &cliConf,
 			ServerConfigs: srvConf,
 		},

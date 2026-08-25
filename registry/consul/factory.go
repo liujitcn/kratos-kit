@@ -3,7 +3,7 @@ package consul
 import (
 	"github.com/go-kratos/kratos/v3/registry"
 
-	consulClient "github.com/hashicorp/consul/api"
+	"github.com/hashicorp/consul/api"
 
 	baseRegistry "github.com/liujitcn/kratos-kit/registry"
 
@@ -21,14 +21,14 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 		return nil, nil
 	}
 
-	cfg := consulClient.DefaultConfig()
+	cfg := api.DefaultConfig()
 	cfg.Address = c.Consul.GetAddress()
 	cfg.Scheme = c.Consul.GetScheme()
 	cfg.Token = c.Consul.GetToken()
 
-	var cli *consulClient.Client
+	var cli *api.Client
 	var err error
-	if cli, err = consulClient.NewClient(cfg); err != nil {
+	if cli, err = api.NewClient(cfg); err != nil {
 		return nil, err
 	}
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-kratos/kratos/v3/log"
 
-	stdCasbin "github.com/casbin/casbin/v2"
+	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 
 	"github.com/liujitcn/kratos-kit/auth/authz/engine"
@@ -37,7 +37,7 @@ type State struct {
 
 	model    model.Model
 	policy   *Adapter
-	enforcer *stdCasbin.SyncedEnforcer
+	enforcer *casbin.SyncedEnforcer
 
 	projects                  engine.Projects
 	wildcardItem              string
@@ -76,7 +76,7 @@ func (s *State) init(opts ...OptFunc) error {
 		}
 	}
 
-	s.enforcer, err = stdCasbin.NewSyncedEnforcer(s.model, s.policy)
+	s.enforcer, err = casbin.NewSyncedEnforcer(s.model, s.policy)
 	if err != nil {
 		log.Error("casbin.authz.engine: failed to create casbin enforcer", "error", err)
 		return err

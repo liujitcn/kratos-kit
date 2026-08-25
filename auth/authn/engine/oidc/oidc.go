@@ -12,7 +12,7 @@ import (
 	"time"
 
 	keyfuncV3 "github.com/MicahParks/keyfunc/v3"
-	jwtV5 "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/liujitcn/kratos-kit/auth/authn/engine"
 )
 
@@ -196,30 +196,30 @@ func (a *Authenticator) Close() {
 
 // authenticate 校验 ID token 的签名、issuer、audience 和时效。
 func (a *Authenticator) authenticate(ctx context.Context, rawToken string) (*engine.AuthClaims, error) {
-	token, err := jwtV5.Parse(
+	token, err := jwt.Parse(
 		rawToken,
 		a.keyfunc.KeyfuncCtx(ctx),
-		jwtV5.WithValidMethods(a.signingMethods),
-		jwtV5.WithIssuer(a.options.issuer),
-		jwtV5.WithAudience(a.options.audience),
-		jwtV5.WithExpirationRequired(),
-		jwtV5.WithIssuedAt(),
+		jwt.WithValidMethods(a.signingMethods),
+		jwt.WithIssuer(a.options.issuer),
+		jwt.WithAudience(a.options.audience),
+		jwt.WithExpirationRequired(),
+		jwt.WithIssuedAt(),
 	)
 	if err != nil {
 		switch {
-		case errors.Is(err, jwtV5.ErrTokenExpired), errors.Is(err, jwtV5.ErrTokenNotValidYet):
+		case errors.Is(err, jwt.ErrTokenExpired), errors.Is(err, jwt.ErrTokenNotValidYet):
 			return nil, engine.ErrTokenExpired
-		case errors.Is(err, jwtV5.ErrTokenInvalidAudience):
+		case errors.Is(err, jwt.ErrTokenInvalidAudience):
 			return nil, engine.ErrInvalidAudience
-		case errors.Is(err, jwtV5.ErrTokenInvalidIssuer):
+		case errors.Is(err, jwt.ErrTokenInvalidIssuer):
 			return nil, engine.ErrInvalidIssuer
-		case errors.Is(err, jwtV5.ErrTokenSignatureInvalid):
+		case errors.Is(err, jwt.ErrTokenSignatureInvalid):
 			return nil, engine.ErrSignTokenFailed
 		default:
 			return nil, engine.ErrInvalidToken
 		}
 	}
-	claims, ok := token.Claims.(jwtV5.MapClaims)
+	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return nil, engine.ErrInvalidClaims
 	}

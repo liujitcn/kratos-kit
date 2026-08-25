@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v3/log"
-	kratosTransport "github.com/go-kratos/kratos/v3/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 	"github.com/liujitcn/kratos-kit/transport/keepalive"
-	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 const (
@@ -29,8 +29,8 @@ const (
 )
 
 var (
-	_ kratosTransport.Server     = (*Server)(nil)
-	_ kratosTransport.Endpointer = (*Server)(nil)
+	_ transport.Server     = (*Server)(nil)
+	_ transport.Endpointer = (*Server)(nil)
 )
 
 // Server 封装官方 MCP SDK 服务，并适配 Kratos transport.Server。
@@ -38,11 +38,11 @@ type Server struct {
 	mu      sync.RWMutex
 	started atomic.Bool
 
-	mcpServer *mcpsdk.Server
+	mcpServer *mcp.Server
 
 	serverName    string
 	serverVersion string
-	serverOptions *mcpsdk.ServerOptions
+	serverOptions *mcp.ServerOptions
 
 	serverType    ServerType
 	network       string
@@ -62,8 +62,8 @@ type Server struct {
 	keepaliveServer *keepalive.Server
 	enableKeepalive bool
 
-	streamableHTTPOptions *mcpsdk.StreamableHTTPOptions
-	sseOptions            *mcpsdk.SSEOptions
+	streamableHTTPOptions *mcp.StreamableHTTPOptions
+	sseOptions            *mcp.SSEOptions
 }
 
 // NewServer 创建 MCP 服务端。
@@ -115,7 +115,7 @@ func (s *Server) Start(ctx context.Context) error {
 		err = s.startHTTP(runCtx)
 	// STDIO 模式用于命令行 MCP Server，Run 会阻塞到连接关闭或上下文取消。
 	case ServerTypeStdio:
-		err = s.mcpServer.Run(runCtx, &mcpsdk.StdioTransport{})
+		err = s.mcpServer.Run(runCtx, &mcp.StdioTransport{})
 	case ServerTypeInProcess:
 		err = nil
 	default:
@@ -211,7 +211,7 @@ func (s *Server) Endpoint() (*url.URL, error) {
 }
 
 // MCPServer 返回底层官方 MCP SDK 服务实例。
-func (s *Server) MCPServer() *mcpsdk.Server {
+func (s *Server) MCPServer() *mcp.Server {
 	if s == nil {
 		return nil
 	}
@@ -219,7 +219,7 @@ func (s *Server) MCPServer() *mcpsdk.Server {
 }
 
 // AddTool 注册原始 MCP Tool 处理器。
-func (s *Server) AddTool(tool *mcpsdk.Tool, handler mcpsdk.ToolHandler) error {
+func (s *Server) AddTool(tool *mcp.Tool, handler mcp.ToolHandler) error {
 	if s == nil || s.mcpServer == nil {
 		return errors.New("mcp server is nil")
 	}
@@ -228,12 +228,12 @@ func (s *Server) AddTool(tool *mcpsdk.Tool, handler mcpsdk.ToolHandler) error {
 }
 
 // RegisterHandler 注册原始 MCP Tool 处理器。
-func (s *Server) RegisterHandler(tool *mcpsdk.Tool, handler mcpsdk.ToolHandler) error {
+func (s *Server) RegisterHandler(tool *mcp.Tool, handler mcp.ToolHandler) error {
 	return s.AddTool(tool, handler)
 }
 
 // HTTPHandler 创建可挂载到已有 HTTP 服务的 Streamable HTTP MCP Handler。
-func (s *Server) HTTPHandler(opts ...*mcpsdk.StreamableHTTPOptions) (http.Handler, error) {
+func (s *Server) HTTPHandler(opts ...*mcp.StreamableHTTPOptions) (http.Handler, error) {
 	if s == nil || s.mcpServer == nil {
 		return nil, errors.New("mcp server is nil")
 	}
@@ -243,7 +243,7 @@ func (s *Server) HTTPHandler(opts ...*mcpsdk.StreamableHTTPOptions) (http.Handle
 		options = mergeStreamableHTTPOptions(options, opt)
 	}
 
-	return mcpsdk.NewStreamableHTTPHandler(func(*http.Request) *mcpsdk.Server {
+	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
 		return s.mcpServer
 	}, options), nil
 }
@@ -261,11 +261,11 @@ func (s *Server) init(opts ...ServerOption) {
 		}
 	}
 
-	impl := &mcpsdk.Implementation{
+	impl := &mcp.Implementation{
 		Name:    s.serverName,
 		Version: s.serverVersion,
 	}
-	s.mcpServer = mcpsdk.NewServer(impl, s.serverOptions)
+	s.mcpServer = mcp.NewServer(impl, s.serverOptions)
 }
 
 func (s *Server) startHTTP(ctx context.Context) error {
@@ -313,7 +313,7 @@ func (s *Server) transportHTTPHandler() (http.Handler, error) {
 }
 
 // SSEHandler 创建可挂载到已有 HTTP 服务的 Legacy SSE MCP Handler。
-func (s *Server) SSEHandler(opts ...*mcpsdk.SSEOptions) (http.Handler, error) {
+func (s *Server) SSEHandler(opts ...*mcp.SSEOptions) (http.Handler, error) {
 	if s == nil || s.mcpServer == nil {
 		return nil, errors.New("mcp server is nil")
 	}
@@ -323,7 +323,7 @@ func (s *Server) SSEHandler(opts ...*mcpsdk.SSEOptions) (http.Handler, error) {
 		options = mergeSSEOptions(options, opt)
 	}
 
-	return mcpsdk.NewSSEHandler(func(*http.Request) *mcpsdk.Server {
+	return mcp.NewSSEHandler(func(*http.Request) *mcp.Server {
 		return s.mcpServer
 	}, options), nil
 }

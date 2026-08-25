@@ -7,12 +7,12 @@ import (
 	"net/url"
 	"strings"
 
-	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // LoadToolFromJsonString 从 JSON 字符串加载 MCP Tool。
-func LoadToolFromJsonString(jsonStr string) (*mcpsdk.Tool, error) {
-	var tool mcpsdk.Tool
+func LoadToolFromJsonString(jsonStr string) (*mcp.Tool, error) {
+	var tool mcp.Tool
 	if err := json.Unmarshal([]byte(jsonStr), &tool); err != nil {
 		return nil, fmt.Errorf("JSON 反序列化失败：%w", err)
 	}
@@ -48,7 +48,7 @@ func ValidateToolInputSchema(schema any) error {
 	return nil
 }
 
-func cloneServerOptions(opts *mcpsdk.ServerOptions) *mcpsdk.ServerOptions {
+func cloneServerOptions(opts *mcp.ServerOptions) *mcp.ServerOptions {
 	if opts == nil {
 		return nil
 	}
@@ -56,7 +56,7 @@ func cloneServerOptions(opts *mcpsdk.ServerOptions) *mcpsdk.ServerOptions {
 	return &cloned
 }
 
-func cloneStreamableHTTPOptions(opts *mcpsdk.StreamableHTTPOptions) *mcpsdk.StreamableHTTPOptions {
+func cloneStreamableHTTPOptions(opts *mcp.StreamableHTTPOptions) *mcp.StreamableHTTPOptions {
 	if opts == nil {
 		return nil
 	}
@@ -64,7 +64,7 @@ func cloneStreamableHTTPOptions(opts *mcpsdk.StreamableHTTPOptions) *mcpsdk.Stre
 	return &cloned
 }
 
-func mergeStreamableHTTPOptions(base, override *mcpsdk.StreamableHTTPOptions) *mcpsdk.StreamableHTTPOptions {
+func mergeStreamableHTTPOptions(base, override *mcp.StreamableHTTPOptions) *mcp.StreamableHTTPOptions {
 	if override == nil {
 		return cloneStreamableHTTPOptions(base)
 	}
@@ -98,7 +98,7 @@ func mergeStreamableHTTPOptions(base, override *mcpsdk.StreamableHTTPOptions) *m
 	return &merged
 }
 
-func cloneSSEOptions(opts *mcpsdk.SSEOptions) *mcpsdk.SSEOptions {
+func cloneSSEOptions(opts *mcp.SSEOptions) *mcp.SSEOptions {
 	if opts == nil {
 		return nil
 	}
@@ -106,7 +106,7 @@ func cloneSSEOptions(opts *mcpsdk.SSEOptions) *mcpsdk.SSEOptions {
 	return &cloned
 }
 
-func mergeSSEOptions(base, override *mcpsdk.SSEOptions) *mcpsdk.SSEOptions {
+func mergeSSEOptions(base, override *mcp.SSEOptions) *mcp.SSEOptions {
 	if override == nil {
 		return cloneSSEOptions(base)
 	}

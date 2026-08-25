@@ -7,12 +7,13 @@
 package configv1
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 )
 
 const (
@@ -27,8 +28,6 @@ type Mfa struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// encryption_key 为 MFA 加密密钥，要求为 base64 编码的 32 字节密钥。
 	EncryptionKey string `protobuf:"bytes,1,opt,name=encryption_key,json=encryptionKey,proto3" json:"encryption_key,omitempty"`
-	// issuer 为 TOTP 验证器显示的发行方名称，默认值为 Kratos Admin。
-	Issuer string `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
 	// login_challenge_expire 为登录挑战有效期，默认值为 5 分钟。
 	LoginChallengeExpire *durationpb.Duration `protobuf:"bytes,3,opt,name=login_challenge_expire,json=loginChallengeExpire,proto3" json:"login_challenge_expire,omitempty"`
 	// setup_ticket_expire 为 MFA 绑定票据有效期，默认值为 10 分钟。
@@ -39,22 +38,12 @@ type Mfa struct {
 	RecoveryCodeCount uint32 `protobuf:"varint,6,opt,name=recovery_code_count,json=recoveryCodeCount,proto3" json:"recovery_code_count,omitempty"`
 	// recovery_code_length 为单个恢复码长度，默认值为 10 位。
 	RecoveryCodeLength uint32 `protobuf:"varint,7,opt,name=recovery_code_length,json=recoveryCodeLength,proto3" json:"recovery_code_length,omitempty"`
-	// totp_period 为 TOTP 动态口令周期，单位秒，默认值为 30 秒。
-	TotpPeriod uint32 `protobuf:"varint,8,opt,name=totp_period,json=totpPeriod,proto3" json:"totp_period,omitempty"`
-	// totp_skew 为 TOTP 允许的时间窗口偏移，默认值为 1 个周期。
-	TotpSkew uint32 `protobuf:"varint,9,opt,name=totp_skew,json=totpSkew,proto3" json:"totp_skew,omitempty"`
-	// totp_secret_size 为 TOTP 密钥字节数，默认值为 20 字节。
-	TotpSecretSize uint32 `protobuf:"varint,10,opt,name=totp_secret_size,json=totpSecretSize,proto3" json:"totp_secret_size,omitempty"`
-	// totp_digits 为 TOTP 动态口令位数，默认值为 6 位。
-	TotpDigits uint32 `protobuf:"varint,11,opt,name=totp_digits,json=totpDigits,proto3" json:"totp_digits,omitempty"`
-	// totp_algorithm 为 TOTP 哈希算法，默认值为 SHA1。
-	TotpAlgorithm string `protobuf:"bytes,12,opt,name=totp_algorithm,json=totpAlgorithm,proto3" json:"totp_algorithm,omitempty"`
-	// webauthn_rp_id 为 WebAuthn 依赖方标识，生产环境应配置为业务域名。
-	WebauthnRpId string `protobuf:"bytes,13,opt,name=webauthn_rp_id,json=webauthnRpId,proto3" json:"webauthn_rp_id,omitempty"`
-	// webauthn_rp_origins 为允许发起 WebAuthn ceremony 的来源列表。
-	WebauthnRpOrigins []string `protobuf:"bytes,14,rep,name=webauthn_rp_origins,json=webauthnRpOrigins,proto3" json:"webauthn_rp_origins,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// totp 为基于时间的一次性密码配置。
+	Totp *Mfa_Totp `protobuf:"bytes,8,opt,name=totp,proto3,oneof" json:"totp,omitempty"`
+	// webauthn 为 WebAuthn 依赖方配置。
+	Webauthn      *Mfa_Webauthn `protobuf:"bytes,9,opt,name=webauthn,proto3,oneof" json:"webauthn,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Mfa) Reset() {
@@ -94,13 +83,6 @@ func (x *Mfa) GetEncryptionKey() string {
 	return ""
 }
 
-func (x *Mfa) GetIssuer() string {
-	if x != nil {
-		return x.Issuer
-	}
-	return ""
-}
-
 func (x *Mfa) GetLoginChallengeExpire() *durationpb.Duration {
 	if x != nil {
 		return x.LoginChallengeExpire
@@ -136,51 +118,162 @@ func (x *Mfa) GetRecoveryCodeLength() uint32 {
 	return 0
 }
 
-func (x *Mfa) GetTotpPeriod() uint32 {
+func (x *Mfa) GetTotp() *Mfa_Totp {
 	if x != nil {
-		return x.TotpPeriod
+		return x.Totp
 	}
-	return 0
+	return nil
 }
 
-func (x *Mfa) GetTotpSkew() uint32 {
+func (x *Mfa) GetWebauthn() *Mfa_Webauthn {
 	if x != nil {
-		return x.TotpSkew
+		return x.Webauthn
 	}
-	return 0
+	return nil
 }
 
-func (x *Mfa) GetTotpSecretSize() uint32 {
-	if x != nil {
-		return x.TotpSecretSize
-	}
-	return 0
+// Totp 描述基于时间的一次性密码配置。
+type Mfa_Totp struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// issuer 为 TOTP 验证器显示的发行方名称，默认值为 Kratos Admin。
+	Issuer string `protobuf:"bytes,1,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	// period 为 TOTP 动态口令周期，单位秒，默认值为 30 秒。
+	Period uint32 `protobuf:"varint,2,opt,name=period,proto3" json:"period,omitempty"`
+	// skew 为 TOTP 允许的时间窗口偏移，默认值为 1 个周期。
+	Skew uint32 `protobuf:"varint,3,opt,name=skew,proto3" json:"skew,omitempty"`
+	// secret_size 为 TOTP 密钥字节数，默认值为 20 字节。
+	SecretSize uint32 `protobuf:"varint,4,opt,name=secret_size,json=secretSize,proto3" json:"secret_size,omitempty"`
+	// digits 为 TOTP 动态口令位数，默认值为 6 位。
+	Digits uint32 `protobuf:"varint,5,opt,name=digits,proto3" json:"digits,omitempty"`
+	// algorithm 为 TOTP 哈希算法，默认值为 SHA1。
+	Algorithm     string `protobuf:"bytes,6,opt,name=algorithm,proto3" json:"algorithm,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Mfa) GetTotpDigits() uint32 {
-	if x != nil {
-		return x.TotpDigits
-	}
-	return 0
+func (x *Mfa_Totp) Reset() {
+	*x = Mfa_Totp{}
+	mi := &file_config_v1_mfa_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
-func (x *Mfa) GetTotpAlgorithm() string {
+func (x *Mfa_Totp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Mfa_Totp) ProtoMessage() {}
+
+func (x *Mfa_Totp) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_mfa_proto_msgTypes[1]
 	if x != nil {
-		return x.TotpAlgorithm
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Mfa_Totp.ProtoReflect.Descriptor instead.
+func (*Mfa_Totp) Descriptor() ([]byte, []int) {
+	return file_config_v1_mfa_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *Mfa_Totp) GetIssuer() string {
+	if x != nil {
+		return x.Issuer
 	}
 	return ""
 }
 
-func (x *Mfa) GetWebauthnRpId() string {
+func (x *Mfa_Totp) GetPeriod() uint32 {
 	if x != nil {
-		return x.WebauthnRpId
+		return x.Period
+	}
+	return 0
+}
+
+func (x *Mfa_Totp) GetSkew() uint32 {
+	if x != nil {
+		return x.Skew
+	}
+	return 0
+}
+
+func (x *Mfa_Totp) GetSecretSize() uint32 {
+	if x != nil {
+		return x.SecretSize
+	}
+	return 0
+}
+
+func (x *Mfa_Totp) GetDigits() uint32 {
+	if x != nil {
+		return x.Digits
+	}
+	return 0
+}
+
+func (x *Mfa_Totp) GetAlgorithm() string {
+	if x != nil {
+		return x.Algorithm
 	}
 	return ""
 }
 
-func (x *Mfa) GetWebauthnRpOrigins() []string {
+// Webauthn 描述 WebAuthn 依赖方配置。
+type Mfa_Webauthn struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// rp_id 为 WebAuthn 依赖方标识，生产环境应配置为业务域名。
+	RpId string `protobuf:"bytes,1,opt,name=rp_id,json=rpId,proto3" json:"rp_id,omitempty"`
+	// rp_origins 为允许发起 WebAuthn ceremony 的来源列表。
+	RpOrigins     []string `protobuf:"bytes,2,rep,name=rp_origins,json=rpOrigins,proto3" json:"rp_origins,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Mfa_Webauthn) Reset() {
+	*x = Mfa_Webauthn{}
+	mi := &file_config_v1_mfa_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Mfa_Webauthn) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Mfa_Webauthn) ProtoMessage() {}
+
+func (x *Mfa_Webauthn) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_mfa_proto_msgTypes[2]
 	if x != nil {
-		return x.WebauthnRpOrigins
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Mfa_Webauthn.ProtoReflect.Descriptor instead.
+func (*Mfa_Webauthn) Descriptor() ([]byte, []int) {
+	return file_config_v1_mfa_proto_rawDescGZIP(), []int{0, 1}
+}
+
+func (x *Mfa_Webauthn) GetRpId() string {
+	if x != nil {
+		return x.RpId
+	}
+	return ""
+}
+
+func (x *Mfa_Webauthn) GetRpOrigins() []string {
+	if x != nil {
+		return x.RpOrigins
 	}
 	return nil
 }
@@ -189,25 +282,31 @@ var File_config_v1_mfa_proto protoreflect.FileDescriptor
 
 const file_config_v1_mfa_proto_rawDesc = "" +
 	"\n" +
-	"\x13config/v1/mfa.proto\x12\tconfig.v1\x1a\x1egoogle/protobuf/duration.proto\"\xf6\x04\n" +
+	"\x13config/v1/mfa.proto\x12\tconfig.v1\x1a\x1egoogle/protobuf/duration.proto\"\xba\x06\n" +
 	"\x03Mfa\x12%\n" +
-	"\x0eencryption_key\x18\x01 \x01(\tR\rencryptionKey\x12\x16\n" +
-	"\x06issuer\x18\x02 \x01(\tR\x06issuer\x12O\n" +
+	"\x0eencryption_key\x18\x01 \x01(\tR\rencryptionKey\x12O\n" +
 	"\x16login_challenge_expire\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\x14loginChallengeExpire\x12I\n" +
 	"\x13setup_ticket_expire\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x11setupTicketExpire\x12,\n" +
 	"\x12login_max_attempts\x18\x05 \x01(\rR\x10loginMaxAttempts\x12.\n" +
 	"\x13recovery_code_count\x18\x06 \x01(\rR\x11recoveryCodeCount\x120\n" +
-	"\x14recovery_code_length\x18\a \x01(\rR\x12recoveryCodeLength\x12\x1f\n" +
-	"\vtotp_period\x18\b \x01(\rR\n" +
-	"totpPeriod\x12\x1b\n" +
-	"\ttotp_skew\x18\t \x01(\rR\btotpSkew\x12(\n" +
-	"\x10totp_secret_size\x18\n" +
-	" \x01(\rR\x0etotpSecretSize\x12\x1f\n" +
-	"\vtotp_digits\x18\v \x01(\rR\n" +
-	"totpDigits\x12%\n" +
-	"\x0etotp_algorithm\x18\f \x01(\tR\rtotpAlgorithm\x12$\n" +
-	"\x0ewebauthn_rp_id\x18\r \x01(\tR\fwebauthnRpId\x12.\n" +
-	"\x13webauthn_rp_origins\x18\x0e \x03(\tR\x11webauthnRpOriginsB\x9c\x01\n" +
+	"\x14recovery_code_length\x18\a \x01(\rR\x12recoveryCodeLength\x12,\n" +
+	"\x04totp\x18\b \x01(\v2\x13.config.v1.Mfa.TotpH\x00R\x04totp\x88\x01\x01\x128\n" +
+	"\bwebauthn\x18\t \x01(\v2\x17.config.v1.Mfa.WebauthnH\x01R\bwebauthn\x88\x01\x01\x1a\xa1\x01\n" +
+	"\x04Totp\x12\x16\n" +
+	"\x06issuer\x18\x01 \x01(\tR\x06issuer\x12\x16\n" +
+	"\x06period\x18\x02 \x01(\rR\x06period\x12\x12\n" +
+	"\x04skew\x18\x03 \x01(\rR\x04skew\x12\x1f\n" +
+	"\vsecret_size\x18\x04 \x01(\rR\n" +
+	"secretSize\x12\x16\n" +
+	"\x06digits\x18\x05 \x01(\rR\x06digits\x12\x1c\n" +
+	"\talgorithm\x18\x06 \x01(\tR\talgorithm\x1a>\n" +
+	"\bWebauthn\x12\x13\n" +
+	"\x05rp_id\x18\x01 \x01(\tR\x04rpId\x12\x1d\n" +
+	"\n" +
+	"rp_origins\x18\x02 \x03(\tR\trpOriginsB\a\n" +
+	"\x05_totpB\v\n" +
+	"\t_webauthnJ\x04\b\x02\x10\x03J\x04\b\n" +
+	"\x10\x0fR\x06issuerR\vtotp_periodR\ttotp_skewR\x10totp_secret_sizeR\vtotp_digitsR\x0etotp_algorithmR\x0ewebauthn_rp_idR\x13webauthn_rp_originsB\x9c\x01\n" +
 	"\rcom.config.v1B\bMfaProtoP\x01Z<github.com/liujitcn/kratos-kit/api/gen/go/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\x06proto3"
 
@@ -223,19 +322,23 @@ func file_config_v1_mfa_proto_rawDescGZIP() []byte {
 	return file_config_v1_mfa_proto_rawDescData
 }
 
-var file_config_v1_mfa_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_config_v1_mfa_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_config_v1_mfa_proto_goTypes = []any{
 	(*Mfa)(nil),                 // 0: config.v1.Mfa
-	(*durationpb.Duration)(nil), // 1: google.protobuf.Duration
+	(*Mfa_Totp)(nil),            // 1: config.v1.Mfa.Totp
+	(*Mfa_Webauthn)(nil),        // 2: config.v1.Mfa.Webauthn
+	(*durationpb.Duration)(nil), // 3: google.protobuf.Duration
 }
 var file_config_v1_mfa_proto_depIdxs = []int32{
-	1, // 0: config.v1.Mfa.login_challenge_expire:type_name -> google.protobuf.Duration
-	1, // 1: config.v1.Mfa.setup_ticket_expire:type_name -> google.protobuf.Duration
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	3, // 0: config.v1.Mfa.login_challenge_expire:type_name -> google.protobuf.Duration
+	3, // 1: config.v1.Mfa.setup_ticket_expire:type_name -> google.protobuf.Duration
+	1, // 2: config.v1.Mfa.totp:type_name -> config.v1.Mfa.Totp
+	2, // 3: config.v1.Mfa.webauthn:type_name -> config.v1.Mfa.Webauthn
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_mfa_proto_init() }
@@ -243,13 +346,14 @@ func file_config_v1_mfa_proto_init() {
 	if File_config_v1_mfa_proto != nil {
 		return
 	}
+	file_config_v1_mfa_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_mfa_proto_rawDesc), len(file_config_v1_mfa_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

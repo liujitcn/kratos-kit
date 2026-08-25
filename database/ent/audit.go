@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	entgo "entgo.io/ent"
+	"entgo.io/ent"
 	"github.com/go-kratos/kratos/v3"
 	"github.com/go-kratos/kratos/v3/log"
-	kratosTransport "github.com/go-kratos/kratos/v3/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 	"github.com/liujitcn/kratos-kit/auth"
 )
 
@@ -22,20 +22,20 @@ var auditExcludeTypes = []string{
 var auditExcludeTypesMu sync.RWMutex
 
 // AuditHook 返回用于回填 Ent 审计字段的 mutation hook。
-func AuditHook() entgo.Hook {
-	return func(next entgo.Mutator) entgo.Mutator {
-		return entgo.MutateFunc(func(ctx context.Context, mutation entgo.Mutation) (entgo.Value, error) {
+func AuditHook() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, mutation ent.Mutation) (ent.Value, error) {
 			if shouldSkipAudit(mutation) {
 				return next.Mutate(ctx, mutation)
 			}
 
-			if mutation.Op().Is(entgo.OpCreate) {
+			if mutation.Op().Is(ent.OpCreate) {
 				err := fillCreatedFields(ctx, mutation)
 				if err != nil {
 					return nil, err
 				}
 			}
-			if mutation.Op().Is(entgo.OpUpdate | entgo.OpUpdateOne) {
+			if mutation.Op().Is(ent.OpUpdate | ent.OpUpdateOne) {
 				err := fillUpdatedFields(ctx, mutation)
 				if err != nil {
 					return nil, err
@@ -54,7 +54,7 @@ func SetAuditExcludeTypes(types ...string) {
 }
 
 // shouldSkipAudit 判断当前 mutation 是否需要跳过审计字段回填。
-func shouldSkipAudit(mutation entgo.Mutation) bool {
+func shouldSkipAudit(mutation ent.Mutation) bool {
 	if mutation == nil {
 		return true
 	}
@@ -64,7 +64,7 @@ func shouldSkipAudit(mutation entgo.Mutation) bool {
 }
 
 // fillCreatedFields 在创建时回填审计字段。
-func fillCreatedFields(ctx context.Context, mutation entgo.Mutation) error {
+func fillCreatedFields(ctx context.Context, mutation ent.Mutation) error {
 	now := time.Now()
 	var createdBySet bool
 	createdBySet, err := setFieldIfUnset(mutation, "created_by", int64(0))
@@ -104,7 +104,7 @@ func fillCreatedFields(ctx context.Context, mutation entgo.Mutation) error {
 }
 
 // fillUpdatedFields 在更新时回填审计字段。
-func fillUpdatedFields(ctx context.Context, mutation entgo.Mutation) error {
+func fillUpdatedFields(ctx context.Context, mutation ent.Mutation) error {
 	var updatedBySet bool
 	updatedBySet, err := setFieldIfUnset(mutation, "updated_by", int64(0))
 	if err != nil {
@@ -125,7 +125,7 @@ func fillUpdatedFields(ctx context.Context, mutation entgo.Mutation) error {
 }
 
 // setFieldIfUnset 在字段未被调用方显式设置时回填默认值。
-func setFieldIfUnset(mutation entgo.Mutation, fieldName string, value entgo.Value) (bool, error) {
+func setFieldIfUnset(mutation ent.Mutation, fieldName string, value ent.Value) (bool, error) {
 	if _, ok := mutation.Field(fieldName); ok {
 		return false, nil
 	}
@@ -175,7 +175,7 @@ func isAppLifecycleContext(ctx context.Context) bool {
 	}
 
 	// 请求上下文会额外挂载 transport 信息，不能按应用生命周期上下文处理。
-	if _, ok := kratosTransport.FromServerContext(ctx); ok {
+	if _, ok := transport.FromServerContext(ctx); ok {
 		return false
 	}
 

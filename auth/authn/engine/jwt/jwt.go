@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	jwtV5 "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/liujitcn/kratos-kit/auth/authn/engine"
 )
@@ -25,7 +25,7 @@ func NewAuthenticator(opts ...Option) (engine.Authenticator, error) {
 	}
 
 	if auth.options.signingMethod == nil {
-		auth.options.signingMethod = jwtV5.SigningMethodHS256
+		auth.options.signingMethod = jwt.SigningMethodHS256
 	}
 
 	return auth, nil
@@ -46,18 +46,18 @@ func (a *Authenticator) AuthenticateToken(tokenString string) (*engine.AuthClaim
 	jwtToken, err := a.parseToken(tokenString)
 	if err != nil {
 		switch {
-		case errors.Is(err, jwtV5.ErrTokenMalformed):
+		case errors.Is(err, jwt.ErrTokenMalformed):
 			return nil, engine.ErrInvalidToken
-		case errors.Is(err, jwtV5.ErrTokenSignatureInvalid):
+		case errors.Is(err, jwt.ErrTokenSignatureInvalid):
 			return nil, engine.ErrSignTokenFailed
-		case errors.Is(err, jwtV5.ErrTokenExpired) || errors.Is(err, jwtV5.ErrTokenNotValidYet):
+		case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
 			return nil, engine.ErrTokenExpired
 		default:
 			return nil, engine.ErrInvalidToken
 		}
 	}
 
-	claims, ok := jwtToken.Claims.(jwtV5.MapClaims)
+	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, engine.ErrInvalidToken
 	}
@@ -80,7 +80,7 @@ func (a *Authenticator) CreateIdentityWithContext(ctx context.Context, contextTy
 
 // CreateIdentity creates a signed token string from the claims.
 func (a *Authenticator) CreateIdentity(claims engine.AuthClaims) (string, error) {
-	jwtToken := jwtV5.NewWithClaims(
+	jwtToken := jwt.NewWithClaims(
 		a.options.signingMethod,
 		&claims,
 	)
@@ -96,16 +96,16 @@ func (a *Authenticator) CreateIdentity(claims engine.AuthClaims) (string, error)
 func (a *Authenticator) Close() {}
 
 // parseToken parses the token string and returns the token.
-func (a *Authenticator) parseToken(token string) (*jwtV5.Token, error) {
+func (a *Authenticator) parseToken(token string) (*jwt.Token, error) {
 	if a.options.keyFunc == nil {
 		return nil, engine.ErrMissingKeyFunc
 	}
 
-	return jwtV5.Parse(token, a.options.keyFunc)
+	return jwt.Parse(token, a.options.keyFunc)
 }
 
 // generateToken generates a signed token string from the token.
-func (a *Authenticator) generateToken(jwtToken *jwtV5.Token) (string, error) {
+func (a *Authenticator) generateToken(jwtToken *jwt.Token) (string, error) {
 	if a.options.keyFunc == nil {
 		return "", engine.ErrMissingKeyFunc
 	}

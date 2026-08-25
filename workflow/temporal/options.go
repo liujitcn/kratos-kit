@@ -7,7 +7,7 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/worker"
 
-	enumspb "go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/enums/v1"
 )
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,7 +66,7 @@ type ExecuteOptions struct {
 	CronSchedule string
 
 	// IDReusePolicy 控制 WorkflowID 已存在时的复用行为。
-	IDReusePolicy enumspb.WorkflowIdReusePolicy
+	IDReusePolicy enums.WorkflowIdReusePolicy
 }
 
 ////////////////////////////////////////////////////////////////////////////////

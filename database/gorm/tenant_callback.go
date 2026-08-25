@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/liujitcn/kratos-kit/auth"
-	gormdb "gorm.io/gorm"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 )
@@ -34,7 +34,7 @@ func init() {
 }
 
 // addTenantWhere 为当前查询、更新和删除语句追加租户条件。
-func addTenantWhere(db *gormdb.DB) {
+func addTenantWhere(db *gorm.DB) {
 	if shouldSkipDataIsolation(db) || db == nil || db.Statement == nil || db.Error != nil {
 		return
 	}
@@ -78,7 +78,7 @@ func addTenantWhere(db *gormdb.DB) {
 }
 
 // fillTenantID 在创建租户表数据时自动填充租户编号。
-func fillTenantID(db *gormdb.DB) {
+func fillTenantID(db *gorm.DB) {
 	if shouldSkipDataIsolation(db) || db == nil || db.Statement == nil {
 		return
 	}
@@ -115,7 +115,7 @@ func fillTenantID(db *gormdb.DB) {
 }
 
 // tenantIDForStatement 从当前 GORM 语句上下文读取租户编号。
-func tenantIDForStatement(db *gormdb.DB) (int64, bool, error) {
+func tenantIDForStatement(db *gorm.DB) (int64, bool, error) {
 	if db == nil || db.Statement == nil {
 		return 0, false, ErrTenantContextMissing
 	}
@@ -142,7 +142,7 @@ func tenantIDFromContext(ctx context.Context) (int64, bool, error) {
 }
 
 // hasTenantField 判断当前模型是否包含租户字段。
-func hasTenantField(db *gormdb.DB, scopedTables map[string]struct{}) bool {
+func hasTenantField(db *gorm.DB, scopedTables map[string]struct{}) bool {
 	if db == nil || db.Statement == nil {
 		return false
 	}
@@ -156,13 +156,13 @@ func hasTenantField(db *gormdb.DB, scopedTables map[string]struct{}) bool {
 }
 
 // tenantTables 返回所有注册模型中需要租户隔离的表名。
-func tenantTables(db *gormdb.DB) (map[string]struct{}, error) {
+func tenantTables(db *gorm.DB) (map[string]struct{}, error) {
 	tables, _, err := getIsolationTables(db)
 	return tables, err
 }
 
 // hasTenantJoin 判断当前语句是否关联了需要租户隔离的表。
-func hasTenantJoin(db *gormdb.DB, scopedTables map[string]struct{}) bool {
+func hasTenantJoin(db *gorm.DB, scopedTables map[string]struct{}) bool {
 	match := func(reference sqlTableReference) bool {
 		return isScopedTableReference(reference, scopedTables, tenantColumnName)
 	}
@@ -170,7 +170,7 @@ func hasTenantJoin(db *gormdb.DB, scopedTables map[string]struct{}) bool {
 }
 
 // hasScopedJoin 判断当前语句是否存在匹配指定规则的关联表。
-func hasScopedJoin(db *gormdb.DB, match func(sqlTableReference) bool) bool {
+func hasScopedJoin(db *gorm.DB, match func(sqlTableReference) bool) bool {
 	hasMatch := false
 	if fromClause, clauseExists := db.Statement.Clauses["FROM"]; clauseExists {
 		if from, isFromClause := fromClause.Expression.(clause.From); isFromClause {
@@ -221,7 +221,7 @@ func hasScopedJoin(db *gormdb.DB, match func(sqlTableReference) bool) bool {
 }
 
 // applyTenantJoinConditions 将租户条件写入 JOIN ON，并返回无法写入 ON 的兜底条件。
-func applyTenantJoinConditions(db *gormdb.DB, tenantID int64, scopedTables map[string]struct{}) []clause.Expression {
+func applyTenantJoinConditions(db *gorm.DB, tenantID int64, scopedTables map[string]struct{}) []clause.Expression {
 	match := func(reference sqlTableReference) bool {
 		return isScopedTableReference(reference, scopedTables, tenantColumnName)
 	}
@@ -232,7 +232,7 @@ func applyTenantJoinConditions(db *gormdb.DB, tenantID int64, scopedTables map[s
 }
 
 // applyJoinConditions 将关联表隔离条件优先写入 JOIN ON，并返回需要写入 WHERE 的兜底条件。
-func applyJoinConditions(db *gormdb.DB, match func(sqlTableReference) bool, build func(sqlTableReference) clause.Expression, placeholderPrefix string) []clause.Expression {
+func applyJoinConditions(db *gorm.DB, match func(sqlTableReference) bool, build func(sqlTableReference) clause.Expression, placeholderPrefix string) []clause.Expression {
 	expandNestedAssociationJoins(db)
 	seen := make(map[string]struct{})
 	joinedAssociations := make(map[string]struct{})
@@ -311,7 +311,7 @@ func applyJoinConditions(db *gormdb.DB, match func(sqlTableReference) bool, buil
 }
 
 // expandNestedAssociationJoins 将嵌套关联展开为逐级 JOIN，便于为每一级写入独立 ON 条件。
-func expandNestedAssociationJoins(db *gormdb.DB) {
+func expandNestedAssociationJoins(db *gorm.DB) {
 	if db == nil || db.Statement == nil || db.Statement.Schema == nil || len(db.Statement.Joins) == 0 {
 		return
 	}
@@ -435,7 +435,7 @@ func isScopedTableReference(reference sqlTableReference, scopedTables map[string
 }
 
 // rawJoinReferences 从原生 JOIN 片段中解析表名和别名，并返回片段是否可安全识别。
-func rawJoinReferences(db *gormdb.DB, query string) ([]sqlTableReference, bool) {
+func rawJoinReferences(db *gorm.DB, query string) ([]sqlTableReference, bool) {
 	segments := rawJoinSegments(db, query)
 	if len(segments) == 0 {
 		return nil, false
@@ -451,7 +451,7 @@ func rawJoinReferences(db *gormdb.DB, query string) ([]sqlTableReference, bool) 
 }
 
 // rawJoinSegments 解析原生 SQL 中每个顶层 JOIN 的表引用和 ON 条件范围。
-func rawJoinSegments(db *gormdb.DB, query string) []rawJoinSegment {
+func rawJoinSegments(db *gorm.DB, query string) []rawJoinSegment {
 	tokens := rawSQLTokens(query)
 	var joinIndexes []int
 	for index, token := range tokens {
@@ -688,7 +688,7 @@ func normalizeSQLIdentifier(value string) string {
 }
 
 // normalizeRawSQLIdentifier 按数据库规则规范化原生 SQL 中未引用的标识符。
-func normalizeRawSQLIdentifier(db *gormdb.DB, value string) string {
+func normalizeRawSQLIdentifier(db *gorm.DB, value string) string {
 	name := normalizeSQLIdentifier(value)
 	if db == nil || db.Dialector == nil || db.Dialector.Name() != "postgres" || isQuotedSQLIdentifier(value) {
 		return name
@@ -710,7 +710,7 @@ func isQuotedSQLIdentifier(value string) bool {
 }
 
 // statementUsesRegisteredTable 判断当前无 Schema 语句是否直接操作已注册表。
-func statementUsesRegisteredTable(db *gormdb.DB, registeredTables map[string]struct{}) bool {
+func statementUsesRegisteredTable(db *gorm.DB, registeredTables map[string]struct{}) bool {
 	if db == nil || db.Statement == nil {
 		return false
 	}
@@ -729,7 +729,7 @@ func statementUsesRegisteredTable(db *gormdb.DB, registeredTables map[string]str
 }
 
 // setTenantMap 将租户编号写入 map 创建参数。
-func setTenantMap(db *gormdb.DB, tenantField *schema.Field, tenantID int64) bool {
+func setTenantMap(db *gorm.DB, tenantField *schema.Field, tenantID int64) bool {
 	switch dest := db.Statement.Dest.(type) {
 	case map[string]interface{}:
 		setTenantMapItem(db, dest, tenantField, tenantID)
@@ -754,7 +754,7 @@ func setTenantMap(db *gormdb.DB, tenantField *schema.Field, tenantID int64) bool
 }
 
 // setTenantMapItem 在单条 map 数据上填充或校验租户编号。
-func setTenantMapItem(db *gormdb.DB, item map[string]interface{}, tenantField *schema.Field, tenantID int64) {
+func setTenantMapItem(db *gorm.DB, item map[string]interface{}, tenantField *schema.Field, tenantID int64) {
 	if item == nil || db.Error != nil {
 		return
 	}
@@ -797,7 +797,7 @@ func tenantMapValue(item map[string]interface{}, tenantField *schema.Field) (str
 }
 
 // setTenantField 将租户编号写入结构体或结构体集合。
-func setTenantField(db *gormdb.DB, value reflect.Value, tenantField *schema.Field, tenantID int64) {
+func setTenantField(db *gorm.DB, value reflect.Value, tenantField *schema.Field, tenantID int64) {
 	if !value.IsValid() || db.Error != nil {
 		return
 	}

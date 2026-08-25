@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"sync"
 
-	kratosTransport "github.com/go-kratos/kratos/v3/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	basequeue "github.com/liujitcn/kratos-kit/queue"
-	queueData "github.com/liujitcn/kratos-kit/queue/data"
+	"github.com/liujitcn/kratos-kit/queue/data"
 )
 
-var _ kratosTransport.Server = (*Server)(nil)
+var _ transport.Server = (*Server)(nil)
 
 // Server 将现有 queue.Queue 适配为 Kratos transport.Server。
 type Server struct {
@@ -111,12 +111,12 @@ func (s *Server) Stop(_ context.Context) error {
 }
 
 // Append 向指定流追加消息。
-func (s *Server) Append(stream Stream, message queueData.Message) error {
+func (s *Server) Append(stream Stream, message data.Message) error {
 	return s.queue.Append(string(stream), message)
 }
 
 // Register 注册指定流的消费处理函数。
-func (s *Server) Register(stream Stream, fn queueData.ConsumerFunc) {
+func (s *Server) Register(stream Stream, fn data.ConsumerFunc) {
 	s.queue.Register(string(stream), fn)
 }
 

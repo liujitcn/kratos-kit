@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	sseServer "github.com/liujitcn/kratos-kit/transport/sse"
+	"github.com/liujitcn/kratos-kit/transport/sse"
 	"github.com/liujitcn/kratos-kit/utils"
 )
 
 // CreateSseServer 创建独立监听端口的 SSE 服务端。
-func CreateSseServer(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) (*sseServer.Server, error) {
+func CreateSseServer(cfg *configv1.Bootstrap, opts ...sse.ServerOption) (*sse.Server, error) {
 	err := validateSseServerTransport(cfg, configv1.Server_Sse_HTTP)
 	if err != nil {
 		return nil, err
@@ -22,11 +22,11 @@ func CreateSseServer(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) (*
 		return nil, err
 	}
 
-	return sseServer.NewServer(options...)
+	return sse.NewServer(options...)
 }
 
 // CreateSseHandler 创建可挂载到已有 HTTP 服务的 SSE 处理器。
-func CreateSseHandler(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) (*sseServer.Server, error) {
+func CreateSseHandler(cfg *configv1.Bootstrap, opts ...sse.ServerOption) (*sse.Server, error) {
 	err := validateSseServerTransport(cfg, configv1.Server_Sse_IN_PROCESS)
 	if err != nil {
 		return nil, err
@@ -37,11 +37,11 @@ func CreateSseHandler(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) (
 		return nil, err
 	}
 
-	return sseServer.NewHandler(options...), nil
+	return sse.NewHandler(options...), nil
 }
 
 // CreateSseHTTPHandler 创建标准 http.Handler 形式的 SSE 处理器。
-func CreateSseHTTPHandler(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) (http.Handler, error) {
+func CreateSseHTTPHandler(cfg *configv1.Bootstrap, opts ...sse.ServerOption) (http.Handler, error) {
 	return CreateSseHandler(cfg, opts...)
 }
 
@@ -64,8 +64,8 @@ func validateSseServerTransport(cfg *configv1.Bootstrap, expected configv1.Serve
 }
 
 // initSseServerConfig 初始化 SSE 服务端配置。
-func initSseServerConfig(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption) ([]sseServer.ServerOption, error) {
-	options := make([]sseServer.ServerOption, 0, len(opts)+12)
+func initSseServerConfig(cfg *configv1.Bootstrap, opts ...sse.ServerOption) ([]sse.ServerOption, error) {
+	options := make([]sse.ServerOption, 0, len(opts)+12)
 
 	if cfg == nil || cfg.Server == nil || cfg.Server.Sse == nil {
 		return append(options, opts...), nil
@@ -73,29 +73,29 @@ func initSseServerConfig(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption
 
 	sseCfg := cfg.Server.Sse
 	if sseCfg.Network != "" {
-		options = append(options, sseServer.WithNetwork(sseCfg.Network))
+		options = append(options, sse.WithNetwork(sseCfg.Network))
 	}
 	if sseCfg.Addr != "" {
-		options = append(options, sseServer.WithAddress(sseCfg.Addr))
+		options = append(options, sse.WithAddress(sseCfg.Addr))
 	}
 	if sseCfg.Path != "" {
-		options = append(options, sseServer.WithPath(sseCfg.Path))
+		options = append(options, sse.WithPath(sseCfg.Path))
 	}
 	if sseCfg.Codec != "" {
-		options = append(options, sseServer.WithCodec(sseCfg.Codec))
+		options = append(options, sse.WithCodec(sseCfg.Codec))
 	}
 	if sseCfg.Timeout != nil {
-		options = append(options, sseServer.WithTimeout(sseCfg.Timeout.AsDuration()))
+		options = append(options, sse.WithTimeout(sseCfg.Timeout.AsDuration()))
 	}
 	if sseCfg.EventTtl != nil {
-		options = append(options, sseServer.WithEventTTL(sseCfg.EventTtl.AsDuration()))
+		options = append(options, sse.WithEventTTL(sseCfg.EventTtl.AsDuration()))
 	}
 
 	options = append(options,
-		sseServer.WithAutoStream(sseCfg.GetAutoStream()),
-		sseServer.WithAutoReply(sseCfg.GetAutoReply()),
-		sseServer.WithSplitData(sseCfg.GetSplitData()),
-		sseServer.WithEncodeBase64(sseCfg.GetEncodeBase64()),
+		sse.WithAutoStream(sseCfg.GetAutoStream()),
+		sse.WithAutoReply(sseCfg.GetAutoReply()),
+		sse.WithSplitData(sseCfg.GetSplitData()),
+		sse.WithEncodeBase64(sseCfg.GetEncodeBase64()),
 	)
 
 	if sseCfg.Tls != nil {
@@ -104,7 +104,7 @@ func initSseServerConfig(cfg *configv1.Bootstrap, opts ...sseServer.ServerOption
 			return nil, err
 		}
 		if tlsCfg != nil {
-			options = append(options, sseServer.WithTLSConfig(tlsCfg))
+			options = append(options, sse.WithTLSConfig(tlsCfg))
 		}
 	}
 

@@ -2,7 +2,7 @@ package redisqueue
 
 import (
 	"context"
-	stderrors "errors"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -164,7 +164,7 @@ func (c *Consumer) RunContext(ctx context.Context) {
 	consumers := c.snapshotConsumers()
 	if len(consumers) == 0 {
 		c.running.Store(false)
-		c.reportError(stderrors.New("at least one consumer function needs to be registered"))
+		c.reportError(errors.New("at least one consumer function needs to be registered"))
 		return
 	}
 	if err := c.prepareConsumerGroups(ctx, consumers); err != nil {
@@ -317,7 +317,7 @@ func (c *Consumer) reclaim(ctx context.Context) {
 						End:    end,
 						Count:  int64(c.options.BufferSize - len(c.queue)),
 					}).Result()
-					if err != nil && !stderrors.Is(err, redis.Nil) {
+					if err != nil && !errors.Is(err, redis.Nil) {
 						c.reportError(fmt.Errorf("error listing pending messages: %w", err))
 						break
 					}
@@ -339,12 +339,12 @@ func (c *Consumer) reclaim(ctx context.Context) {
 							MinIdle:  c.options.VisibilityTimeout,
 							Messages: []string{r.ID},
 						}).Result()
-						if err != nil && !stderrors.Is(err, redis.Nil) {
+						if err != nil && !errors.Is(err, redis.Nil) {
 							c.reportError(fmt.Errorf("error claiming message: %w", err))
 							break
 						}
 						// 消息已经被裁剪或删除时，需要主动 ack 清理 pending 状态。
-						if stderrors.Is(err, redis.Nil) {
+						if errors.Is(err, redis.Nil) {
 							err = c.redis.XAck(ctx, stream, c.options.GroupName, r.ID).Err()
 							if err != nil {
 								c.reportError(fmt.Errorf("error acknowledging after failed claim for %q stream and %q message: %w", stream, r.ID, err))
@@ -391,7 +391,7 @@ func (c *Consumer) poll(ctx context.Context) {
 				if err, ok := err.(net.Error); ok && err.Timeout() {
 					continue
 				}
-				if stderrors.Is(err, redis.Nil) {
+				if errors.Is(err, redis.Nil) {
 					continue
 				}
 				c.reportError(fmt.Errorf("error reading redis stream: %w", err))

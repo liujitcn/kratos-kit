@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	kitlogger "github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/logger"
 )
 
 const defaultTimestampFormat = "2006-01-02 15:04:05.000"
@@ -38,7 +38,7 @@ func (f *textFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		builder.WriteString(level)
 	}
 
-	var caller = entry.Data[kitlogger.CallerKey]
+	var caller = entry.Data[logger.CallerKey]
 	if caller != nil && caller != "" {
 		builder.WriteByte(' ')
 		builder.WriteString(entryString(caller))
@@ -50,13 +50,13 @@ func (f *textFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	var fields = make(map[string]any, len(entry.Data))
 	for key, value := range entry.Data {
-		if key == kitlogger.CallerKey {
+		if key == logger.CallerKey {
 			continue
 		}
 		fields[key] = value
 	}
 	if len(fields) > 0 {
-		var encodedFields, err = kitlogger.FormatFields(fields)
+		var encodedFields, err = logger.FormatFields(fields)
 		if err != nil {
 			return nil, err
 		}

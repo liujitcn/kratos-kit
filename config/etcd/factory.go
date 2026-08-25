@@ -10,7 +10,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	etcdClient "go.etcd.io/etcd/client/v3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	bConfig "github.com/liujitcn/kratos-kit/config"
@@ -45,13 +45,13 @@ func NewConfigSource(c *configv1.Config) (config.Source, error) {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	cfg := etcdClient.Config{
+	cfg := clientv3.Config{
 		Endpoints:   c.Etcd.Endpoints,
 		DialTimeout: c.Etcd.Timeout.AsDuration(),
 		DialOptions: dialOpts,
 	}
 
-	cli, err := etcdClient.New(cfg)
+	cli, err := clientv3.New(cfg)
 	if err != nil {
 		return nil, err
 	}

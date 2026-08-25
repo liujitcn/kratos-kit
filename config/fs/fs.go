@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	iofs "io/fs"
+	"io/fs"
 	"path"
 	"strings"
 
@@ -15,12 +15,12 @@ import (
 type Option func(*options)
 
 type options struct {
-	fsys iofs.FS
+	fsys fs.FS
 	path string
 }
 
 // WithFS 设置配置文件所在的文件系统。
-func WithFS(fsys iofs.FS) Option {
+func WithFS(fsys fs.FS) Option {
 	return func(o *options) {
 		o.fsys = fsys
 	}
@@ -54,7 +54,7 @@ type source struct {
 
 // Load 读取静态配置文件。
 func (s *source) Load() ([]*config.KeyValue, error) {
-	value, err := iofs.ReadFile(s.options.fsys, s.options.path)
+	value, err := fs.ReadFile(s.options.fsys, s.options.path)
 	if err != nil {
 		return nil, fmt.Errorf("config/fs: read %s: %w", s.options.path, err)
 	}

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-kratos/kratos/v3/selector"
-	kratosTransport "github.com/go-kratos/kratos/v3/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 )
 
 const (
@@ -12,7 +12,7 @@ const (
 	KindMCP = "mcp"
 )
 
-var _ kratosTransport.Transporter = &Transport{}
+var _ transport.Transporter = &Transport{}
 
 // Transport 表示 MCP transport 元信息。
 type Transport struct {
@@ -24,7 +24,7 @@ type Transport struct {
 }
 
 // Kind 返回 transport 类型。
-func (tr *Transport) Kind() kratosTransport.Kind {
+func (tr *Transport) Kind() transport.Kind {
 	return KindMCP
 }
 
@@ -39,12 +39,12 @@ func (tr *Transport) Operation() string {
 }
 
 // RequestHeader 返回请求头。
-func (tr *Transport) RequestHeader() kratosTransport.Header {
+func (tr *Transport) RequestHeader() transport.Header {
 	return tr.reqHeader
 }
 
 // ReplyHeader 返回响应头。
-func (tr *Transport) ReplyHeader() kratosTransport.Header {
+func (tr *Transport) ReplyHeader() transport.Header {
 	return tr.replyHeader
 }
 

@@ -3,9 +3,9 @@ package nacos
 import (
 	"github.com/go-kratos/kratos/v3/config"
 
-	nacosClients "github.com/nacos-group/nacos-sdk-go/v2/clients"
-	nacosConstant "github.com/nacos-group/nacos-sdk-go/v2/common/constant"
-	nacosVo "github.com/nacos-group/nacos-sdk-go/v2/vo"
+	"github.com/nacos-group/nacos-sdk-go/v2/clients"
+	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
+	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	bConfig "github.com/liujitcn/kratos-kit/config"
@@ -21,11 +21,11 @@ func NewConfigSource(c *configv1.Config) (config.Source, error) {
 		return nil, nil
 	}
 
-	srvConf := []nacosConstant.ServerConfig{
-		*nacosConstant.NewServerConfig(c.Nacos.Address, c.Nacos.Port),
+	srvConf := []constant.ServerConfig{
+		*constant.NewServerConfig(c.Nacos.Address, c.Nacos.Port),
 	}
 
-	cliConf := nacosConstant.ClientConfig{
+	cliConf := constant.ClientConfig{
 		TimeoutMs:       c.Nacos.TimeoutMs,            // http请求超时时间，单位毫秒
 		BeatInterval:    c.Nacos.BeatInterval,         // 心跳间隔时间，单位毫秒
 		UpdateThreadNum: int(c.Nacos.UpdateThreadNum), // 更新服务的线程数
@@ -43,8 +43,8 @@ func NewConfigSource(c *configv1.Config) (config.Source, error) {
 		NamespaceId: c.Nacos.NamespaceId, // 命名空间ID
 	}
 
-	nacosClient, err := nacosClients.NewConfigClient(
-		nacosVo.NacosClientParam{
+	nacosClient, err := clients.NewConfigClient(
+		vo.NacosClientParam{
 			ClientConfig:  &cliConf,
 			ServerConfigs: srvConf,
 		},

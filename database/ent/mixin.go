@@ -3,7 +3,7 @@ package ent
 import (
 	"time"
 
-	entgo "entgo.io/ent"
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/field"
@@ -11,12 +11,12 @@ import (
 
 // AuditMixin 提供 Ent 审计字段与回填 hook。
 type AuditMixin struct {
-	entgo.Mixin
+	ent.Mixin
 }
 
 // Fields 返回审计字段定义。
-func (AuditMixin) Fields() []entgo.Field {
-	return []entgo.Field{
+func (AuditMixin) Fields() []ent.Field {
+	return []ent.Field{
 		field.Int64("created_by").Default(0).Comment("创建人ID"),
 		field.Int64("updated_by").Default(0).Comment("更新人ID"),
 		field.Time("created_at").Default(time.Now).Immutable().Comment("创建时间"),
@@ -25,8 +25,8 @@ func (AuditMixin) Fields() []entgo.Field {
 }
 
 // Hooks 返回审计字段回填 hook。
-func (AuditMixin) Hooks() []entgo.Hook {
-	return []entgo.Hook{
+func (AuditMixin) Hooks() []ent.Hook {
+	return []ent.Hook{
 		AuditHook(),
 	}
 }

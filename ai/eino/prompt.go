@@ -1,18 +1,18 @@
 package eino
 
 import (
-	einoPrompt "github.com/cloudwego/eino/components/prompt"
+	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/schema"
 )
 
 // FromMessages 根据消息模板列表创建 ChatTemplate。
-func FromMessages(formatType schema.FormatType, templates ...schema.MessagesTemplate) *einoPrompt.DefaultChatTemplate {
-	return einoPrompt.FromMessages(formatType, templates...)
+func FromMessages(formatType schema.FormatType, templates ...schema.MessagesTemplate) *prompt.DefaultChatTemplate {
+	return prompt.FromMessages(formatType, templates...)
 }
 
 // FromAgenticMessages 根据 Agentic 消息模板列表创建 AgenticChatTemplate。
-func FromAgenticMessages(formatType schema.FormatType, templates ...schema.AgenticMessagesTemplate) *einoPrompt.DefaultAgenticChatTemplate {
-	return einoPrompt.FromAgenticMessages(formatType, templates...)
+func FromAgenticMessages(formatType schema.FormatType, templates ...schema.AgenticMessagesTemplate) *prompt.DefaultAgenticChatTemplate {
+	return prompt.FromAgenticMessages(formatType, templates...)
 }
 
 // SystemMessage 创建一个系统角色的消息模板。

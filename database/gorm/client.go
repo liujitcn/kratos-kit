@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v3/log"
-	gormdb "gorm.io/gorm"
+	"gorm.io/gorm"
 	gormLog "gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"gorm.io/plugin/opentelemetry/tracing"
@@ -25,7 +25,7 @@ import (
 // Client 封装 GORM 数据库客户端。
 type Client struct {
 	// DB 是实际执行查询、事务和迁移脚本的 GORM 数据库对象。
-	*gormdb.DB
+	*gorm.DB
 	// name 是数据源名称，default 表示集中保存迁移记录的默认库。
 	name string
 	// driver 是配置声明的真实数据库驱动，用于区分复用同一 GORM Dialector 的数据库。
@@ -70,7 +70,7 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 	if cfg.Driver == "mysql" || cfg.Driver == "doris" {
 		source = ensureMySQLMultiStatements(source)
 	}
-	db, err := gormdb.Open(gormDriver(source), &gormdb.Config{
+	db, err := gorm.Open(gormDriver(source), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
@@ -215,7 +215,7 @@ func (c *Client) Driver() string {
 }
 
 // registerCallbacks 按注册顺序将包级回调安装到 GORM 客户端。
-func registerCallbacks(db *gormdb.DB) error {
+func registerCallbacks(db *gorm.DB) error {
 	var err error
 	for i, fn := range getCallbackQueries() {
 		err = db.Callback().Query().Before("gorm:query").Register(fmt.Sprintf("before_query_%d", i), fn)

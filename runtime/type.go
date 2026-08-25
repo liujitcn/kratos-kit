@@ -1,13 +1,13 @@
 package runtime
 
 import (
-	utilsTranslator "github.com/liujitcn/go-utils/translator"
+	"github.com/liujitcn/go-utils/translator"
 	"github.com/liujitcn/kratos-kit/cache"
 	"github.com/liujitcn/kratos-kit/database/gorm"
 	"github.com/liujitcn/kratos-kit/locker"
 	"github.com/liujitcn/kratos-kit/oss"
 	"github.com/liujitcn/kratos-kit/queue"
-	queueData "github.com/liujitcn/kratos-kit/queue/data"
+	"github.com/liujitcn/kratos-kit/queue/data"
 )
 
 // Runtime 定义业务系统共享基础设施实例的存取能力。
@@ -47,10 +47,10 @@ type Runtime interface {
 	GetQueue() queue.Queue
 
 	// SetTranslator 设置翻译器。
-	SetTranslator(utilsTranslator.Translator)
+	SetTranslator(translator.Translator)
 	// GetTranslator 获取翻译器。
-	GetTranslator() utilsTranslator.Translator
+	GetTranslator() translator.Translator
 
 	// GetStreamMessage 创建队列流消息。
-	GetStreamMessage(id string, value map[string]interface{}) (queueData.Message, error)
+	GetStreamMessage(id string, value map[string]interface{}) (data.Message, error)
 }

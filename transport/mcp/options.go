@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/liujitcn/kratos-kit/transport/keepalive"
-	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // ServerType 表示 MCP 服务的运行形态。
@@ -41,14 +41,14 @@ func WithServerVersion(version string) ServerOption {
 }
 
 // WithServerOptions 设置官方 MCP SDK 服务选项。
-func WithServerOptions(opts *mcpsdk.ServerOptions) ServerOption {
+func WithServerOptions(opts *mcp.ServerOptions) ServerOption {
 	return func(s *Server) {
 		s.serverOptions = cloneServerOptions(opts)
 	}
 }
 
 // WithMCPServerOptions 设置官方 MCP SDK 服务选项。
-func WithMCPServerOptions(opts *mcpsdk.ServerOptions) ServerOption {
+func WithMCPServerOptions(opts *mcp.ServerOptions) ServerOption {
 	return WithServerOptions(opts)
 }
 
@@ -126,14 +126,14 @@ func WithShutdownTimeout(timeout time.Duration) ServerOption {
 }
 
 // WithStreamableHTTPOptions 设置 Streamable HTTP Handler 选项。
-func WithStreamableHTTPOptions(opts *mcpsdk.StreamableHTTPOptions) ServerOption {
+func WithStreamableHTTPOptions(opts *mcp.StreamableHTTPOptions) ServerOption {
 	return func(s *Server) {
 		s.streamableHTTPOptions = mergeStreamableHTTPOptions(s.streamableHTTPOptions, opts)
 	}
 }
 
 // WithSSEOptions 设置 Legacy SSE Handler 选项。
-func WithSSEOptions(opts *mcpsdk.SSEOptions) ServerOption {
+func WithSSEOptions(opts *mcp.SSEOptions) ServerOption {
 	return func(s *Server) {
 		s.sseOptions = cloneSSEOptions(opts)
 	}

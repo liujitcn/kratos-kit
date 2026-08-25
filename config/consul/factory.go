@@ -3,7 +3,7 @@ package consul
 import (
 	"github.com/go-kratos/kratos/v3/config"
 
-	consulApi "github.com/hashicorp/consul/api"
+	"github.com/hashicorp/consul/api"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	bConfig "github.com/liujitcn/kratos-kit/config"
@@ -19,11 +19,11 @@ func NewConfigSource(c *configv1.Config) (config.Source, error) {
 		return nil, nil
 	}
 
-	cfg := consulApi.DefaultConfig()
+	cfg := api.DefaultConfig()
 	cfg.Address = c.Consul.Address
 	cfg.Scheme = c.Consul.Scheme
 
-	cli, err := consulApi.NewClient(cfg)
+	cli, err := api.NewClient(cfg)
 	if err != nil {
 		return nil, err
 	}

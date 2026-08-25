@@ -2,7 +2,7 @@ package queue
 
 import (
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	basequeue "github.com/liujitcn/kratos-kit/queue"
+	"github.com/liujitcn/kratos-kit/queue"
 )
 
 type backendType uint8
@@ -17,7 +17,7 @@ type options struct {
 	memorySize int64
 	redisConf  *configv1.Data_Redis
 	queueConf  *configv1.Data_Queue
-	instance   basequeue.Queue
+	instance   queue.Queue
 }
 
 // ServerOption 配置队列 transport。
@@ -41,7 +41,7 @@ func WithRedis(redisConf *configv1.Data_Redis, queueConf *configv1.Data_Queue) S
 }
 
 // WithQueue 注入已有队列实例，便于复用队列或进行测试。
-func WithQueue(instance basequeue.Queue) ServerOption {
+func WithQueue(instance queue.Queue) ServerOption {
 	return func(o *options) {
 		o.instance = instance
 	}

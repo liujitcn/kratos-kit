@@ -6,7 +6,7 @@ import (
 
 	"encoding/json"
 
-	jwtV5 "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 const (
@@ -34,22 +34,22 @@ func (c *AuthClaims) GetJwtID() (string, error) {
 }
 
 // GetExpirationTime implements the Claims interface.
-func (c *AuthClaims) GetExpirationTime() (*jwtV5.NumericDate, error) {
+func (c *AuthClaims) GetExpirationTime() (*jwt.NumericDate, error) {
 	return c.parseNumericDate(ClaimFieldExpirationTime)
 }
 
 // GetNotBefore implements the Claims interface.
-func (c *AuthClaims) GetNotBefore() (*jwtV5.NumericDate, error) {
+func (c *AuthClaims) GetNotBefore() (*jwt.NumericDate, error) {
 	return c.parseNumericDate(ClaimFieldNotBefore)
 }
 
 // GetIssuedAt implements the Claims interface.
-func (c *AuthClaims) GetIssuedAt() (*jwtV5.NumericDate, error) {
+func (c *AuthClaims) GetIssuedAt() (*jwt.NumericDate, error) {
 	return c.parseNumericDate(ClaimFieldIssuedAt)
 }
 
 // GetAudience implements the Claims interface.
-func (c *AuthClaims) GetAudience() (jwtV5.ClaimStrings, error) {
+func (c *AuthClaims) GetAudience() (jwt.ClaimStrings, error) {
 	return c.parseClaimsString(ClaimFieldAudience)
 }
 
@@ -65,7 +65,7 @@ func (c *AuthClaims) GetSubject() (string, error) {
 
 // GetScopes returns the scopes of the token.
 // Scopes see: https://datatracker.ietf.org/doc/html/rfc6749#section-3.3
-func (c *AuthClaims) GetScopes() (jwtV5.ClaimStrings, error) {
+func (c *AuthClaims) GetScopes() (jwt.ClaimStrings, error) {
 	return c.parseClaimsString(ClaimFieldScope)
 }
 
@@ -77,7 +77,7 @@ func (c *AuthClaims) GetStrings(key string) ([]string, error) {
 	return c.parseStrings(key)
 }
 
-func (c *AuthClaims) GetClaimStrings(key string) (jwtV5.ClaimStrings, error) {
+func (c *AuthClaims) GetClaimStrings(key string) (jwt.ClaimStrings, error) {
 	return c.parseClaimsString(key)
 }
 
@@ -212,7 +212,7 @@ func (c *AuthClaims) parseStrings(key string) ([]string, error) {
 // parseNumericDate tries to parse a key in the map claims type as a number
 // date. This will succeed, if the underlying type is either a [float64] or a
 // [json.Number]. Otherwise, nil will be returned.
-func (c *AuthClaims) parseNumericDate(key string) (*jwtV5.NumericDate, error) {
+func (c *AuthClaims) parseNumericDate(key string) (*jwt.NumericDate, error) {
 	v, ok := (*c)[key]
 	if !ok {
 		return nil, nil
@@ -236,7 +236,7 @@ func (c *AuthClaims) parseNumericDate(key string) (*jwtV5.NumericDate, error) {
 
 // parseClaimsString tries to parse a key in the map claims type as a
 // [ClaimsStrings] type, which can either be a string or an array of string.
-func (c *AuthClaims) parseClaimsString(key string) (jwtV5.ClaimStrings, error) {
+func (c *AuthClaims) parseClaimsString(key string) (jwt.ClaimStrings, error) {
 	var cs []string
 	switch v := (*c)[key].(type) {
 	case string:
@@ -256,9 +256,9 @@ func (c *AuthClaims) parseClaimsString(key string) (jwtV5.ClaimStrings, error) {
 	return cs, nil
 }
 
-func newNumericDateFromSeconds(f float64) *jwtV5.NumericDate {
+func newNumericDateFromSeconds(f float64) *jwt.NumericDate {
 	round, frac := math.Modf(f)
-	return jwtV5.NewNumericDate(time.Unix(int64(round), int64(frac*1e9)))
+	return jwt.NewNumericDate(time.Unix(int64(round), int64(frac*1e9)))
 }
 
 func parseNumber[R float32 | float64 | int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64](value interface{}) (R, error) {

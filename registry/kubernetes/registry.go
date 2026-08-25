@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -169,7 +169,7 @@ func (s *Registry) GetService(_ context.Context, name string) ([]*registry.Servi
 	}
 	ret := make([]*registry.ServiceInstance, 0, len(pods))
 	for _, pod := range pods {
-		if pod.Status.Phase != corev1.PodRunning {
+		if pod.Status.Phase != v1.PodRunning {
 			continue
 		}
 		instance, err := getServiceInstanceFromPod(pod)
@@ -201,7 +201,7 @@ func (s *Registry) Watch(ctx context.Context, name string) (registry.Watcher, er
 			case <-s.stopCh:
 				return false
 			default:
-				pod := obj.(*corev1.Pod)
+				pod := obj.(*v1.Pod)
 				val := pod.GetLabels()[LabelsKeyServiceName]
 				return val == name
 			}
@@ -346,7 +346,7 @@ func getProtocolMapByEndpoints(endpoints []string) (protocolMap, error) {
 	return ret, nil
 }
 
-func getProtocolMapFromPod(pod *corev1.Pod) (protocolMap, error) {
+func getProtocolMapFromPod(pod *v1.Pod) (protocolMap, error) {
 	protoMap := protocolMap{}
 	if s := pod.Annotations[AnnotationsKeyProtocolMap]; !isEmptyObjectString(s) {
 		err := unmarshal(s, &protoMap)
@@ -357,7 +357,7 @@ func getProtocolMapFromPod(pod *corev1.Pod) (protocolMap, error) {
 	return protoMap, nil
 }
 
-func getMetadataFromPod(pod *corev1.Pod) (map[string]string, error) {
+func getMetadataFromPod(pod *v1.Pod) (map[string]string, error) {
 	metadata := map[string]string{}
 	if s := pod.Annotations[AnnotationsKeyMetadata]; !isEmptyObjectString(s) {
 		err := unmarshal(s, &metadata)
@@ -368,7 +368,7 @@ func getMetadataFromPod(pod *corev1.Pod) (map[string]string, error) {
 	return metadata, nil
 }
 
-func getServiceInstanceFromPod(pod *corev1.Pod) (*registry.ServiceInstance, error) {
+func getServiceInstanceFromPod(pod *v1.Pod) (*registry.ServiceInstance, error) {
 	podIP := pod.Status.PodIP
 	podLabels := pod.GetLabels()
 	// Get Metadata

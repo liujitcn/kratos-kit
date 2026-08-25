@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit
 go 1.27.0
 
 require (
-	github.com/liujitcn/go-utils/translator v0.0.3
+	github.com/liujitcn/go-utils/translator v0.0.4
 	github.com/liujitcn/kratos-kit/cache v0.0.17
 	github.com/liujitcn/kratos-kit/database/gorm v0.0.39
 	github.com/liujitcn/kratos-kit/locker v0.0.14

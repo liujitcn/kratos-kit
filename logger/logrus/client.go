@@ -11,11 +11,11 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	kitlogger "github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/logger"
 )
 
 func init() {
-	_ = kitlogger.Register(kitlogger.Logrus, func(cfg *configv1.Logger) (*slog.Logger, error) {
+	_ = logger.Register(logger.Logrus, func(cfg *configv1.Logger) (*slog.Logger, error) {
 		return NewLogger(cfg)
 	})
 }
@@ -55,7 +55,7 @@ func NewLogger(cfg *configv1.Logger) (*slog.Logger, error) {
 				cfg.Logrus.DisableTimestamp,
 				fileWriter,
 			),
-			formatCaller: kitlogger.FormatFileCaller,
+			formatCaller: logger.FormatFileCaller,
 			cleanANSI:    true,
 		})
 	}
@@ -70,11 +70,11 @@ func NewLogger(cfg *configv1.Logger) (*slog.Logger, error) {
 				cfg.Logrus.DisableTimestamp,
 				os.Stdout,
 			),
-			formatCaller: kitlogger.FormatConsoleCaller,
+			formatCaller: logger.FormatConsoleCaller,
 		})
 	}
 
-	return kitlogger.NewLegacyLogger(wrapped), nil
+	return logger.NewLegacyLogger(wrapped), nil
 }
 
 // newBackendLogger 创建指定输出目标和格式的 logrus 实例。

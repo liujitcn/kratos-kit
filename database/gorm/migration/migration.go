@@ -7,11 +7,11 @@ import (
 	"slices"
 	"sync"
 
-	databaseGorm "github.com/liujitcn/kratos-kit/database/gorm"
+	"github.com/liujitcn/kratos-kit/database/gorm"
 )
 
 // DefaultTarget 表示默认数据源目标。
-const DefaultTarget = databaseGorm.DefaultClientName
+const DefaultTarget = gorm.DefaultClientName
 
 // Migration 描述一个模块提供的版本化迁移资源。
 type Migration struct {
@@ -39,7 +39,7 @@ type Runner struct {
 	// registry 保存已校验的迁移模块及其依赖关系。
 	registry *Registry
 	// clients 按数据源名称保存已注入的 GORM 客户端。
-	clients map[string]*databaseGorm.Client
+	clients map[string]*gorm.Client
 	// mu 保护客户端注册和迁移执行过程，避免并发执行同一 Runner。
 	mu sync.Mutex
 }
@@ -51,12 +51,12 @@ func NewRunner(registry *Registry) (*Runner, error) {
 	}
 	return &Runner{
 		registry: registry,
-		clients:  make(map[string]*databaseGorm.Client),
+		clients:  make(map[string]*gorm.Client),
 	}, nil
 }
 
 // SetClient 注入数据库客户端；默认客户端用于保存集中迁移记录。
-func (r *Runner) SetClient(client *databaseGorm.Client) error {
+func (r *Runner) SetClient(client *gorm.Client) error {
 	if r == nil {
 		return fmt.Errorf("迁移执行器不能为空")
 	}
@@ -70,7 +70,7 @@ func (r *Runner) SetClient(client *databaseGorm.Client) error {
 }
 
 // NewReady 创建默认数据库迁移屏障。
-func NewReady(_ *databaseGorm.Client) Ready {
+func NewReady(_ *gorm.Client) Ready {
 	return Ready{}
 }
 
@@ -78,7 +78,7 @@ func NewReady(_ *databaseGorm.Client) Ready {
 //
 // 不传目标客户端时，按版本目录中的数据源目录查找客户端，未找到时回退到默认客户端；
 // 传入一个目标客户端时，仅执行该客户端对应数据库类型和数据源的迁移。
-func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*databaseGorm.Client) error {
+func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*gorm.Client) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -98,7 +98,7 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*dat
 	if err != nil {
 		return err
 	}
-	targets := make(map[string]*databaseGorm.Client)
+	targets := make(map[string]*gorm.Client)
 	if len(targetClients) == 1 {
 		targetClient := targetClients[0]
 		if targetClient == nil || targetClient.DB == nil {
@@ -108,7 +108,7 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*dat
 	} else {
 		for _, assets := range assetsByModule {
 			for _, asset := range assets {
-				var targetClient *databaseGorm.Client
+				var targetClient *gorm.Client
 				targetClient, exists = r.clients[asset.dataSource]
 				if !exists || targetClient == nil || targetClient.DB == nil {
 					// 迁移目录可以提前声明尚未配置的数据源，未匹配时统一落到默认数据源。
@@ -221,10 +221,10 @@ func (r *Runner) loadModuleAssets(
 // runModule 按依赖顺序执行迁移模块。
 func (r *Runner) runModule(
 	ctx context.Context,
-	centralClient *databaseGorm.Client,
+	centralClient *gorm.Client,
 	name ModuleName,
 	dataSource string,
-	targetClient *databaseGorm.Client,
+	targetClient *gorm.Client,
 	visited map[ModuleName]bool,
 	assetsByModule map[ModuleName][]migrationAsset,
 ) error {
@@ -258,8 +258,8 @@ func (r *Runner) runModule(
 // runMigration 执行单个迁移资源目录，并将执行记录保存到默认数据源。
 func (r *Runner) runMigration(
 	ctx context.Context,
-	centralClient *databaseGorm.Client,
-	targetClient *databaseGorm.Client,
+	centralClient *gorm.Client,
+	targetClient *gorm.Client,
 	moduleName ModuleName,
 	asset migrationAsset,
 ) error {

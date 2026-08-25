@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/go-kratos/kratos/v3/log"
-	kitlogger "github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/logger"
 )
 
 // Logger 定义阿里云日志 SDK 适配器能力。
@@ -53,9 +53,9 @@ func NewAliyunLog(options ...Option) (Logger, error) {
 
 // Log 将统一解析后的结构化日志写入阿里云日志服务。
 func (a *aliyunLog) Log(level log.Level, keyvals ...any) error {
-	var entry kitlogger.Entry
+	var entry logger.Entry
 	var err error
-	entry, err = kitlogger.ParseLegacyEntry(keyvals...)
+	entry, err = logger.ParseLegacyEntry(keyvals...)
 	if err != nil {
 		return err
 	}
@@ -68,20 +68,20 @@ func (a *aliyunLog) Log(level log.Level, keyvals ...any) error {
 	if entry.Message != "" {
 		contents = append(contents, &sls.LogContent{
 			Key:   new(slog.MessageKey),
-			Value: new(kitlogger.CleanANSI(entry.Message)),
+			Value: new(logger.CleanANSI(entry.Message)),
 		})
 	}
-	var caller = kitlogger.FormatFileCaller(entry.Caller)
+	var caller = logger.FormatFileCaller(entry.Caller)
 	if caller != "" {
 		contents = append(contents, &sls.LogContent{
-			Key:   new(kitlogger.CallerKey),
+			Key:   new(logger.CallerKey),
 			Value: new(caller),
 		})
 	}
 	for _, field := range entry.Fields {
 		contents = append(contents, &sls.LogContent{
 			Key:   new(field.Key),
-			Value: new(kitlogger.CleanANSI(toString(field.Value))),
+			Value: new(logger.CleanANSI(toString(field.Value))),
 		})
 	}
 

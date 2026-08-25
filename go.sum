@@ -281,8 +281,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/liujitcn/go-utils v0.0.36 h1:fJ+k0JohHnGLrPoV/6QMwBorfrfvs6YReUTI1UazSjs=
 github.com/liujitcn/go-utils v0.0.36/go.mod h1:7QojK9b2R4p0wrBPYTkkK7372mGVUhO8QseAZpHuhOs=
-github.com/liujitcn/go-utils/translator v0.0.3 h1:4OpwvK4gKL6s/HsY1lRWiR2fMnFPchp8+coC9Y/Vwgg=
-github.com/liujitcn/go-utils/translator v0.0.3/go.mod h1:c7K/fvl1m/YcSTI33929VoesSTD1Lx5olMsMIXaJnUA=
+github.com/liujitcn/go-utils/translator v0.0.4 h1:P2cGkwf/TXb5GBz/SYnahijBZSMw/o1fYkV138DyCvI=
+github.com/liujitcn/go-utils/translator v0.0.4/go.mod h1:c7K/fvl1m/YcSTI33929VoesSTD1Lx5olMsMIXaJnUA=
 github.com/liujitcn/kratos-kit/api v0.0.30 h1:5Ym0hV9oY67VgMlPc3dMGEhtoKTOwSfhEy4kfseHNmE=
 github.com/liujitcn/kratos-kit/api v0.0.30/go.mod h1:OxJnIZeM6wwGjsheybFzOwgpHoZEu4SfPN+qhECXqF4=
 github.com/liujitcn/kratos-kit/auth v0.0.24 h1:SR5B/7JWJFlQu+YVXzCC0f4fy3qq5axCCFzTB1IPL0I=

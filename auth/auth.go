@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-kratos/kratos/v3/middleware"
 	"github.com/go-kratos/kratos/v3/transport"
-	authnEngine "github.com/liujitcn/kratos-kit/auth/authn/engine"
+	"github.com/liujitcn/kratos-kit/auth/authn/engine"
 	authnMiddleware "github.com/liujitcn/kratos-kit/auth/authn/middleware"
 	authzEngine "github.com/liujitcn/kratos-kit/auth/authz/engine"
 	authzMiddleware "github.com/liujitcn/kratos-kit/auth/authz/middleware"
@@ -23,7 +23,7 @@ func Server(userToken *data.UserToken) middleware.Middleware {
 				return nil, ErrWrongContext
 			}
 
-			var authnClaims *authnEngine.AuthClaims
+			var authnClaims *engine.AuthClaims
 			authnClaims, ok = authnMiddleware.FromContext(ctx)
 			if !ok {
 				return nil, ErrWrongContext
@@ -58,7 +58,7 @@ func Server(userToken *data.UserToken) middleware.Middleware {
 }
 
 func FromContext(ctx context.Context) (*data.UserTokenPayload, error) {
-	claims, ok := authnEngine.AuthClaimsFromContext(ctx)
+	claims, ok := engine.AuthClaimsFromContext(ctx)
 	if !ok {
 		return nil, ErrMissingJwtToken
 	}
@@ -67,7 +67,7 @@ func FromContext(ctx context.Context) (*data.UserTokenPayload, error) {
 }
 
 // verifyAccessToken 校验访问令牌
-func verifyAccessToken(userToken *data.UserToken, authnClaims *authnEngine.AuthClaims) error {
+func verifyAccessToken(userToken *data.UserToken, authnClaims *engine.AuthClaims) error {
 	userID, err := authnClaims.GetInt64(data.ClaimFieldUserID)
 	if err != nil {
 		return ErrExtractUserInfoFailed

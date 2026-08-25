@@ -8,8 +8,8 @@ import (
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/tmc/langchaingo/llms"
-	lcOllama "github.com/tmc/langchaingo/llms/ollama"
-	lcOpenAI "github.com/tmc/langchaingo/llms/openai"
+	"github.com/tmc/langchaingo/llms/ollama"
+	"github.com/tmc/langchaingo/llms/openai"
 )
 
 const (
@@ -43,17 +43,17 @@ func newCloudModel(cfg *configv1.AI_Model, o *options) (llms.Model, error) {
 		return nil, errors.New("ai cloud config is nil")
 	}
 
-	opts := []lcOpenAI.Option{
-		lcOpenAI.WithToken(cloud.GetApiKey()),
-		lcOpenAI.WithModel(cfg.GetModelName()),
-		lcOpenAI.WithHTTPClient(httpClient(cfg, o)),
+	opts := []openai.Option{
+		openai.WithToken(cloud.GetApiKey()),
+		openai.WithModel(cfg.GetModelName()),
+		openai.WithHTTPClient(httpClient(cfg, o)),
 	}
 	if cloud.GetBaseUrl() != "" {
-		opts = append(opts, lcOpenAI.WithBaseURL(cloud.GetBaseUrl()))
+		opts = append(opts, openai.WithBaseURL(cloud.GetBaseUrl()))
 	}
 	opts = append(opts, o.openAIOpts...)
 
-	return lcOpenAI.New(opts...)
+	return openai.New(opts...)
 }
 
 // newLocalModel 创建本地 Ollama 模型客户端。
@@ -72,14 +72,14 @@ func newLocalModel(cfg *configv1.AI_Model, o *options) (llms.Model, error) {
 		port = defaultLocalPort
 	}
 
-	opts := []lcOllama.Option{
-		lcOllama.WithModel(cfg.GetModelName()),
-		lcOllama.WithServerURL(fmt.Sprintf("http://%s:%d", host, port)),
-		lcOllama.WithHTTPClient(httpClient(cfg, o)),
+	opts := []ollama.Option{
+		ollama.WithModel(cfg.GetModelName()),
+		ollama.WithServerURL(fmt.Sprintf("http://%s:%d", host, port)),
+		ollama.WithHTTPClient(httpClient(cfg, o)),
 	}
 	opts = append(opts, o.ollamaOpts...)
 
-	return lcOllama.New(opts...)
+	return ollama.New(opts...)
 }
 
 // httpClient 返回模型请求使用的 HTTP 客户端。

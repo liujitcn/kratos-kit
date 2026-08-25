@@ -7,7 +7,7 @@ import (
 	"github.com/go-kratos/kratos/v3/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
-	semConv "go.opentelemetry.io/otel/semconv/v1.12.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 	"go.opentelemetry.io/otel/trace"
 	workflowservice "go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
@@ -189,9 +189,9 @@ func (wc *WorkflowClient) startProducerSpan(ctx context.Context, topic string) (
 	return wc.tracer.Start(ctx, spanNameProducer,
 		trace.WithSpanKind(trace.SpanKindProducer),
 		trace.WithAttributes(
-			semConv.MessagingSystemKey.String(tracerMessageSystemKey),
-			semConv.MessagingDestinationKindTopic,
-			semConv.MessagingDestinationKey.String(topic),
+			semconv.MessagingSystemKey.String(tracerMessageSystemKey),
+			semconv.MessagingDestinationKindTopic,
+			semconv.MessagingDestinationKey.String(topic),
 		),
 	)
 }
@@ -215,10 +215,10 @@ func (wc *WorkflowClient) startConsumerSpan(ctx context.Context, topic string) (
 	return wc.tracer.Start(ctx, spanNameConsumer,
 		trace.WithSpanKind(trace.SpanKindConsumer),
 		trace.WithAttributes(
-			semConv.MessagingSystemKey.String(tracerMessageSystemKey),
-			semConv.MessagingDestinationKindTopic,
-			semConv.MessagingDestinationKey.String(topic),
-			semConv.MessagingOperationReceive,
+			semconv.MessagingSystemKey.String(tracerMessageSystemKey),
+			semconv.MessagingDestinationKindTopic,
+			semconv.MessagingDestinationKey.String(topic),
+			semconv.MessagingOperationReceive,
 		),
 	)
 }

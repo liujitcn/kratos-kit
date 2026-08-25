@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-kratos/kratos/v3/config"
-	goredis "github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
 )
 
 const channelPrefix = "__kratos_config__:"
@@ -54,7 +54,7 @@ func WithFormat(format string) Option {
 }
 
 // New 创建 Redis 配置源。
-func New(client goredis.UniversalClient, opts ...Option) (config.Source, error) {
+func New(client redis.UniversalClient, opts ...Option) (config.Source, error) {
 	if client == nil {
 		return nil, errors.New("config/redis: client is nil")
 	}
@@ -76,7 +76,7 @@ func New(client goredis.UniversalClient, opts ...Option) (config.Source, error) 
 }
 
 type source struct {
-	client  goredis.UniversalClient
+	client  redis.UniversalClient
 	options *options
 }
 
@@ -106,7 +106,7 @@ func (s *source) Watch() (config.Watcher, error) {
 // load 读取配置并转换为 Kratos KeyValue。
 func (s *source) load(ctx context.Context) ([]*config.KeyValue, error) {
 	value, err := s.client.Get(ctx, s.options.path).Bytes()
-	if err == goredis.Nil {
+	if err == redis.Nil {
 		return []*config.KeyValue{}, nil
 	}
 	if err != nil {
@@ -132,8 +132,8 @@ type watcher struct {
 	source *source
 	ctx    context.Context
 	cancel context.CancelFunc
-	pubsub *goredis.PubSub
-	msgs   <-chan *goredis.Message
+	pubsub *redis.PubSub
+	msgs   <-chan *redis.Message
 }
 
 // Next 等待下一条 Redis 配置变更通知。

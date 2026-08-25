@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 
-	databaseGorm "github.com/liujitcn/kratos-kit/database/gorm"
+	"github.com/liujitcn/kratos-kit/database/gorm"
 )
 
 // withMigrationLock 使用默认数据库锁定一个模块的数据源迁移。
 func withMigrationLock(
 	ctx context.Context,
-	client *databaseGorm.Client,
+	client *gorm.Client,
 	module ModuleName,
 	dataSource string,
 	fn func() error,

@@ -2,7 +2,7 @@ package cron
 
 import (
 	"github.com/go-kratos/kratos/v3/selector"
-	kratosTransport "github.com/go-kratos/kratos/v3/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 )
 
 const (
@@ -10,7 +10,7 @@ const (
 	KindCron = "cron"
 )
 
-var _ kratosTransport.Transporter = &Transport{}
+var _ transport.Transporter = &Transport{}
 
 // Transport 表示 Cron 传输上下文。
 type Transport struct {
@@ -22,7 +22,7 @@ type Transport struct {
 }
 
 // Kind 返回传输类型。
-func (tr *Transport) Kind() kratosTransport.Kind {
+func (tr *Transport) Kind() transport.Kind {
 	return KindCron
 }
 
@@ -37,12 +37,12 @@ func (tr *Transport) Operation() string {
 }
 
 // RequestHeader 返回请求头载体。
-func (tr *Transport) RequestHeader() kratosTransport.Header {
+func (tr *Transport) RequestHeader() transport.Header {
 	return tr.reqHeader
 }
 
 // ReplyHeader 返回响应头载体。
-func (tr *Transport) ReplyHeader() kratosTransport.Header {
+func (tr *Transport) ReplyHeader() transport.Header {
 	return tr.replyHeader
 }
 

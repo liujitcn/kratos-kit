@@ -1,7 +1,7 @@
 package response
 
 import (
-	jsonv1 "encoding/json"
+	"encoding/json"
 	jsonv2 "encoding/json/v2"
 	"net/http"
 
@@ -41,7 +41,7 @@ func marshal(codec encoding.Codec, v interface{}) ([]byte, error) {
 	if codec.Name() == kratosJSON.Name {
 		if message, ok := v.(proto.Message); ok {
 			// 保留 encoding/json v1 的兼容语义，同时使用 Go 1.27 的 json/v2 实现。
-			return jsonv2.Marshal(message, jsonv1.DefaultOptionsV1())
+			return jsonv2.Marshal(message, json.DefaultOptionsV1())
 		}
 	}
 

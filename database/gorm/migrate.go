@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	gormdb "gorm.io/gorm"
+	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 )
 
@@ -78,13 +78,13 @@ func newMigrateRegistry(models []interface{}, explicit bool) *migrateRegistry {
 }
 
 // getMigrateModels 返回当前客户端对应的模型副本。
-func getMigrateModels(db *gormdb.DB) []interface{} {
+func getMigrateModels(db *gorm.DB) []interface{} {
 	models, _ := getMigrateModelsSnapshot(db)
 	return models
 }
 
 // getMigrateModelsSnapshot 返回当前客户端模型副本及版本。
-func getMigrateModelsSnapshot(db *gormdb.DB) ([]interface{}, uint64) {
+func getMigrateModelsSnapshot(db *gorm.DB) ([]interface{}, uint64) {
 	if db != nil && db.Statement != nil {
 		if value, ok := db.Get(migrateRegistryKey); ok {
 			registry, registryOK := value.(*migrateRegistry)
@@ -116,7 +116,7 @@ func getRegisteredMigrateModelsVersion() uint64 {
 }
 
 // getMigrateRegistryIdentity 返回缓存需要区分的模型注册范围标识。
-func getMigrateRegistryIdentity(db *gormdb.DB) interface{} {
+func getMigrateRegistryIdentity(db *gorm.DB) interface{} {
 	if db != nil && db.Statement != nil {
 		if value, ok := db.Get(migrateRegistryKey); ok {
 			registry, registryOK := value.(*migrateRegistry)
@@ -129,13 +129,13 @@ func getMigrateRegistryIdentity(db *gormdb.DB) interface{} {
 }
 
 // getIsolationTables 返回当前命名策略下缓存的租户表和数据范围表。
-func getIsolationTables(db *gormdb.DB) (map[string]struct{}, map[string]struct{}, error) {
+func getIsolationTables(db *gorm.DB) (map[string]struct{}, map[string]struct{}, error) {
 	entry := getIsolationTableCacheEntry(db)
 	return entry.tenantTables, entry.dataScopeTables, entry.err
 }
 
 // getRegisteredAuditField 返回当前语句目标表已注册的审计字段元数据。
-func getRegisteredAuditField(db *gormdb.DB, fieldName string) (auditFieldMetadata, bool, error) {
+func getRegisteredAuditField(db *gorm.DB, fieldName string) (auditFieldMetadata, bool, error) {
 	entry := getIsolationTableCacheEntry(db)
 	if entry.err != nil {
 		return auditFieldMetadata{}, false, entry.err
@@ -163,7 +163,7 @@ func getRegisteredAuditField(db *gormdb.DB, fieldName string) (auditFieldMetadat
 }
 
 // getIsolationTableCacheEntry 返回当前命名策略下缓存的隔离与审计字段元数据。
-func getIsolationTableCacheEntry(db *gormdb.DB) isolationTableCacheEntry {
+func getIsolationTableCacheEntry(db *gorm.DB) isolationTableCacheEntry {
 	if db == nil {
 		return isolationTableCacheEntry{err: fmt.Errorf("gorm db is nil")}
 	}

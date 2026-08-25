@@ -10,7 +10,7 @@ import (
 	"github.com/fluent/fluent-logger-golang/fluent"
 
 	"github.com/go-kratos/kratos/v3/log"
-	kitlogger "github.com/liujitcn/kratos-kit/logger"
+	"github.com/liujitcn/kratos-kit/logger"
 )
 
 // Logger 封装 Fluent 日志 SDK。
@@ -79,9 +79,9 @@ func NewFluentLogger(addr string, opts ...Option) (*Logger, error) {
 
 // Log 将统一解析后的结构化日志写入 Fluent。
 func (l *Logger) Log(level log.Level, keyvals ...any) error {
-	var entry kitlogger.Entry
+	var entry logger.Entry
 	var err error
-	entry, err = kitlogger.ParseLegacyEntry(keyvals...)
+	entry, err = logger.ParseLegacyEntry(keyvals...)
 	if err != nil {
 		return err
 	}
@@ -89,14 +89,14 @@ func (l *Logger) Log(level log.Level, keyvals ...any) error {
 	var data = make(map[string]string, len(entry.Fields)+3)
 	data[slog.LevelKey] = level.String()
 	if entry.Message != "" {
-		data[slog.MessageKey] = kitlogger.CleanANSI(entry.Message)
+		data[slog.MessageKey] = logger.CleanANSI(entry.Message)
 	}
-	var caller = kitlogger.FormatFileCaller(entry.Caller)
+	var caller = logger.FormatFileCaller(entry.Caller)
 	if caller != "" {
-		data[kitlogger.CallerKey] = caller
+		data[logger.CallerKey] = caller
 	}
 	for _, field := range entry.Fields {
-		data[field.Key] = kitlogger.CleanANSI(fmt.Sprint(field.Value))
+		data[field.Key] = logger.CleanANSI(fmt.Sprint(field.Value))
 	}
 
 	return l.log.Post(level.String(), data)

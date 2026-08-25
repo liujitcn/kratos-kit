@@ -2,7 +2,7 @@ package gob
 
 import (
 	"bytes"
-	stdGob "encoding/gob"
+	"encoding/gob"
 
 	"github.com/go-kratos/kratos/v3/encoding"
 )
@@ -20,7 +20,7 @@ func init() {
 // Marshal 将 Go 值编码为 gob。
 func (codec) Marshal(value any) ([]byte, error) {
 	var buffer bytes.Buffer
-	err := stdGob.NewEncoder(&buffer).Encode(value)
+	err := gob.NewEncoder(&buffer).Encode(value)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (codec) Marshal(value any) ([]byte, error) {
 
 // Unmarshal 将 gob 数据解码到目标值。
 func (codec) Unmarshal(data []byte, value any) error {
-	return stdGob.NewDecoder(bytes.NewReader(data)).Decode(value)
+	return gob.NewDecoder(bytes.NewReader(data)).Decode(value)
 }
 
 // Name 返回 codec 注册名称。

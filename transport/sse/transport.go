@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	kratosTransport "github.com/go-kratos/kratos/v3/transport"
+	"github.com/go-kratos/kratos/v3/transport"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 var _ Transporter = &Transport{}
 
 type Transporter interface {
-	kratosTransport.Transporter
+	transport.Transporter
 	Request() *http.Request
 	PathTemplate() string
 }
@@ -30,7 +30,7 @@ type Transport struct {
 }
 
 // Kind returns the transport kind.
-func (tr *Transport) Kind() kratosTransport.Kind {
+func (tr *Transport) Kind() transport.Kind {
 	return KindSSE
 }
 
@@ -50,12 +50,12 @@ func (tr *Transport) Request() *http.Request {
 }
 
 // RequestHeader returns the request header.
-func (tr *Transport) RequestHeader() kratosTransport.Header {
+func (tr *Transport) RequestHeader() transport.Header {
 	return tr.reqHeader
 }
 
 // ReplyHeader returns the reply header.
-func (tr *Transport) ReplyHeader() kratosTransport.Header {
+func (tr *Transport) ReplyHeader() transport.Header {
 	return tr.replyHeader
 }
 
@@ -66,7 +66,7 @@ func (tr *Transport) PathTemplate() string {
 
 // SetOperation sets the transport operation.
 func SetOperation(ctx context.Context, op string) {
-	if tr, ok := kratosTransport.FromServerContext(ctx); ok {
+	if tr, ok := transport.FromServerContext(ctx); ok {
 		if tr, ok := tr.(*Transport); ok {
 			tr.operation = op
 		}

@@ -6,8 +6,8 @@ import (
 	"github.com/go-kratos/kratos/v3/log"
 	"github.com/go-kratos/kratos/v3/registry"
 
-	polarisApi "github.com/polarismesh/polaris-go/api"
-	polarisModel "github.com/polarismesh/polaris-go/pkg/model"
+	"github.com/polarismesh/polaris-go/api"
+	"github.com/polarismesh/polaris-go/pkg/model"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	baseRegistry "github.com/liujitcn/kratos-kit/registry"
@@ -26,19 +26,19 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 
 	var err error
 
-	var consumer polarisApi.ConsumerAPI
-	if consumer, err = polarisApi.NewConsumerAPI(); err != nil {
+	var consumer api.ConsumerAPI
+	if consumer, err = api.NewConsumerAPI(); err != nil {
 		return nil, fmt.Errorf("fail to create consumerAPI: %w", err)
 	}
 
-	var provider polarisApi.ProviderAPI
-	provider = polarisApi.NewProviderAPIByContext(consumer.SDKContext())
+	var provider api.ProviderAPI
+	provider = api.NewProviderAPIByContext(consumer.SDKContext())
 
 	log.Info(fmt.Sprintf("start to register instances, count %d", c.Polaris.InstanceCount))
 
-	var resp *polarisModel.InstanceRegisterResponse
+	var resp *model.InstanceRegisterResponse
 	for i := 0; i < (int)(c.Polaris.InstanceCount); i++ {
-		registerRequest := &polarisApi.InstanceRegisterRequest{}
+		registerRequest := &api.InstanceRegisterRequest{}
 		registerRequest.Service = c.Polaris.Service
 		registerRequest.Namespace = c.Polaris.Namespace
 		registerRequest.Host = c.Polaris.Address

@@ -3,7 +3,7 @@ package tracer
 import (
 	"context"
 
-	traceSdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -13,12 +13,12 @@ import (
 )
 
 // NewStdoutExporter 创建一个标准输出导出器
-func NewStdoutExporter(_ context.Context) (traceSdk.SpanExporter, error) {
+func NewStdoutExporter(_ context.Context) (trace.SpanExporter, error) {
 	return stdouttrace.New()
 }
 
 // NewZipkinExporter 创建一个zipkin导出器，默认对端地址：http://localhost:9411/api/v2/spans
-func NewZipkinExporter(_ context.Context, endpoint string) (traceSdk.SpanExporter, error) {
+func NewZipkinExporter(_ context.Context, endpoint string) (trace.SpanExporter, error) {
 	return zipkin.New(endpoint)
 }
 
@@ -28,7 +28,7 @@ func NewZipkinExporter(_ context.Context, endpoint string) (traceSdk.SpanExporte
 //}
 
 // NewOtlpHttpExporter 创建OTLP/HTTP导出器，默认端口：4318
-func NewOtlpHttpExporter(ctx context.Context, endpoint string, insecure bool, options ...otlptracehttp.Option) (traceSdk.SpanExporter, error) {
+func NewOtlpHttpExporter(ctx context.Context, endpoint string, insecure bool, options ...otlptracehttp.Option) (trace.SpanExporter, error) {
 	if endpoint == "" {
 		endpoint = "localhost:4318"
 	}
@@ -48,7 +48,7 @@ func NewOtlpHttpExporter(ctx context.Context, endpoint string, insecure bool, op
 }
 
 // NewOtlpGrpcExporter 创建OTLP/gRPC导出器，默认端口：4317
-func NewOtlpGrpcExporter(ctx context.Context, endpoint string, insecure bool, options ...otlptracegrpc.Option) (traceSdk.SpanExporter, error) {
+func NewOtlpGrpcExporter(ctx context.Context, endpoint string, insecure bool, options ...otlptracegrpc.Option) (trace.SpanExporter, error) {
 	if endpoint == "" {
 		endpoint = "localhost:4317"
 	}
