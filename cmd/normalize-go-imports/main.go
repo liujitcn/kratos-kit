@@ -235,27 +235,28 @@ func NormalizeSource(filename string, source []byte, packages map[string]string)
 		if !canUse(actual, implicitNames, localNames) {
 			continue
 		}
+		targetName := preferredImportName(actual)
 		if len(indexes) == 1 {
 			index := indexes[0]
 			// 局部声明可能遮蔽旧别名；此时无法仅靠 AST 名称安全改写选择器。
-			if localNames[imports[index].oldName] || (currentNames[actual] && imports[index].oldName != actual) {
+			if localNames[imports[index].oldName] || (currentNames[targetName] && imports[index].oldName != targetName) {
 				continue
 			}
-			imports[index].newName = actual
+			imports[index].newName = targetName
 			continue
 		}
 
 		chosen := indexes[0]
 		for _, index := range indexes {
-			if imports[index].oldName == actual {
+			if imports[index].oldName == targetName || imports[index].oldName == actual {
 				chosen = index
 				break
 			}
 		}
-		if localNames[imports[chosen].oldName] || (currentNames[actual] && imports[chosen].oldName != actual) {
+		if localNames[imports[chosen].oldName] || (currentNames[targetName] && imports[chosen].oldName != targetName) {
 			continue
 		}
-		imports[chosen].newName = actual
+		imports[chosen].newName = targetName
 	}
 	for i := range imports {
 		if imports[i].newName == "" {
@@ -270,7 +271,10 @@ func NormalizeSource(filename string, source []byte, packages map[string]string)
 		if info.newName == info.oldName {
 			continue
 		}
-		if info.newName == info.actual {
+		if info.spec.Name == nil {
+			pathStart := offset(fset, info.spec.Path.Pos())
+			edits = append(edits, edit{start: pathStart, end: pathStart, text: info.newName + " "})
+		} else if info.newName == info.actual && !isGoLanguageName(filepath.Base(info.path)) {
 			nameStart := offset(fset, info.spec.Name.Pos())
 			pathStart := offset(fset, info.spec.Path.Pos())
 			edits = append(edits, edit{start: nameStart, end: pathStart})
@@ -416,6 +420,7 @@ func shouldSkipDir(name string) bool {
 	}
 }
 
+// collectImports 收集需要规范化的导入及隐式导入名称。
 func collectImports(file *ast.File, packages map[string]string) ([]importInfo, map[string]bool, error) {
 	imports := make([]importInfo, 0, len(file.Imports))
 	implicitNames := make(map[string]bool)
@@ -431,7 +436,16 @@ func collectImports(file *ast.File, packages map[string]string) ([]importInfo, m
 			continue
 		}
 		if spec.Name == nil {
-			implicitNames[actual] = true
+			defaultName := filepath.Base(path)
+			if isGoLanguageName(defaultName) || preferredImportName(actual) != actual {
+				oldName := actual
+				if isGoLanguageName(defaultName) {
+					oldName = defaultName
+				}
+				imports = append(imports, importInfo{spec: spec, path: path, actual: actual, oldName: oldName})
+			} else {
+				implicitNames[actual] = true
+			}
 			continue
 		}
 		if spec.Name.Name == "." || spec.Name.Name == "_" {
@@ -490,10 +504,13 @@ func collectFunctionNames(node ast.Node, names map[string]bool) {
 	})
 }
 
+// canUse 判断规范化后的 import 别名是否可安全使用。
 func canUse(actual string, implicitNames, localNames map[string]bool) bool {
-	return token.IsIdentifier(actual) && !token.Lookup(actual).IsKeyword() && !localNames[actual] && !implicitNames[actual]
+	name := preferredImportName(actual)
+	return token.IsIdentifier(name) && name != "_" && !localNames[name] && !implicitNames[name]
 }
 
+// ensureUniqueNames 确保同一文件内的 import 别名唯一。
 func ensureUniqueNames(imports []importInfo) {
 	used := make(map[string]bool)
 	for i := range imports {
@@ -502,9 +519,50 @@ func ensureUniqueNames(imports []importInfo) {
 			used[name] = true
 			continue
 		}
-		imports[i].newName = imports[i].oldName
-		used[imports[i].newName] = true
+		fallback := imports[i].oldName
+		if fallback == imports[i].actual && isGoLanguageName(fallback) {
+			fallback = preferredImportName(fallback)
+		}
+		if fallback == "" || used[fallback] {
+			fallback = preferredImportName(imports[i].actual)
+		}
+		for suffix := 2; used[fallback]; suffix++ {
+			fallback = fmt.Sprintf("%s_%d", preferredImportName(imports[i].actual), suffix)
+		}
+		imports[i].newName = fallback
+		used[fallback] = true
 	}
+}
+
+// preferredImportName 返回包名对应的规范 import 别名。
+func preferredImportName(actual string) string {
+	if strings.HasPrefix(actual, "_") && isGoLanguageName(strings.TrimPrefix(actual, "_")) {
+		return actual
+	}
+	if isGoLanguageName(actual) {
+		return "_" + actual
+	}
+	return actual
+}
+
+// isGoLanguageName 判断名称是否属于 Go 关键字或预声明标识符。
+func isGoLanguageName(name string) bool {
+	if token.Lookup(name).IsKeyword() {
+		return true
+	}
+	_, ok := goPredeclaredNames[name]
+	return ok
+}
+
+var goPredeclaredNames = map[string]struct{}{
+	"any": {}, "append": {}, "bool": {}, "byte": {}, "cap": {}, "clear": {},
+	"close": {}, "complex": {}, "complex64": {}, "complex128": {}, "comparable": {},
+	"copy": {}, "delete": {}, "error": {}, "false": {}, "float32": {}, "float64": {},
+	"imag": {}, "int": {}, "int8": {}, "int16": {}, "int32": {}, "int64": {},
+	"iota": {}, "len": {}, "make": {}, "max": {}, "min": {}, "new": {},
+	"nil": {}, "panic": {}, "print": {}, "println": {}, "real": {}, "recover": {},
+	"rune": {}, "string": {}, "true": {}, "uint": {}, "uint8": {}, "uint16": {},
+	"uint32": {}, "uint64": {}, "uintptr": {},
 }
 
 func applyEdits(source []byte, edits []edit) ([]byte, error) {
