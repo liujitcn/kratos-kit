@@ -9,10 +9,9 @@ import (
 
 	"github.com/liujitcn/go-utils/id"
 	"github.com/liujitcn/go-utils/stringcase"
-	_time "github.com/liujitcn/go-utils/time"
-	"github.com/liujitcn/go-utils/trans"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -100,7 +99,7 @@ func AdjustAppInfo(ai *configv1.AppInfo) {
 		ai.InstanceId = NewInstanceId(ai.Project, ai.AppId, ai.Version, host)
 	}
 
-	ai.StartTime = _time.TimeToTimestamppb(trans.Ptr(time.Now()))
+	ai.StartTime = timestamppb.New(time.Now())
 }
 
 // ResolveHost 返回优先级选择的 host 标识：POD_NAME -> HOSTNAME env -> os.Hostname() -> 首个非 loopback IPv4 -> "unknown-host"

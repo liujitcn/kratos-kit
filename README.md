@@ -41,6 +41,7 @@
 - `runtime`：运行时应用信息模型
 - `utils`：通用工具（TLS、Redis 配置辅助）
 - `cmd/project-docs`：收集当前项目约定 README 和根 docs 的 Go 命令
+- `cmd/normalize-go-imports`：通用 Go import 别名规范化命令，可安装后在任意项目目录执行
 - `cmd/kratos-admin-backend`：生成基于 kratos-admin Core 的空业务后端项目
 
 `database/gorm` 的 `Data` 配置支持 `database` 与 `databases` 两种形式。多个固定数据源应按名称分别创建客户端和 `data.Data`，每个客户端启动时主动校验连接；跨数据源事务、Join 与请求级动态切库不在该封装的职责范围内。
@@ -122,6 +123,14 @@ go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
 ```bash
 project-docs
 project-docs --output ./backend/internal/docs
+```
+
+Go import 别名规范化命令可安装到 `GOBIN`，从任意项目目录预览或写回规范化结果：
+
+```bash
+go install github.com/liujitcn/kratos-kit/cmd/normalize-go-imports@latest
+normalize-go-imports -root /path/to/project
+normalize-go-imports -root /path/to/project -write
 ```
 
 生成物不包含项目身份。服务加载后使用 `AppInfo.Project` 和 `AppInfo.Name`
@@ -303,8 +312,8 @@ protoc --go-mcp-tool_out=. path/to/service.proto
 
 ```bash
 make plugin   # 安装 protoc 相关插件
-make cli      # 安装 kratos/buf 等命令行工具
-make fmt      # 使用 goimports 统一整理 Go 代码
+make cli      # 安装 kratos/buf、normalize-go-imports 等命令行工具
+make fmt # 运行 normalize-go-imports，再使用 goimports 格式化
 make api      # 生成 api 代码
 make gen      # 一键生成并整理 api 代码
 make tag      # 默认从仓库根目录递归检查 go.mod 并自动打/推送 tag（含根模块）

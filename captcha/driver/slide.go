@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/liujitcn/go-utils/id"
 	"github.com/wenlng/go-captcha/v2/base/option"
 	"github.com/wenlng/go-captcha/v2/slide"
 )
@@ -47,7 +46,7 @@ func (d *slideDriver) Generate() (*Challenge, error) {
 		return nil, fmt.Errorf("failed to convert tile image to base64: %w", err)
 	}
 
-	captchaID := id.NewGUIDv4NoHyphen()
+	captchaID := newUUIDNoHyphen()
 	slideCfg := d.config
 	if slideCfg == nil {
 		slideCfg = DefaultSlideConfig()

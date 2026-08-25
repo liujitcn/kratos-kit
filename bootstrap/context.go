@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 
@@ -226,7 +226,7 @@ func (c *Context) PrintAppInfo() {
 		for k := range ai.Metadata {
 			keys = append(keys, k)
 		}
-		sort.Strings(keys)
+		slices.Sort(keys)
 		for _, k := range keys {
 			fmt.Printf("    %s=%s\n", k, ai.Metadata[k])
 		}

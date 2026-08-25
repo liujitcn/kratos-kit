@@ -1,7 +1,7 @@
 package swagger
 
 import (
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -52,7 +52,7 @@ func IndexTpl(assetsBase, faviconBase string, cfg *Config) string {
 		settingsStr = append(settingsStr, "\t\t\t"+k+": "+v)
 	}
 
-	sort.Strings(settingsStr)
+	slices.Sort(settingsStr)
 
 	return `
 <!DOCTYPE html>

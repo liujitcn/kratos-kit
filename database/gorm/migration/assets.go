@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"path"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -141,17 +141,17 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 	if len(assets) == 0 {
 		return nil, fmt.Errorf("迁移目录 %s 未提供任何版本目录", directory)
 	}
-	sort.Slice(assets, func(index, other int) bool {
-		if assets[index].version.less(assets[other].version) {
-			return true
+	slices.SortFunc(assets, func(current, other migrationAsset) int {
+		if current.version.less(other.version) {
+			return -1
 		}
-		if assets[other].version.less(assets[index].version) {
-			return false
+		if other.version.less(current.version) {
+			return 1
 		}
-		if assets[index].databaseType != assets[other].databaseType {
-			return assets[index].databaseType < assets[other].databaseType
+		if current.databaseType != other.databaseType {
+			return strings.Compare(current.databaseType, other.databaseType)
 		}
-		return assets[index].dataSource < assets[other].dataSource
+		return strings.Compare(current.dataSource, other.dataSource)
 	})
 	return assets, nil
 }
@@ -188,11 +188,11 @@ func findMigrationTargets(
 		}
 		targets = append(targets, databaseTargets...)
 	}
-	sort.Slice(targets, func(index, other int) bool {
-		if targets[index].databaseType != targets[other].databaseType {
-			return targets[index].databaseType < targets[other].databaseType
+	slices.SortFunc(targets, func(current, other migrationTargetFiles) int {
+		if current.databaseType != other.databaseType {
+			return strings.Compare(current.databaseType, other.databaseType)
 		}
-		return targets[index].dataSource < targets[other].dataSource
+		return strings.Compare(current.dataSource, other.dataSource)
 	})
 	return targets, nil
 }
@@ -237,8 +237,8 @@ func findDatabaseMigrationTargets(
 			entries:      directEntries,
 		})
 	}
-	sort.Slice(targets, func(index, other int) bool {
-		return targets[index].dataSource < targets[other].dataSource
+	slices.SortFunc(targets, func(current, other migrationTargetFiles) int {
+		return strings.Compare(current.dataSource, other.dataSource)
 	})
 	return targets, nil
 }
@@ -263,9 +263,9 @@ func findMigrationFiles(versionPath string, entries []fs.DirEntry) ([]string, []
 			return nil, nil, nil, fmt.Errorf("迁移版本目录 %s 中的文件名无效: %s", versionPath, entry.Name())
 		}
 	}
-	sort.Strings(upFileNames)
-	sort.Strings(downFileNames)
-	sort.Strings(descriptionFileNames)
+	slices.Sort(upFileNames)
+	slices.Sort(downFileNames)
+	slices.Sort(descriptionFileNames)
 	return upFileNames, downFileNames, descriptionFileNames, nil
 }
 

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -299,18 +300,18 @@ func (c *Client) processEvent(msg []byte) (event *Event, err error) {
 		return nil, errors.New("event message was empty")
 	}
 
-	for _, line := range bytes.FieldsFunc(msg, func(r rune) bool { return r == '\n' || r == '\r' }) {
+	for line := range bytes.FieldsFuncSeq(msg, func(r rune) bool { return r == '\n' || r == '\r' }) {
 		switch {
 		case bytes.HasPrefix(line, headerID):
-			e.ID = append([]byte(nil), trimHeader(len(headerID), line)...)
+			e.ID = slices.Clone(trimHeader(len(headerID), line))
 		case bytes.HasPrefix(line, headerData):
 			e.Data = append(e.Data[:], append(trimHeader(len(headerData), line), byte('\n'))...)
 		case bytes.Equal(line, bytes.TrimSuffix(headerData, []byte(":"))):
 			e.Data = append(e.Data, byte('\n'))
 		case bytes.HasPrefix(line, headerEvent):
-			e.Event = append([]byte(nil), trimHeader(len(headerEvent), line)...)
+			e.Event = slices.Clone(trimHeader(len(headerEvent), line))
 		case bytes.HasPrefix(line, headerRetry):
-			e.Retry = append([]byte(nil), trimHeader(len(headerRetry), line)...)
+			e.Retry = slices.Clone(trimHeader(len(headerRetry), line))
 		default:
 		}
 	}

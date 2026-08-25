@@ -3,6 +3,7 @@ package casbin
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/casbin/casbin/v2/model"
@@ -68,7 +69,7 @@ func (sa *Adapter) SetPolicies(policies map[string]interface{}) {
 	policySnapshot := make(map[string]interface{}, len(policies))
 	for key, value := range policies {
 		if rules, ok := value.([]PolicyRule); ok {
-			policySnapshot[key] = append([]PolicyRule(nil), rules...)
+			policySnapshot[key] = slices.Clone(rules)
 			continue
 		}
 		policySnapshot[key] = value

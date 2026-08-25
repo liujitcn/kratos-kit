@@ -1,8 +1,11 @@
 module github.com/liujitcn/kratos-kit/ai/langchaingo
 
-go 1.26.0
+go 1.27.0
 
-require github.com/tmc/langchaingo v0.1.14
+require (
+	github.com/liujitcn/kratos-kit/api v0.0.28
+	github.com/tmc/langchaingo v0.1.14
+)
 
 require (
 	cloud.google.com/go v0.123.0 // indirect
@@ -21,7 +24,6 @@ require (
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.28
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect

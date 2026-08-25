@@ -1,8 +1,11 @@
 module github.com/liujitcn/kratos-kit/database/gorm/migration
 
-go 1.26.0
+go 1.27.0
 
-require gorm.io/gorm v1.31.1
+require (
+	github.com/liujitcn/kratos-kit/database/gorm v0.0.39
+	gorm.io/gorm v1.31.1
+)
 
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
@@ -29,7 +32,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
-	github.com/liujitcn/go-utils v0.0.31 // indirect
+	github.com/liujitcn/go-utils v0.0.36 // indirect
 	github.com/liujitcn/kratos-kit/api v0.0.28 // indirect
 	github.com/liujitcn/kratos-kit/auth v0.0.24 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.22 // indirect
@@ -37,7 +40,6 @@ require (
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.21 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.17 // indirect
 	github.com/liujitcn/kratos-kit/cache v0.0.17 // indirect
-	github.com/liujitcn/kratos-kit/database/gorm v0.0.39
 	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.17 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.18 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect

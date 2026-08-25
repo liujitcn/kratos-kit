@@ -1,8 +1,11 @@
 module github.com/liujitcn/kratos-kit/database/gorm/driver/bigquery
 
-go 1.26.0
+go 1.27.0
 
-require gorm.io/driver/bigquery v1.2.0
+require (
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.17
+	gorm.io/driver/bigquery v1.2.0
+)
 
 require (
 	cel.dev/expr v0.25.2 // indirect
@@ -29,7 +32,6 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.17
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect

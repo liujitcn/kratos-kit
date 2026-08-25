@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
+	"slices"
 
 	"github.com/go-kratos/kratos/v3/log"
 )
@@ -73,7 +74,7 @@ func recordCaller(record slog.Record) string {
 // WithAttrs 创建带固定字段的 handler 副本。
 func (h *legacyHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	clone := h.clone()
-	clone.attrs = append(clone.attrs, attrs...)
+	clone.attrs = slices.Concat(clone.attrs, attrs)
 	return clone
 }
 
@@ -94,7 +95,7 @@ func (h *legacyHandler) clone() *legacyHandler {
 		return &legacyHandler{}
 	}
 	clone := *h
-	clone.attrs = append([]slog.Attr(nil), h.attrs...)
+	clone.attrs = slices.Clone(h.attrs)
 	return &clone
 }
 

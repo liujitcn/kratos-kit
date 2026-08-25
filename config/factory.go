@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"sync"
 
 	"github.com/go-kratos/kratos/v3/config"
@@ -88,6 +88,6 @@ func ListFactories() []string {
 	for n := range factories {
 		names = append(names, string(n))
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 	return names
 }

@@ -1,3 +1,3 @@
 module github.com/liujitcn/kratos-kit/database/ent/driver
 
-go 1.26.0
+go 1.27.0

@@ -3,6 +3,7 @@ package apikey
 import (
 	"context"
 	"errors"
+	"maps"
 
 	"github.com/liujitcn/kratos-kit/auth/authn/engine"
 )
@@ -44,7 +45,7 @@ func WithKeyClaims(apiKey string, claims map[string]any) Option {
 		if options.keys == nil {
 			options.keys = make(map[string]map[string]any)
 		}
-		options.keys[apiKey] = cloneClaims(claims)
+		options.keys[apiKey] = maps.Clone(claims)
 	}
 }
 
@@ -97,14 +98,14 @@ func (a *Authenticator) AuthenticateToken(token string) (*engine.AuthClaims, err
 		if !valid {
 			return nil, engine.ErrUnauthenticated
 		}
-		authClaims := engine.AuthClaims(cloneClaims(claims))
+		authClaims := engine.AuthClaims(maps.Clone(claims))
 		return &authClaims, nil
 	}
 	claims, ok := a.options.keys[token]
 	if !ok {
 		return nil, engine.ErrUnauthenticated
 	}
-	authClaims := engine.AuthClaims(cloneClaims(claims))
+	authClaims := engine.AuthClaims(maps.Clone(claims))
 	return &authClaims, nil
 }
 
@@ -127,12 +128,3 @@ func (a *Authenticator) CreateIdentity(engine.AuthClaims) (string, error) {
 
 // Close 释放认证器资源。
 func (a *Authenticator) Close() {}
-
-// cloneClaims 复制声明，避免调用方修改认证器内部静态数据。
-func cloneClaims(claims map[string]any) map[string]any {
-	cloned := make(map[string]any, len(claims))
-	for key, value := range claims {
-		cloned[key] = value
-	}
-	return cloned
-}

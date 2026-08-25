@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"maps"
 	"strings"
 
 	"github.com/liujitcn/kratos-kit/auth/authn/engine"
@@ -41,10 +42,7 @@ func WithUser(username string, password string) Option {
 // WithUsers 配置静态用户名密码集合。
 func WithUsers(users map[string]string) Option {
 	return func(options *options) {
-		options.users = make(map[string]string, len(users))
-		for username, password := range users {
-			options.users[username] = password
-		}
+		options.users = maps.Clone(users)
 	}
 }
 

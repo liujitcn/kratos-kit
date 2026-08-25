@@ -3,7 +3,7 @@ package health
 import (
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 )
@@ -128,7 +128,7 @@ func (h *Health) Check(ctx context.Context) Result {
 	if len(names) == 0 {
 		return Result{Status: StatusUp, Message: "no checkers registered"}
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 
 	checkCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -186,7 +186,7 @@ func (h *Health) Names() []string {
 	for name := range h.checkers {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 	return names
 }
 

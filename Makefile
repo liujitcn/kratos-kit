@@ -27,11 +27,15 @@ cli:
 	@go install github.com/bufbuild/buf/cmd/buf@latest
 	@go install entgo.io/ent/cmd/ent@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@go install ./cmd/normalize-go-imports
 	@cd cmd/project-docs && go install .
 	@cd cmd/kratos-admin-backend && go install .
 
 # 使用 goimports 统一整理 Go 代码的 import 与格式
 fmt:
+	@normalize_bin="$$(go env GOBIN)"; \
+	if [ -z "$$normalize_bin" ]; then normalize_bin="$$(go env GOPATH)/bin"; fi; \
+	"$$normalize_bin/normalize-go-imports" -root . -write
 	@goimports -w $$(rg --files -g '*.go')
 
 # 生成 protobuf API Go 代码

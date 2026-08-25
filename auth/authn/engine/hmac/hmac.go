@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"strconv"
 	"strings"
@@ -110,10 +111,7 @@ func WithSecret(keyID string, secret string) Option {
 // WithSecrets 配置 key ID 和 HMAC 密钥集合。
 func WithSecrets(secrets map[string]string) Option {
 	return func(options *options) {
-		options.secrets = make(map[string]string, len(secrets))
-		for keyID, secret := range secrets {
-			options.secrets[keyID] = secret
-		}
+		options.secrets = maps.Clone(secrets)
 	}
 }
 

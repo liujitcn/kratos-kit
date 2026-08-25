@@ -3,9 +3,10 @@ package oauth
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
+	"uuid"
 
-	"github.com/liujitcn/go-utils/id"
 	"github.com/liujitcn/kratos-kit/cache"
 	"github.com/liujitcn/kratos-kit/oauth/provider"
 )
@@ -41,7 +42,7 @@ func NewState(store cache.Cache, payload StatePayload, ttl time.Duration) (strin
 	if ttl <= 0 {
 		ttl = defaultStateTTL
 	}
-	state := id.NewGUIDv7NoHyphen()
+	state := strings.ReplaceAll(uuid.NewV7().String(), "-", "")
 	if payload.CreatedAt == 0 {
 		payload.CreatedAt = time.Now().Unix()
 	}

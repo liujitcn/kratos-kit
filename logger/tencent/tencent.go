@@ -58,26 +58,26 @@ func (t *tencentLog) Log(level log.Level, keyvals ...any) error {
 
 	var contents = make([]*cls.Log_Content, 0, len(entry.Fields)+3)
 	contents = append(contents, &cls.Log_Content{
-		Key:   newString(slog.LevelKey),
-		Value: newString(level.String()),
+		Key:   new(slog.LevelKey),
+		Value: new(level.String()),
 	})
 	if entry.Message != "" {
 		contents = append(contents, &cls.Log_Content{
-			Key:   newString(slog.MessageKey),
-			Value: newString(kitlogger.CleanANSI(entry.Message)),
+			Key:   new(slog.MessageKey),
+			Value: new(kitlogger.CleanANSI(entry.Message)),
 		})
 	}
 	var caller = kitlogger.FormatFileCaller(entry.Caller)
 	if caller != "" {
 		contents = append(contents, &cls.Log_Content{
-			Key:   newString(kitlogger.CallerKey),
-			Value: newString(caller),
+			Key:   new(kitlogger.CallerKey),
+			Value: new(caller),
 		})
 	}
 	for _, field := range entry.Fields {
 		contents = append(contents, &cls.Log_Content{
-			Key:   newString(field.Key),
-			Value: newString(kitlogger.CleanANSI(toString(field.Value))),
+			Key:   new(field.Key),
+			Value: new(kitlogger.CleanANSI(toString(field.Value))),
 		})
 	}
 
@@ -96,11 +96,6 @@ func (t *tencentLog) GetProducer() *cls.AsyncProducerClient {
 // Close 关闭腾讯云日志 Producer。
 func (t *tencentLog) Close() error {
 	return t.producer.Close(5000)
-}
-
-// newString 将字符串转换为字符串指针。
-func newString(s string) *string {
-	return &s
 }
 
 // toString 将任意字段值转换为字符串。

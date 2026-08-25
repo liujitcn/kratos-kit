@@ -1,8 +1,11 @@
 module github.com/liujitcn/kratos-kit/auth/authz/engine/opa
 
-go 1.26.0
+go 1.27.0
 
-require github.com/open-policy-agent/opa v1.15.2
+require (
+	github.com/liujitcn/kratos-kit/auth/authz v0.0.21
+	github.com/open-policy-agent/opa v1.15.2
+)
 
 require (
 	github.com/agnivade/levenshtein v1.2.1 // indirect
@@ -20,7 +23,6 @@ require (
 	github.com/lestrrat-go/httprc/v3 v3.0.2 // indirect
 	github.com/lestrrat-go/jwx/v3 v3.0.13 // indirect
 	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
-	github.com/liujitcn/kratos-kit/auth/authz v0.0.21
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 // indirect

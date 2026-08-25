@@ -3,7 +3,7 @@ package datadog
 import (
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"time"
 
 	"github.com/DataDog/datadog-go/v5/statsd"
@@ -127,7 +127,7 @@ func tags(labels map[string]string) []string {
 	for name := range labels {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 	result := make([]string, 0, len(names))
 	for _, name := range names {
 		result = append(result, fmt.Sprintf("%s:%s", name, labels[name]))

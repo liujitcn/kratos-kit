@@ -1,9 +1,11 @@
 module github.com/liujitcn/kratos-kit/config/polaris
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
+	github.com/liujitcn/kratos-kit/api v0.0.28
+	github.com/liujitcn/kratos-kit/config v0.0.23
 	github.com/polarismesh/polaris-go v1.7.0
 )
 
@@ -19,8 +21,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.28
-	github.com/liujitcn/kratos-kit/config v0.0.23
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect

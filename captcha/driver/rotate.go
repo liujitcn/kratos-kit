@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/liujitcn/go-utils/id"
 	"github.com/wenlng/go-captcha/v2/rotate"
 )
 
@@ -48,7 +47,7 @@ func (d *rotateDriver) Generate() (*Challenge, error) {
 		return nil, fmt.Errorf("failed to convert thumb image to base64: %w", err)
 	}
 
-	captchaID := id.NewGUIDv4NoHyphen()
+	captchaID := newUUIDNoHyphen()
 	imageSize := d.captcha.GetOptions().GetImageSize()
 	rotateData := &RotateCaptchaData{
 		Type:      string(DriverRotate),

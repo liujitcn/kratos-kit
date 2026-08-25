@@ -1,8 +1,11 @@
 module github.com/liujitcn/kratos-kit/database/gorm/driver/postgres
 
-go 1.26.0
+go 1.27.0
 
-require gorm.io/driver/postgres v1.6.0
+require (
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.17
+	gorm.io/driver/postgres v1.6.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -12,7 +15,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.17
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	golang.org/x/crypto v0.53.0 // indirect

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/mvrilo/go-redoc"
@@ -90,7 +91,7 @@ func WithRedocLocalFile(filePath string) RedocOption {
 // WithRedocMemoryData 设置由服务端托管的内存 OpenAPI 文档。
 func WithRedocMemoryData(data []byte, dataType string) RedocOption {
 	return func(config *RedocConfig) {
-		config.SpecData = append([]byte(nil), data...)
+		config.SpecData = slices.Clone(data)
 		config.SpecType = dataType
 	}
 }
@@ -120,7 +121,7 @@ func NewRedocHandler(options ...RedocOption) (*RedocHandler, error) {
 	}
 
 	specURL := config.SpecURL
-	specData := append([]byte(nil), config.SpecData...)
+	specData := slices.Clone(config.SpecData)
 	specType := config.SpecType
 	dataSources := 0
 	if specURL != "" {

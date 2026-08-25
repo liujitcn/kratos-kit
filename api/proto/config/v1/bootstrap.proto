@@ -9,6 +9,7 @@ import "config/v1/client.proto";
 import "config/v1/config.proto";
 import "config/v1/data.proto";
 import "config/v1/logger.proto";
+import "config/v1/mfa.proto";
 import "config/v1/notify.proto";
 import "config/v1/oauth.proto";
 import "config/v1/oss.proto";
@@ -50,4 +51,6 @@ message Bootstrap {
   optional OAuth oauth = 14;
   // translator 为机器翻译配置。
   optional Translator translator = 15;
+  // mfa 为多因素认证配置。
+  optional Mfa mfa = 16;
 }

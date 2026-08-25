@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -70,7 +71,7 @@ func getRegisteredMigrateModels() []interface{} {
 // newMigrateRegistry 创建当前客户端使用的模型注册范围。
 func newMigrateRegistry(models []interface{}, explicit bool) *migrateRegistry {
 	return &migrateRegistry{
-		models:   append([]interface{}(nil), models...),
+		models:   slices.Clone(models),
 		explicit: explicit,
 		version:  1,
 	}
@@ -88,7 +89,7 @@ func getMigrateModelsSnapshot(db *gormdb.DB) ([]interface{}, uint64) {
 		if value, ok := db.Get(migrateRegistryKey); ok {
 			registry, registryOK := value.(*migrateRegistry)
 			if registryOK && registry.explicit {
-				return append([]interface{}(nil), registry.models...), registry.version
+				return slices.Clone(registry.models), registry.version
 			}
 		}
 	}

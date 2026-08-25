@@ -3,7 +3,7 @@ package prometheus
 import (
 	"context"
 	"errors"
-	"sort"
+	"slices"
 	"sync"
 
 	prom "github.com/prometheus/client_golang/prometheus"
@@ -234,8 +234,8 @@ func (p *Provider) register(collector prom.Collector) (prom.Collector, bool) {
 	if err == nil {
 		return collector, true
 	}
-	var alreadyRegistered prom.AlreadyRegisteredError
-	if errors.As(err, &alreadyRegistered) {
+	alreadyRegistered, ok := errors.AsType[prom.AlreadyRegisteredError](err)
+	if ok {
 		return alreadyRegistered.ExistingCollector, true
 	}
 	return nil, false
@@ -247,7 +247,7 @@ func sortedLabelNames(labels map[string]string) []string {
 	for name := range labels {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 	return names
 }
 

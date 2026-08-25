@@ -1,6 +1,6 @@
 module github.com/liujitcn/kratos-kit/swagger-ui
 
-go 1.26
+go 1.27.0
 
 require (
 	github.com/mvrilo/go-redoc v0.1.5

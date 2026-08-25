@@ -1,6 +1,6 @@
 module github.com/liujitcn/kratos-kit/transport
 
-go 1.26.0
+go 1.27.0
 
 require github.com/liujitcn/kratos-kit/broker v0.0.9
 

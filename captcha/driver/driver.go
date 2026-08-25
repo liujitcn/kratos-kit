@@ -1,5 +1,10 @@
 package driver
 
+import (
+	"strings"
+	"uuid"
+)
+
 // Challenge 表示驱动内部生成结果，Answer 只允许写入服务端缓存。
 type Challenge struct {
 	ID      string // 验证码 ID
@@ -11,6 +16,11 @@ type Challenge struct {
 type Driver interface {
 	Generate() (*Challenge, error)
 	Verify(expected, actual string) bool
+}
+
+// newUUIDNoHyphen 生成不带连字符的随机 UUID。
+func newUUIDNoHyphen() string {
+	return strings.ReplaceAll(uuid.NewV4().String(), "-", "")
 }
 
 // New 根据配置创建对应的验证码驱动。

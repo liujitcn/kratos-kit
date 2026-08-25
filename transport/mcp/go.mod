@@ -1,9 +1,10 @@
 module github.com/liujitcn/kratos-kit/transport/mcp
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
+	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.11
 	github.com/modelcontextprotocol/go-sdk v1.6.0
 )
 
@@ -19,7 +20,6 @@ require (
 	github.com/liujitcn/kratos-kit/broker v0.0.9 // indirect
 	github.com/liujitcn/kratos-kit/tracing v0.0.10 // indirect
 	github.com/liujitcn/kratos-kit/transport v0.0.22 // indirect
-	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.11
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/segmentio/encoding v0.5.4 // indirect

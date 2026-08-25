@@ -2,7 +2,7 @@ package registry
 
 import (
 	"fmt"
-	"sort"
+	"slices"
 	"sync"
 
 	"github.com/go-kratos/kratos/v3/registry"
@@ -77,6 +77,6 @@ func ListRegistrarFactories() []string {
 	for k := range registrarFactories {
 		names = append(names, string(k))
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 	return names
 }

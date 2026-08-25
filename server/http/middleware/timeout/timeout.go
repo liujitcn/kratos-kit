@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 )
@@ -92,7 +93,7 @@ type bufferedResponseWriter struct {
 func newBufferedResponseWriter(w http.ResponseWriter) *bufferedResponseWriter {
 	header := make(http.Header, len(w.Header()))
 	for key, values := range w.Header() {
-		header[key] = append([]string(nil), values...)
+		header[key] = slices.Clone(values)
 	}
 	return &bufferedResponseWriter{header: header, status: http.StatusOK}
 }
@@ -132,7 +133,7 @@ func (w *bufferedResponseWriter) flushTo(dst http.ResponseWriter) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	for key, values := range w.header {
-		dst.Header()[key] = append([]string(nil), values...)
+		dst.Header()[key] = slices.Clone(values)
 	}
 	dst.WriteHeader(w.status)
 	_, _ = dst.Write(w.body.Bytes())

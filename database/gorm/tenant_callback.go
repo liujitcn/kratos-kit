@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -336,7 +337,7 @@ func expandNestedAssociationJoins(db *gormdb.DB) {
 			item.Name = path
 			if join.On != nil {
 				on := *join.On
-				on.Exprs = append([]clause.Expression(nil), join.On.Exprs...)
+				on.Exprs = slices.Clone(join.On.Exprs)
 				item.On = &on
 			}
 			if index < len(references)-1 {

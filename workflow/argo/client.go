@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 
@@ -158,7 +159,7 @@ func (wc *WorkflowClient) SubmitWorkflow(ctx context.Context, wf *Workflow, opts
 	requestWorkflow := wf
 	if opts != nil && len(opts.Parameters) > 0 {
 		workflowCopy := *wf
-		workflowCopy.Spec.Arguments.Parameters = append([]Parameter(nil), wf.Spec.Arguments.Parameters...)
+		workflowCopy.Spec.Arguments.Parameters = slices.Clone(wf.Spec.Arguments.Parameters)
 		for _, parameter := range opts.Parameters {
 			name, value, ok := strings.Cut(parameter, "=")
 			if !ok || name == "" {

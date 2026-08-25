@@ -1,6 +1,6 @@
 module github.com/liujitcn/kratos-kit/server/mcp
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/liujitcn/kratos-kit/api v0.0.28
@@ -19,7 +19,7 @@ require (
 	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
-	github.com/liujitcn/go-utils v0.0.31 // indirect
+	github.com/liujitcn/go-utils v0.0.36 // indirect
 	github.com/liujitcn/kratos-kit/broker v0.0.9 // indirect
 	github.com/liujitcn/kratos-kit/tracing v0.0.10 // indirect
 	github.com/liujitcn/kratos-kit/transport v0.0.22 // indirect

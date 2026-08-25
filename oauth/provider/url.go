@@ -3,13 +3,7 @@ package provider
 import (
 	"net/url"
 	"strconv"
-	"strings"
 )
-
-// JoinScopes 使用指定分隔符拼接 OAuth scope。
-func JoinScopes(scopes []string, sep string) string {
-	return strings.Join(scopes, sep)
-}
 
 // ChooseScopes 按覆盖参数、配置参数、默认参数的优先级选择 scope。
 func ChooseScopes(configured []string, override []string, defaults []string) []string {

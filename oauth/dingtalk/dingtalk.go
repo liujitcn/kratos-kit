@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	httpx "github.com/liujitcn/go-utils/http"
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
@@ -47,7 +48,7 @@ func (p *Provider) AuthURL(state string, opts ...provider.Option) string {
 	params.Set("redirect_uri", redirectURI)
 	params.Set("response_type", "code")
 	params.Set("client_id", p.conf.GetClientId())
-	params.Set("scope", provider.JoinScopes(scopes, " "))
+	params.Set("scope", strings.Join(scopes, " "))
 	params.Set("state", state)
 	params.Set("prompt", "consent")
 	provider.SetPKCEAuthParams(params, o.PKCE)

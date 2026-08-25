@@ -1,4 +1,4 @@
-go 1.26.3
+go 1.27.0
 
 use (
 	.
@@ -29,6 +29,7 @@ use (
 	./cache
 	./captcha
 	./cmd/internal/utils
+	./cmd/normalize-go-imports
 	./cmd/kratos-admin-backend
 	./cmd/protoc-gen-go-agent-tool
 	./cmd/protoc-gen-go-mcp-tool

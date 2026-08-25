@@ -1,9 +1,11 @@
 module github.com/liujitcn/kratos-kit/config/etcd
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
+	github.com/liujitcn/kratos-kit/api v0.0.28
+	github.com/liujitcn/kratos-kit/config v0.0.23
 	go.etcd.io/etcd/client/v3 v3.6.10
 	google.golang.org/grpc v1.81.1
 )
@@ -16,8 +18,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.28
-	github.com/liujitcn/kratos-kit/config v0.0.23
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	go.etcd.io/etcd/api/v3 v3.6.10 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.6.10 // indirect

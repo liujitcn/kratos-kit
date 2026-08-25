@@ -1,6 +1,9 @@
 package migration
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // Registry 保存已注册模块的迁移定义。
 type Registry struct {
@@ -51,7 +54,7 @@ func (r *Registry) Register(contributors ...Contributor) error {
 			if migration.Path == "" {
 				return fmt.Errorf("迁移模块 %s 未提供资源路径", name)
 			}
-			migration.Dependencies = append([]ModuleName(nil), migration.Dependencies...)
+			migration.Dependencies = slices.Clone(migration.Dependencies)
 			for _, dependency := range migration.Dependencies {
 				if err := dependency.Validate(); err != nil {
 					return fmt.Errorf("迁移模块 %s 依赖无效: %w", name, err)

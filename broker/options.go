@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"crypto/tls"
+	"slices"
 
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
@@ -115,7 +116,7 @@ func OptionContextWithValue(k, v any) Option {
 
 // WithAddress set broker address
 func WithAddress(addressList ...string) Option {
-	addrsCopy := append([]string(nil), addressList...)
+	addrsCopy := slices.Clone(addressList)
 	return func(o *Options) {
 		if o == nil {
 			return
@@ -210,7 +211,7 @@ func WithGlobalPropagator() Option {
 
 // WithSubscriberMiddlewares sets subscriber middlewares
 func WithSubscriberMiddlewares(mws ...SubscriberMiddleware) Option {
-	m := append([]SubscriberMiddleware(nil), mws...)
+	m := slices.Clone(mws)
 	return func(o *Options) {
 		if o == nil {
 			return
@@ -221,7 +222,7 @@ func WithSubscriberMiddlewares(mws ...SubscriberMiddleware) Option {
 
 // WithPublishMiddlewares sets publish middlewares
 func WithPublishMiddlewares(mws ...PublishMiddleware) Option {
-	m := append([]PublishMiddleware(nil), mws...)
+	m := slices.Clone(mws)
 	return func(o *Options) {
 		if o == nil {
 			return

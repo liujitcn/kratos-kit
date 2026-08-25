@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 
@@ -224,7 +224,7 @@ func attributes(labels map[string]string) []attribute.KeyValue {
 	for name := range labels {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 	values := make([]attribute.KeyValue, 0, len(names))
 	for _, name := range names {
 		values = append(values, attribute.String(name, labels[name]))

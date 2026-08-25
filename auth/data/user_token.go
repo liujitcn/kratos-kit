@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"uuid"
 
 	"github.com/go-kratos/kratos/v3/log"
-	"github.com/google/uuid"
 	authnEngine "github.com/liujitcn/kratos-kit/auth/authn/engine"
 	"github.com/liujitcn/kratos-kit/cache"
 	"github.com/redis/go-redis/v9"
@@ -201,8 +201,7 @@ func (r *UserToken) createAccessJwtToken(userToken *UserTokenPayload) string {
 
 // createRefreshToken 生成刷新令牌
 func (r *UserToken) createRefreshToken() string {
-	strUUID := uuid.New()
-	return strUUID.String()
+	return uuid.NewV4().String()
 }
 
 // makeAccessTokenKey 生成访问令牌键

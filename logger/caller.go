@@ -176,7 +176,7 @@ func readCallerModulePath(goModPath string) string {
 	if err != nil {
 		return ""
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	for line := range strings.Lines(string(data)) {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "module ") {
 			continue

@@ -1,6 +1,6 @@
 module github.com/liujitcn/kratos-kit/server/grpc
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
@@ -19,7 +19,7 @@ require (
 	github.com/go-playground/form/v4 v4.3.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
-	github.com/liujitcn/go-utils v0.0.31 // indirect
+	github.com/liujitcn/go-utils v0.0.36 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/redis/go-redis/v9 v9.19.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

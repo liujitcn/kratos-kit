@@ -1,7 +1,7 @@
 package oauth
 
 import (
-	"sort"
+	"slices"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/oauth/dingtalk"
@@ -78,9 +78,7 @@ func (m *Manager) Providers() []Type {
 			providers = append(providers, name)
 		}
 	}
-	sort.Slice(providers, func(i, j int) bool {
-		return providers[i] < providers[j]
-	})
+	slices.Sort(providers)
 	return providers
 }
 

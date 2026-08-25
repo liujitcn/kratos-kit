@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/go-kratos/kratos/v3/log"
@@ -36,7 +36,7 @@ func NewLogger(cfg *configv1.Logger) (*slog.Logger, error) {
 		for _, t := range available {
 			strs = append(strs, string(t))
 		}
-		sort.Strings(strs)
+		slices.Sort(strs)
 		return nil, fmt.Errorf("unsupported logger type: %s; available: %v", typ, strs)
 	}
 

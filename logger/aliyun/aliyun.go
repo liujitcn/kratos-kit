@@ -62,26 +62,26 @@ func (a *aliyunLog) Log(level log.Level, keyvals ...any) error {
 
 	var contents = make([]*sls.LogContent, 0, len(entry.Fields)+3)
 	contents = append(contents, &sls.LogContent{
-		Key:   newString(slog.LevelKey),
-		Value: newString(level.String()),
+		Key:   new(slog.LevelKey),
+		Value: new(level.String()),
 	})
 	if entry.Message != "" {
 		contents = append(contents, &sls.LogContent{
-			Key:   newString(slog.MessageKey),
-			Value: newString(kitlogger.CleanANSI(entry.Message)),
+			Key:   new(slog.MessageKey),
+			Value: new(kitlogger.CleanANSI(entry.Message)),
 		})
 	}
 	var caller = kitlogger.FormatFileCaller(entry.Caller)
 	if caller != "" {
 		contents = append(contents, &sls.LogContent{
-			Key:   newString(kitlogger.CallerKey),
-			Value: newString(caller),
+			Key:   new(kitlogger.CallerKey),
+			Value: new(caller),
 		})
 	}
 	for _, field := range entry.Fields {
 		contents = append(contents, &sls.LogContent{
-			Key:   newString(field.Key),
-			Value: newString(kitlogger.CleanANSI(toString(field.Value))),
+			Key:   new(field.Key),
+			Value: new(kitlogger.CleanANSI(toString(field.Value))),
 		})
 	}
 
@@ -100,11 +100,6 @@ func (a *aliyunLog) GetProducer() *producer.Producer {
 // Close 关闭阿里云日志 Producer。
 func (a *aliyunLog) Close() error {
 	return a.producer.Close(5000)
-}
-
-// newString 将字符串转换为字符串指针。
-func newString(s string) *string {
-	return &s
 }
 
 // toString 将任意字段值转换为字符串。

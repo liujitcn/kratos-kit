@@ -1,5 +1,7 @@
 package gorm
 
+import "slices"
+
 // DefaultClientName 表示默认 GORM 客户端名称。
 const DefaultClientName = "default"
 
@@ -26,6 +28,6 @@ func WithName(name string) ClientOption {
 func WithMigrateModels(models ...interface{}) ClientOption {
 	return func(opts *clientOptions) {
 		opts.modelsExplicit = true
-		opts.migrateModels = append([]interface{}(nil), models...)
+		opts.migrateModels = slices.Clone(models)
 	}
 }

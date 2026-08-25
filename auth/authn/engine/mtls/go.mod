@@ -1,9 +1,10 @@
 module github.com/liujitcn/kratos-kit/auth/authn/engine/mtls
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.22
 	google.golang.org/grpc v1.81.1
 )
 
@@ -14,7 +15,6 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.22
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/text v0.38.0 // indirect

@@ -1,11 +1,8 @@
 module github.com/liujitcn/kratos-kit/queue/redisqueue
 
-go 1.26.0
+go 1.27.0
 
-require (
-	github.com/pkg/errors v0.9.1
-	github.com/redis/go-redis/v9 v9.19.0
-)
+require github.com/redis/go-redis/v9 v9.19.0
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

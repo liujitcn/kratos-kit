@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/go-kratos/kratos/v3/transport"
@@ -27,7 +28,7 @@ func NewSubscription(topic string, handler Handler, binder Binder, options ...Su
 		Topic:   topic,
 		Handler: handler,
 		Binder:  binder,
-		Options: append([]SubscribeOption(nil), options...),
+		Options: slices.Clone(options),
 	}
 }
 
@@ -46,7 +47,7 @@ var _ transport.Server = (*TransportServer)(nil)
 func NewTransportServer(instance Broker, subscriptions ...Subscription) *TransportServer {
 	return &TransportServer{
 		broker:        instance,
-		subscriptions: append([]Subscription(nil), subscriptions...),
+		subscriptions: slices.Clone(subscriptions),
 	}
 }
 

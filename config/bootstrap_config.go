@@ -113,6 +113,11 @@ func initBootstrapConfig() {
 			commonConfig.Translator = &configv1.Translator{}
 		}
 		addConfigLocked(commonConfig.Translator)
+
+		if commonConfig.GetMfa() == nil {
+			commonConfig.Mfa = &configv1.Mfa{}
+		}
+		addConfigLocked(commonConfig.Mfa)
 	})
 }
 

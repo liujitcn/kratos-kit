@@ -1,11 +1,16 @@
 module github.com/liujitcn/kratos-kit/bootstrap
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/google/subcommands v1.2.0
-	github.com/liujitcn/go-utils v0.0.31
+	github.com/liujitcn/go-utils v0.0.36
+	github.com/liujitcn/kratos-kit/api v0.0.30
+	github.com/liujitcn/kratos-kit/config v0.0.24
+	github.com/liujitcn/kratos-kit/logger v0.0.29
+	github.com/liujitcn/kratos-kit/registry v0.0.21
+	github.com/liujitcn/kratos-kit/tracer v0.0.15
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/tools v0.45.0
@@ -26,12 +31,6 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.30
-	github.com/liujitcn/kratos-kit/config v0.0.24
-	github.com/liujitcn/kratos-kit/logger v0.0.29
-	github.com/liujitcn/kratos-kit/registry v0.0.21
-	github.com/liujitcn/kratos-kit/tracer v0.0.15
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.23 // indirect

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -80,7 +81,7 @@ func WithClientToken(clientToken string) Option {
 // WithSigningMethods 配置允许的 JWT 签名算法。
 func WithSigningMethods(methods ...string) Option {
 	return func(options *options) {
-		options.signingMethods = append([]string(nil), methods...)
+		options.signingMethods = slices.Clone(methods)
 	}
 }
 
@@ -280,7 +281,7 @@ func allowedSigningMethods(configured []string, advertised []string) []string {
 		}
 	}
 	if len(advertised) == 0 {
-		return append([]string(nil), allowed...)
+		return slices.Clone(allowed)
 	}
 	advertisedSet := make(map[string]struct{}, len(advertised))
 	for _, method := range advertised {

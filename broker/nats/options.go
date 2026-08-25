@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -47,7 +48,7 @@ func DrainConnection() broker.Option {
 
 // JetStreamContextOptions 注入创建 JetStream context 时使用的 SDK 选项。
 func JetStreamContextOptions(options ...nats.JSOpt) broker.Option {
-	return broker.OptionContextWithValue(jetStreamContextOptionsKey{}, append([]nats.JSOpt(nil), options...))
+	return broker.OptionContextWithValue(jetStreamContextOptionsKey{}, slices.Clone(options))
 }
 
 // WithHeaders 为发布消息追加支持多值的 NATS header。
@@ -112,7 +113,7 @@ func WithExpectLastMsgId(id string) broker.PublishOption {
 
 // WithPublishRawOptions 追加原生 JetStream 发布选项。
 func WithPublishRawOptions(options ...nats.PubOpt) broker.PublishOption {
-	return broker.PublishContextWithValue(publishRawOptionsKey{}, append([]nats.PubOpt(nil), options...))
+	return broker.PublishContextWithValue(publishRawOptionsKey{}, slices.Clone(options))
 }
 
 // WithPublishRawOpts 兼容上游命名并追加原生 JetStream 发布选项。
@@ -195,7 +196,7 @@ func WithPullBatchSize(size int) broker.SubscribeOption {
 
 // WithSubscribeRawOptions 追加原生 JetStream 订阅选项。
 func WithSubscribeRawOptions(options ...nats.SubOpt) broker.SubscribeOption {
-	return broker.SubscribeContextWithValue(subscribeRawOptionsKey{}, append([]nats.SubOpt(nil), options...))
+	return broker.SubscribeContextWithValue(subscribeRawOptionsKey{}, slices.Clone(options))
 }
 
 // WithSubscribeRawOpts 兼容上游命名并追加原生 JetStream 订阅选项。
@@ -220,7 +221,7 @@ func cloneHeaders(headers map[string][]string) map[string][]string {
 	}
 	cloned := make(map[string][]string, len(headers))
 	for key, values := range headers {
-		cloned[key] = append([]string(nil), values...)
+		cloned[key] = slices.Clone(values)
 	}
 	return cloned
 }

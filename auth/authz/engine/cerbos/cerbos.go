@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -52,7 +53,7 @@ func WithPrincipalRoles(roles map[engine.Subject][]string) Option {
 	return func(options *options) {
 		options.principalRoles = make(map[engine.Subject][]string, len(roles))
 		for subject, values := range roles {
-			options.principalRoles[subject] = append([]string(nil), values...)
+			options.principalRoles[subject] = slices.Clone(values)
 		}
 	}
 }
@@ -60,7 +61,7 @@ func WithPrincipalRoles(roles map[engine.Subject][]string) Option {
 // WithProjects 配置 FilterAuthorizedProjects 使用的候选项目。
 func WithProjects(projects ...engine.Project) Option {
 	return func(options *options) {
-		options.projects = append(engine.Projects(nil), projects...)
+		options.projects = slices.Clone(projects)
 	}
 }
 

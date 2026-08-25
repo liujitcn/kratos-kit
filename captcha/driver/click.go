@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/liujitcn/go-utils/id"
 	"github.com/wenlng/go-captcha/v2/base/option"
 	"github.com/wenlng/go-captcha/v2/click"
 )
@@ -79,7 +78,7 @@ func (d *clickDriver) Generate() (*Challenge, error) {
 		})
 	}
 
-	captchaID := id.NewGUIDv4NoHyphen()
+	captchaID := newUUIDNoHyphen()
 	clickCfg := d.config
 	if clickCfg == nil {
 		clickCfg = DefaultClickConfig()

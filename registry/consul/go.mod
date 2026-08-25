@@ -1,10 +1,12 @@
 module github.com/liujitcn/kratos-kit/registry/consul
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/hashicorp/consul/api v1.34.2
+	github.com/liujitcn/kratos-kit/api v0.0.28
+	github.com/liujitcn/kratos-kit/registry v0.0.21
 )
 
 require (
@@ -22,8 +24,6 @@ require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.28
-	github.com/liujitcn/kratos-kit/registry v0.0.21
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/miekg/dns v1.1.57 // indirect

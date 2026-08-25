@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	sentinelapi "github.com/alibaba/sentinel-golang/api"
 	"github.com/alibaba/sentinel-golang/core/base"
@@ -35,7 +36,7 @@ func WithTrafficType(trafficType base.TrafficType) Option {
 // WithEntryOptions 设置额外的 Sentinel Entry 选项。
 func WithEntryOptions(entryOpts ...sentinelapi.EntryOption) Option {
 	return func(o *options) {
-		o.entryOpts = append([]sentinelapi.EntryOption(nil), entryOpts...)
+		o.entryOpts = slices.Clone(entryOpts)
 	}
 }
 

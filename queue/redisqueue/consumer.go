@@ -3,13 +3,13 @@ package redisqueue
 import (
 	"context"
 	stderrors "errors"
+	"fmt"
 	"net"
 	"os"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -139,7 +139,7 @@ func (c *Consumer) RegisterWithLastIDContext(ctx context.Context, stream string,
 
 	if running {
 		if err := c.createConsumerGroup(ctx, stream, id); err != nil {
-			c.reportError(errors.Wrap(err, "error creating consumer group"))
+			c.reportError(fmt.Errorf("error creating consumer group: %w", err))
 		}
 	}
 }
@@ -164,7 +164,7 @@ func (c *Consumer) RunContext(ctx context.Context) {
 	consumers := c.snapshotConsumers()
 	if len(consumers) == 0 {
 		c.running.Store(false)
-		c.reportError(errors.New("at least one consumer function needs to be registered"))
+		c.reportError(stderrors.New("at least one consumer function needs to be registered"))
 		return
 	}
 	if err := c.prepareConsumerGroups(ctx, consumers); err != nil {
@@ -207,7 +207,7 @@ func (c *Consumer) Shutdown() {
 func (c *Consumer) prepareConsumerGroups(ctx context.Context, consumers map[string]registeredConsumer) error {
 	for stream, consumer := range consumers {
 		if err := c.createConsumerGroup(ctx, stream, consumer.id); err != nil {
-			return errors.Wrap(err, "error creating consumer group")
+			return fmt.Errorf("error creating consumer group: %w", err)
 		}
 	}
 
@@ -318,7 +318,7 @@ func (c *Consumer) reclaim(ctx context.Context) {
 						Count:  int64(c.options.BufferSize - len(c.queue)),
 					}).Result()
 					if err != nil && !stderrors.Is(err, redis.Nil) {
-						c.reportError(errors.Wrap(err, "error listing pending messages"))
+						c.reportError(fmt.Errorf("error listing pending messages: %w", err))
 						break
 					}
 					if len(res) == 0 {
@@ -340,14 +340,14 @@ func (c *Consumer) reclaim(ctx context.Context) {
 							Messages: []string{r.ID},
 						}).Result()
 						if err != nil && !stderrors.Is(err, redis.Nil) {
-							c.reportError(errors.Wrap(err, "error claiming message"))
+							c.reportError(fmt.Errorf("error claiming message: %w", err))
 							break
 						}
 						// 消息已经被裁剪或删除时，需要主动 ack 清理 pending 状态。
 						if stderrors.Is(err, redis.Nil) {
 							err = c.redis.XAck(ctx, stream, c.options.GroupName, r.ID).Err()
 							if err != nil {
-								c.reportError(errors.Wrapf(err, "error acknowledging after failed claim for %q stream and %q message", stream, r.ID))
+								c.reportError(fmt.Errorf("error acknowledging after failed claim for %q stream and %q message: %w", stream, r.ID, err))
 							}
 							continue
 						}
@@ -394,7 +394,7 @@ func (c *Consumer) poll(ctx context.Context) {
 				if stderrors.Is(err, redis.Nil) {
 					continue
 				}
-				c.reportError(errors.Wrap(err, "error reading redis stream"))
+				c.reportError(fmt.Errorf("error reading redis stream: %w", err))
 				continue
 			}
 
@@ -440,13 +440,13 @@ func (c *Consumer) work(ctx context.Context) {
 	for msg := range c.queue {
 		err := c.process(msg)
 		if err != nil {
-			c.reportError(errors.Wrapf(err, "error calling ConsumerFunc for %q stream and %q message", msg.Stream, msg.ID))
+			c.reportError(fmt.Errorf("error calling ConsumerFunc for %q stream and %q message: %w", msg.Stream, msg.ID, err))
 			continue
 		}
 
 		err = acknowledgeMessage(ctx, c.redis, c.options.GroupName, msg)
 		if err != nil {
-			c.reportError(errors.Wrapf(err, "error acknowledging completed message for %q stream and %q message", msg.Stream, msg.ID))
+			c.reportError(fmt.Errorf("error acknowledging completed message for %q stream and %q message: %w", msg.Stream, msg.ID, err))
 			continue
 		}
 	}
@@ -457,16 +457,16 @@ func (c *Consumer) process(msg *Message) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if e, ok := r.(error); ok {
-				err = errors.Wrap(e, "ConsumerFunc panic")
+				err = fmt.Errorf("ConsumerFunc panic: %w", e)
 				return
 			}
-			err = errors.Errorf("ConsumerFunc panic: %v", r)
+			err = fmt.Errorf("ConsumerFunc panic: %v", r)
 		}
 	}()
 
 	consumer, ok := c.getConsumer(msg.Stream)
 	if !ok {
-		return errors.Errorf("consumer for %q stream not found", msg.Stream)
+		return fmt.Errorf("consumer for %q stream not found", msg.Stream)
 	}
 
 	err = consumer.fn(msg)

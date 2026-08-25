@@ -6,7 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/google/uuid"
+	"uuid"
+
 	"github.com/liujitcn/kratos-kit/queue/data"
 )
 
@@ -57,7 +58,7 @@ func (s *Memory) Append(stream string, message data.Message) error {
 	}
 	go func(gm data.Message, gq queueChan) {
 		if len(gm.ID) == 0 {
-			gm.ID = uuid.New().String()
+			gm.ID = uuid.NewV4().String()
 		}
 		select {
 		case gq <- gm:

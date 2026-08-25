@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -66,7 +65,7 @@ func incrementMessageID(id string) (string, error) {
 	index := parts[1]
 	parsed, err := strconv.ParseInt(index, 10, 64)
 	if err != nil {
-		return "", errors.Wrapf(err, "error parsing message ID %q", id)
+		return "", fmt.Errorf("error parsing message ID %q: %w", id, err)
 	}
 	return fmt.Sprintf("%s-%d", parts[0], parsed+1), nil
 }

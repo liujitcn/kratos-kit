@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -88,10 +89,10 @@ func (b *natsBroker) Options() broker.Options {
 	defer b.mu.RUnlock()
 
 	options := b.options
-	options.Addrs = append([]string(nil), b.options.Addrs...)
-	options.Tracings = append([]tracing.Option(nil), b.options.Tracings...)
-	options.SubscriberMiddlewares = append([]broker.SubscriberMiddleware(nil), b.options.SubscriberMiddlewares...)
-	options.PublishMiddlewares = append([]broker.PublishMiddleware(nil), b.options.PublishMiddlewares...)
+	options.Addrs = slices.Clone(b.options.Addrs)
+	options.Tracings = slices.Clone(b.options.Tracings)
+	options.SubscriberMiddlewares = slices.Clone(b.options.SubscriberMiddlewares)
+	options.PublishMiddlewares = slices.Clone(b.options.PublishMiddlewares)
 	return options
 }
 
@@ -134,7 +135,7 @@ func (b *natsBroker) configureLocked() {
 		addresses = natsOptions.Servers
 	}
 	b.options.Addrs = normalizeAddresses(addresses)
-	natsOptions.Servers = append([]string(nil), b.options.Addrs...)
+	natsOptions.Servers = slices.Clone(b.options.Addrs)
 	if b.options.Secure {
 		natsOptions.Secure = true
 	}
@@ -365,7 +366,7 @@ func (b *natsBroker) Subscribe(topic string, handler broker.Handler, binder brok
 
 	subscribeOptions := broker.NewSubscribeOptions(options...)
 	subscribeOptions.Context = normalizeContext(subscribeOptions.Context)
-	middlewares := append([]broker.SubscriberMiddleware(nil), b.options.SubscriberMiddlewares...)
+	middlewares := slices.Clone(b.options.SubscriberMiddlewares)
 	middlewares = append(middlewares, subscribeOptions.Middlewares...)
 	handler = broker.ChainSubscriberMiddleware(handler, middlewares)
 
@@ -520,7 +521,7 @@ func (b *natsBroker) handleMessage(options broker.SubscribeOptions, handler brok
 
 	var err error
 	if binder == nil {
-		message.Body = append([]byte(nil), source.Data...)
+		message.Body = slices.Clone(source.Data)
 	} else {
 		message.Body = binder()
 		if message.Body == nil {
@@ -616,7 +617,7 @@ func (b *natsBroker) Request(ctx context.Context, topic string, message *broker.
 		return nil, fmt.Errorf("请求 NATS subject %q: %w", topic, err)
 	}
 	return broker.NewMessage(
-		append([]byte(nil), response.Data...),
+		slices.Clone(response.Data),
 		broker.WithHeaders(toBrokerHeaders(response.Header)),
 		broker.WithMsg(response),
 	), nil

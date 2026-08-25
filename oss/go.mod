@@ -1,11 +1,13 @@
 module github.com/liujitcn/kratos-kit/oss
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/jlaffaye/ftp v0.2.0
+	github.com/liujitcn/kratos-kit/api v0.0.28
+	github.com/liujitcn/kratos-kit/oss/s3 v0.0.2
 	github.com/minio/minio-go/v7 v7.1.0
 )
 
@@ -40,8 +42,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.28
-	github.com/liujitcn/kratos-kit/oss/s3 v0.0.2
 	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect

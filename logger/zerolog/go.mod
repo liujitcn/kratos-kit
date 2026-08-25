@@ -1,9 +1,11 @@
 module github.com/liujitcn/kratos-kit/logger/zerolog
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
+	github.com/liujitcn/kratos-kit/api v0.0.30
+	github.com/liujitcn/kratos-kit/logger v0.0.29
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/rs/zerolog v1.35.1
 )
@@ -11,8 +13,6 @@ require (
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.30
-	github.com/liujitcn/kratos-kit/logger v0.0.29
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect

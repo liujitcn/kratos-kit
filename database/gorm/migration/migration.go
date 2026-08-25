@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"sort"
+	"slices"
 	"sync"
 
 	databaseGorm "github.com/liujitcn/kratos-kit/database/gorm"
@@ -125,7 +125,7 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*dat
 	for targetName := range targets {
 		targetNames = append(targetNames, targetName)
 	}
-	sort.Strings(targetNames)
+	slices.Sort(targetNames)
 	for _, targetName := range targetNames {
 		targetClient := targets[targetName]
 		targetDriver := targetClient.Driver()

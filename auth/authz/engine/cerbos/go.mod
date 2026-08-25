@@ -1,6 +1,6 @@
 module github.com/liujitcn/kratos-kit/auth/authz/engine/cerbos
 
-go 1.26.0
+go 1.27.0
 
 require github.com/liujitcn/kratos-kit/auth/authz v0.0.21
 

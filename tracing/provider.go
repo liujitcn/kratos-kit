@@ -3,7 +3,8 @@ package tracing
 import (
 	"fmt"
 
-	"github.com/google/uuid"
+	"uuid"
+
 	"go.opentelemetry.io/otel/sdk/resource"
 	traceSdk "go.opentelemetry.io/otel/sdk/trace"
 	semConv "go.opentelemetry.io/otel/semconv/v1.12.0"
@@ -12,11 +13,7 @@ import (
 // NewTracerProvider 创建一个链路追踪器，并返回导出器或实例 ID 初始化错误。
 func NewTracerProvider(exporterName, endpoint, serviceName, instanceId, version string, sampler float64) (*traceSdk.TracerProvider, error) {
 	if instanceId == "" {
-		ud, err := uuid.NewUUID()
-		if err != nil {
-			return nil, fmt.Errorf("tracing: create instance id: %w", err)
-		}
-		instanceId = ud.String()
+		instanceId = uuid.NewV7().String()
 	}
 	if version == "" {
 		version = "x.x.x"

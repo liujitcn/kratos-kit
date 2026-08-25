@@ -85,9 +85,8 @@ func NormalizeCommentText(comments protogen.Comments) string {
 		return ""
 	}
 
-	lines := strings.Split(raw, "\n")
-	parts := make([]string, 0, len(lines))
-	for _, line := range lines {
+	parts := make([]string, 0)
+	for line := range strings.Lines(raw) {
 		line = strings.TrimSpace(line)
 		line = strings.TrimPrefix(line, "//")
 		line = strings.TrimSpace(line)
