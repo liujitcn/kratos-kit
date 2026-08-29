@@ -64,6 +64,11 @@ func (s *Redis) Get(key string) (string, error) {
 	return s.client.Get(context.TODO(), key).Result()
 }
 
+// Incr 原子递增 Redis 中的数值键。
+func (s *Redis) Incr(key string) (int64, error) {
+	return s.client.Incr(context.TODO(), key).Result()
+}
+
 // GetDel 使用 Redis GETDEL 原子读取并删除缓存值。
 func (s *Redis) GetDel(key string) (string, error) {
 	return s.client.GetDel(context.TODO(), key).Result()

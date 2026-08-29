@@ -11,6 +11,8 @@ import (
 
 type Cache interface {
 	Get(key string) (string, error)
+	// Incr 原子递增字符串数值键并返回递增后的值。
+	Incr(key string) (int64, error)
 	// GetDel 原子读取并删除缓存值。
 	GetDel(key string) (string, error)
 	Set(key string, value string, expire time.Duration) error

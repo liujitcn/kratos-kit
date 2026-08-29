@@ -2,6 +2,7 @@ package memory
 
 import (
 	"errors"
+	"strconv"
 	"sync"
 	"time"
 
@@ -61,6 +62,28 @@ func (s *Memory) Get(key string) (string, error) {
 		return "", errors.New("key expired")
 	}
 	return item.Value, nil
+}
+
+// Incr 原子递增内存缓存中的数值键。
+func (s *Memory) Incr(key string) (int64, error) {
+	s.strMutex.Lock()
+	defer s.strMutex.Unlock()
+	item, ok := s.strItems[key]
+	if ok && time.Now().After(item.Expired) {
+		delete(s.strItems, key)
+		ok = false
+	}
+	var value int64
+	var err error
+	if ok {
+		value, err = strconv.ParseInt(item.Value, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+	}
+	value++
+	s.strItems[key] = &strItem{Value: strconv.FormatInt(value, 10), Expired: time.Now().AddDate(100, 0, 0)}
+	return value, nil
 }
 
 // GetDel 原子读取并删除缓存值。
