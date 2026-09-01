@@ -67,8 +67,10 @@ message Server {
     string network = 1;
     // addr 为服务监听地址。
     string addr = 2;
-    // timeout 为请求超时时间。
+    // timeout 为普通 HTTP 请求处理超时时间，流式请求由服务实现跳过；零表示不限制。
     google.protobuf.Duration timeout = 3;
+    // max_body_bytes 为单次 HTTP 请求体大小上限，零表示不限制。
+    int64 max_body_bytes = 4;
 
     // cors 为跨域资源共享配置。
     Cors cors = 10;

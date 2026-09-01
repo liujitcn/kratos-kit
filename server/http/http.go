@@ -2,7 +2,9 @@ package http
 
 import (
 	"crypto/tls"
+	stdhttp "net/http"
 	"net/http/pprof"
+	"strings"
 
 	"github.com/go-kratos/kratos/v3/middleware"
 	"github.com/go-kratos/kratos/v3/middleware/metadata"
@@ -13,6 +15,7 @@ import (
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/server/http/internal/response"
 	"github.com/liujitcn/kratos-kit/server/http/middleware/requestid"
+	"github.com/liujitcn/kratos-kit/server/http/middleware/timeout"
 	"github.com/liujitcn/kratos-kit/tracing"
 	"github.com/liujitcn/kratos-kit/utils"
 )
@@ -43,6 +46,7 @@ func initHttpServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 	httpCfg := cfg.Server.Http
 
 	options := make([]http.ServerOption, 0)
+	filters := make([]http.FilterFunc, 0, 3)
 
 	if httpCfg.Cors != nil {
 		corsOptions := make([]handlers.CORSOption, 0, 6)
@@ -64,7 +68,24 @@ func initHttpServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 		if httpCfg.Cors.MaxAgeSeconds > 0 {
 			corsOptions = append(corsOptions, handlers.MaxAge(int(httpCfg.Cors.MaxAgeSeconds)))
 		}
-		options = append(options, http.Filter(handlers.CORS(corsOptions...)))
+		filters = append(filters, handlers.CORS(corsOptions...))
+	}
+	if httpCfg.MaxBodyBytes > 0 {
+		maxBodyBytes := httpCfg.MaxBodyBytes
+		filters = append(filters, func(next stdhttp.Handler) stdhttp.Handler {
+			return stdhttp.HandlerFunc(func(writer stdhttp.ResponseWriter, request *stdhttp.Request) {
+				if request.Body != nil {
+					request.Body = stdhttp.MaxBytesReader(writer, request.Body, maxBodyBytes)
+				}
+				next.ServeHTTP(writer, request)
+			})
+		})
+	}
+	if httpCfg.Timeout != nil && httpCfg.Timeout.AsDuration() > 0 {
+		filters = append(filters, timeout.Middleware(httpCfg.Timeout.AsDuration(), timeout.WithSkipFunc(streamingRequest)))
+	}
+	if len(filters) > 0 {
+		options = append(options, http.Filter(filters...))
 	}
 
 	if mds == nil {
@@ -98,9 +119,8 @@ func initHttpServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 	if httpCfg.Addr != "" {
 		options = append(options, http.Address(httpCfg.Addr))
 	}
-	if httpCfg.Timeout != nil {
-		options = append(options, http.Timeout(httpCfg.Timeout.AsDuration()))
-	}
+	// timeout 已由可跳过流式请求的 HTTP 过滤器处理，传输层不设置全局 deadline。
+	options = append(options, http.Timeout(0))
 
 	if httpCfg.Tls != nil {
 		var tlsCfg *tls.Config
@@ -116,6 +136,15 @@ func initHttpServerConfig(cfg *configv1.Bootstrap, mds ...middleware.Middleware)
 	}
 
 	return options, nil
+}
+
+// streamingRequest 判断当前路径是否需要保留长连接语义。
+func streamingRequest(request *stdhttp.Request) bool {
+	path := request.URL.Path
+	if path == "/events" || path == "/mcp" || strings.HasPrefix(path, "/events/") || strings.HasPrefix(path, "/mcp/") {
+		return true
+	}
+	return strings.HasPrefix(path, "/api/v1/base/ai/session/") && strings.Contains(path, "/message")
 }
 
 // registerHttpPprof 注册 pprof 路由。

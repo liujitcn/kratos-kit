@@ -23,7 +23,7 @@ serverhttp "github.com/liujitcn/kratos-kit/server/http"
 func CreateHttpServer(cfg *configv1.Bootstrap, mds ...middleware.Middleware) (*kratosHttp.Server, error)
 ```
 
-`CreateHttpServer` 从 `cfg.server.http` 读取监听地址、超时、CORS、TLS 以及 recovery、tracing、ratelimit、metadata 等官方 Kratos 中间件开关。传输层中间件固定在调用方传入的 `mds` 之前；参数校验由 `kratos-core` 按 `middleware.enable_validate` 挂载。
+`CreateHttpServer` 从 `cfg.server.http` 读取监听地址、普通请求超时、请求体上限、CORS、TLS 以及 recovery、tracing、ratelimit、metadata 等官方 Kratos 中间件开关。普通请求使用 `timeout`，`/events`、`/mcp` 和 AI 消息流自动跳过该超时；`max_body_bytes` 对所有 HTTP 请求仍然生效。传输层中间件固定在调用方传入的 `mds` 之前；参数校验由 `kratos-core` 按 `middleware.enable_validate` 挂载。
 
 HTTP 服务端专属中间件位于 `server/http/middleware`：
 
@@ -39,6 +39,7 @@ server:
     network: tcp
     addr: 0.0.0.0:8000
     timeout: 5s
+    max_body_bytes: 67108864
     enable_pprof: false
     cors:
       headers: ["Content-Type", "Authorization"]

@@ -7,16 +7,21 @@ import (
 	"time"
 
 	"github.com/go-kratos/kratos/v3/log"
+	"github.com/liujitcn/kratos-kit/cache/store"
 )
 
 type strItem struct {
-	Value   string
-	Expired time.Time
+	Value     string
+	Expired   time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type mapItem struct {
-	Value   map[string]string
-	Expired time.Time
+	Value     map[string]string
+	Expired   time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Memory struct {
@@ -36,6 +41,35 @@ func NewMemory() (*Memory, func(), error) {
 		}, nil
 }
 
+// List 返回内存缓存中的字符串和 Hash 条目及其元数据。
+func (s *Memory) List() ([]store.Entry, error) {
+	now := time.Now()
+	entries := make([]store.Entry, 0)
+	s.strMutex.Lock()
+	for key, item := range s.strItems {
+		if !item.Expired.IsZero() && now.After(item.Expired) {
+			delete(s.strItems, key)
+			continue
+		}
+		entries = append(entries, store.Entry{Key: key, Type: "string", Value: item.Value, TTL: ttl(item.Expired), ExpiresAt: item.Expired, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt})
+	}
+	s.strMutex.Unlock()
+	s.mapMutex.Lock()
+	for key, item := range s.mapItems {
+		if !item.Expired.IsZero() && now.After(item.Expired) {
+			delete(s.mapItems, key)
+			continue
+		}
+		fields := make(map[string]string, len(item.Value))
+		for field, value := range item.Value {
+			fields[field] = value
+		}
+		entries = append(entries, store.Entry{Key: key, Type: "hash", Fields: fields, TTL: ttl(item.Expired), ExpiresAt: item.Expired, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt})
+	}
+	s.mapMutex.Unlock()
+	return entries, nil
+}
+
 func (s *Memory) Connect() error {
 	if s.strItems == nil || s.mapItems == nil {
 		return errors.New("memory connect fail")
@@ -50,14 +84,14 @@ func (s *Memory) DisConnect() error {
 }
 
 func (s *Memory) Get(key string) (string, error) {
-	s.strMutex.RLock()
-	defer s.strMutex.RUnlock()
+	s.strMutex.Lock()
+	defer s.strMutex.Unlock()
 
 	item, ok := s.strItems[key]
 	if !ok {
 		return "", errors.New("key not found")
 	}
-	if time.Now().After(item.Expired) {
+	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		delete(s.strItems, key)
 		return "", errors.New("key expired")
 	}
@@ -69,7 +103,7 @@ func (s *Memory) Incr(key string) (int64, error) {
 	s.strMutex.Lock()
 	defer s.strMutex.Unlock()
 	item, ok := s.strItems[key]
-	if ok && time.Now().After(item.Expired) {
+	if ok && !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		delete(s.strItems, key)
 		ok = false
 	}
@@ -82,7 +116,14 @@ func (s *Memory) Incr(key string) (int64, error) {
 		}
 	}
 	value++
-	s.strItems[key] = &strItem{Value: strconv.FormatInt(value, 10), Expired: time.Now().AddDate(100, 0, 0)}
+	now := time.Now()
+	if !ok {
+		item = &strItem{CreatedAt: now}
+	}
+	item.Value = strconv.FormatInt(value, 10)
+	item.UpdatedAt = now
+	item.Expired = time.Time{}
+	s.strItems[key] = item
 	return value, nil
 }
 
@@ -96,7 +137,7 @@ func (s *Memory) GetDel(key string) (string, error) {
 		return "", errors.New("key not found")
 	}
 	delete(s.strItems, key)
-	if time.Now().After(item.Expired) {
+	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		return "", errors.New("key expired")
 	}
 	return item.Value, nil
@@ -106,9 +147,12 @@ func (s *Memory) Set(key, value string, expire time.Duration) error {
 	s.strMutex.Lock()
 	defer s.strMutex.Unlock()
 
-	item := &strItem{
-		Value:   value,
-		Expired: time.Now().Add(expire),
+	now := time.Now()
+	item := &strItem{Value: value, Expired: expiration(expire), CreatedAt: now, UpdatedAt: now}
+	if previous, ok := s.strItems[key]; ok {
+		if previous.Expired.IsZero() || now.Before(previous.Expired) {
+			item.CreatedAt = previous.CreatedAt
+		}
 	}
 
 	s.strItems[key] = item
@@ -132,22 +176,23 @@ func (s *Memory) Expire(key string, dur time.Duration) error {
 	if !ok {
 		return errors.New("key not found")
 	}
-	item.Expired = time.Now().Add(dur)
+	item.Expired = expiration(dur)
+	item.UpdatedAt = time.Now()
 
 	s.strItems[key] = item
 	return nil
 }
 
 func (s *Memory) Exists(key string) bool {
-	s.strMutex.RLock()
-	defer s.strMutex.RUnlock()
+	s.strMutex.Lock()
+	defer s.strMutex.Unlock()
 
 	item, ok := s.strItems[key]
 	if !ok {
 		return false
 	}
 
-	if time.Now().After(item.Expired) {
+	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		delete(s.strItems, key)
 		return false
 	}
@@ -155,29 +200,31 @@ func (s *Memory) Exists(key string) bool {
 }
 
 func (s *Memory) HGetAll(key string) (map[string]string, error) {
-	s.mapMutex.RLock()
-	defer s.mapMutex.RUnlock()
+	s.mapMutex.Lock()
+	defer s.mapMutex.Unlock()
 
 	item, ok := s.mapItems[key]
+	if ok && !item.Expired.IsZero() && time.Now().After(item.Expired) {
+		delete(s.mapItems, key)
+		return nil, errors.New("key expired")
+	}
 	if !ok {
 		return nil, errors.New("key not found")
-	}
-	if time.Now().After(item.Expired) {
-		return nil, errors.New("key expired")
 	}
 	return item.Value, nil
 }
 
 func (s *Memory) HGet(key, field string) (string, error) {
-	s.mapMutex.RLock()
-	defer s.mapMutex.RUnlock()
+	s.mapMutex.Lock()
+	defer s.mapMutex.Unlock()
 
 	item, ok := s.mapItems[key]
+	if ok && !item.Expired.IsZero() && time.Now().After(item.Expired) {
+		delete(s.mapItems, key)
+		return "", errors.New("key expired")
+	}
 	if !ok {
 		return "", errors.New("key not found")
-	}
-	if time.Now().After(item.Expired) {
-		return "", errors.New("key expired")
 	}
 	var itemValue string
 	itemValue, ok = item.Value[field]
@@ -192,14 +239,20 @@ func (s *Memory) HSet(key, field, value string) error {
 	defer s.mapMutex.Unlock()
 
 	item, ok := s.mapItems[key]
+	if ok && !item.Expired.IsZero() && time.Now().After(item.Expired) {
+		delete(s.mapItems, key)
+		ok = false
+	}
 	if !ok {
+		now := time.Now()
 		item = &mapItem{
-			Value:   make(map[string]string),
-			Expired: time.Now().AddDate(100, 0, 0),
+			Value:     make(map[string]string),
+			CreatedAt: now,
 		}
 	}
 
 	item.Value[field] = value
+	item.UpdatedAt = time.Now()
 
 	s.mapItems[key] = item
 	return nil
@@ -213,11 +266,12 @@ func (s *Memory) HDel(key, field string) error {
 	if !ok {
 		return errors.New("key not found")
 	}
-	if time.Now().After(item.Expired) {
+	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		return errors.New("key expired")
 	}
 
 	delete(item.Value, field)
+	item.UpdatedAt = time.Now()
 
 	s.mapItems[key] = item
 	return nil
@@ -231,7 +285,7 @@ func (s *Memory) HExists(key, field string) error {
 	if !ok {
 		return errors.New("key not found")
 	}
-	if time.Now().After(item.Expired) {
+	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		return errors.New("key expired")
 	}
 
@@ -240,4 +294,18 @@ func (s *Memory) HExists(key, field string) error {
 		return errors.New("field not found")
 	}
 	return nil
+}
+
+func expiration(expire time.Duration) time.Time {
+	if expire <= 0 {
+		return time.Time{}
+	}
+	return time.Now().Add(expire)
+}
+
+func ttl(expired time.Time) time.Duration {
+	if expired.IsZero() {
+		return -1
+	}
+	return time.Until(expired)
 }

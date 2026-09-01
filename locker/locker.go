@@ -8,13 +8,15 @@ import (
 	"github.com/liujitcn/kratos-kit/locker/redis"
 )
 
+// Locker 定义 Redis 分布式锁能力。
 type Locker interface {
 	Lock(key string, ttl int64, options *redislock.Options) (*redislock.Lock, error)
 }
 
+// NewLocker 创建 Redis 分布式锁实例。
 func NewLocker(cfg *configv1.Data_Redis) (Locker, func(), error) {
 	if cfg == nil {
-		return nil, nil, errors.New("redisConf is null")
+		return nil, nil, errors.New("Redis 配置不能为空")
 	}
 	return redis.NewRedis(cfg)
 }

@@ -1,22 +1,30 @@
 package utils
 
 import (
+	"errors"
+
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/redis/go-redis/v9"
 )
 
 // GetRedisOptions 构造单机 Redis 连接配置。
 func GetRedisOptions(cfg *configv1.Data_Redis) (*redis.Options, error) {
+	if cfg == nil {
+		return nil, errors.New("Redis 配置不能为空")
+	}
+	if len(cfg.GetAddr()) == 0 || cfg.GetAddr()[0] == "" {
+		return nil, errors.New("Redis 地址不能为空")
+	}
 	redisOptions := &redis.Options{
-		Addr:         cfg.Addr[0],
-		Password:     cfg.Password,
-		DB:           int(cfg.Db),
-		DialTimeout:  cfg.DialTimeout.AsDuration(),
-		ReadTimeout:  cfg.ReadTimeout.AsDuration(),
-		WriteTimeout: cfg.WriteTimeout.AsDuration(),
+		Addr:         cfg.GetAddr()[0],
+		Password:     cfg.GetPassword(),
+		DB:           int(cfg.GetDb()),
+		DialTimeout:  cfg.GetDialTimeout().AsDuration(),
+		ReadTimeout:  cfg.GetReadTimeout().AsDuration(),
+		WriteTimeout: cfg.GetWriteTimeout().AsDuration(),
 	}
 	var err error
-	redisOptions.TLSConfig, err = LoadServerTlsConfig(cfg.Tls)
+	redisOptions.TLSConfig, err = LoadServerTlsConfig(cfg.GetTls())
 	return redisOptions, err
 }
 
