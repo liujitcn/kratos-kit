@@ -1,9 +1,0 @@
-logger:
-  type: zap
-  zap:
-    level: debug
-    filepath: ./data/logs
-    max_size: 1
-    max_age: 30
-    max_backups: 5
-    enable_console: true

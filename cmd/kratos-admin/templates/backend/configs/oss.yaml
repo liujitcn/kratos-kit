@@ -1,0 +1,3 @@
+oss:
+  type: local
+  root_directory: ./data

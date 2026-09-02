@@ -1,0 +1,16 @@
+//go:build wireinject
+// +build wireinject
+
+package main
+
+import (
+	"github.com/go-kratos/kratos/v3"
+	"github.com/google/wire"
+	project "__MODULE_PATH__"
+	"github.com/liujitcn/kratos-kit/bootstrap"
+)
+
+// NewApp 通过项目根包的 ProviderSet 创建独立应用。
+func NewApp(ctx *bootstrap.Context) (*kratos.App, func(), error) {
+	panic(wire.Build(project.ProviderSet))
+}

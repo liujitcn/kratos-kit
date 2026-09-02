@@ -1,0 +1,4 @@
+type: file
+scope: default
+file:
+  path: ../root.key

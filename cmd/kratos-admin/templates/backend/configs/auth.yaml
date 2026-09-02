@@ -1,0 +1,6 @@
+authn:
+  jwt:
+    # 仅用于本地开发，生产环境必须替换为 Secret Manager 注入的随机值。
+    secret: 9b235c062ec9f41ed9ecfca2cc4d86dfb477c4860cc5fae35764d3d9b0bf699c
+    access_token_expires: 3600s
+    refresh_token_expires: 2592000s

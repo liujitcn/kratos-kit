@@ -1,5 +1,8 @@
 go 1.27.0
 
+replace github.com/liujitcn/kratos-kit/redact v0.0.1 => ./redact
+replace github.com/liujitcn/kratos-kit/key v0.0.1 => ./key
+
 use (
 	.
 	./ai/eino
@@ -29,10 +32,12 @@ use (
 	./cache
 	./captcha
 	./cmd/internal/utils
+	./cmd/kratos-admin
 	./cmd/normalize-go-imports
-	./cmd/kratos-admin-backend
 	./cmd/protoc-gen-go-agent-tool
 	./cmd/protoc-gen-go-mcp-tool
+	./cmd/protoc-gen-go-redact
+	./redact
 	./config
 	./config/apollo
 	./config/consul
@@ -68,6 +73,7 @@ use (
 	./encoding/thrift
 	./encoding/toml
 	./health
+	./key
 	./locker
 	./logger
 	./logger/aliyun

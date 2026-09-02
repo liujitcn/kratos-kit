@@ -7,6 +7,7 @@ require (
 	github.com/liujitcn/kratos-kit/cache v0.0.17
 	github.com/liujitcn/kratos-kit/database/gorm v0.0.39
 	github.com/liujitcn/kratos-kit/locker v0.0.14
+	github.com/liujitcn/kratos-kit/key v0.0.1
 	github.com/liujitcn/kratos-kit/oss v0.0.16
 	github.com/liujitcn/kratos-kit/queue v0.0.26
 )

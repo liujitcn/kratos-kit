@@ -1,0 +1,41 @@
+// Command server 启动当前后端项目。
+package main
+
+import (
+	"context"
+
+	bootstrapConfigv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	"github.com/liujitcn/kratos-kit/bootstrap"
+
+	// 注册 SQLite 数据库驱动和 Zap 日志实现。
+	_ "github.com/liujitcn/kratos-kit/database/gorm/driver/sqlite"
+	_ "github.com/liujitcn/kratos-kit/logger/zap"
+)
+
+var (
+	// Project 表示当前服务所属项目标识。
+	Project = "__PROJECT_NAME__"
+	// AppID 表示当前服务应用标识。
+	AppID = "__PROJECT_NAME__"
+	// Name 表示当前服务展示名称。
+	Name    = "__PROJECT_NAME__"
+	version = "1.0.0"
+)
+
+// main 初始化应用信息并启动当前后端服务。
+func main() {
+	ctx := bootstrap.NewContext(
+		context.Background(),
+		&bootstrapConfigv1.AppInfo{
+			Project: Project,
+			AppId:   AppID,
+			Name:    Name,
+			Version: version,
+		},
+	)
+	var err error
+	err = bootstrap.RunApp(ctx, NewApp)
+	if err != nil {
+		panic(err)
+	}
+}

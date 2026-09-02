@@ -1,0 +1,10 @@
+.DS_Store
+.idea/
+.vscode/
+backend/bin/
+backend/data/*.db
+backend/data/logs/
+frontend/node_modules/
+frontend/**/dist/
+frontend/**/.turbo/
+*.log

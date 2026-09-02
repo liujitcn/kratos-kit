@@ -1,0 +1,70 @@
+package module
+
+import (
+	"embed"
+	"fmt"
+	"io/fs"
+
+	coremodule "github.com/liujitcn/kratos-core/module"
+)
+
+type resource struct {
+	projectKey  string
+	projectName string
+	openAPI     fs.FS
+}
+
+var _ coremodule.Resource = (*resource)(nil)
+
+//go:embed assets/*
+var openAPIAssets embed.FS
+
+// NewModuleResources 创建当前项目提供给 Core 的空资源集合。
+func NewModuleResources() coremodule.Resources {
+	openAPI, err := fs.Sub(openAPIAssets, "assets")
+	if err != nil {
+		panic(fmt.Errorf("读取内嵌 OpenAPI 资源: %w", err))
+	}
+	return coremodule.Resources{
+		&resource{
+			projectKey:  "__PROJECT_NAME__",
+			projectName: "__PROJECT_NAME__",
+			openAPI:     openAPI,
+		},
+	}
+}
+
+// ProjectKey 返回当前项目的稳定标识。
+func (r *resource) ProjectKey() string {
+	return r.projectKey
+}
+
+// ProjectName 返回当前项目的展示名称。
+func (r *resource) ProjectName() string {
+	return r.projectName
+}
+
+// Models 返回当前项目的数据库模型集合。
+func (*resource) Models() coremodule.Models {
+	return coremodule.Models{}
+}
+
+// Docs 返回当前项目的项目文档资源。
+func (*resource) Docs() fs.FS {
+	return nil
+}
+
+// I18n 返回当前项目的国际化资源。
+func (*resource) I18n() fs.FS {
+	return nil
+}
+
+// OpenAPI 返回当前项目的 OpenAPI 资源。
+func (r *resource) OpenAPI() fs.FS {
+	return r.openAPI
+}
+
+// Migrations 返回当前项目的数据库迁移资源。
+func (*resource) Migrations() coremodule.Migrations {
+	return nil
+}

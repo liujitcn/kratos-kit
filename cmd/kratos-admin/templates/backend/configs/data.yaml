@@ -1,0 +1,11 @@
+data:
+  database:
+    driver: sqlite
+    source: ./data/app.db
+    debug: false
+    enable_migrate: false
+    enable_trace: false
+    enable_metrics: false
+  queue:
+    memory:
+      pool_size: 100

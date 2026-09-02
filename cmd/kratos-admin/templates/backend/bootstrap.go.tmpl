@@ -1,0 +1,105 @@
+// Package __PACKAGE_NAME__ 提供当前项目的 Core 依赖注入集合。
+package __PACKAGE_NAME__
+
+import (
+	"github.com/google/wire"
+	kratoscore "github.com/liujitcn/kratos-core"
+	corebiz "github.com/liujitcn/kratos-core/biz"
+	coreconfig "github.com/liujitcn/kratos-core/config"
+	coredata "github.com/liujitcn/kratos-core/data"
+	corejob "github.com/liujitcn/kratos-core/job"
+	coremcp "github.com/liujitcn/kratos-core/mcp"
+	coremodule "github.com/liujitcn/kratos-core/module"
+	coreresource "github.com/liujitcn/kratos-core/resource"
+	coreDocs "github.com/liujitcn/kratos-core/resource/docs"
+	coreI18n "github.com/liujitcn/kratos-core/resource/i18n"
+	coreMigration "github.com/liujitcn/kratos-core/resource/migration"
+	coreOpenAPI "github.com/liujitcn/kratos-core/resource/openapi"
+	corequeue "github.com/liujitcn/kratos-core/queue"
+	coreServer "github.com/liujitcn/kratos-core/server"
+	coreSSE "github.com/liujitcn/kratos-core/sse"
+	bootstrapConfigv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	kitCache "github.com/liujitcn/kratos-kit/cache"
+	cacheMemory "github.com/liujitcn/kratos-kit/cache/memory"
+	kitOSS "github.com/liujitcn/kratos-kit/oss"
+	kitPprof "github.com/liujitcn/kratos-kit/pprof"
+	kitQueue "github.com/liujitcn/kratos-kit/queue"
+	kitTranslator "github.com/liujitcn/kratos-kit/translator"
+
+	projectModule "__MODULE_PATH__/internal/module"
+)
+
+// ProviderSet 提供当前项目的最小 Core 应用依赖注入集合。
+var ProviderSet = wire.NewSet(
+	kratoscore.NewApp,
+	configProviderSet,
+	bizProviderSet,
+	coremodule.ProviderSet,
+	coredata.ProviderSet,
+	coreDocs.ProviderSet,
+	coreI18n.ProviderSet,
+	coreMigration.ProviderSet,
+	coreOpenAPI.ProviderSet,
+	coremcp.ProviderSet,
+	coreSSE.ProviderSet,
+	coreServer.ProviderSet,
+	projectModule.NewModuleResources,
+	projectModule.NewModules,
+	NewStreams,
+	NewSyncResult,
+	NewQueueServer,
+	NewJobServer,
+)
+
+var configProviderSet = wire.NewSet(
+	coreconfig.ParseBootstrap,
+	coreconfig.ParseAppInfo,
+	coreconfig.ParseDatabase,
+	coreconfig.ParseQueue,
+	coreconfig.ParsePprof,
+	coreconfig.ParseOSS,
+	coreconfig.ParseAuthnJWT,
+	coreconfig.ParseTranslator,
+)
+
+var bizProviderSet = wire.NewSet(
+	corebiz.NewAuthenticator,
+	corebiz.NewAuthzEngine,
+	corebiz.NewUserToken,
+	corebiz.NewBaseCase,
+	kitPprof.NewPprof,
+	kitOSS.NewOSS,
+	kitTranslator.NewTranslator,
+	NewMemoryCache,
+	NewMemoryQueue,
+)
+
+// NewMemoryCache 创建不依赖外部 Redis 的内存缓存。
+func NewMemoryCache() (kitCache.Cache, func(), error) {
+	return cacheMemory.NewMemory()
+}
+
+// NewMemoryQueue 创建不依赖外部 Redis 的内存队列。
+func NewMemoryQueue(config *bootstrapConfigv1.Data_Queue) (kitQueue.Queue, func(), error) {
+	return kitQueue.NewQueue(nil, config)
+}
+
+// NewSyncResult 提供最小服务所需的空资源同步结果。
+func NewSyncResult() *coreresource.SyncResult {
+	return &coreresource.SyncResult{}
+}
+
+// NewStreams 提供最小服务的空 SSE 流集合。
+func NewStreams() coreSSE.Streams {
+	return nil
+}
+
+// NewQueueServer 禁用未注册消费者的独立队列服务。
+func NewQueueServer() *corequeue.Server {
+	return nil
+}
+
+// NewJobServer 禁用未注册任务的独立定时任务服务。
+func NewJobServer() *corejob.Server {
+	return nil
+}

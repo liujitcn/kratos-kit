@@ -14,11 +14,10 @@ plugin:
 	@go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v3@latest
 	@go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest
 	@go install github.com/envoyproxy/protoc-gen-validate@latest
-	@go install github.com/menta2k/protoc-gen-redact/v3@latest
+	@cd cmd/protoc-gen-go-redact && go install .
 	@go install github.com/go-kratos/protoc-gen-typescript-http@latest
 	@cd cmd/protoc-gen-go-agent-tool && go install .
 	@cd cmd/protoc-gen-go-mcp-tool && go install .
-	@cd cmd/protoc-gen-go-service && go install .
 
 # 安装命令行工具
 cli:
@@ -29,7 +28,7 @@ cli:
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install ./cmd/normalize-go-imports
 	@cd cmd/project-docs && go install .
-	@cd cmd/kratos-admin-backend && go install .
+	@cd cmd/kratos-admin && go install .
 
 # 使用 goimports 统一整理 Go 代码的 import 与格式
 fmt:

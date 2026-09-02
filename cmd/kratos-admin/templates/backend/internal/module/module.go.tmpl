@@ -1,0 +1,32 @@
+package module
+
+import (
+	"github.com/go-kratos/kratos/v3/transport/http"
+	coremodule "github.com/liujitcn/kratos-core/module"
+	"github.com/liujitcn/kratos-kit/transport/mcp"
+	"google.golang.org/grpc"
+)
+
+// Module 表示当前项目注册到 Core 宿主的空业务模块。
+type Module struct{}
+
+var _ coremodule.Module = (*Module)(nil)
+
+// NewModule 创建当前项目的空业务模块。
+func NewModule() *Module {
+	return &Module{}
+}
+
+// NewModules 创建当前项目提供给 Core 的模块集合。
+func NewModules() coremodule.Modules {
+	return coremodule.Modules{NewModule()}
+}
+
+// RegisterGRPC 注册当前项目的 gRPC 服务。
+func (*Module) RegisterGRPC(grpc.ServiceRegistrar) {}
+
+// RegisterHTTP 注册当前项目的 HTTP 服务。
+func (*Module) RegisterHTTP(*http.Server) {}
+
+// RegisterMCP 注册当前项目的 MCP 工具。
+func (*Module) RegisterMCP(*mcp.Server) {}

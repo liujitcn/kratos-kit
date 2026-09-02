@@ -11,6 +11,7 @@
 - `api`：protobuf 定义与代码生成（`buf generate`）
 - `bootstrap`：应用启动入口（配置加载 + 日志 + 注册中心 + tracer + `kratos.App`）
 - `config`：本地/远程配置加载与工厂注册；额外提供直接实现 Kratos `config.Source` 的文件、HTTP、Redis、Vault、ZooKeeper 和 S3 配置源
+- `key`：统一密钥接口、根密钥派生和 Secret Manager 适配；提供 File、Vault、AWS、Google、Azure 和 Kubernetes Secret
 - `logger`：日志工厂（`std`/`zap`/`logrus`/`fluent`/`aliyun`/`tencent`/`zerolog`）
 - `registry`：注册发现工厂（`consul`/`etcd`/`eureka`/`kubernetes`/`nacos`/`polaris`/`servicecomb`/`zookeeper`）
 - `tracer`：OpenTelemetry TracerProvider 与 exporter 工厂（`std`/`zipkin`/`otlp-http`/`otlp-grpc`）
@@ -42,7 +43,9 @@
 - `utils`：通用工具（TLS、Redis 配置辅助）
 - `cmd/project-docs`：收集当前项目约定 README 和根 docs 的 Go 命令
 - `cmd/normalize-go-imports`：通用 Go import 别名规范化命令，可安装后在任意项目目录执行
-- `cmd/kratos-admin-backend`：生成基于 kratos-admin Core 的空业务后端项目
+- `cmd/kratos-admin`：生成包含前后端和项目脚本的完整项目
+- `cmd/protoc-gen-go-redact`：按 Proto 字段规则生成服务端响应脱敏代码，并维护可发布到 Buf 的 `redact/v1` 契约
+- `redact`：运行时脱敏接口、自定义规则注册和 gRPC 流式响应包装；由 `cmd/protoc-gen-go-redact` 生成代码依赖
 
 `database/gorm` 的 `Data` 配置支持 `database` 与 `databases` 两种形式。多个固定数据源应按名称分别创建客户端和 `data.Data`，每个客户端启动时主动校验连接；跨数据源事务、Join 与请求级动态切库不在该封装的职责范围内。
 
@@ -59,6 +62,7 @@
 ```bash
 go get github.com/liujitcn/kratos-kit/bootstrap@latest
 go get github.com/liujitcn/kratos-kit/config@latest
+go get github.com/liujitcn/kratos-kit/key@latest
 go get github.com/liujitcn/kratos-kit/logger@latest
 go get github.com/liujitcn/kratos-kit/registry@latest
 go get github.com/liujitcn/kratos-kit/tracer@latest
@@ -110,6 +114,8 @@ go get github.com/liujitcn/kratos-kit/workflow/temporal@latest
 
 ```bash
 go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
+go install github.com/liujitcn/kratos-kit/cmd/protoc-gen-go-redact@latest
+go get github.com/liujitcn/kratos-kit/redact@latest
 ```
 
 命令从项目根目录扫描相对路径不超过三段的文件，只收集精确命名的
@@ -136,13 +142,12 @@ normalize-go-imports -root /path/to/project -write
 生成物不包含项目身份。服务加载后使用 `AppInfo.Project` 和 `AppInfo.Name`
 生成稳定文档 ID，并与 OpenAPI/Swagger 保持一致。
 
-后端项目生成命令使用 Go module 末段作为目标目录名，生成 Proto、biz、service、
-server、data、migration 和 docs 分层骨架，并同时提供可挂载模块与独立应用
-两套 Wire 装配入口：
+项目生成命令按项目名创建完整的前后端目录，后端使用最新 `kratos-core` 的最小
+模块和 Core ProviderSet，前端通过 `@liujitcn/kratos-admin-cli` 生成：
 
 ```bash
-go install github.com/liujitcn/kratos-kit/cmd/kratos-admin-backend@latest
-kratos-admin-backend create --module github.com/example/order
+go install github.com/liujitcn/kratos-kit/cmd/kratos-admin@latest
+kratos-admin create shop-admin
 ```
 
 ## 快速开始
@@ -235,13 +240,51 @@ Ent 审计字段可在 schema 中复用 `entkit.AuditMixin{}`；字段注释通�
 
 app-info 字段的优先级为：启动参数 → 传入的 `*configv1.AppInfo` → 默认值。
 
+## 密钥与配置加解密
+
+`bootstrap.RunApp` 默认启用配置密钥流程。启动顺序如下：
+
+```text
+key.yaml / key.<env>.yaml（仅本地、未加密）
+        ↓
+读取 sdk.Runtime 中已设置的 Key 实例
+        ↓（没有时按 key.type 创建；没有 key 配置时默认 file）
+读取根密钥并派生 purpose=config 的配置密钥
+        ↓
+使用 ENC[payload] 解密本地和远程配置
+        ↓
+初始化 logger、registry、tracer 和应用
+```
+
+独立 `key.yaml` 的内容直接对应 `configv1.Key`，不再嵌套在 `Bootstrap`：
+
+```yaml
+type: vault
+scope: prod/order-service
+root_name: secret/data/kratos/prod/root
+root_version: "3"
+vault:
+  address: http://127.0.0.1:8200
+  value_key: value
+```
+
+如果没有 `key.yaml`，bootstrap 默认读取 `${conf}/root.key`（默认即 `configs/root.key`），使用 `file` provider。
+根密钥必须预先生成并保存，系统不会自动生成或覆盖。业务也可以在调用 `RunApp` 前自行创建
+`key.Key` 并保存到 `sdk.Runtime.SetKey`，bootstrap 会优先复用该接口实例。
+
+配置密文只需要在值上使用 `ENC[...]` 标记；标记可以占据整个值，也可以只嵌入需要保护的字符串片段。
+配置密钥由根密钥按 `scope`、`config` 用途和根版本派生，内部使用 `kratos-kit:config` 标识，不写入密文。
+同一根密钥、范围、用途和版本会得到相同的派生密钥，不同服务或用途应使用不同的 scope/purpose。
+
 ## 配置加载行为
 
-`config.LoadBootstrapConfig(configPath)` 的行为：
+`config.LoadBootstrapConfig(configPath, env, keyValue)` 的行为：
 
-1. 始终加载本地配置源（`configPath`）。
-2. 若存在 `${configPath}/config.yaml`，先读取其中 `config.type`，再创建对应远程配置源并合并加载。
-3. 扫描 `configv1.Bootstrap` 及已注册的自定义配置结构。
+1. 优先使用调用方传入的 `keyValue`；传入 `nil` 时复用 `sdk.Runtime.GetKey()`。
+2. 按 `purpose=config` 派生配置密钥并解密敏感字段。
+3. 按 `env` 加载本地基础配置和环境覆盖配置。
+4. 若存在 `${configPath}/config.yaml`，先读取其中 `config.type`，再创建对应远程配置源并合并加载。
+5. 扫描 `configv1.Bootstrap` 及已注册的自定义配置结构。
 
 引导配置工厂支持的远程配置源类型由 `config.type` 决定，可选值见
 `config/types.go`：`apollo`/`consul`/`etcd`/`kubernetes`/`nacos`/`polaris`。
@@ -306,6 +349,7 @@ import "config/v1/tls.proto";
 ```bash
 protoc --go-agent-tool_out=. path/to/service.proto
 protoc --go-mcp-tool_out=. path/to/service.proto
+protoc --go-redact_out=. path/to/service.proto
 ```
 
 ## 开发命令
