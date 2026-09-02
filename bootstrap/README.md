@@ -47,6 +47,25 @@ go run . -c configs -e prod
 
 如果 `data.prod.yaml` 不存在，`env=prod` 会直接使用 `data.yaml`。环境覆盖文件可以只配置与基础文件不同的字段。
 
+## 密钥 Provider
+
+独立的 `key.yaml` 用于描述密钥 Provider。密钥配置只应包含类型、范围、根密钥引用
+和 Provider 的非敏感连接参数；根密钥与 Provider 认证信息必须由外部 Secret Manager 或工作负载身份提供。
+
+```yaml
+type: vault
+scope: prod/order-service
+root_name: secret/data/kratos/prod/root
+root_version: "3"
+vault:
+  address: http://127.0.0.1:8200
+  value_key: value
+```
+
+启动时 bootstrap 先读取 `key.yaml`；如果 `sdk.Runtime` 已设置 Key 实例就直接复用，否则按 key 配置创建 Key，
+没有 key 配置时默认使用 `configs/root.key` 的 file provider，随后使用派生的 config 密钥加载业务配置。
+因此未配置 `key.yaml` 时，需要先将 32 字节根密钥保存为 `configs/root.key`；系统不会自动生成或覆盖根密钥。
+
 ## 使用示例
 
 ```go

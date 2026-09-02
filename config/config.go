@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,54 +12,72 @@ import (
 	"github.com/go-kratos/kratos/v3/log"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	"github.com/liujitcn/kratos-kit/key"
+	"github.com/liujitcn/kratos-kit/sdk"
 )
 
-const remoteConfigSourceConfigFile = "config.yaml"
+const (
+	remoteConfigSourceConfigFile = "config.yaml"
+	keyConfigFile                = "key.yaml"
+	rootKeyFile                  = "root.key"
+)
 
-// NewFileConfigSource 创建一个本地文件配置源
-func NewFileConfigSource(filePath string) config.Source {
+// newFileConfigSource 创建一个本地文件配置源。
+func newFileConfigSource(filePath string) config.Source {
 	return file.NewSource(filePath)
 }
 
-// NewConfigProvider 创建加载完整目录的配置，保留原有加载行为。
-func NewConfigProvider(configPath string) (config.Config, error) {
-	err, remoteConfig := LoadRemoteConfigSourceConfigs(configPath)
-	if err != nil {
-		log.Error("LoadRemoteConfigSourceConfigs: ", err.Error())
-		return nil, err
+// LoadBootstrapConfig 加载指定环境配置，并使用传入或运行时获取的密钥解密敏感字段。
+func LoadBootstrapConfig(configPath, env string, keyValue key.Key) error {
+	if keyValue == nil {
+		keyValue = sdk.Runtime.GetKey()
+	}
+	if keyValue == nil {
+		return fmt.Errorf("config: key is not initialized")
 	}
 
-	return newConfigProvider([]config.Source{NewFileConfigSource(configPath)}, remoteConfig)
-}
-
-// NewConfigProviderWithEnv 创建加载基础文件和指定环境覆盖文件的配置。
-func NewConfigProviderWithEnv(configPath, env string) (config.Config, error) {
-	localSources, err := newEnvironmentFileConfigSources(configPath, env)
+	var err error
+	var derived []byte
+	derived, err = keyValue.Derive(context.Background(), "config")
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("config: derive config key: %w", err)
+	}
+	var secret *SecretCipher
+	secret, err = NewSecretCipher(derived)
+	if err != nil {
+		return err
+	}
+	var localSources []config.Source
+	localSources, err = newEnvironmentFileConfigSources(configPath, env)
+	if err != nil {
+		return err
 	}
 
 	var remoteConfig *configv1.Config
-	err, remoteConfig = loadRemoteConfigSourceConfigs(localSources)
+	err, remoteConfig = loadRemoteConfigSourceConfigsWithDecoder(localSources, secret.Decoder())
 	if err != nil {
 		log.Error("loadRemoteConfigSourceConfigs: ", err.Error())
-		return nil, err
+		return err
 	}
 
-	return newConfigProvider(localSources, remoteConfig)
+	var cfg config.Config
+	cfg, err = newConfigProviderWithDecoder(localSources, remoteConfig, secret.Decoder())
+	if err != nil {
+		return err
+	}
+	return loadBootstrapConfig(cfg)
 }
 
 // newEnvironmentFileConfigSources 按基础文件在前、环境覆盖文件在后的顺序创建本地配置源。
 func newEnvironmentFileConfigSources(configPath, env string) ([]config.Source, error) {
-	for index := 0; index < len(env); index++ {
-		char := env[index]
-		if char >= 'a' && char <= 'z' || char >= '0' && char <= '9' || char == '-' || char == '_' {
-			continue
-		}
-		return nil, fmt.Errorf("invalid runtime environment %q", env)
+	var err error
+	err = validateEnvironment(env)
+	if err != nil {
+		return nil, err
 	}
 
-	entries, err := os.ReadDir(configPath)
+	var entries []os.DirEntry
+	entries, err = os.ReadDir(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("read config path %q: %w", configPath, err)
 	}
@@ -70,6 +89,9 @@ func newEnvironmentFileConfigSources(configPath, env string) ([]config.Source, e
 		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
+		if entry.Name() == rootKeyFile || entry.Name() == keyConfigFile || strings.HasPrefix(entry.Name(), "key.") {
+			continue
+		}
 
 		extension := filepath.Ext(entry.Name())
 		if extension == "" {
@@ -78,11 +100,11 @@ func newEnvironmentFileConfigSources(configPath, env string) ([]config.Source, e
 		name := strings.TrimSuffix(entry.Name(), extension)
 		filePath := filepath.Join(configPath, entry.Name())
 		if !strings.Contains(name, ".") {
-			baseSources = append(baseSources, NewFileConfigSource(filePath))
+			baseSources = append(baseSources, newFileConfigSource(filePath))
 			continue
 		}
 		if env != "" && strings.HasSuffix(name, environmentSuffix) && !strings.Contains(strings.TrimSuffix(name, environmentSuffix), ".") {
-			environmentSources = append(environmentSources, NewFileConfigSource(filePath))
+			environmentSources = append(environmentSources, newFileConfigSource(filePath))
 		}
 	}
 
@@ -93,8 +115,8 @@ func newEnvironmentFileConfigSources(configPath, env string) ([]config.Source, e
 	return localSources, nil
 }
 
-// newConfigProvider 合并本地配置源与可选的远程配置源。
-func newConfigProvider(localSources []config.Source, remoteConfig *configv1.Config) (config.Config, error) {
+// newConfigProviderWithDecoder 合并配置源，并按需安装敏感字段解码器。
+func newConfigProviderWithDecoder(localSources []config.Source, remoteConfig *configv1.Config, decoder config.Decoder) (config.Config, error) {
 	var err error
 	if remoteConfig != nil {
 		var remoteSource config.Source
@@ -106,27 +128,11 @@ func newConfigProvider(localSources []config.Source, remoteConfig *configv1.Conf
 		localSources = append(localSources, remoteSource)
 	}
 
-	return config.New(
-		config.WithSource(localSources...),
-	), nil
-}
-
-// LoadBootstrapConfig 加载完整目录中的程序引导配置，保留原有加载行为。
-func LoadBootstrapConfig(configPath string) error {
-	cfg, err := NewConfigProvider(configPath)
-	if err != nil {
-		return err
+	options := []config.Option{config.WithSource(localSources...)}
+	if decoder != nil {
+		options = append(options, config.WithDecoder(decoder))
 	}
-	return loadBootstrapConfig(cfg)
-}
-
-// LoadBootstrapConfigWithEnv 加载基础文件和指定环境覆盖文件中的程序引导配置。
-func LoadBootstrapConfigWithEnv(configPath, env string) error {
-	cfg, err := NewConfigProviderWithEnv(configPath, env)
-	if err != nil {
-		return err
-	}
-	return loadBootstrapConfig(cfg)
+	return config.New(options...), nil
 }
 
 // loadBootstrapConfig 加载配置源并扫描所有已注册配置。
@@ -158,19 +164,14 @@ func scanConfigs(cfg config.Config) error {
 	return nil
 }
 
-// LoadRemoteConfigSourceConfigs 加载远程配置源的本地配置
-func LoadRemoteConfigSourceConfigs(configPath string) (error, *configv1.Config) {
-	configPath = filepath.Join(configPath, remoteConfigSourceConfigFile)
-	if !pathExists(configPath) {
-		return nil, nil
+// loadRemoteConfigSourceConfigsWithDecoder 从本地配置源解析远程配置源参数，并按需解密敏感字段。
+func loadRemoteConfigSourceConfigsWithDecoder(localSources []config.Source, decoder config.Decoder) (error, *configv1.Config) {
+	options := []config.Option{config.WithSource(localSources...)}
+	if decoder != nil {
+		options = append(options, config.WithDecoder(decoder))
 	}
-	return loadRemoteConfigSourceConfigs([]config.Source{NewFileConfigSource(configPath)})
-}
-
-// loadRemoteConfigSourceConfigs 从已筛选的本地配置源解析远程配置源参数。
-func loadRemoteConfigSourceConfigs(localSources []config.Source) (error, *configv1.Config) {
 	cfg := config.New(
-		config.WithSource(localSources...),
+		options...,
 	)
 	defer func(cfg config.Config) {
 		closeErr := cfg.Close()
@@ -203,4 +204,15 @@ func pathExists(path string) bool {
 		return false
 	}
 	return false
+}
+
+func validateEnvironment(env string) error {
+	for index := 0; index < len(env); index++ {
+		char := env[index]
+		if char >= 'a' && char <= 'z' || char >= '0' && char <= '9' || char == '-' || char == '_' {
+			continue
+		}
+		return fmt.Errorf("invalid runtime environment %q", env)
+	}
+	return nil
 }

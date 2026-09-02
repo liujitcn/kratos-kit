@@ -6,6 +6,7 @@ import (
 	"github.com/liujitcn/go-utils/translator"
 	"github.com/liujitcn/kratos-kit/cache"
 	"github.com/liujitcn/kratos-kit/database/gorm"
+	"github.com/liujitcn/kratos-kit/key"
 	"github.com/liujitcn/kratos-kit/locker"
 	"github.com/liujitcn/kratos-kit/oss"
 	"github.com/liujitcn/kratos-kit/queue"
@@ -22,6 +23,7 @@ type Application struct {
 	locker      locker.Locker
 	queue       queue.Queue
 	translator  translator.Translator
+	keyValue    key.Key
 
 	mux sync.RWMutex
 }
@@ -148,6 +150,20 @@ func (e *Application) GetTranslator() translator.Translator {
 	e.mux.RLock()
 	defer e.mux.RUnlock()
 	return e.translator
+}
+
+// SetKey 设置密钥实例。
+func (e *Application) SetKey(value key.Key) {
+	e.mux.Lock()
+	defer e.mux.Unlock()
+	e.keyValue = value
+}
+
+// GetKey 获取密钥实例。
+func (e *Application) GetKey() key.Key {
+	e.mux.RLock()
+	defer e.mux.RUnlock()
+	return e.keyValue
 }
 
 // GetStreamMessage 创建队列流消息。

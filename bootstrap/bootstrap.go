@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -9,9 +10,12 @@ import (
 	"github.com/go-kratos/kratos/v3/log"
 	"github.com/go-kratos/kratos/v3/transport"
 
+	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/config"
+	"github.com/liujitcn/kratos-kit/key"
 	"github.com/liujitcn/kratos-kit/logger"
 	"github.com/liujitcn/kratos-kit/registry"
+	"github.com/liujitcn/kratos-kit/sdk"
 	"github.com/liujitcn/kratos-kit/tracer"
 )
 
@@ -88,9 +92,45 @@ func bootstrap(ctx *Context, initApp InitAppFunc) error {
 	ctx.PrintAppInfo()
 
 	var err error
-
-	// load configs
-	if err = config.LoadBootstrapConfigWithEnv(flags.Conf, flags.Env); err != nil {
+	var keyConfig *configv1.Key
+	keyConfig, err = loadKeyConfigWithEnv(flags.Conf, flags.Env)
+	if err != nil {
+		return err
+	}
+	if keyConfig == nil {
+		keyConfig = &configv1.Key{}
+	}
+	if keyConfig.GetType() == "" {
+		keyConfig.Type = string(key.Local)
+	}
+	if keyConfig.GetScope() == "" {
+		keyConfig.Scope = "default"
+	}
+	if keyConfig.GetType() == string(key.Local) {
+		if keyConfig.GetFile() == nil {
+			keyConfig.File = &configv1.Key_File{}
+		}
+		if keyConfig.GetFile().GetPath() == "" {
+			keyConfig.File.Path = keyConfig.GetRootName()
+		}
+		if keyConfig.GetRootName() == "" {
+			keyConfig.RootName = keyConfig.GetFile().GetPath()
+		}
+		if keyConfig.GetFile().GetPath() == "" {
+			rootPath := filepath.Join(flags.Conf, "root.key")
+			keyConfig.File.Path = rootPath
+			keyConfig.RootName = rootPath
+		}
+	}
+	keyValue := sdk.Runtime.GetKey()
+	if keyValue == nil {
+		keyValue, err = key.NewKey(ctx.Context(), keyConfig)
+		if err != nil {
+			return err
+		}
+		sdk.Runtime.SetKey(keyValue)
+	}
+	if err = config.LoadBootstrapConfig(flags.Conf, flags.Env, keyValue); err != nil {
 		return err
 	}
 

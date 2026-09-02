@@ -4,6 +4,7 @@ import (
 	"github.com/liujitcn/go-utils/translator"
 	"github.com/liujitcn/kratos-kit/cache"
 	"github.com/liujitcn/kratos-kit/database/gorm"
+	"github.com/liujitcn/kratos-kit/key"
 	"github.com/liujitcn/kratos-kit/locker"
 	"github.com/liujitcn/kratos-kit/oss"
 	"github.com/liujitcn/kratos-kit/queue"
@@ -50,6 +51,11 @@ type Runtime interface {
 	SetTranslator(translator.Translator)
 	// GetTranslator 获取翻译器。
 	GetTranslator() translator.Translator
+
+	// SetKey 设置密钥实例。
+	SetKey(value key.Key)
+	// GetKey 获取密钥实例。
+	GetKey() key.Key
 
 	// GetStreamMessage 创建队列流消息。
 	GetStreamMessage(id string, value map[string]interface{}) (data.Message, error)

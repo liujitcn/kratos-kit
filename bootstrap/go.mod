@@ -5,9 +5,11 @@ go 1.27.0
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/google/subcommands v1.2.0
+	github.com/liujitcn/kratos-kit v0.0.76
 	github.com/liujitcn/go-utils v0.0.38
 	github.com/liujitcn/kratos-kit/api v0.0.30
 	github.com/liujitcn/kratos-kit/config v0.0.24
+	github.com/liujitcn/kratos-kit/key v0.0.1
 	github.com/liujitcn/kratos-kit/logger v0.0.29
 	github.com/liujitcn/kratos-kit/registry v0.0.21
 	github.com/liujitcn/kratos-kit/tracer v0.0.15

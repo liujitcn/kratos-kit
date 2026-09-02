@@ -118,6 +118,7 @@ func initBootstrapConfig() {
 			commonConfig.Mfa = &configv1.Mfa{}
 		}
 		addConfigLocked(commonConfig.Mfa)
+
 	})
 }
 
