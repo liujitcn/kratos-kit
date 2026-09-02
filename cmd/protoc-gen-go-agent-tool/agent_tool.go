@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"embed"
 	"fmt"
 	"strconv"
+	"text/template"
 
 	"github.com/liujitcn/kratos-kit/cmd/internal/utils"
 	kitutils "github.com/liujitcn/kratos-kit/utils"
@@ -18,6 +21,45 @@ const (
 )
 
 const deprecationComment = "// Deprecated: Do not use."
+
+//go:embed templates/agent_tool.go.tmpl
+var agentToolTemplates embed.FS
+
+var agentToolTemplate = template.Must(template.ParseFS(agentToolTemplates, "templates/agent_tool.go.tmpl"))
+
+type agentToolTemplateData struct {
+	ContextPackage string
+	JSONMarshal    string
+	JSONUnmarshal  string
+	InvokableTool  string
+	InferTool      string
+	Services       []agentServiceTemplateData
+}
+
+type agentServiceTemplateData struct {
+	DeprecatedComment string
+	Comment           string
+	Name              string
+	ServerName        string
+	HasMethods        bool
+	Methods           []agentMethodTemplateData
+}
+
+type agentMethodTemplateData struct {
+	DeprecatedComment string
+	Comment           string
+	Name              string
+	ServiceName       string
+	ServerName        string
+	ConstructorName   string
+	ToolVar           string
+	RequestType       string
+	InputType         string
+	OutputType        string
+	RequestValue      string
+	ToolName          string
+	Description       string
+}
 
 // generateAgentToolFile 生成 Agent Tool 文件。
 func generateAgentToolFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
@@ -39,9 +81,14 @@ func generateAgentToolFile(gen *protogen.Plugin, file *protogen.File) *protogen.
 	g.P()
 	g.P("package ", file.GoPackageName)
 	g.P()
-	generateAgentToolFileContent(g, file)
+	templateContent, err := renderAgentToolTemplate(g, file)
+	if err != nil {
+		panic(err)
+	}
+	g.P(templateContent)
 
-	content, err := g.Content()
+	var content []byte
+	content, err = g.Content()
 	if err != nil {
 		panic(err)
 	}
@@ -56,107 +103,81 @@ func generateAgentToolFile(gen *protogen.Plugin, file *protogen.File) *protogen.
 	return cleanFile
 }
 
-// generateAgentToolFileContent 生成 Agent Tool 文件主体内容。
-func generateAgentToolFileContent(g *protogen.GeneratedFile, file *protogen.File) {
+// renderAgentToolTemplate 使用模板生成 Agent Tool 文件主体，并提前登记所需导入。
+func renderAgentToolTemplate(g *protogen.GeneratedFile, file *protogen.File) (string, error) {
+	data := agentToolTemplateData{
+		ContextPackage: g.QualifiedGoIdent(contextPackage.Ident("Context")),
+		JSONMarshal:    g.QualifiedGoIdent(jsonPackage.Ident("Marshal")),
+		JSONUnmarshal:  g.QualifiedGoIdent(jsonPackage.Ident("Unmarshal")),
+		InvokableTool:  g.QualifiedGoIdent(einoToolPackage.Ident("InvokableTool")),
+		InferTool:      g.QualifiedGoIdent(einoToolUtilsPkg.Ident("InferTool")),
+		Services:       make([]agentServiceTemplateData, 0, len(file.Services)),
+	}
 	for _, service := range file.Services {
-		generateServiceAgentTools(g, service)
+		data.Services = append(data.Services, newAgentServiceTemplateData(g, service))
 	}
+	var output bytes.Buffer
+	err := agentToolTemplate.Execute(&output, data)
+	if err != nil {
+		return "", err
+	}
+	return output.String(), nil
 }
 
-// generateServiceAgentTools 为一个 proto service 生成 Tool 集合构造函数与各 RPC Tool 构造函数。
-func generateServiceAgentTools(g *protogen.GeneratedFile, service *protogen.Service) {
-	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
-		g.P(deprecationComment)
-	}
-
+// newAgentServiceTemplateData 构造一个 Agent service 的模板数据。
+func newAgentServiceTemplateData(g *protogen.GeneratedFile, service *protogen.Service) agentServiceTemplateData {
 	serviceName := service.GoName
-	serverName := utils.Unexport(serviceName) + "Server"
-	g.P(formatTypeComment("New"+serviceName+"AgentTools", utils.NormalizeCommentText(service.Comments.Leading)))
-	g.P("func New", serviceName, "AgentTools(", serverName, " ", service.GoName, "Server) ([]", g.QualifiedGoIdent(einoToolPackage.Ident("InvokableTool")), ", error) {")
-	g.P("var ts []", g.QualifiedGoIdent(einoToolPackage.Ident("InvokableTool")))
-	g.P("var err error")
+	data := agentServiceTemplateData{
+		Comment:    formatTypeComment("New"+serviceName+"AgentTools", utils.NormalizeCommentText(service.Comments.Leading)),
+		Name:       serviceName,
+		ServerName: utils.Unexport(serviceName) + "Server",
+		Methods:    make([]agentMethodTemplateData, 0, len(service.Methods)),
+	}
+	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
+		data.DeprecatedComment = deprecationComment
+	}
 	for _, method := range service.Methods {
 		if !utils.IsUnaryMethod(method) {
 			continue
 		}
-		toolVar := utils.Unexport(method.GoName) + "Tool"
-		g.P("var ", toolVar, " ", g.QualifiedGoIdent(einoToolPackage.Ident("InvokableTool")))
-		g.P(toolVar, ", err = New", serviceName, method.GoName, "AgentTool(", serverName, ")")
-		g.P("if err != nil {")
-		g.P("return nil, err")
-		g.P("}")
-		g.P("ts = append(ts, ", toolVar, ")")
+		data.Methods = append(data.Methods, newAgentMethodTemplateData(g, service, method))
 	}
-	g.P("return ts, nil")
-	g.P("}")
-	g.P()
-
-	for _, method := range service.Methods {
-		if !utils.IsUnaryMethod(method) {
-			continue
-		}
-		generateMethodAgentTool(g, service, method)
-	}
+	data.HasMethods = len(data.Methods) > 0
+	return data
 }
 
-// generateMethodAgentTool 为一个一元 RPC 生成 Agent Tool 构造函数。
-func generateMethodAgentTool(g *protogen.GeneratedFile, service *protogen.Service, method *protogen.Method) {
-	toolName := kitutils.ToolNameFromRPCPath("/" + string(service.Desc.FullName()) + "/" + string(method.Desc.Name()))
-	description := utils.ToolDescription(service, method)
-	serverName := utils.Unexport(service.GoName) + "Server"
+// newAgentMethodTemplateData 构造一个一元 RPC 的 Agent Tool 模板数据。
+func newAgentMethodTemplateData(g *protogen.GeneratedFile, service *protogen.Service, method *protogen.Method) agentMethodTemplateData {
 	requestType := g.QualifiedGoIdent(method.Input.GoIdent)
 	responseType := g.QualifiedGoIdent(method.Output.GoIdent)
 	inputType := "*" + requestType
 	outputType := "*" + responseType
+	requestValue := "req"
 	if messageHasRecursiveReference(method.Input) {
 		inputType = "any"
+		requestValue = "realReq"
 	}
 	if messageHasRecursiveReference(method.Output) {
 		outputType = "any"
 	}
-
+	data := agentMethodTemplateData{
+		Comment:         formatMethodComment("New"+service.GoName+method.GoName+"AgentTool", utils.NormalizeCommentText(method.Comments.Leading)),
+		Name:            method.GoName,
+		ServiceName:     service.GoName,
+		ServerName:      utils.Unexport(service.GoName) + "Server",
+		ConstructorName: "New" + service.GoName + method.GoName + "AgentTool",
+		ToolVar:         utils.Unexport(method.GoName) + "Tool",
+		RequestType:     requestType,
+		InputType:       inputType,
+		OutputType:      outputType,
+		RequestValue:    requestValue,
+		ToolName:        strconv.Quote(kitutils.ToolNameFromRPCPath("/" + string(service.Desc.FullName()) + "/" + string(method.Desc.Name()))),
+		Description:     strconv.Quote(utils.ToolDescription(service, method)),
+	}
 	if method.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
-		g.P(deprecationComment)
+		data.DeprecatedComment = deprecationComment
 	}
-	g.P(formatMethodComment("New"+service.GoName+method.GoName+"AgentTool", utils.NormalizeCommentText(method.Comments.Leading)))
-	g.P("func New", service.GoName, method.GoName, "AgentTool(", serverName, " ", service.GoName, "Server) (", g.QualifiedGoIdent(einoToolPackage.Ident("InvokableTool")), ", error) {")
-	g.P("return ", g.QualifiedGoIdent(einoToolUtilsPkg.Ident("InferTool")), "[", inputType, ", ", outputType, "](")
-	g.P(strconv.Quote(toolName), ",")
-	g.P(strconv.Quote(description), ",")
-	g.P("func(ctx ", g.QualifiedGoIdent(contextPackage.Ident("Context")), ", req ", inputType, ") (", outputType, ", error) {")
-	if inputType == "any" {
-		g.P("realReq := &", requestType, "{}")
-		g.P("if req != nil {")
-		g.P("reqBytes, err := ", g.QualifiedGoIdent(jsonPackage.Ident("Marshal")), "(req)")
-		g.P("if err != nil {")
-		g.P("return nil, err")
-		g.P("}")
-		g.P("if err = ", g.QualifiedGoIdent(jsonPackage.Ident("Unmarshal")), "(reqBytes, realReq); err != nil {")
-		g.P("return nil, err")
-		g.P("}")
-		g.P("}")
-	} else {
-		g.P("if req == nil {")
-		g.P("req = &", requestType, "{}")
-		g.P("}")
-	}
-	requestValue := "req"
-	if inputType == "any" {
-		requestValue = "realReq"
-	}
-	if outputType == "any" {
-		g.P("reply, err := ", serverName, ".", method.GoName, "(ctx, ", requestValue, ")")
-		g.P("if err != nil {")
-		g.P("return nil, err")
-		g.P("}")
-		g.P("return reply, nil")
-	} else {
-		g.P("return ", serverName, ".", method.GoName, "(ctx, ", requestValue, ")")
-	}
-	g.P("},")
-	g.P(")")
-	g.P("}")
-	g.P()
+	return data
 }
 
 // messageHasRecursiveReference 判断 message 依赖图中是否存在递归引用。

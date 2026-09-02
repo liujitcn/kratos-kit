@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"embed"
 	"fmt"
 	"strconv"
+	"text/template"
 
 	"github.com/liujitcn/kratos-kit/cmd/internal/utils"
 	kitutils "github.com/liujitcn/kratos-kit/utils"
@@ -17,6 +20,46 @@ const (
 )
 
 const deprecationComment = "// Deprecated: Do not use."
+
+//go:embed templates/mcp_tool.go.tmpl
+var mcpToolTemplates embed.FS
+
+var mcpToolTemplate = template.Must(template.ParseFS(mcpToolTemplates, "templates/mcp_tool.go.tmpl"))
+
+type mcpToolTemplateData struct {
+	ContextPackage  string
+	JSONMarshal     string
+	JSONUnmarshal   string
+	MCPServer       string
+	AddTool         string
+	Tool            string
+	CallToolRequest string
+	CallToolResult  string
+	Services        []mcpServiceTemplateData
+}
+
+type mcpServiceTemplateData struct {
+	DeprecatedComment string
+	Comment           string
+	Name              string
+	ServerName        string
+	Methods           []mcpMethodTemplateData
+}
+
+type mcpMethodTemplateData struct {
+	DeprecatedComment string
+	Comment           string
+	Name              string
+	ServiceName       string
+	ServerName        string
+	RegisterName      string
+	RequestType       string
+	InputType         string
+	OutputType        string
+	RequestValue      string
+	ToolName          string
+	Description       string
+}
 
 // generateMCPToolFile 生成 MCP Tool 文件。
 func generateMCPToolFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
@@ -38,9 +81,14 @@ func generateMCPToolFile(gen *protogen.Plugin, file *protogen.File) *protogen.Ge
 	g.P()
 	g.P("package ", file.GoPackageName)
 	g.P()
-	generateMCPToolFileContent(g, file)
+	templateContent, err := renderMCPToolTemplate(g, file)
+	if err != nil {
+		panic(err)
+	}
+	g.P(templateContent)
 
-	content, err := g.Content()
+	var content []byte
+	content, err = g.Content()
 	if err != nil {
 		panic(err)
 	}
@@ -55,97 +103,82 @@ func generateMCPToolFile(gen *protogen.Plugin, file *protogen.File) *protogen.Ge
 	return cleanFile
 }
 
-// generateMCPToolFileContent 生成 MCP Tool 文件主体内容。
-func generateMCPToolFileContent(g *protogen.GeneratedFile, file *protogen.File) {
+// renderMCPToolTemplate 使用模板生成 MCP Tool 文件主体，并提前登记所需导入。
+func renderMCPToolTemplate(g *protogen.GeneratedFile, file *protogen.File) (string, error) {
+	data := mcpToolTemplateData{
+		ContextPackage:  g.QualifiedGoIdent(contextPackage.Ident("Context")),
+		JSONMarshal:     g.QualifiedGoIdent(jsonPackage.Ident("Marshal")),
+		JSONUnmarshal:   g.QualifiedGoIdent(jsonPackage.Ident("Unmarshal")),
+		MCPServer:       g.QualifiedGoIdent(mcpPackage.Ident("Server")),
+		AddTool:         g.QualifiedGoIdent(mcpPackage.Ident("AddTool")),
+		Tool:            g.QualifiedGoIdent(mcpPackage.Ident("Tool")),
+		CallToolRequest: g.QualifiedGoIdent(mcpPackage.Ident("CallToolRequest")),
+		CallToolResult:  g.QualifiedGoIdent(mcpPackage.Ident("CallToolResult")),
+		Services:        make([]mcpServiceTemplateData, 0, len(file.Services)),
+	}
 	for _, service := range file.Services {
-		generateServiceMCPTools(g, file, service)
+		data.Services = append(data.Services, newMCPServiceTemplateData(g, service))
 	}
+	var output bytes.Buffer
+	err := mcpToolTemplate.Execute(&output, data)
+	if err != nil {
+		return "", err
+	}
+	return output.String(), nil
 }
 
-// generateServiceMCPTools 为一个 proto service 生成 MCP Tool 注册函数与各 RPC Tool 注册函数。
-func generateServiceMCPTools(g *protogen.GeneratedFile, file *protogen.File, service *protogen.Service) {
-	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
-		g.P(deprecationComment)
-	}
-
+// newMCPServiceTemplateData 构造一个 MCP service 的模板数据。
+func newMCPServiceTemplateData(g *protogen.GeneratedFile, service *protogen.Service) mcpServiceTemplateData {
 	serviceName := service.GoName
-	serverName := utils.Unexport(serviceName) + "Server"
-	g.P(formatTypeComment("Register"+serviceName+"MCPTools", utils.NormalizeCommentText(service.Comments.Leading)))
-	g.P("func Register", serviceName, "MCPTools(mcpServer *", g.QualifiedGoIdent(mcpPackage.Ident("Server")), ", ", serverName, " ", service.GoName, "Server) {")
+	data := mcpServiceTemplateData{
+		Comment:    formatTypeComment("Register"+serviceName+"MCPTools", utils.NormalizeCommentText(service.Comments.Leading)),
+		Name:       serviceName,
+		ServerName: utils.Unexport(serviceName) + "Server",
+		Methods:    make([]mcpMethodTemplateData, 0, len(service.Methods)),
+	}
+	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
+		data.DeprecatedComment = deprecationComment
+	}
 	for _, method := range service.Methods {
 		if !utils.IsUnaryMethod(method) {
 			continue
 		}
-		g.P("Register", serviceName, method.GoName, "MCPTool(mcpServer, ", serverName, ")")
+		data.Methods = append(data.Methods, newMCPMethodTemplateData(g, service, method))
 	}
-	g.P("}")
-	g.P()
-
-	for _, method := range service.Methods {
-		if !utils.IsUnaryMethod(method) {
-			continue
-		}
-		generateMethodMCPTool(g, file, service, method)
-	}
+	return data
 }
 
-// generateMethodMCPTool 为一个一元 RPC 生成 MCP Tool 注册函数。
-func generateMethodMCPTool(g *protogen.GeneratedFile, file *protogen.File, service *protogen.Service, method *protogen.Method) {
-	toolName := kitutils.ToolNameFromRPCPath("/" + string(service.Desc.FullName()) + "/" + string(method.Desc.Name()))
-	description := utils.ToolDescription(service, method)
-	serverName := utils.Unexport(service.GoName) + "Server"
+// newMCPMethodTemplateData 构造一个一元 RPC 的 MCP Tool 模板数据。
+func newMCPMethodTemplateData(g *protogen.GeneratedFile, service *protogen.Service, method *protogen.Method) mcpMethodTemplateData {
 	requestType := g.QualifiedGoIdent(method.Input.GoIdent)
 	responseType := g.QualifiedGoIdent(method.Output.GoIdent)
 	inputType := "*" + requestType
 	outputType := "*" + responseType
+	requestValue := "input"
 	if messageHasRecursiveReference(method.Input) {
 		inputType = "any"
+		requestValue = "req"
 	}
 	if messageHasRecursiveReference(method.Output) {
 		outputType = "any"
 	}
-
+	data := mcpMethodTemplateData{
+		Comment:      formatMethodComment("Register"+service.GoName+method.GoName+"MCPTool", utils.NormalizeCommentText(method.Comments.Leading)),
+		Name:         method.GoName,
+		ServiceName:  service.GoName,
+		ServerName:   utils.Unexport(service.GoName) + "Server",
+		RegisterName: "Register" + service.GoName + method.GoName + "MCPTool",
+		RequestType:  requestType,
+		InputType:    inputType,
+		OutputType:   outputType,
+		RequestValue: requestValue,
+		ToolName:     strconv.Quote(kitutils.ToolNameFromRPCPath("/" + string(service.Desc.FullName()) + "/" + string(method.Desc.Name()))),
+		Description:  strconv.Quote(utils.ToolDescription(service, method)),
+	}
 	if method.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
-		g.P(deprecationComment)
+		data.DeprecatedComment = deprecationComment
 	}
-	g.P(formatMethodComment("Register"+service.GoName+method.GoName+"MCPTool", utils.NormalizeCommentText(method.Comments.Leading)))
-	g.P("func Register", service.GoName, method.GoName, "MCPTool(mcpServer *", g.QualifiedGoIdent(mcpPackage.Ident("Server")), ", ", serverName, " ", service.GoName, "Server) {")
-	g.P(g.QualifiedGoIdent(mcpPackage.Ident("AddTool")), "[", inputType, ", ", outputType, "](")
-	g.P("mcpServer,")
-	g.P("&", g.QualifiedGoIdent(mcpPackage.Ident("Tool")), "{")
-	g.P("Name: ", strconv.Quote(toolName), ",")
-	g.P("Description: ", strconv.Quote(description), ",")
-	g.P("},")
-	g.P("func(ctx ", g.QualifiedGoIdent(contextPackage.Ident("Context")), ", request *", g.QualifiedGoIdent(mcpPackage.Ident("CallToolRequest")), ", input ", inputType, ") (*", g.QualifiedGoIdent(mcpPackage.Ident("CallToolResult")), ", ", outputType, ", error) {")
-	if inputType == "any" {
-		g.P("req := &", requestType, "{}")
-		g.P("if input != nil {")
-		g.P("inputBytes, err := ", g.QualifiedGoIdent(jsonPackage.Ident("Marshal")), "(input)")
-		g.P("if err != nil {")
-		g.P("return nil, nil, err")
-		g.P("}")
-		g.P("if err = ", g.QualifiedGoIdent(jsonPackage.Ident("Unmarshal")), "(inputBytes, req); err != nil {")
-		g.P("return nil, nil, err")
-		g.P("}")
-		g.P("}")
-	} else {
-		g.P("if input == nil {")
-		g.P("input = &", requestType, "{}")
-		g.P("}")
-	}
-	requestValue := "input"
-	if inputType == "any" {
-		requestValue = "req"
-	}
-	g.P("reply, err := ", serverName, ".", method.GoName, "(ctx, ", requestValue, ")")
-	g.P("if err != nil {")
-	g.P("return nil, nil, err")
-	g.P("}")
-	g.P("return nil, reply, nil")
-	g.P("},")
-	g.P(")")
-	g.P("}")
-	g.P()
+	return data
 }
 
 // messageHasRecursiveReference 判断 message 依赖图中是否存在递归引用。

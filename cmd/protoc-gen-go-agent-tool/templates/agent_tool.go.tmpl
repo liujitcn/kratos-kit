@@ -1,0 +1,48 @@
+{{range .Services}}
+{{if .DeprecatedComment}}{{.DeprecatedComment}}
+{{end}}{{.Comment}}
+func New{{.Name}}AgentTools({{.ServerName}} {{.Name}}Server) ([]{{$.InvokableTool}}, error) {
+	var ts []{{$.InvokableTool}}
+{{if .HasMethods}}	var err error
+{{range .Methods}}	var {{.ToolVar}} {{$.InvokableTool}}
+	{{.ToolVar}}, err = {{.ConstructorName}}({{.ServerName}})
+	if err != nil {
+		return nil, err
+	}
+	ts = append(ts, {{.ToolVar}})
+{{end}}{{end}}	return ts, nil
+}
+
+{{range .Methods}}
+{{if .DeprecatedComment}}{{.DeprecatedComment}}
+{{end}}{{.Comment}}
+func {{.ConstructorName}}({{.ServerName}} {{.ServiceName}}Server) ({{$.InvokableTool}}, error) {
+	return {{$.InferTool}}[{{.InputType}}, {{.OutputType}}](
+		{{.ToolName}},
+		{{.Description}},
+		func(ctx {{$.ContextPackage}}, req {{.InputType}}) ({{.OutputType}}, error) {
+{{if eq .InputType "any"}}			realReq := &{{.RequestType}}{}
+			if req != nil {
+				reqBytes, err := {{$.JSONMarshal}}(req)
+				if err != nil {
+					return nil, err
+				}
+				if err = {{$.JSONUnmarshal}}(reqBytes, realReq); err != nil {
+					return nil, err
+				}
+			}
+{{else}}			if req == nil {
+				req = &{{.RequestType}}{}
+			}
+{{end}}{{if eq .OutputType "any"}}			reply, err := {{.ServerName}}.{{.Name}}(ctx, {{.RequestValue}})
+			if err != nil {
+				return nil, err
+			}
+			return reply, nil
+{{else}}			return {{.ServerName}}.{{.Name}}(ctx, {{.RequestValue}})
+{{end}}		},
+	)
+}
+
+{{end}}
+{{end}}

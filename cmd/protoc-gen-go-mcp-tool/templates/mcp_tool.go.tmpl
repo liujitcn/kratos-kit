@@ -1,0 +1,42 @@
+{{range .Services}}
+{{if .DeprecatedComment}}{{.DeprecatedComment}}
+{{end}}{{.Comment}}
+func Register{{.Name}}MCPTools(mcpServer *{{$.MCPServer}}, {{.ServerName}} {{.Name}}Server) {
+{{range .Methods}}	{{.RegisterName}}(mcpServer, {{.ServerName}})
+{{end}}}
+
+{{range .Methods}}
+{{if .DeprecatedComment}}{{.DeprecatedComment}}
+{{end}}{{.Comment}}
+func {{.RegisterName}}(mcpServer *{{$.MCPServer}}, {{.ServerName}} {{.ServiceName}}Server) {
+	{{$.AddTool}}[{{.InputType}}, {{.OutputType}}](
+		mcpServer,
+		&{{$.Tool}}{
+			Name: {{.ToolName}},
+			Description: {{.Description}},
+		},
+		func(ctx {{$.ContextPackage}}, request *{{$.CallToolRequest}}, input {{.InputType}}) (*{{$.CallToolResult}}, {{.OutputType}}, error) {
+{{if eq .InputType "any"}}			req := &{{.RequestType}}{}
+			if input != nil {
+				inputBytes, err := {{$.JSONMarshal}}(input)
+				if err != nil {
+					return nil, nil, err
+				}
+				if err = {{$.JSONUnmarshal}}(inputBytes, req); err != nil {
+					return nil, nil, err
+				}
+			}
+{{else}}			if input == nil {
+				input = &{{.RequestType}}{}
+			}
+{{end}}			reply, err := {{.ServerName}}.{{.Name}}(ctx, {{.RequestValue}})
+			if err != nil {
+				return nil, nil, err
+			}
+			return nil, reply, nil
+		},
+	)
+}
+
+{{end}}
+{{end}}
