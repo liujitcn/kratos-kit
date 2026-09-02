@@ -4,6 +4,14 @@ package config.v1;
 
 // Oss 描述对象存储配置。
 message Oss {
+  // UploadSecurity 描述上传内容的安全扫描配置。
+  message UploadSecurity {
+    // enabled 表示上传前是否执行安全扫描。
+    bool enabled = 1;
+    // command 为扫描器可执行文件路径；参数由上传模块固定追加。
+    string command = 2;
+  }
+
   // Ftp 描述 FTP 对象存储配置。
   message Ftp {
     // endpoint 为 FTP 服务地址，例如 127.0.0.1:21。
@@ -74,4 +82,6 @@ message Oss {
   optional Minio minio = 5;
   // s3 为 AWS S3 及兼容对象存储配置。
   optional S3 s3 = 6;
+  // upload_security 为上传前安全扫描配置。
+  optional UploadSecurity upload_security = 7;
 }

@@ -6,6 +6,14 @@ import "google/protobuf/duration.proto";
 
 // Authentication 描述认证相关配置。
 message Authentication {
+  // Session 描述服务端会话状态策略。
+  message Session {
+    // idle_timeout 为会话空闲超时时间；零表示使用应用默认值。
+    google.protobuf.Duration idle_timeout = 1;
+    // max_lifetime 为会话从创建开始的最大生命周期；零表示使用应用默认值。
+    google.protobuf.Duration max_lifetime = 2;
+  }
+
   // Jwt 描述 JWT 认证配置。
   message Jwt {
     // WhiteList 描述无需强制认证或可选认证的路由匹配规则。
@@ -36,4 +44,6 @@ message Authentication {
 
   // jwt 为 JWT 认证配置。
   optional Jwt jwt = 1;
+  // session 为服务端会话状态策略。
+  optional Session session = 2;
 }

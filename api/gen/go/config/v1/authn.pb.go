@@ -26,7 +26,9 @@ const (
 type Authentication struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// jwt 为 JWT 认证配置。
-	Jwt           *Authentication_Jwt `protobuf:"bytes,1,opt,name=jwt,proto3,oneof" json:"jwt,omitempty"`
+	Jwt *Authentication_Jwt `protobuf:"bytes,1,opt,name=jwt,proto3,oneof" json:"jwt,omitempty"`
+	// session 为服务端会话状态策略。
+	Session       *Authentication_Session `protobuf:"bytes,2,opt,name=session,proto3,oneof" json:"session,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -68,6 +70,68 @@ func (x *Authentication) GetJwt() *Authentication_Jwt {
 	return nil
 }
 
+func (x *Authentication) GetSession() *Authentication_Session {
+	if x != nil {
+		return x.Session
+	}
+	return nil
+}
+
+// Session 描述服务端会话状态策略。
+type Authentication_Session struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// idle_timeout 为会话空闲超时时间；零表示使用应用默认值。
+	IdleTimeout *durationpb.Duration `protobuf:"bytes,1,opt,name=idle_timeout,json=idleTimeout,proto3" json:"idle_timeout,omitempty"`
+	// max_lifetime 为会话从创建开始的最大生命周期；零表示使用应用默认值。
+	MaxLifetime   *durationpb.Duration `protobuf:"bytes,2,opt,name=max_lifetime,json=maxLifetime,proto3" json:"max_lifetime,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Authentication_Session) Reset() {
+	*x = Authentication_Session{}
+	mi := &file_config_v1_authn_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Authentication_Session) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Authentication_Session) ProtoMessage() {}
+
+func (x *Authentication_Session) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_authn_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Authentication_Session.ProtoReflect.Descriptor instead.
+func (*Authentication_Session) Descriptor() ([]byte, []int) {
+	return file_config_v1_authn_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *Authentication_Session) GetIdleTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.IdleTimeout
+	}
+	return nil
+}
+
+func (x *Authentication_Session) GetMaxLifetime() *durationpb.Duration {
+	if x != nil {
+		return x.MaxLifetime
+	}
+	return nil
+}
+
 // Jwt 描述 JWT 认证配置。
 type Authentication_Jwt struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -89,7 +153,7 @@ type Authentication_Jwt struct {
 
 func (x *Authentication_Jwt) Reset() {
 	*x = Authentication_Jwt{}
-	mi := &file_config_v1_authn_proto_msgTypes[1]
+	mi := &file_config_v1_authn_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +165,7 @@ func (x *Authentication_Jwt) String() string {
 func (*Authentication_Jwt) ProtoMessage() {}
 
 func (x *Authentication_Jwt) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_authn_proto_msgTypes[1]
+	mi := &file_config_v1_authn_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +178,7 @@ func (x *Authentication_Jwt) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Authentication_Jwt.ProtoReflect.Descriptor instead.
 func (*Authentication_Jwt) Descriptor() ([]byte, []int) {
-	return file_config_v1_authn_proto_rawDescGZIP(), []int{0, 0}
+	return file_config_v1_authn_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *Authentication_Jwt) GetMethod() string {
@@ -176,7 +240,7 @@ type Authentication_Jwt_WhiteList struct {
 
 func (x *Authentication_Jwt_WhiteList) Reset() {
 	*x = Authentication_Jwt_WhiteList{}
-	mi := &file_config_v1_authn_proto_msgTypes[2]
+	mi := &file_config_v1_authn_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -188,7 +252,7 @@ func (x *Authentication_Jwt_WhiteList) String() string {
 func (*Authentication_Jwt_WhiteList) ProtoMessage() {}
 
 func (x *Authentication_Jwt_WhiteList) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_authn_proto_msgTypes[2]
+	mi := &file_config_v1_authn_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -201,7 +265,7 @@ func (x *Authentication_Jwt_WhiteList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Authentication_Jwt_WhiteList.ProtoReflect.Descriptor instead.
 func (*Authentication_Jwt_WhiteList) Descriptor() ([]byte, []int) {
-	return file_config_v1_authn_proto_rawDescGZIP(), []int{0, 0, 0}
+	return file_config_v1_authn_proto_rawDescGZIP(), []int{0, 1, 0}
 }
 
 func (x *Authentication_Jwt_WhiteList) GetPrefix() []string {
@@ -236,9 +300,13 @@ var File_config_v1_authn_proto protoreflect.FileDescriptor
 
 const file_config_v1_authn_proto_rawDesc = "" +
 	"\n" +
-	"\x15config/v1/authn.proto\x12\tconfig.v1\x1a\x1egoogle/protobuf/duration.proto\"\x9d\x04\n" +
+	"\x15config/v1/authn.proto\x12\tconfig.v1\x1a\x1egoogle/protobuf/duration.proto\"\xf3\x05\n" +
 	"\x0eAuthentication\x124\n" +
-	"\x03jwt\x18\x01 \x01(\v2\x1d.config.v1.Authentication.JwtH\x00R\x03jwt\x88\x01\x01\x1a\xcc\x03\n" +
+	"\x03jwt\x18\x01 \x01(\v2\x1d.config.v1.Authentication.JwtH\x00R\x03jwt\x88\x01\x01\x12@\n" +
+	"\asession\x18\x02 \x01(\v2!.config.v1.Authentication.SessionH\x01R\asession\x88\x01\x01\x1a\x85\x01\n" +
+	"\aSession\x12<\n" +
+	"\fidle_timeout\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\vidleTimeout\x12<\n" +
+	"\fmax_lifetime\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\vmaxLifetime\x1a\xcc\x03\n" +
 	"\x03Jwt\x12\x16\n" +
 	"\x06method\x18\x01 \x01(\tR\x06method\x12\x16\n" +
 	"\x06secret\x18\x02 \x01(\tR\x06secret\x12K\n" +
@@ -253,7 +321,9 @@ const file_config_v1_authn_proto_rawDesc = "" +
 	"\x05regex\x18\x02 \x03(\tR\x05regex\x12\x12\n" +
 	"\x04path\x18\x03 \x03(\tR\x04path\x12\x14\n" +
 	"\x05match\x18\x04 \x03(\tR\x05matchB\x06\n" +
-	"\x04_jwtB\x9e\x01\n" +
+	"\x04_jwtB\n" +
+	"\n" +
+	"\b_sessionB\x9e\x01\n" +
 	"\rcom.config.v1B\n" +
 	"AuthnProtoP\x01Z<github.com/liujitcn/kratos-kit/api/gen/go/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\x06proto3"
@@ -270,24 +340,28 @@ func file_config_v1_authn_proto_rawDescGZIP() []byte {
 	return file_config_v1_authn_proto_rawDescData
 }
 
-var file_config_v1_authn_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_config_v1_authn_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_config_v1_authn_proto_goTypes = []any{
 	(*Authentication)(nil),               // 0: config.v1.Authentication
-	(*Authentication_Jwt)(nil),           // 1: config.v1.Authentication.Jwt
-	(*Authentication_Jwt_WhiteList)(nil), // 2: config.v1.Authentication.Jwt.WhiteList
-	(*durationpb.Duration)(nil),          // 3: google.protobuf.Duration
+	(*Authentication_Session)(nil),       // 1: config.v1.Authentication.Session
+	(*Authentication_Jwt)(nil),           // 2: config.v1.Authentication.Jwt
+	(*Authentication_Jwt_WhiteList)(nil), // 3: config.v1.Authentication.Jwt.WhiteList
+	(*durationpb.Duration)(nil),          // 4: google.protobuf.Duration
 }
 var file_config_v1_authn_proto_depIdxs = []int32{
-	1, // 0: config.v1.Authentication.jwt:type_name -> config.v1.Authentication.Jwt
-	3, // 1: config.v1.Authentication.Jwt.access_token_expires:type_name -> google.protobuf.Duration
-	3, // 2: config.v1.Authentication.Jwt.refresh_token_expires:type_name -> google.protobuf.Duration
-	2, // 3: config.v1.Authentication.Jwt.white_list:type_name -> config.v1.Authentication.Jwt.WhiteList
-	2, // 4: config.v1.Authentication.Jwt.optional_auth:type_name -> config.v1.Authentication.Jwt.WhiteList
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	2, // 0: config.v1.Authentication.jwt:type_name -> config.v1.Authentication.Jwt
+	1, // 1: config.v1.Authentication.session:type_name -> config.v1.Authentication.Session
+	4, // 2: config.v1.Authentication.Session.idle_timeout:type_name -> google.protobuf.Duration
+	4, // 3: config.v1.Authentication.Session.max_lifetime:type_name -> google.protobuf.Duration
+	4, // 4: config.v1.Authentication.Jwt.access_token_expires:type_name -> google.protobuf.Duration
+	4, // 5: config.v1.Authentication.Jwt.refresh_token_expires:type_name -> google.protobuf.Duration
+	3, // 6: config.v1.Authentication.Jwt.white_list:type_name -> config.v1.Authentication.Jwt.WhiteList
+	3, // 7: config.v1.Authentication.Jwt.optional_auth:type_name -> config.v1.Authentication.Jwt.WhiteList
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_authn_proto_init() }
@@ -302,7 +376,7 @@ func file_config_v1_authn_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_authn_proto_rawDesc), len(file_config_v1_authn_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

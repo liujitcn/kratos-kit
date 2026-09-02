@@ -35,9 +35,11 @@ type Oss struct {
 	// minio 为 MinIO 对象存储配置。
 	Minio *Oss_Minio `protobuf:"bytes,5,opt,name=minio,proto3,oneof" json:"minio,omitempty"`
 	// s3 为 AWS S3 及兼容对象存储配置。
-	S3            *Oss_S3 `protobuf:"bytes,6,opt,name=s3,proto3,oneof" json:"s3,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	S3 *Oss_S3 `protobuf:"bytes,6,opt,name=s3,proto3,oneof" json:"s3,omitempty"`
+	// upload_security 为上传前安全扫描配置。
+	UploadSecurity *Oss_UploadSecurity `protobuf:"bytes,7,opt,name=upload_security,json=uploadSecurity,proto3,oneof" json:"upload_security,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Oss) Reset() {
@@ -112,6 +114,68 @@ func (x *Oss) GetS3() *Oss_S3 {
 	return nil
 }
 
+func (x *Oss) GetUploadSecurity() *Oss_UploadSecurity {
+	if x != nil {
+		return x.UploadSecurity
+	}
+	return nil
+}
+
+// UploadSecurity 描述上传内容的安全扫描配置。
+type Oss_UploadSecurity struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// enabled 表示上传前是否执行安全扫描。
+	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	// command 为扫描器可执行文件路径；参数由上传模块固定追加。
+	Command       string `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Oss_UploadSecurity) Reset() {
+	*x = Oss_UploadSecurity{}
+	mi := &file_config_v1_oss_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Oss_UploadSecurity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Oss_UploadSecurity) ProtoMessage() {}
+
+func (x *Oss_UploadSecurity) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_oss_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Oss_UploadSecurity.ProtoReflect.Descriptor instead.
+func (*Oss_UploadSecurity) Descriptor() ([]byte, []int) {
+	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 0}
+}
+
+func (x *Oss_UploadSecurity) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *Oss_UploadSecurity) GetCommand() string {
+	if x != nil {
+		return x.Command
+	}
+	return ""
+}
+
 // Ftp 描述 FTP 对象存储配置。
 type Oss_Ftp struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -127,7 +191,7 @@ type Oss_Ftp struct {
 
 func (x *Oss_Ftp) Reset() {
 	*x = Oss_Ftp{}
-	mi := &file_config_v1_oss_proto_msgTypes[1]
+	mi := &file_config_v1_oss_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -139,7 +203,7 @@ func (x *Oss_Ftp) String() string {
 func (*Oss_Ftp) ProtoMessage() {}
 
 func (x *Oss_Ftp) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_oss_proto_msgTypes[1]
+	mi := &file_config_v1_oss_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -152,7 +216,7 @@ func (x *Oss_Ftp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Oss_Ftp.ProtoReflect.Descriptor instead.
 func (*Oss_Ftp) Descriptor() ([]byte, []int) {
-	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 0}
+	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 1}
 }
 
 func (x *Oss_Ftp) GetEndpoint() string {
@@ -193,7 +257,7 @@ type Oss_Aliyun struct {
 
 func (x *Oss_Aliyun) Reset() {
 	*x = Oss_Aliyun{}
-	mi := &file_config_v1_oss_proto_msgTypes[2]
+	mi := &file_config_v1_oss_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -205,7 +269,7 @@ func (x *Oss_Aliyun) String() string {
 func (*Oss_Aliyun) ProtoMessage() {}
 
 func (x *Oss_Aliyun) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_oss_proto_msgTypes[2]
+	mi := &file_config_v1_oss_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -218,7 +282,7 @@ func (x *Oss_Aliyun) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Oss_Aliyun.ProtoReflect.Descriptor instead.
 func (*Oss_Aliyun) Descriptor() ([]byte, []int) {
-	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 1}
+	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 2}
 }
 
 func (x *Oss_Aliyun) GetEndpoint() string {
@@ -270,7 +334,7 @@ type Oss_Minio struct {
 
 func (x *Oss_Minio) Reset() {
 	*x = Oss_Minio{}
-	mi := &file_config_v1_oss_proto_msgTypes[3]
+	mi := &file_config_v1_oss_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -282,7 +346,7 @@ func (x *Oss_Minio) String() string {
 func (*Oss_Minio) ProtoMessage() {}
 
 func (x *Oss_Minio) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_oss_proto_msgTypes[3]
+	mi := &file_config_v1_oss_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -295,7 +359,7 @@ func (x *Oss_Minio) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Oss_Minio.ProtoReflect.Descriptor instead.
 func (*Oss_Minio) Descriptor() ([]byte, []int) {
-	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 2}
+	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 3}
 }
 
 func (x *Oss_Minio) GetEndpoint() string {
@@ -365,7 +429,7 @@ type Oss_S3 struct {
 
 func (x *Oss_S3) Reset() {
 	*x = Oss_S3{}
-	mi := &file_config_v1_oss_proto_msgTypes[4]
+	mi := &file_config_v1_oss_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -377,7 +441,7 @@ func (x *Oss_S3) String() string {
 func (*Oss_S3) ProtoMessage() {}
 
 func (x *Oss_S3) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_oss_proto_msgTypes[4]
+	mi := &file_config_v1_oss_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -390,7 +454,7 @@ func (x *Oss_S3) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Oss_S3.ProtoReflect.Descriptor instead.
 func (*Oss_S3) Descriptor() ([]byte, []int) {
-	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 3}
+	return file_config_v1_oss_proto_rawDescGZIP(), []int{0, 4}
 }
 
 func (x *Oss_S3) GetEndpoint() string {
@@ -453,14 +517,18 @@ var File_config_v1_oss_proto protoreflect.FileDescriptor
 
 const file_config_v1_oss_proto_rawDesc = "" +
 	"\n" +
-	"\x13config/v1/oss.proto\x12\tconfig.v1\"\xb6\a\n" +
+	"\x13config/v1/oss.proto\x12\tconfig.v1\"\xdd\b\n" +
 	"\x03Oss\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12%\n" +
 	"\x0eroot_directory\x18\x02 \x01(\tR\rrootDirectory\x122\n" +
 	"\x06aliyun\x18\x03 \x01(\v2\x15.config.v1.Oss.AliyunH\x00R\x06aliyun\x88\x01\x01\x12)\n" +
 	"\x03ftp\x18\x04 \x01(\v2\x12.config.v1.Oss.FtpH\x01R\x03ftp\x88\x01\x01\x12/\n" +
 	"\x05minio\x18\x05 \x01(\v2\x14.config.v1.Oss.MinioH\x02R\x05minio\x88\x01\x01\x12&\n" +
-	"\x02s3\x18\x06 \x01(\v2\x11.config.v1.Oss.S3H\x03R\x02s3\x88\x01\x01\x1aY\n" +
+	"\x02s3\x18\x06 \x01(\v2\x11.config.v1.Oss.S3H\x03R\x02s3\x88\x01\x01\x12K\n" +
+	"\x0fupload_security\x18\a \x01(\v2\x1d.config.v1.Oss.UploadSecurityH\x04R\x0euploadSecurity\x88\x01\x01\x1aD\n" +
+	"\x0eUploadSecurity\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x18\n" +
+	"\acommand\x18\x02 \x01(\tR\acommand\x1aY\n" +
 	"\x03Ftp\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x1b\n" +
 	"\tuser_name\x18\x02 \x01(\tR\buserName\x12\x19\n" +
@@ -497,7 +565,8 @@ const file_config_v1_oss_proto_rawDesc = "" +
 	"\a_aliyunB\x06\n" +
 	"\x04_ftpB\b\n" +
 	"\x06_minioB\x05\n" +
-	"\x03_s3B\x9c\x01\n" +
+	"\x03_s3B\x12\n" +
+	"\x10_upload_securityB\x9c\x01\n" +
 	"\rcom.config.v1B\bOssProtoP\x01Z<github.com/liujitcn/kratos-kit/api/gen/go/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\x06proto3"
 
@@ -513,24 +582,26 @@ func file_config_v1_oss_proto_rawDescGZIP() []byte {
 	return file_config_v1_oss_proto_rawDescData
 }
 
-var file_config_v1_oss_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_config_v1_oss_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_config_v1_oss_proto_goTypes = []any{
-	(*Oss)(nil),        // 0: config.v1.Oss
-	(*Oss_Ftp)(nil),    // 1: config.v1.Oss.Ftp
-	(*Oss_Aliyun)(nil), // 2: config.v1.Oss.Aliyun
-	(*Oss_Minio)(nil),  // 3: config.v1.Oss.Minio
-	(*Oss_S3)(nil),     // 4: config.v1.Oss.S3
+	(*Oss)(nil),                // 0: config.v1.Oss
+	(*Oss_UploadSecurity)(nil), // 1: config.v1.Oss.UploadSecurity
+	(*Oss_Ftp)(nil),            // 2: config.v1.Oss.Ftp
+	(*Oss_Aliyun)(nil),         // 3: config.v1.Oss.Aliyun
+	(*Oss_Minio)(nil),          // 4: config.v1.Oss.Minio
+	(*Oss_S3)(nil),             // 5: config.v1.Oss.S3
 }
 var file_config_v1_oss_proto_depIdxs = []int32{
-	2, // 0: config.v1.Oss.aliyun:type_name -> config.v1.Oss.Aliyun
-	1, // 1: config.v1.Oss.ftp:type_name -> config.v1.Oss.Ftp
-	3, // 2: config.v1.Oss.minio:type_name -> config.v1.Oss.Minio
-	4, // 3: config.v1.Oss.s3:type_name -> config.v1.Oss.S3
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	3, // 0: config.v1.Oss.aliyun:type_name -> config.v1.Oss.Aliyun
+	2, // 1: config.v1.Oss.ftp:type_name -> config.v1.Oss.Ftp
+	4, // 2: config.v1.Oss.minio:type_name -> config.v1.Oss.Minio
+	5, // 3: config.v1.Oss.s3:type_name -> config.v1.Oss.S3
+	1, // 4: config.v1.Oss.upload_security:type_name -> config.v1.Oss.UploadSecurity
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_oss_proto_init() }
@@ -545,7 +616,7 @@ func file_config_v1_oss_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_oss_proto_rawDesc), len(file_config_v1_oss_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
