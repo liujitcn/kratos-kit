@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package config.v1;
+
+// Key 描述应用启动阶段使用的根密钥 Provider 配置。
+// 该配置只包含 Provider 选择和密钥引用，不包含根密钥或 Provider 认证凭据。
+message Key {
+  // File 描述本地文件密钥 Provider。
+  message File {
+    // path 为密钥文件路径。
+    string path = 1;
+  }
+
+  // Vault 描述 HashiCorp Vault KV 密钥 Provider。
+  message Vault {
+    // address 为 Vault 服务地址，留空时使用 VAULT_ADDR 或 SDK 默认值。
+    string address = 1;
+    // namespace 为 Vault Enterprise 命名空间。
+    string namespace = 2;
+    // value_key 为 KV Secret 中保存密钥值的字段名。
+    string value_key = 3;
+  }
+
+  // Aws 描述 AWS Secrets Manager 密钥 Provider。
+  message Aws {
+    // region 为 AWS 区域，留空时使用 SDK 默认配置。
+    string region = 1;
+    // version_stage 为版本阶段，例如 AWSCURRENT。
+    string version_stage = 2;
+  }
+
+  // Google 描述 Google Secret Manager 密钥 Provider。
+  message Google {
+    // project 为项目 ID；root_name 使用完整资源名时可留空。
+    string project = 1;
+  }
+
+  // Azure 描述 Azure Key Vault Secrets 密钥 Provider。
+  message Azure {
+    // vault_url 为 Key Vault 地址。
+    string vault_url = 1;
+  }
+
+  // Kubernetes 描述 Kubernetes Secret 密钥 Provider。
+  message Kubernetes {
+    // namespace 为 Secret 所在命名空间。
+    string namespace = 1;
+    // value_key 为 Secret.Data 中保存密钥值的字段名。
+    string value_key = 2;
+  }
+
+  // type 为 Provider 类型：file、vault、aws、google、azure 或 kubernetes。
+  string type = 1;
+  // scope 为派生密钥的隔离范围，例如 prod/order-service。
+  string scope = 2;
+  // root_name 为 Secret Manager 中根密钥的名称或路径。
+  string root_name = 3;
+  // root_version 为要读取的根密钥固定版本，留空表示使用 Provider 默认版本。
+  string root_version = 4;
+
+  // file 为本地文件 Provider 配置。
+  optional File file = 10;
+  // vault 为 Vault Provider 配置。
+  optional Vault vault = 11;
+  // aws 为 AWS Secrets Manager Provider 配置。
+  optional Aws aws = 12;
+  // google 为 Google Secret Manager Provider 配置。
+  optional Google google = 13;
+  // azure 为 Azure Key Vault Provider 配置。
+  optional Azure azure = 14;
+  // kubernetes 为 Kubernetes Secret Provider 配置。
+  optional Kubernetes kubernetes = 15;
+}
