@@ -1,0 +1,24 @@
+version: v2
+
+modules:
+  - path: redact
+    name: buf.build/liujitcn/kratos-kit-redact
+    lint:
+      use:
+        - STANDARD
+      except:
+        - ENUM_VALUE_PREFIX
+        - ENUM_ZERO_VALUE_SUFFIX
+        - PACKAGE_DIRECTORY_MATCH
+        - PACKAGE_VERSION_SUFFIX
+    breaking:
+      use:
+        - FILE
+
+breaking:
+  use:
+    - FILE
+
+lint:
+  use:
+    - DEFAULT

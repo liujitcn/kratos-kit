@@ -1,0 +1,31 @@
+# buf.gen.yaml - Configuration for buf generate
+# Copyright 2025 Contributors
+# Licensed under the Apache License, Version 2.0
+
+version: v2
+
+clean: false
+
+inputs:
+  - directory: .
+    paths:
+      - redact/v1/redact.proto
+
+plugins:
+  # Generate Go protobuf code.
+  - local: protoc-gen-go
+    out: redact
+    opt:
+      - paths=source_relative
+
+  # Generate Go gRPC code.
+  - local: protoc-gen-go-grpc
+    out: redact
+    opt:
+      - paths=source_relative
+
+  # Generate redaction code.
+  - local: protoc-gen-go-redact
+    out: redact
+    opt:
+      - paths=source_relative
