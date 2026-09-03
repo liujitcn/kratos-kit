@@ -21,6 +21,7 @@ type ServiceData struct {
 // MethodData defines custom data type for Method info needed in template
 type MethodData struct {
 	Name            string
+	FullMethod      string
 	Skip            bool
 	Input           string
 	Output          *MessageData // will only contain name and options (ignore, nil, empty)

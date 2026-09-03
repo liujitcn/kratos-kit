@@ -85,7 +85,11 @@ ts-admin: types-admin
 # 生成管理端自动导入声明。
 types-admin:
 	@echo "==> 生成管理端自动导入声明"
-	@cd admin && CI="$(CI)" $(PNPM) run generate:auto-import-types
+	@if [ -f admin/scripts/generate-auto-import-types.mjs ]; then \
+		cd admin && CI="$(CI)" $(PNPM) run generate:auto-import-types; \
+	else \
+		echo "未发现自动导入声明脚本，跳过自动导入声明生成"; \
+	fi
 	@echo "==> 管理端自动导入声明生成完成"
 
 # 生成 uni-app 端 TypeScript RPC 代码。

@@ -226,7 +226,7 @@ var (
 					{{- else }}
 						if !s.bypass.CheckInternal(stream.Context()) {
 							// Wrap stream to redact each response message
-							stream = &redact.BidiStreamRedactor[{{ $meth.Input }}, {{ $meth.Output.WithAlias }}]{BidiStreamingServer: stream}
+							stream = &redact.BidiStreamRedactor[{{ $meth.Input }}, {{ $meth.Output.WithAlias }}]{BidiStreamingServer: stream, Operation: "{{ $meth.FullMethod }}"}
 						}
 						return s.srv.{{ $meth.Name }}(stream)
 					{{- end }}
@@ -245,7 +245,7 @@ var (
 					{{- else }}
 						if !s.bypass.CheckInternal(stream.Context()) {
 							// Wrap stream to redact the response message
-							stream = &redact.ClientStreamRedactor[{{ $meth.Input }}, {{ $meth.Output.WithAlias }}]{ClientStreamingServer: stream}
+							stream = &redact.ClientStreamRedactor[{{ $meth.Input }}, {{ $meth.Output.WithAlias }}]{ClientStreamingServer: stream, Operation: "{{ $meth.FullMethod }}"}
 						}
 						return s.srv.{{ $meth.Name }}(stream)
 					{{- end }}
@@ -264,7 +264,7 @@ var (
 					{{- else }}
 						if !s.bypass.CheckInternal(stream.Context()) {
 							// Wrap stream to redact each response message
-							stream = &redact.ServerStreamRedactor[{{ $meth.Output.WithAlias }}]{ServerStreamingServer: stream}
+							stream = &redact.ServerStreamRedactor[{{ $meth.Output.WithAlias }}]{ServerStreamingServer: stream, Operation: "{{ $meth.FullMethod }}"}
 						}
 						return s.srv.{{ $meth.Name }}(in, stream)
 					{{- end }}
@@ -293,7 +293,7 @@ var (
 								// Response message is set to be ignored from any redaction
 							{{- else }}
 								// Apply redaction to the response
-								redact.ApplyWith(ctx, nil, res)
+								redact.ApplyWith(redact.WithDirection(redact.WithOperation(ctx, "{{ $meth.FullMethod }}"), redact.DirectionResponse), nil, res)
 							{{- end }}
 						}
 						return res, err

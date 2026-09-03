@@ -1,0 +1,13 @@
+ai:
+  model:
+    # 默认不配置模型名和密钥，配置完整后自动启用 AI 能力。
+    type: CLOUD_MODEL
+    model_name: ''
+    temperature: 0.2
+    max_tokens: 1024
+    timeout_seconds: 60
+    max_retries: 2
+    cloud:
+      base_url: https://api.openai.com/v1
+      api_key: ''
+      organization: ''

@@ -29,7 +29,21 @@ type DynamicRedactor interface {
 	RedactWith(ctx context.Context, resolver PolicyResolver)
 }
 
-type sceneContextKey struct{}
+type (
+	sceneContextKey     struct{}
+	operationContextKey struct{}
+	directionContextKey struct{}
+)
+
+// Direction 表示脱敏策略作用于请求还是响应。
+type Direction uint8
+
+const (
+	// DirectionRequest 表示请求参数方向。
+	DirectionRequest Direction = iota + 1
+	// DirectionResponse 表示响应数据方向。
+	DirectionResponse
+)
 
 // WithScene 将脱敏场景写入上下文，解析器会优先匹配该场景的策略。
 func WithScene(ctx context.Context, sceneCode string) context.Context {
@@ -54,6 +68,43 @@ func SceneFromContext(ctx context.Context) string {
 	return sceneCode
 }
 
+// WithOperation 将 RPC 完整操作名写入上下文。
+func WithOperation(ctx context.Context, operation string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, operationContextKey{}, operation)
+}
+
+// OperationFromContext 从上下文读取 RPC 完整操作名。
+func OperationFromContext(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	operation, _ := ctx.Value(operationContextKey{}).(string)
+	return operation
+}
+
+// WithDirection 将脱敏方向写入上下文。
+func WithDirection(ctx context.Context, direction Direction) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, directionContextKey{}, direction)
+}
+
+// DirectionFromContext 从上下文读取脱敏方向，未设置时默认为响应方向。
+func DirectionFromContext(ctx context.Context) Direction {
+	if ctx == nil {
+		return DirectionResponse
+	}
+	direction, ok := ctx.Value(directionContextKey{}).(Direction)
+	if !ok || direction == 0 {
+		return DirectionResponse
+	}
+	return direction
+}
+
 // Apply 对实现 Redactor 的值执行脱敏；未实现该接口的值保持不变。
 func Apply(in any) {
 	if redactor, ok := in.(Redactor); ok {
@@ -75,8 +126,11 @@ const (
 
 // FieldPolicy 表示单个字段的运行时脱敏策略。
 type FieldPolicy struct {
-	Mode      PolicyMode
-	Transform func(value any) any
+	Mode        PolicyMode
+	Transform   func(value any) any
+	RuleID      int64
+	RuleVersion int32
+	Fingerprint string
 }
 
 // NewFieldPolicy 根据数据库中的策略模式、规则类型和 JSON 规则创建字段策略。
@@ -142,6 +196,9 @@ func ApplyWith(ctx context.Context, resolver PolicyResolver, in any) {
 	}
 	if resolver == nil {
 		Apply(in)
+		if message, ok := in.(proto.Message); ok {
+			sanitizeFreeTextMessage(message.ProtoReflect())
+		}
 		return
 	}
 	if dynamic, ok := in.(DynamicRedactor); ok {
@@ -162,9 +219,69 @@ func ApplyDynamic(ctx context.Context, resolver PolicyResolver, fieldRef string,
 	}
 	policy, ok := resolver.Resolve(ctx, fieldRef)
 	if !ok {
+		if DirectionFromContext(ctx) == DirectionResponse {
+			if text, textOK := value.(string); textOK {
+				sanitized := SanitizeText(text)
+				if sanitized != text {
+					return sanitized, true
+				}
+			}
+		}
 		return value, false
 	}
 	return policy.Apply(value), true
+}
+
+// sanitizeFreeTextMessage 递归清理未配置字段中的常见敏感文本。
+func sanitizeFreeTextMessage(message protoreflect.Message) {
+	if !message.IsValid() {
+		return
+	}
+	fields := message.Descriptor().Fields()
+	for index := 0; index < fields.Len(); index++ {
+		field := fields.Get(index)
+		if field.IsMap() {
+			sanitizeFreeTextMap(message.Get(field).Map(), field.MapValue())
+			continue
+		}
+		if field.IsList() {
+			list := message.Get(field).List()
+			for listIndex := 0; listIndex < list.Len(); listIndex++ {
+				value := list.Get(listIndex)
+				if field.Kind() == protoreflect.MessageKind || field.Kind() == protoreflect.GroupKind {
+					sanitizeFreeTextMessage(value.Message())
+					continue
+				}
+				if field.Kind() == protoreflect.StringKind {
+					list.Set(listIndex, protoreflect.ValueOfString(SanitizeText(value.String())))
+				}
+			}
+			continue
+		}
+		if field.Kind() == protoreflect.MessageKind || field.Kind() == protoreflect.GroupKind {
+			if message.Has(field) {
+				sanitizeFreeTextMessage(message.Get(field).Message())
+			}
+			continue
+		}
+		if field.Kind() == protoreflect.StringKind && (!field.HasPresence() || message.Has(field)) {
+			message.Set(field, protoreflect.ValueOfString(SanitizeText(message.Get(field).String())))
+		}
+	}
+}
+
+// sanitizeFreeTextMap 递归清理字符串 Map 值中的常见敏感文本。
+func sanitizeFreeTextMap(values protoreflect.Map, valueDescriptor protoreflect.FieldDescriptor) {
+	values.Range(func(key protoreflect.MapKey, value protoreflect.Value) bool {
+		if valueDescriptor.Kind() == protoreflect.MessageKind || valueDescriptor.Kind() == protoreflect.GroupKind {
+			sanitizeFreeTextMessage(value.Message())
+			return true
+		}
+		if valueDescriptor.Kind() == protoreflect.StringKind {
+			values.Set(key, protoreflect.ValueOfString(SanitizeText(value.String())))
+		}
+		return true
+	})
 }
 
 func applyDynamicMessage(ctx context.Context, resolver PolicyResolver, message protoreflect.Message) {
@@ -430,15 +547,23 @@ func RegisterCustomRedactor(name string, redactor CustomRedactor) {
 	customRedactors[name] = redactor
 }
 
-// ApplyCustomRedactor 执行指定名称的自定义脱敏函数；未注册时原样返回。
+// HasCustomRedactor 判断指定名称的自定义脱敏函数是否已注册。
+func HasCustomRedactor(name string) bool {
+	customRedactorsMu.RLock()
+	redactor, ok := customRedactors[name]
+	customRedactorsMu.RUnlock()
+	return ok && redactor != nil
+}
+
+// ApplyCustomRedactor 执行指定名称的自定义脱敏函数；未注册时返回统一掩码。
 func ApplyCustomRedactor(name, value string) string {
 	customRedactorsMu.RLock()
 	redactor, ok := customRedactors[name]
 	customRedactorsMu.RUnlock()
-	if ok {
+	if ok && redactor != nil {
 		return redactor(value)
 	}
-	return value
+	return "[REDACTED]"
 }
 
 func hiddenValue(value any) any {
@@ -499,6 +624,9 @@ func newRuleTransform(ruleType, ruleJSON string) (func(any) any, error) {
 		}
 		err = json.Unmarshal(rawRule, &rule)
 		if err != nil {
+			return nil, fmt.Errorf("REGEX 规则无效: %w", err)
+		}
+		if _, err = regexp.Compile(rule.Pattern); err != nil {
 			return nil, fmt.Errorf("REGEX 规则无效: %w", err)
 		}
 		return func(value any) any {
@@ -641,6 +769,9 @@ func newRuleTransform(ruleType, ruleJSON string) (func(any) any, error) {
 		err = json.Unmarshal(rawRule, &rule)
 		if err != nil {
 			return nil, fmt.Errorf("CUSTOM 规则无效: %w", err)
+		}
+		if !HasCustomRedactor(rule.Name) {
+			return nil, fmt.Errorf("CUSTOM 脱敏函数未注册: %s", rule.Name)
 		}
 		return func(value any) any {
 			text, ok := value.(string)

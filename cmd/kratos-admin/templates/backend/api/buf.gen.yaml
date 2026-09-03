@@ -4,7 +4,6 @@ clean: true
 
 inputs:
   - directory: proto
-  - module: buf.build/liujitcn/kratos-common
 
 managed:
   enabled: true

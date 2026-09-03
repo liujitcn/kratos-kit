@@ -18,6 +18,7 @@ import (
 const (
 	projectTemplateRoot = "templates/project"
 	backendTemplateRoot = "templates/backend"
+	adminBackendAPIRef  = "github.com/liujitcn/kratos-admin/backend/api@v0.0.4-0.20260831030712-38ce3e11fc46"
 )
 
 var projectDirectories = []string{
@@ -215,14 +216,10 @@ func initializeProject(target, frontendModule string) error {
 	if err != nil {
 		return fmt.Errorf("解析最新 Admin Backend 依赖失败: %w", err)
 	}
-	err = runProjectCommand(
-		backendTarget,
-		"go",
-		"get",
-		"github.com/liujitcn/kratos-admin/backend/api@main",
-	)
+	// 当前 Backend 发布模块的 go.mod 仍声明旧 API 版本，显式使用同一发布提交的 API 子模块。
+	err = runProjectCommand(backendTarget, "go", "get", adminBackendAPIRef)
 	if err != nil {
-		return fmt.Errorf("解析最新 Admin API 依赖失败: %w", err)
+		return fmt.Errorf("解析匹配的 Admin API 依赖失败: %w", err)
 	}
 	err = runProjectCommand(backendTarget, "go", "mod", "tidy")
 	if err != nil {
@@ -255,6 +252,10 @@ func runProjectCommand(target, name string, args ...string) error {
 func runProjectCommandInDirectory(target, directory, name string, args ...string) error {
 	command := exec.Command(name, args...)
 	command.Dir = filepath.Join(target, filepath.FromSlash(directory))
+	if name == "go" {
+		// 生成项目必须只使用自己的 go.mod，避免继承调用方的 Go workspace。
+		command.Env = append(os.Environ(), "GOWORK=off")
+	}
 	output, err := command.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf(

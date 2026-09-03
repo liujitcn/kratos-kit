@@ -49,10 +49,8 @@ kratos-admin create shop-admin \
 - `@liujitcn/kratos-uni-app-cli@latest`
 - `@liujitcn/kratos-taro-app-cli@latest`
 
-生成过程会在后端初始化时执行
-先后执行 `go get github.com/liujitcn/kratos-admin/backend@latest` 和
-`go get github.com/liujitcn/kratos-admin/backend/api@main`，因此不会把 Admin Backend
-或 API 固定在某个旧版本；API 使用默认分支最新提交以跟随 Backend 的最新接口变更。
+生成过程会在后端初始化时执行 `go get github.com/liujitcn/kratos-admin/backend@latest`，
+并拉取同一发布提交的 Admin API 子模块，避免 Backend 与 API 契约跨版本组合。
 随后执行后端 `go mod tidy`、Wire 和 `go test ./...`。任一前端 CLI 或后端初始化失败，
 本命令都会清理本次新建的不完整项目目录。
 

@@ -1,0 +1,51 @@
+# 生成当前项目业务模块的管理端 TypeScript RPC 代码
+version: v2
+
+clean: false
+
+inputs:
+  - directory: .
+    paths:
+      - proto/__FRONTEND_MODULE__/admin/v1
+
+plugins:
+  - local: protoc-gen-ts_proto
+    out: ../../frontend/admin/packages/modules/__FRONTEND_MODULE__/src/rpc
+    include_imports: true
+    include_wkt: true
+    exclude_types:
+      - buf.validate
+      - gnostic.openapi.v3
+      - google.api
+    strategy: all
+    opt:
+      - outputSchema=false
+      - outputTypeRegistry=false
+      - outputTypeAnnotations=false
+      - outputServices=default
+      - outputJsonMethods=false
+      - outputEncodeMethods=false
+      - outputPartialMethods=false
+      - outputClientImpl=false
+      - useExactTypes=true
+      - usePrototypeForDefaults=true
+      - useJsonName=false
+      - snakeToCamel=false
+      - useNullAsOptional=false
+      - useDate=false
+      - useOptionals=none
+      - useMapType=true
+      - useReadonlyTypes=false
+      - nestJs=false
+      - onlyTypes=false
+      - fileSuffix=
+      - enumsAsLiterals=false
+      - comments=true
+      - exportCommonSymbols=false
+      - esModuleInterop=true
+      - oneof=unions
+      - stringEnums=false
+      - useJsonWireFormat=false
+      - unrecognizedEnum=false
+      - outputIndex=false
+      - paths=source_relative

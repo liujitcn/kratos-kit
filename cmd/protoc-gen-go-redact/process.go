@@ -226,6 +226,7 @@ func (m *Module) processService(
 
 		methData := &MethodData{
 			Name:            m.ctx.Name(meth).String(),
+			FullMethod:      "/" + strings.TrimPrefix(srv.FullyQualifiedName(), ".") + "/" + m.ctx.Name(meth).String(),
 			Input:           nameWithAlias(in),
 			Output:          m.processMessage(out, nameWithAlias),
 			ClientStreaming: meth.ClientStreaming(),

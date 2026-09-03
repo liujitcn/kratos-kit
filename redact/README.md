@@ -5,7 +5,7 @@
 ## 能力边界
 
 - `Redactor`、`Apply`：执行生成消息的脱敏方法。
-- `PolicyResolver`、`ApplyWith`：按运行时上下文解析字段策略并递归处理 Proto 消息；`WithScene` 可为同一字段选择不同场景策略。
+- `PolicyResolver`、`ApplyWith`：按运行时上下文解析字段策略并递归处理 Proto 消息；`WithOperation`、`WithDirection` 和 `WithScene` 可按接口、请求/响应方向及场景选择策略。
 - `NewFieldPolicy`：将数据库中的规则类型和 JSON 配置转换为运行时策略。
 - `Mask`、`Regex`、`Email`、`Truncate`、`Hash`、`UUID`、`IP`、`URL`、`FixedLength`：实现 Proto 规则对应的具体算法。
 - `RegisterCustomRedactor`：注册命名的自定义脱敏函数。

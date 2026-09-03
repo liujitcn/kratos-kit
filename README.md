@@ -142,13 +142,17 @@ normalize-go-imports -root /path/to/project -write
 生成物不包含项目身份。服务加载后使用 `AppInfo.Project` 和 `AppInfo.Name`
 生成稳定文档 ID，并与 OpenAPI/Swagger 保持一致。
 
-项目生成命令按项目名创建完整的前后端目录，后端使用最新 `kratos-core` 的最小
-模块和 Core ProviderSet，前端通过 `@liujitcn/kratos-admin-cli` 生成：
+项目生成命令按项目名创建携带 Admin 能力的完整前后端目录，后端组合
+`kratos-core` 与 `kratos-admin/backend` 业务宿主，前端通过管理端、uni-app 和 Taro CLI 生成：
 
 ```bash
 go install github.com/liujitcn/kratos-kit/cmd/kratos-admin@latest
 kratos-admin create shop-admin
 ```
+
+生成时使用 `backend@latest` 及其自身匹配的 API 依赖解析最新 Admin Backend/API，并生成
+MySQL、Redis 及本地 Docker Compose 配置。扩展业务时在生成项目中增加自己的 Proto、Biz、
+Data、Service、Module、Migration 和前端 CLI 模块，不复制 Admin 的 `internal` 代码。
 
 ## 快速开始
 

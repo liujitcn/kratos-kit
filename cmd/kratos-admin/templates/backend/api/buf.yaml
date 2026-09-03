@@ -15,7 +15,6 @@ modules:
         - FILE
 
 deps:
-  - buf.build/liujitcn/kratos-common
   - buf.build/liujitcn/kratos-core
   - buf.build/googleapis/googleapis
   - buf.build/kratos/apis
