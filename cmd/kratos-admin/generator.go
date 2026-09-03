@@ -111,6 +111,7 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 		"__PROJECT_NAME__":    projectName,
 		"__PACKAGE_NAME__":    projectPackageName(projectName),
 		"__FRONTEND_MODULE__": frontendModule,
+		"__DATABASE_NAME__":   projectPackageName(projectName),
 	}
 	err = renderTemplates(target, projectTemplateRoot, tokens)
 	if err != nil {
@@ -186,7 +187,7 @@ func renderTemplates(target, templateRoot string, tokens map[string]string) erro
 	})
 }
 
-// initializeProject 生成前端、Wire 产物，并验证完整项目可以编译。
+// initializeProject 生成前端、解析最新后端依赖、Wire 产物，并验证完整项目可以编译。
 func initializeProject(target, frontendModule string) error {
 	var err error
 	for _, cli := range frontendCLIs {
@@ -205,6 +206,24 @@ func initializeProject(target, frontendModule string) error {
 		}
 	}
 	backendTarget := filepath.Join(target, "backend")
+	err = runProjectCommand(
+		backendTarget,
+		"go",
+		"get",
+		"github.com/liujitcn/kratos-admin/backend@latest",
+	)
+	if err != nil {
+		return fmt.Errorf("解析最新 Admin Backend 依赖失败: %w", err)
+	}
+	err = runProjectCommand(
+		backendTarget,
+		"go",
+		"get",
+		"github.com/liujitcn/kratos-admin/backend/api@main",
+	)
+	if err != nil {
+		return fmt.Errorf("解析最新 Admin API 依赖失败: %w", err)
+	}
 	err = runProjectCommand(backendTarget, "go", "mod", "tidy")
 	if err != nil {
 		return err

@@ -7,6 +7,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+// ProjectModules 表示当前项目提供给 Core 的协议模块集合。
+type ProjectModules coremodule.Modules
+
 // Module 表示当前项目注册到 Core 宿主的空业务模块。
 type Module struct{}
 
@@ -17,9 +20,9 @@ func NewModule() *Module {
 	return &Module{}
 }
 
-// NewModules 创建当前项目提供给 Core 的模块集合。
-func NewModules() coremodule.Modules {
-	return coremodule.Modules{NewModule()}
+// NewModules 创建当前项目提供给 Core 的具名模块集合。
+func NewModules() ProjectModules {
+	return ProjectModules{NewModule()}
 }
 
 // RegisterGRPC 注册当前项目的 gRPC 服务。

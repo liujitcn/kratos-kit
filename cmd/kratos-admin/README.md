@@ -11,7 +11,7 @@ go install github.com/liujitcn/kratos-kit/cmd/kratos-admin@latest
 
 ## 使用
 
-只传项目名即可创建默认项目：
+传入项目名即可创建携带 Admin 登录、用户、角色、菜单、权限、文件、日志、任务和消息能力的完整项目：
 
 ```bash
 kratos-admin create shop-admin
@@ -21,7 +21,7 @@ kratos-admin create shop-admin
 
 ```text
 shop-admin
-├── backend       # 基于 kratos-core 的最小 Kratos 服务
+├── backend       # Core + Admin + 当前项目业务模块
 ├── frontend
 │   ├── admin     # @liujitcn/kratos-admin-cli
 │   ├── uni-app   # @liujitcn/kratos-uni-app-cli
@@ -49,9 +49,13 @@ kratos-admin create shop-admin \
 - `@liujitcn/kratos-uni-app-cli@latest`
 - `@liujitcn/kratos-taro-app-cli@latest`
 
-随后执行后端 `go mod tidy`、Wire 和 `go test ./...`。任一前端 CLI 或后端初始化
-失败，本命令都会清理本次新建的不完整项目目录。
+生成过程会在后端初始化时执行
+先后执行 `go get github.com/liujitcn/kratos-admin/backend@latest` 和
+`go get github.com/liujitcn/kratos-admin/backend/api@main`，因此不会把 Admin Backend
+或 API 固定在某个旧版本；API 使用默认分支最新提交以跟随 Backend 的最新接口变更。
+随后执行后端 `go mod tidy`、Wire 和 `go test ./...`。任一前端 CLI 或后端初始化失败，
+本命令都会清理本次新建的不完整项目目录。
 
-生成项目默认使用 SQLite 文件、内存缓存和内存队列，不需要预先启动 MySQL、Redis
-或 Consul。进入项目后执行 `make init` 安装后端工具和前端依赖，再按根目录
+生成项目使用 MySQL、Redis 和内存队列，并生成 `docker-compose.yaml`；进入项目后可执行
+`make infra-up` 准备本地依赖。随后执行 `make init` 安装后端工具和前端依赖，再按项目
 README 中的命令开发、生成和构建。

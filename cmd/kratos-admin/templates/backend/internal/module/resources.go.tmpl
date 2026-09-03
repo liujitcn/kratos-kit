@@ -14,18 +14,21 @@ type resource struct {
 	openAPI     fs.FS
 }
 
+// ProjectResources 表示当前项目提供给 Core 的具名静态资源集合。
+type ProjectResources []coremodule.Resource
+
 var _ coremodule.Resource = (*resource)(nil)
 
 //go:embed assets/*
 var openAPIAssets embed.FS
 
-// NewModuleResources 创建当前项目提供给 Core 的空资源集合。
-func NewModuleResources() coremodule.Resources {
+// NewModuleResources 创建当前项目提供给 Core 的具名资源集合。
+func NewModuleResources() ProjectResources {
 	openAPI, err := fs.Sub(openAPIAssets, "assets")
 	if err != nil {
 		panic(fmt.Errorf("读取内嵌 OpenAPI 资源: %w", err))
 	}
-	return coremodule.Resources{
+	return ProjectResources{
 		&resource{
 			projectKey:  "__PROJECT_NAME__",
 			projectName: "__PROJECT_NAME__",

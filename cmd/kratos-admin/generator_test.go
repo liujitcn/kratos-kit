@@ -60,6 +60,23 @@ func TestCreateProjectWithOptions(t *testing.T) {
 	if !strings.Contains(string(content), "module github.com/acme/shop-admin/backend") {
 		t.Fatalf("后端 go.mod 未渲染指定 module: %s", content)
 	}
+	content, err = os.ReadFile(filepath.Join(target, "backend", "bootstrap.go"))
+	if err != nil {
+		t.Fatalf("读取 Admin bootstrap.go 失败: %v", err)
+	}
+	if !strings.Contains(string(content), "adminbackend.ProviderSet") {
+		t.Fatalf("默认项目未组合 Admin ProviderSet: %s", content)
+	}
+	content, err = os.ReadFile(filepath.Join(target, "backend", "configs", "data.yaml"))
+	if err != nil {
+		t.Fatalf("读取 Admin data.yaml 失败: %v", err)
+	}
+	if !strings.Contains(string(content), "driver: mysql") {
+		t.Fatalf("默认项目未使用 Admin MySQL 配置: %s", content)
+	}
+	if _, err = os.Stat(filepath.Join(target, "docker-compose.yaml")); err != nil {
+		t.Fatalf("默认项目未生成基础设施编排文件: %v", err)
+	}
 	info, err := os.Stat(filepath.Join(target, "scripts", "backend.sh"))
 	if err != nil {
 		t.Fatalf("读取后端脚本失败: %v", err)

@@ -1,5 +1,5 @@
 # Makefile 提供完整项目的前后端聚合命令。
-.PHONY: help init backend-init frontend-install generate test build run backend-run \
+.PHONY: help init backend-init frontend-install generate test build run backend-run infra-up infra-down \
 	frontend-dev frontend-admin-dev frontend-uni-dev frontend-taro-dev \
 	frontend-build frontend-admin-build frontend-uni-build frontend-taro-build
 
@@ -34,6 +34,16 @@ run:
 # 只启动后端服务。
 backend-run:
 	@bash scripts/backend.sh run
+
+# 启动 Admin profile 提供的本地基础设施。
+infra-up:
+	@test -f docker-compose.yaml || (echo "当前 profile 未提供 docker-compose.yaml" && exit 1)
+	@docker compose up -d
+
+# 停止 Admin profile 提供的本地基础设施。
+infra-down:
+	@test -f docker-compose.yaml || (echo "当前 profile 未提供 docker-compose.yaml" && exit 1)
+	@docker compose down
 
 # 启动前端开发服务。
 frontend-dev:
@@ -71,6 +81,6 @@ help:
 	@echo ""
 	@echo "Usage: make [target]"
 	@echo ""
-	@echo "Targets: init generate test build run backend-run frontend-dev frontend-uni-dev frontend-taro-dev"
+	@echo "Targets: init generate test build run backend-run infra-up infra-down frontend-dev frontend-uni-dev frontend-taro-dev"
 
 .DEFAULT_GOAL := help

@@ -1,58 +1,40 @@
 # __PROJECT_NAME__
 
-`__PROJECT_NAME__` 是基于最新 `kratos-core` 的最小 Kratos 后端服务模板。
+这是一个基于 `kratos-core` 和 `kratos-admin/backend` 的 Admin 后端服务。
 
-Go module：`__MODULE_PATH__`
+## 已提供能力
 
-## 目录
+- 登录、JWT、验证码、MFA 和 OAuth；
+- 用户、租户、部门、岗位、角色、菜单和接口权限；
+- 文件资产、消息通知、操作审计、登录日志和运行日志；
+- OpenAPI、文档、国际化、Casbin 策略和数据库迁移同步；
+- Admin 定时任务、SSE 流和队列消费者；
+- 当前项目业务模块的 HTTP、gRPC、MCP、资源和任务扩展入口。
 
-```text
-.
-├── api
-│   ├── proto
-│   └── gen/go
-├── configs
-├── data
-├── scripts
-│   └── docker-entrypoint.sh
-├── internal
-│   ├── cmd/server
-│   ├── module
-│   └── openapi
-│       └── assets
-├── bootstrap.go
-├── Dockerfile
-└── Makefile
-```
+Admin 通过公开的 `github.com/liujitcn/kratos-admin/backend` ProviderSet 接入，生成项目不
+依赖 Admin 的 `internal` 包。
 
-服务入口位于 `internal/cmd/server`，项目根包提供 Core 依赖注入集合。`internal/module`
-中预置了一个空业务模块，新增业务时可以在此注册 HTTP、gRPC 或 MCP 服务。
+## 配置和启动
 
-默认配置使用 SQLite 文件、内存缓存和内存队列，不需要预先启动 MySQL、Redis 或 Consul。
-生产环境可以按 `kratos-core` 的配置约定替换数据库、缓存、队列和注册中心实现。
-
-## 启动
+默认配置使用本地 MySQL、Redis 和内存队列。项目根目录提供 `docker-compose.yaml`：
 
 ```bash
+cd ..
+make infra-up
 make run
 ```
 
-HTTP 默认监听 `:7001`，gRPC 默认监听 `:6001`。
+数据库迁移会自动创建 Core/Admin 表，并执行 Admin 默认菜单、权限和开发数据初始化。
+生产环境必须替换 `configs/auth.yaml` 中的 JWT 密钥以及 `configs/data.yaml` 中的连接信息。
 
-## 生成与验证
+## 扩展业务
+
+在项目根包的 `bootstrap.go` 中，Admin 和当前项目模块通过 `hostProviderSet` 合并。新增
+业务模块时只需增加自己的 ProviderSet、Resource、Module、Migration 和生成产物，不修改
+Admin 依赖源码。
 
 ```bash
-make init
 make gen
 make test
 make build
 ```
-
-后端发布打包：
-
-```bash
-make package-binary
-```
-
-`api/gen/go`、OpenAPI 文件和 `internal/cmd/server/wire_gen.go` 都是生成产物，
-应通过 `make gen` 或对应生成命令更新。

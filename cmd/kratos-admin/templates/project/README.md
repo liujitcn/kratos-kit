@@ -1,78 +1,69 @@
 # __PROJECT_NAME__
 
-`__PROJECT_NAME__` 是由 `kratos-admin` 创建的前后端项目，包含独立的 Kratos
-后端，以及管理端、uni-app 和 Taro 三套前端 workspace。
+`__PROJECT_NAME__` 是由 `kratos-admin` 创建的完整 Admin 项目，包含：
+
+- `kratos-core` 运行时；
+- `kratos-admin/backend` 提供的登录、用户、角色、菜单、权限、文件、日志、任务和消息能力；
+- 当前项目自己的业务模块扩展入口；
+- 管理端、uni-app 和 Taro 三套前端 workspace。
 
 ## 目录
 
 ```text
 .
-├── backend       # kratos-core 后端服务
+├── backend       # Core + Admin + 当前项目业务模块
 ├── frontend
-│   ├── admin     # 由 @liujitcn/kratos-admin-cli 生成
-│   ├── uni-app   # 由 @liujitcn/kratos-uni-app-cli 生成
-│   ├── taro-app  # 由 @liujitcn/kratos-taro-app-cli 生成
-│   ├── Makefile  # 三套前端的聚合命令
-│   └── scripts   # 依赖重装和 npm 发布脚本
-├── scripts       # 前后端快捷脚本
+│   ├── admin     # 管理端 CLI 生成
+│   ├── uni-app   # uni-app CLI 生成
+│   └── taro-app  # Taro CLI 生成
+├── docker-compose.yaml
+├── scripts
 ├── Makefile
 └── README.md
 ```
 
-前端源码不属于本项目模板，由三个上游 CLI 在创建过程中生成。后端使用 SQLite
-文件、内存缓存和内存队列，默认不需要预先启动 MySQL、Redis 或 Consul。
+前端源码由上游 CLI 生成，后端通过公开的 `kratos-admin/backend` ProviderSet 接入 Admin，
+不复制 Admin 的 `internal` 代码。
 
-## 创建
+## 启动
 
-```bash
-kratos-admin create __PROJECT_NAME__
-```
-
-后端 Go module 当前为 `__MODULE_PATH__`。可以在生成时通过
-`--module <go-module>` 指定实际 module 路径，通过 `--frontend-module <module>`
-指定前端默认业务 module。
-
-## 开发
-
-首次进入项目后安装依赖：
+默认配置使用本地 MySQL、Redis 和内存队列。先准备本地基础设施：
 
 ```bash
-make init
-```
-
-启动后端：
-
-```bash
+make infra-up
 make run
 ```
 
-启动管理端前端开发服务：
+默认开发账号和菜单权限由 Admin 迁移初始化。数据库连接、Redis、JWT 和跨域配置位于
+`backend/configs`，生产环境必须替换示例密钥和连接信息。
+
+管理端前端：
 
 ```bash
 make frontend-dev
 ```
 
-启动 uni-app 或 Taro H5 开发服务：
+## 扩展业务模块
 
-```bash
-make frontend-uni-dev
-make frontend-taro-dev
+新增业务时，按以下边界组织代码：
+
+```text
+backend/api/proto/<domain>
+backend/internal/biz/<domain>
+backend/internal/data/<domain>
+backend/internal/service/<domain>
+backend/internal/server/<domain>
+backend/internal/task/<domain>
+backend/internal/module
+backend/migration
 ```
 
-也可以进入 `frontend/` 使用从上游迁移的完整三端 Makefile：
+业务模块只提供自己的 Service、Resource、Migration 和任务，通过 `backend/bootstrap.go`
+中的宿主 ProviderSet 与 Admin 并列组合。接口、OpenAPI、Wire 和前端 RPC 使用项目 Makefile
+中的生成命令完成。
 
 ```bash
-make -C frontend help
-make -C frontend init
+make -C backend gen
 make -C frontend ts
-make -C frontend check
-make -C frontend build
-```
-
-后端默认监听 HTTP `:7001` 和 gRPC `:6001`。常用生成、测试和构建命令如下：
-
-```bash
-make generate
 make test
-make build
 ```

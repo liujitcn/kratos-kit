@@ -81,7 +81,7 @@ func printHelp(output io.Writer) {
 	_, _ = fmt.Fprintf(
 		output,
 		"%s\n\n用法:\n  %s create <project> [--module <go-module>] [--frontend-module <module>]\n\n示例:\n  %s create shop-admin\n  %s create shop-admin --module github.com/acme/shop-admin/backend --frontend-module shop\n",
-		"创建包含前后端的完整项目，前端通过管理端、uni-app 和 Taro CLI 生成。",
+		"创建包含前后端和 Admin 能力的完整项目，前端通过管理端、uni-app 和 Taro CLI 生成。",
 		commandName,
 		commandName,
 		commandName,

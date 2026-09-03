@@ -1,11 +1,23 @@
 data:
   database:
-    driver: sqlite
-    source: ./data/app.db
+    # Admin 的默认迁移和初始化数据使用 MySQL。
+    driver: mysql
+    source: root:password@tcp(127.0.0.1:3306)/__DATABASE_NAME__?charset=utf8mb4&parseTime=True&loc=Local&timeout=1000ms
     debug: false
-    enable_migrate: false
+    enable_migrate: true
     enable_trace: false
     enable_metrics: false
+    max_idle_connections: 10
+    max_open_connections: 20
+    connection_max_lifetime: 300s
+
+  redis:
+    addr:
+      - 127.0.0.1:6379
+    password: ""
+    db: 1
+
   queue:
+    # 单机开发使用内存队列；生产环境可切换为 Redis Stream。
     memory:
-      pool_size: 100
+      pool_size: 1000
