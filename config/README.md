@@ -19,7 +19,7 @@
 `LoadBootstrapConfig(configPath, env, keyValue)` 是配置包唯一的完整加载入口，执行逻辑如下：
 
 1. 优先使用调用方传入的 `keyValue`；传入 `nil` 时从 `sdk.Runtime.GetKey()` 获取。
-2. 按 `purpose=config` 派生配置密钥，并自动解密 `ENC[...]` 字段。
+2. 按 `kratos-kit:config` 派生配置密钥，并自动解密 `ENC[...]` 字段。
 3. 按 `env` 加载基础配置和环境覆盖配置。
 4. 若存在 `config.yaml`，读取远程配置源参数并与本地源合并加载。
 5. 扫描并填充已注册配置对象（默认包含 `Bootstrap` 及其常见子配置）。
@@ -67,7 +67,7 @@ bootstrap 会在调用配置入口前读取独立的 `key.yaml` 和 `key.<env>.y
 `ENC(...)` 可以占据整个值，也可以嵌入字符串中；嵌入时只替换标记部分。
 
 ```go
-key := []byte("01234567890123456789012345678901") // 应从环境变量、KMS 或 Vault 获取
+key := []byte("01234567890123456789012345678901") // 测试示例；生产环境应从 sdk.Runtime.GetKey() 派生
 cipher, err := config.NewSecretCipher(key)
 if err != nil {
 	return err

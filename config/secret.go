@@ -17,9 +17,6 @@ const secretCipherPrefix = "ENC["
 
 const secretMarkerPrefix = "ENC("
 
-// secretKeyID 是配置加密使用的内部认证标识，不写入配置密文。
-const secretKeyID = "kratos-kit:config"
-
 var (
 	// ErrInvalidSecretCipher 表示密钥加密器配置无效。
 	ErrInvalidSecretCipher = errors.New("config: invalid secret cipher")

@@ -249,7 +249,7 @@ key.yaml / key.<env>.yaml（仅本地、未加密）
         ↓
 读取 sdk.Runtime 中已设置的 Key 实例
         ↓（没有时按 key.type 创建；没有 key 配置时默认 file）
-读取根密钥并派生 purpose=config 的配置密钥
+读取根密钥并派生 `kratos-kit:config` 的配置密钥
         ↓
 使用 ENC[payload] 解密本地和远程配置
         ↓
@@ -273,7 +273,7 @@ vault:
 `key.Key` 并保存到 `sdk.Runtime.SetKey`，bootstrap 会优先复用该接口实例。
 
 配置密文只需要在值上使用 `ENC[...]` 标记；标记可以占据整个值，也可以只嵌入需要保护的字符串片段。
-配置密钥由根密钥按 `scope`、`config` 用途和根版本派生，内部使用 `kratos-kit:config` 标识，不写入密文。
+配置密钥由根密钥按 `scope`、`kratos-kit:config` 用途和根版本派生，该标识不写入密文。
 同一根密钥、范围、用途和版本会得到相同的派生密钥，不同服务或用途应使用不同的 scope/purpose。
 
 ## 配置加载行为
@@ -281,7 +281,7 @@ vault:
 `config.LoadBootstrapConfig(configPath, env, keyValue)` 的行为：
 
 1. 优先使用调用方传入的 `keyValue`；传入 `nil` 时复用 `sdk.Runtime.GetKey()`。
-2. 按 `purpose=config` 派生配置密钥并解密敏感字段。
+2. 按 `kratos-kit:config` 派生配置密钥并解密敏感字段。
 3. 按 `env` 加载本地基础配置和环境覆盖配置。
 4. 若存在 `${configPath}/config.yaml`，先读取其中 `config.type`，再创建对应远程配置源并合并加载。
 5. 扫描 `configv1.Bootstrap` 及已注册的自定义配置结构。

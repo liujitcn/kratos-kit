@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	remoteConfigSourceConfigFile = "config.yaml"
-	keyConfigFile                = "key.yaml"
-	rootKeyFile                  = "root.key"
+	keyConfigFile = "key.yaml"
+	rootKeyFile   = "root.key"
+	// secretKeyID 是配置加密使用的内部认证标识，不写入配置密文。
+	secretKeyID = "kratos-kit:config"
 )
 
 // newFileConfigSource 创建一个本地文件配置源。
@@ -38,7 +39,7 @@ func LoadBootstrapConfig(configPath, env string, keyValue key.Key) error {
 
 	var err error
 	var derived []byte
-	derived, err = keyValue.Derive(context.Background(), "config")
+	derived, err = keyValue.Derive(context.Background(), secretKeyID)
 	if err != nil {
 		return fmt.Errorf("config: derive config key: %w", err)
 	}
@@ -192,18 +193,6 @@ func loadRemoteConfigSourceConfigsWithDecoder(localSources []config.Source, deco
 	}
 
 	return nil, bootstrapConfig.GetConfig()
-}
-
-// pathExists 判断路径是否存在
-func pathExists(path string) bool {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return false
 }
 
 func validateEnvironment(env string) error {
