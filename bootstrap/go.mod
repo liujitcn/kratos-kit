@@ -8,7 +8,7 @@ require (
 	github.com/liujitcn/go-utils v0.0.41
 	github.com/liujitcn/kratos-kit v0.0.83
 	github.com/liujitcn/kratos-kit/api v0.0.36
-	github.com/liujitcn/kratos-kit/config v0.0.31
+	github.com/liujitcn/kratos-kit/config v0.0.32
 	github.com/liujitcn/kratos-kit/key v0.0.4
 	github.com/liujitcn/kratos-kit/logger v0.0.32
 	github.com/liujitcn/kratos-kit/registry v0.0.23

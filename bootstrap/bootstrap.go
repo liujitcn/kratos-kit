@@ -130,9 +130,12 @@ func bootstrap(ctx *Context, initApp InitAppFunc) error {
 		}
 		sdk.Runtime.SetKey(keyValue)
 	}
-	if err = config.LoadBootstrapConfig(flags.Conf, flags.Env, keyValue); err != nil {
+	var configCleanup func()
+	configCleanup, err = config.LoadBootstrapConfig(flags.Conf, flags.Env, keyValue)
+	if err != nil {
 		return err
 	}
+	defer configCleanup()
 
 	// get bootstrap config
 	ctx.config = config.GetBootstrapConfig()

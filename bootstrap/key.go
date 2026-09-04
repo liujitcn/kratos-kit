@@ -5,10 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/go-kratos/kratos/v3/config"
+	kratosconfig "github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/config/file"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	kitconfig "github.com/liujitcn/kratos-kit/config"
 )
 
 const keyConfigFile = "key.yaml"
@@ -22,7 +23,7 @@ func loadKeyConfigWithEnv(configPath, env string) (*configv1.Key, error) {
 		return nil, err
 	}
 
-	sources := make([]config.Source, 0, 2)
+	sources := make([]kratosconfig.Source, 0, 2)
 	basePath := filepath.Join(configPath, keyConfigFile)
 	if keyPathExists(basePath) {
 		sources = append(sources, file.NewSource(basePath))
@@ -37,20 +38,8 @@ func loadKeyConfigWithEnv(configPath, env string) (*configv1.Key, error) {
 		return nil, nil
 	}
 
-	cfg := config.New(config.WithSource(sources...))
-	defer func() {
-		var closeErr error
-		closeErr = cfg.Close()
-		if closeErr != nil {
-			panic(closeErr)
-		}
-	}()
-	err = cfg.Load()
-	if err != nil {
-		return nil, err
-	}
 	keyConfig := &configv1.Key{}
-	err = cfg.Scan(keyConfig)
+	err = kitconfig.LoadConfigWithoutWatch(sources, nil, keyConfig)
 	if err != nil {
 		return nil, err
 	}
