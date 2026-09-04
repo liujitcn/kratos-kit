@@ -3,9 +3,9 @@ module github.com/liujitcn/kratos-kit/server/sse
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/api v0.0.28
-	github.com/liujitcn/kratos-kit/transport/sse v0.0.12
-	github.com/liujitcn/kratos-kit/utils v0.0.18
+	github.com/liujitcn/kratos-kit/api v0.0.36
+	github.com/liujitcn/kratos-kit/transport/sse v0.0.14
+	github.com/liujitcn/kratos-kit/utils v0.0.22
 )
 
 require (
@@ -18,12 +18,12 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
-	github.com/liujitcn/go-utils v0.0.36 // indirect
-	github.com/liujitcn/kratos-kit/broker v0.0.9 // indirect
-	github.com/liujitcn/kratos-kit/tracing v0.0.10 // indirect
-	github.com/liujitcn/kratos-kit/transport v0.0.22 // indirect
+	github.com/liujitcn/go-utils v0.0.41 // indirect
+	github.com/liujitcn/kratos-kit/broker v0.0.11 // indirect
+	github.com/liujitcn/kratos-kit/tracing v0.0.12 // indirect
+	github.com/liujitcn/kratos-kit/transport v0.0.24 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
-	github.com/redis/go-redis/v9 v9.19.0 // indirect
+	github.com/redis/go-redis/v9 v9.22.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.44.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.43.0 // indirect
@@ -39,9 +39,9 @@ require (
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
-	google.golang.org/grpc v1.83.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260819154853-08b0e4226688 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260818201246-1b0934165a6f // indirect
+	google.golang.org/grpc v1.83.1 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
