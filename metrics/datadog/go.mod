@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/DataDog/datadog-go/v5 v5.8.3
-	github.com/liujitcn/kratos-kit/metrics v0.0.2
+	github.com/liujitcn/kratos-kit/metrics v0.0.3
 )
 
 require (
@@ -13,6 +13,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 )
