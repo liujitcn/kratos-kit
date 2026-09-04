@@ -266,7 +266,6 @@ key.yaml / key.<env>.yaml（仅本地、未加密）
 type: vault
 scope: prod/order-service
 root_name: secret/data/kratos/prod/root
-root_version: "3"
 vault:
   address: http://127.0.0.1:8200
   value_key: value
@@ -277,8 +276,9 @@ vault:
 不会覆盖已有根密钥。业务也可以在调用 `RunApp` 前自行创建 `key.Key` 并保存到 `sdk.Runtime.SetKey`，bootstrap 会优先复用该接口实例。
 
 配置密文只需要在值上使用 `ENC[...]` 标记；标记可以占据整个值，也可以只嵌入需要保护的字符串片段。
-配置密钥由根密钥按 `scope`、`kratos-kit:config` 用途和根版本派生，该标识不写入密文。
-同一根密钥、范围、用途和版本会得到相同的派生密钥，不同服务或用途应使用不同的 scope/purpose。
+配置密钥由根密钥按 `scope` 和 `kratos-kit:config` 用途派生，该标识不写入密文。
+同一根密钥、范围和用途会得到相同的派生密钥，不同服务或用途应使用不同的 scope/purpose。
+已经按旧版本规则生成的 `ENC[...]` 密文不能直接使用新规则解密，需要先用旧规则解密后重新加密。
 
 ## 配置加载行为
 

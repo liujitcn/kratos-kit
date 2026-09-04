@@ -7,7 +7,6 @@ DefaultAzureCredential。
 type: azure
 scope: prod/order-service
 root_name: kratos-root
-root_version: version-id
 azure:
   vault_url: https://example.vault.azure.net
 ```

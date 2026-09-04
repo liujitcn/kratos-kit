@@ -21,7 +21,6 @@ func NewKey(ctx context.Context, cfg *configv1.Key) (Key, error)
 type: vault
 scope: prod/order-service
 root_name: secret/data/kratos/prod/root
-root_version: "3"
 vault:
   address: http://127.0.0.1:8200
   value_key: value
@@ -71,11 +70,12 @@ sdk.Runtime.SetKey(value)
 派生算法为 HKDF-SHA256，派生上下文包含：
 
 ```text
-scope + purpose + root_version
+scope + purpose
 ```
 
-相同根密钥、范围、用途和根版本会生成相同结果；不同服务或用途必须使用不同的 `scope`/`purpose`。
-根密钥轮换时增加新版本，旧版本应保留到历史 Token 和密文不再需要为止。
+相同根密钥、范围和用途会生成相同结果；不同服务或用途必须使用不同的 `scope`/`purpose`。
+根密钥内容发生变化时，派生密钥也会变化，已有密文需要使用旧根密钥解密后重新加密。
+已经按旧版本规则生成的密文，需要先用旧规则解密后重新加密。
 
 ## Provider
 
@@ -91,3 +91,6 @@ go get github.com/liujitcn/kratos-kit/key@latest
 - `key/google`：Google Secret Manager，使用 Application Default Credentials。
 - `key/azure`：Azure Key Vault Secrets，使用 Managed Identity 或 DefaultAzureCredential。
 - `key/kubernetes`：Kubernetes Secret API，使用 Pod ServiceAccount。
+
+Provider 读取当前可用的根密钥值，不再将 Provider 版本或文件修改时间参与派生；AWS 的
+`version_stage` 仍可用于选择 AWS Secret 的版本阶段。

@@ -56,7 +56,6 @@ go run . -c configs -e prod
 type: vault
 scope: prod/order-service
 root_name: secret/data/kratos/prod/root
-root_version: "3"
 vault:
   address: http://127.0.0.1:8200
   value_key: value

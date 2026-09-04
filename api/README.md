@@ -165,7 +165,7 @@ Secret、回调地址和 Scope。常见名称包括 `github`、`gitee`、`google
 `wechatmp`、`wechatmini`、`wechatwork`、`dingtalk` 和 `feishu`。
 
 `Key` 描述应用启动阶段的根密钥 Provider，支持 `file`、`vault`、`aws`、`google`、
-`azure` 和 `kubernetes`。公共字段为 Provider 类型、派生范围、根密钥名称和版本；Provider
+`azure` 和 `kubernetes`。公共字段为 Provider 类型、派生范围和根密钥名称；Provider
 扩展字段分别为文件路径、Vault 地址/命名空间/value key、AWS 区域/版本阶段、Google
 项目、Azure Vault 地址以及 Kubernetes 命名空间/value key。根密钥和认证凭据不属于该
 Proto 的明文配置内容。

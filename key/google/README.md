@@ -7,7 +7,6 @@ Google Secret Manager 实现由 `key.NewKey` 内部使用。Google SDK 使用 Ap
 type: google
 scope: prod/order-service
 root_name: kratos-root
-root_version: "3"
 google:
   project: example-project
 ```
