@@ -48,6 +48,10 @@ func LoadBootstrapConfig(configPath, env string, keyValue key.Key) error {
 	if err != nil {
 		return err
 	}
+	err = encryptMarkedConfigFiles(configPath, env, secret)
+	if err != nil {
+		return err
+	}
 	var localSources []config.Source
 	localSources, err = newEnvironmentFileConfigSources(configPath, env)
 	if err != nil {
@@ -71,6 +75,19 @@ func LoadBootstrapConfig(configPath, env string, keyValue key.Key) error {
 
 // newEnvironmentFileConfigSources 按基础文件在前、环境覆盖文件在后的顺序创建本地配置源。
 func newEnvironmentFileConfigSources(configPath, env string) ([]config.Source, error) {
+	paths, err := newEnvironmentFilePaths(configPath, env)
+	if err != nil {
+		return nil, err
+	}
+	localSources := make([]config.Source, 0, len(paths))
+	for _, path := range paths {
+		localSources = append(localSources, newFileConfigSource(path))
+	}
+	return localSources, nil
+}
+
+// newEnvironmentFilePaths 按基础文件在前、环境覆盖文件在后的顺序返回配置路径。
+func newEnvironmentFilePaths(configPath, env string) ([]string, error) {
 	var err error
 	err = validateEnvironment(env)
 	if err != nil {
@@ -83,8 +100,8 @@ func newEnvironmentFileConfigSources(configPath, env string) ([]config.Source, e
 		return nil, fmt.Errorf("read config path %q: %w", configPath, err)
 	}
 
-	baseSources := make([]config.Source, 0, len(entries))
-	environmentSources := make([]config.Source, 0, len(entries))
+	basePaths := make([]string, 0, len(entries))
+	environmentPaths := make([]string, 0, len(entries))
 	environmentSuffix := "." + env
 	for _, entry := range entries {
 		if entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
@@ -101,19 +118,19 @@ func newEnvironmentFileConfigSources(configPath, env string) ([]config.Source, e
 		name := strings.TrimSuffix(entry.Name(), extension)
 		filePath := filepath.Join(configPath, entry.Name())
 		if !strings.Contains(name, ".") {
-			baseSources = append(baseSources, newFileConfigSource(filePath))
+			basePaths = append(basePaths, filePath)
 			continue
 		}
 		if env != "" && strings.HasSuffix(name, environmentSuffix) && !strings.Contains(strings.TrimSuffix(name, environmentSuffix), ".") {
-			environmentSources = append(environmentSources, newFileConfigSource(filePath))
+			environmentPaths = append(environmentPaths, filePath)
 		}
 	}
 
-	localSources := append(baseSources, environmentSources...)
-	if len(localSources) == 0 {
+	paths := append(basePaths, environmentPaths...)
+	if len(paths) == 0 {
 		return nil, fmt.Errorf("no config files found in %q for environment %q", configPath, env)
 	}
-	return localSources, nil
+	return paths, nil
 }
 
 // newConfigProviderWithDecoder 合并配置源，并按需安装敏感字段解码器。
