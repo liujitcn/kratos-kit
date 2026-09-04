@@ -6,7 +6,7 @@ require (
 	github.com/cloudwego/eino v0.9.2
 	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.1
 	github.com/eino-contrib/jsonschema v1.0.3
-	github.com/liujitcn/kratos-kit/api v0.0.28
+	github.com/liujitcn/kratos-kit/api v0.0.36
 )
 
 require (
@@ -51,12 +51,11 @@ require (
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	golang.org/x/arch v0.26.0 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
