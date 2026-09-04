@@ -123,9 +123,11 @@ func TestLoadBootstrapConfigEncryptsMarkedFilesBeforeLoading(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := LoadBootstrapConfig(directory, "dev", testKey{}); err != nil {
+	cleanup, err := LoadBootstrapConfig(directory, "dev", testKey{})
+	if err != nil {
 		t.Fatal(err)
 	}
+	defer cleanup()
 	output, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

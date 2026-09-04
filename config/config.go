@@ -28,49 +28,59 @@ func newFileConfigSource(filePath string) config.Source {
 	return file.NewSource(filePath)
 }
 
-// LoadBootstrapConfig 加载指定环境配置，并使用传入或运行时获取的密钥解密敏感字段。
-func LoadBootstrapConfig(configPath, env string, keyValue key.Key) error {
+// LoadBootstrapConfig 加载指定环境配置，并返回关闭配置监听的清理函数。
+func LoadBootstrapConfig(configPath, env string, keyValue key.Key) (func(), error) {
 	if keyValue == nil {
 		keyValue = sdk.Runtime.GetKey()
 	}
 	if keyValue == nil {
-		return fmt.Errorf("config: key is not initialized")
+		return nil, fmt.Errorf("config: key is not initialized")
 	}
 
 	var err error
 	var derived []byte
 	derived, err = keyValue.Derive(context.Background(), secretKeyID)
 	if err != nil {
-		return fmt.Errorf("config: derive config key: %w", err)
+		return nil, fmt.Errorf("config: derive config key: %w", err)
 	}
 	var secret *SecretCipher
 	secret, err = NewSecretCipher(derived)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = encryptMarkedConfigFiles(configPath, env, secret)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	var localSources []config.Source
 	localSources, err = newEnvironmentFileConfigSources(configPath, env)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var remoteConfig *configv1.Config
-	err, remoteConfig = loadRemoteConfigSourceConfigsWithDecoder(localSources, secret.Decoder())
+	remoteConfig, err = loadRemoteConfigSourceConfigsWithDecoder(localSources, secret.Decoder())
 	if err != nil {
 		log.Error("loadRemoteConfigSourceConfigs: ", err.Error())
-		return err
+		return nil, err
 	}
 
 	var cfg config.Config
 	cfg, err = newConfigProviderWithDecoder(localSources, remoteConfig, secret.Decoder())
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return loadBootstrapConfig(cfg)
+	cleanup := func() {
+		closeErr := cfg.Close()
+		if closeErr != nil {
+			log.Error("关闭配置监听失败", "error", closeErr)
+		}
+	}
+	if err = loadBootstrapConfig(cfg); err != nil {
+		cleanup()
+		return nil, err
+	}
+	return cleanup, nil
 }
 
 // newEnvironmentFileConfigSources 按基础文件在前、环境覆盖文件在后的顺序创建本地配置源。
@@ -183,33 +193,12 @@ func scanConfigs(cfg config.Config) error {
 }
 
 // loadRemoteConfigSourceConfigsWithDecoder 从本地配置源解析远程配置源参数，并按需解密敏感字段。
-func loadRemoteConfigSourceConfigsWithDecoder(localSources []config.Source, decoder config.Decoder) (error, *configv1.Config) {
-	options := []config.Option{config.WithSource(localSources...)}
-	if decoder != nil {
-		options = append(options, config.WithDecoder(decoder))
-	}
-	cfg := config.New(
-		options...,
-	)
-	defer func(cfg config.Config) {
-		closeErr := cfg.Close()
-		if closeErr != nil {
-			panic(closeErr)
-		}
-	}(cfg)
-
-	err := cfg.Load()
+func loadRemoteConfigSourceConfigsWithDecoder(localSources []config.Source, decoder config.Decoder) (*configv1.Config, error) {
+	bootstrapConfig, err := loadBootstrapConfigWithoutWatch(localSources, decoder)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
-
-	bootstrapConfig := &configv1.Bootstrap{}
-	err = cfg.Scan(bootstrapConfig)
-	if err != nil {
-		return err, nil
-	}
-
-	return nil, bootstrapConfig.GetConfig()
+	return bootstrapConfig.GetConfig(), nil
 }
 
 func validateEnvironment(env string) error {
