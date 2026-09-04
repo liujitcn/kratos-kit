@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/godoes/gorm-oracle v1.6.18
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.17
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.19
 )
 
 require (
@@ -12,6 +12,6 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/sijms/go-ora/v2 v2.9.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
-	gorm.io/gorm v1.31.1 // indirect
+	golang.org/x/text v0.41.0 // indirect
+	gorm.io/gorm v1.31.2 // indirect
 )
