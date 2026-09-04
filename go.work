@@ -1,6 +1,7 @@
 go 1.27.0
 
 replace github.com/liujitcn/kratos-kit/redact v0.0.1 => ./redact
+
 replace github.com/liujitcn/kratos-kit/key v0.0.1 => ./key
 
 use (
@@ -37,7 +38,6 @@ use (
 	./cmd/protoc-gen-go-agent-tool
 	./cmd/protoc-gen-go-mcp-tool
 	./cmd/protoc-gen-go-redact
-	./redact
 	./config
 	./config/apollo
 	./config/consul
@@ -95,6 +95,7 @@ use (
 	./ratelimit
 	./ratelimit/sentinel
 	./ratelimit/tokenbucket
+	./redact
 	./registry
 	./registry/consul
 	./registry/etcd
