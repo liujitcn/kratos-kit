@@ -89,7 +89,7 @@ build: wire
 # 打包后端二进制、配置和 Docker 启动脚本。
 package-binary: build
 	@mkdir -p $(DIST_DIR)
-	@tar -czf $(DIST_DIR)/$(PACKAGE_NAME).tar.gz $(BINARY) configs root.key scripts
+	@tar -czf $(DIST_DIR)/$(PACKAGE_NAME).tar.gz $(BINARY) configs scripts
 
 # 构建后端 Docker 镜像。
 docker-build:

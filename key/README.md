@@ -45,8 +45,9 @@ Derive("config") 获取配置解密密钥
 初始化业务应用
 ```
 
-没有 key 配置时默认使用 `${conf}/root.key`，默认配置目录下即 `configs/root.key`。根密钥必须预先生成，
-系统不会自动生成或覆盖：
+没有 key 配置时默认使用 `${conf}/root.key`，默认配置目录下即 `configs/root.key`。本地 file provider 初始化时，
+如果根密钥文件不存在，file provider 会生成一次 32 字节随机根密钥并以 `0600` 权限保存；如果文件已存在则直接复用，
+不会覆盖已有根密钥：
 
 ```bash
 umask 077

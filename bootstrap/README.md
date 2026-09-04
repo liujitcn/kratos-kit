@@ -64,7 +64,8 @@ vault:
 
 启动时 bootstrap 先读取 `key.yaml`；如果 `sdk.Runtime` 已设置 Key 实例就直接复用，否则按 key 配置创建 Key，
 没有 key 配置时默认使用 `configs/root.key` 的 file provider，随后使用派生的 config 密钥加载业务配置。
-因此未配置 `key.yaml` 时，需要先将 32 字节根密钥保存为 `configs/root.key`；系统不会自动生成或覆盖根密钥。
+本地 file provider 初始化时，根密钥文件不存在会使用系统随机源生成 32 字节根密钥并以 `0600` 权限排他创建；
+文件已存在时直接复用，永远不会覆盖已有根密钥。外部 Secret Manager Provider 不会创建本地文件。
 
 ## 使用示例
 

@@ -273,8 +273,8 @@ vault:
 ```
 
 如果没有 `key.yaml`，bootstrap 默认读取 `${conf}/root.key`（默认即 `configs/root.key`），使用 `file` provider。
-根密钥必须预先生成并保存，系统不会自动生成或覆盖。业务也可以在调用 `RunApp` 前自行创建
-`key.Key` 并保存到 `sdk.Runtime.SetKey`，bootstrap 会优先复用该接口实例。
+如果本地根密钥文件不存在，file provider 初始化时会生成一次 32 字节随机根密钥并以 `0600` 权限保存；文件已存在时直接复用，
+不会覆盖已有根密钥。业务也可以在调用 `RunApp` 前自行创建 `key.Key` 并保存到 `sdk.Runtime.SetKey`，bootstrap 会优先复用该接口实例。
 
 配置密文只需要在值上使用 `ENC[...]` 标记；标记可以占据整个值，也可以只嵌入需要保护的字符串片段。
 配置密钥由根密钥按 `scope`、`kratos-kit:config` 用途和根版本派生，该标识不写入密文。
