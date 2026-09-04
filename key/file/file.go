@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/key/internal"
@@ -45,8 +44,8 @@ func NewFromConfig(cfg *configv1.Key) (internal.Provider, error) {
 	return New(path)
 }
 
-// Get 读取密钥文件内容，并使用文件修改时间作为版本标识。
-func (p *Provider) Get(_ context.Context, name, requestedVersion string) (internal.Secret, error) {
+// Get 读取密钥文件内容。
+func (p *Provider) Get(_ context.Context, name string) (internal.Secret, error) {
 	if p == nil || p.path == "" {
 		return internal.Secret{}, errors.New("key/file: provider is nil")
 	}
@@ -61,16 +60,7 @@ func (p *Provider) Get(_ context.Context, name, requestedVersion string) (intern
 		}
 		return internal.Secret{}, fmt.Errorf("key/file: read %q: %w", p.path, err)
 	}
-	info, err := os.Stat(p.path)
-	if err != nil {
-		return internal.Secret{}, fmt.Errorf("key/file: stat %q: %w", p.path, err)
-	}
-	version := info.ModTime().UTC().Format(time.RFC3339Nano)
-	if requestedVersion != "" {
-		// 文件系统没有原生版本号，调用方指定版本时由配置承担轮换标识。
-		version = requestedVersion
-	}
-	return internal.Secret{Version: version, Value: value}, nil
+	return internal.Secret{Value: value}, nil
 }
 
 // ensureRootKeyFile 创建缺失的根密钥文件，已存在时保持原内容不变。

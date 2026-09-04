@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/hashicorp/vault/api"
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
@@ -85,17 +84,12 @@ func newProvider(logical logicalReader, opts ...Option) *Provider {
 	return provider
 }
 
-// Get 读取指定 Vault 路径中的密钥值。
-// SecretRef.Version 会作为 KV v2 的 version 查询参数；KV v1 会忽略该参数。
-func (p *Provider) Get(ctx context.Context, name, requestedVersion string) (internal.Secret, error) {
+// Get 读取 Vault 路径中的最新密钥值。
+func (p *Provider) Get(ctx context.Context, name string) (internal.Secret, error) {
 	if p == nil || p.logical == nil {
 		return internal.Secret{}, errors.New("key/vault: provider is nil")
 	}
-	query := make(map[string][]string)
-	if requestedVersion != "" {
-		query["version"] = []string{requestedVersion}
-	}
-	secret, err := p.logical.ReadWithDataWithContext(ctx, name, query)
+	secret, err := p.logical.ReadWithDataWithContext(ctx, name, nil)
 	if err != nil {
 		return internal.Secret{}, fmt.Errorf("key/vault: read %q: %w", name, err)
 	}
@@ -103,51 +97,27 @@ func (p *Provider) Get(ctx context.Context, name, requestedVersion string) (inte
 		return internal.Secret{}, fmt.Errorf("key/vault: %w: %s", internal.ErrSecretNotFound, name)
 	}
 
-	value, version, err := extractValue(secret.Data, p.options.valueKey)
+	value, err := extractValue(secret.Data, p.options.valueKey)
 	if err != nil {
 		return internal.Secret{}, fmt.Errorf("key/vault: read %q: %w", name, err)
 	}
-	if requestedVersion != "" {
-		version = requestedVersion
-	}
-	return internal.Secret{Version: version, Value: value}, nil
+	return internal.Secret{Value: value}, nil
 }
 
-func extractValue(data map[string]interface{}, valueKey string) ([]byte, string, error) {
-	version := "unversioned"
-	if metadata, ok := data["metadata"].(map[string]interface{}); ok {
-		if rawVersion, ok := metadata["version"]; ok {
-			version = parseVersion(rawVersion)
-		}
-	}
+func extractValue(data map[string]interface{}, valueKey string) ([]byte, error) {
 	if inner, ok := data["data"].(map[string]interface{}); ok {
 		data = inner
 	}
 	value, ok := data[valueKey]
 	if !ok {
-		return nil, "", fmt.Errorf("%w: field %q is missing", internal.ErrSecretNotFound, valueKey)
+		return nil, fmt.Errorf("%w: field %q is missing", internal.ErrSecretNotFound, valueKey)
 	}
 	switch typed := value.(type) {
 	case string:
-		return []byte(typed), version, nil
+		return []byte(typed), nil
 	case []byte:
-		return append([]byte(nil), typed...), version, nil
+		return append([]byte(nil), typed...), nil
 	default:
-		return nil, "", fmt.Errorf("field %q has unsupported type %T", valueKey, value)
-	}
-}
-
-func parseVersion(value interface{}) string {
-	switch typed := value.(type) {
-	case string:
-		return typed
-	case int:
-		return strconv.Itoa(typed)
-	case int64:
-		return strconv.FormatInt(typed, 10)
-	case float64:
-		return strconv.FormatInt(int64(typed), 10)
-	default:
-		return fmt.Sprint(value)
+		return nil, fmt.Errorf("field %q has unsupported type %T", valueKey, value)
 	}
 }

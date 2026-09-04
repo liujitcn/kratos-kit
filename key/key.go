@@ -70,7 +70,7 @@ func NewKey(ctx context.Context, cfg *configv1.Key) (Key, error) {
 	if err != nil {
 		return nil, err
 	}
-	return internal.NewResolver(provider, rootName, cfg.GetRootVersion(), cfg.GetScope())
+	return internal.NewResolver(provider, rootName, cfg.GetScope())
 }
 
 func defaultConfig(configPath string) *configv1.Key {

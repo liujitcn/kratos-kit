@@ -19,7 +19,6 @@ type options struct {
 }
 
 // WithVersionStage 指定 AWS Secret 的版本阶段，例如 AWSCURRENT。
-// SecretRef.Version 仍然优先用于指定不可变的 VersionId。
 func WithVersionStage(stage string) Option {
 	return func(o *options) {
 		o.versionStage = stage
@@ -78,15 +77,11 @@ func newProvider(client clientAPI, opts ...Option) *Provider {
 }
 
 // Get 读取 AWS Secrets Manager 中的密钥值。
-// SecretRef.Version 映射到 AWS VersionId；如需版本阶段请使用 WithVersionStage。
-func (p *Provider) Get(ctx context.Context, name, requestedVersion string) (internal.Secret, error) {
+func (p *Provider) Get(ctx context.Context, name string) (internal.Secret, error) {
 	if p == nil || p.client == nil {
 		return internal.Secret{}, errors.New("key/aws: provider is nil")
 	}
 	input := &secretsmanager.GetSecretValueInput{SecretId: &name}
-	if requestedVersion != "" {
-		input.VersionId = &requestedVersion
-	}
 	if p.options.versionStage != "" {
 		input.VersionStage = &p.options.versionStage
 	}
@@ -104,9 +99,5 @@ func (p *Provider) Get(ctx context.Context, name, requestedVersion string) (inte
 	if len(value) == 0 {
 		return internal.Secret{}, fmt.Errorf("key/aws: %w: %s", internal.ErrSecretNotFound, name)
 	}
-	version := requestedVersion
-	if output.VersionId != nil {
-		version = *output.VersionId
-	}
-	return internal.Secret{Version: version, Value: append([]byte(nil), value...)}, nil
+	return internal.Secret{Value: append([]byte(nil), value...)}, nil
 }

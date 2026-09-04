@@ -86,9 +86,8 @@ func NewFromClient(client kubernetes.Interface, namespace string, opts ...Option
 	return New(client.CoreV1().Secrets(namespace), opts...)
 }
 
-// Get 读取指定 Kubernetes Secret.Data 字段中的密钥值。
-// Kubernetes Secret 没有原生版本，返回的 Version 使用资源版本号。
-func (p *Provider) Get(ctx context.Context, name, requestedVersion string) (internal.Secret, error) {
+// Get 读取 Kubernetes Secret.Data 字段中的密钥值。
+func (p *Provider) Get(ctx context.Context, name string) (internal.Secret, error) {
 	if p == nil || p.secrets == nil {
 		return internal.Secret{}, errors.New("key/kubernetes: provider is nil")
 	}
@@ -103,12 +102,5 @@ func (p *Provider) Get(ctx context.Context, name, requestedVersion string) (inte
 	if !ok || len(value) == 0 {
 		return internal.Secret{}, fmt.Errorf("key/kubernetes: %w: %s/%s", internal.ErrSecretNotFound, name, p.options.valueKey)
 	}
-	version := secret.ResourceVersion
-	if version == "" {
-		version = "unversioned"
-	}
-	if requestedVersion != "" && requestedVersion != version {
-		return internal.Secret{}, fmt.Errorf("key/kubernetes: requested version %q does not match resource version %q", requestedVersion, version)
-	}
-	return internal.Secret{Version: version, Value: append([]byte(nil), value...)}, nil
+	return internal.Secret{Value: append([]byte(nil), value...)}, nil
 }

@@ -55,25 +55,17 @@ func newProvider(client clientAPI) *Provider {
 	return &Provider{client: client}
 }
 
-// Get 读取指定 Azure Key Vault Secret 的密钥值。
-// SecretRef.Version 为空时读取最新版本。
-func (p *Provider) Get(ctx context.Context, name, requestedVersion string) (internal.Secret, error) {
+// Get 读取 Azure Key Vault Secret 的最新密钥值。
+func (p *Provider) Get(ctx context.Context, name string) (internal.Secret, error) {
 	if p == nil || p.client == nil {
 		return internal.Secret{}, errors.New("key/azure: provider is nil")
 	}
-	response, err := p.client.GetSecret(ctx, name, requestedVersion, nil)
+	response, err := p.client.GetSecret(ctx, name, "", nil)
 	if err != nil {
 		return internal.Secret{}, fmt.Errorf("key/azure: get %q: %w", name, err)
 	}
 	if response.Value == nil || *response.Value == "" {
 		return internal.Secret{}, fmt.Errorf("key/azure: %w: %s", internal.ErrSecretNotFound, name)
 	}
-	version := requestedVersion
-	if response.ID != nil {
-		version = response.ID.Version()
-	}
-	if version == "" {
-		version = "unversioned"
-	}
-	return internal.Secret{Version: version, Value: []byte(*response.Value)}, nil
+	return internal.Secret{Value: []byte(*response.Value)}, nil
 }

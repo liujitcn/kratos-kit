@@ -54,28 +54,24 @@ func newProvider(client clientAPI) *Provider {
 	return &Provider{client: client}
 }
 
-// Get 读取指定 Google Secret Manager 版本的密钥值。
-// Name 可以是 projects/{project}/secrets/{secret}，Version 为空时读取 latest。
-func (p *Provider) Get(ctx context.Context, name, requestedVersion string) (internal.Secret, error) {
+// Get 读取 Google Secret Manager 中最新版本的密钥值。
+// Name 可以是 projects/{project}/secrets/{secret}。
+func (p *Provider) Get(ctx context.Context, name string) (internal.Secret, error) {
 	if p == nil || p.client == nil {
 		return internal.Secret{}, errors.New("key/google: provider is nil")
 	}
-	versionedName, err := versionNameWithProject(name, requestedVersion, p.project)
+	secretName, err := secretNameWithProject(name, p.project)
 	if err != nil {
 		return internal.Secret{}, err
 	}
-	output, err := p.client.AccessSecretVersion(ctx, &secretmanagerpb.AccessSecretVersionRequest{Name: versionedName})
+	output, err := p.client.AccessSecretVersion(ctx, &secretmanagerpb.AccessSecretVersionRequest{Name: secretName})
 	if err != nil {
 		return internal.Secret{}, fmt.Errorf("key/google: get %q: %w", name, err)
 	}
 	if output == nil || output.Payload == nil || len(output.Payload.Data) == 0 {
 		return internal.Secret{}, fmt.Errorf("key/google: %w: %s", internal.ErrSecretNotFound, name)
 	}
-	version := requestedVersion
-	if output.Name != "" {
-		version = versionFromName(output.Name)
-	}
-	return internal.Secret{Version: version, Value: append([]byte(nil), output.Payload.Data...)}, nil
+	return internal.Secret{Value: append([]byte(nil), output.Payload.Data...)}, nil
 }
 
 // Close 关闭 Google Secret Manager 客户端。
@@ -86,19 +82,9 @@ func (p *Provider) Close() error {
 	return p.close()
 }
 
-func versionName(name, version string) (string, error) {
-	return versionNameWithProject(name, version, "")
-}
-
-func versionNameWithProject(name, version, project string) (string, error) {
+func secretNameWithProject(name, project string) (string, error) {
 	if strings.Contains(name, "/versions/") {
-		if version != "" {
-			return "", fmt.Errorf("key/google: version is specified twice for %q", name)
-		}
-		return name, nil
-	}
-	if version == "" {
-		version = "latest"
+		return "", fmt.Errorf("key/google: versioned secret name is not supported: %q", name)
 	}
 	secretName := name
 	if !strings.Contains(secretName, "/secrets/") && project != "" {
@@ -107,13 +93,5 @@ func versionNameWithProject(name, version, project string) (string, error) {
 	if !strings.Contains(secretName, "/secrets/") {
 		return "", fmt.Errorf("key/google: invalid secret name %q", name)
 	}
-	return strings.TrimRight(secretName, "/") + "/versions/" + version, nil
-}
-
-func versionFromName(name string) string {
-	parts := strings.Split(strings.TrimRight(name, "/"), "/versions/")
-	if len(parts) == 2 && parts[1] != "" {
-		return parts[1]
-	}
-	return "unversioned"
+	return strings.TrimRight(secretName, "/") + "/versions/latest", nil
 }
