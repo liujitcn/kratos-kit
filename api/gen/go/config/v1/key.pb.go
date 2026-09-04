@@ -7,12 +7,11 @@
 package configv1
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -32,8 +31,6 @@ type Key struct {
 	Scope string `protobuf:"bytes,2,opt,name=scope,proto3" json:"scope,omitempty"`
 	// root_name 为 Secret Manager 中根密钥的名称或路径。
 	RootName string `protobuf:"bytes,3,opt,name=root_name,json=rootName,proto3" json:"root_name,omitempty"`
-	// root_version 为要读取的根密钥固定版本，留空表示使用 Provider 默认版本。
-	RootVersion string `protobuf:"bytes,4,opt,name=root_version,json=rootVersion,proto3" json:"root_version,omitempty"`
 	// file 为本地文件 Provider 配置。
 	File *Key_File `protobuf:"bytes,10,opt,name=file,proto3,oneof" json:"file,omitempty"`
 	// vault 为 Vault Provider 配置。
@@ -97,13 +94,6 @@ func (x *Key) GetScope() string {
 func (x *Key) GetRootName() string {
 	if x != nil {
 		return x.RootName
-	}
-	return ""
-}
-
-func (x *Key) GetRootVersion() string {
-	if x != nil {
-		return x.RootVersion
 	}
 	return ""
 }
@@ -466,12 +456,11 @@ var File_config_v1_key_proto protoreflect.FileDescriptor
 
 const file_config_v1_key_proto_rawDesc = "" +
 	"\n" +
-	"\x13config/v1/key.proto\x12\tconfig.v1\"\xae\x06\n" +
+	"\x13config/v1/key.proto\x12\tconfig.v1\"\x9f\x06\n" +
 	"\x03Key\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x14\n" +
 	"\x05scope\x18\x02 \x01(\tR\x05scope\x12\x1b\n" +
-	"\troot_name\x18\x03 \x01(\tR\brootName\x12!\n" +
-	"\froot_version\x18\x04 \x01(\tR\vrootVersion\x12,\n" +
+	"\troot_name\x18\x03 \x01(\tR\brootName\x12,\n" +
 	"\x04file\x18\n" +
 	" \x01(\v2\x13.config.v1.Key.FileH\x00R\x04file\x88\x01\x01\x12/\n" +
 	"\x05vault\x18\v \x01(\v2\x14.config.v1.Key.VaultH\x01R\x05vault\x88\x01\x01\x12)\n" +
@@ -503,7 +492,7 @@ const file_config_v1_key_proto_rawDesc = "" +
 	"\x04_awsB\t\n" +
 	"\a_googleB\b\n" +
 	"\x06_azureB\r\n" +
-	"\v_kubernetesB\x9c\x01\n" +
+	"\v_kubernetesJ\x04\b\x04\x10\x05R\froot_versionB\x9c\x01\n" +
 	"\rcom.config.v1B\bKeyProtoP\x01Z<github.com/liujitcn/kratos-kit/api/gen/go/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\x06proto3"
 
