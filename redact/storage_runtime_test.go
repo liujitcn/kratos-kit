@@ -7,50 +7,42 @@ import (
 )
 
 type storageTestResolver struct {
-	responsePolicy FieldPolicy
-	storagePolicy  StorageFieldPolicy
+	policies []StorageFieldPolicy
 }
 
-func (r storageTestResolver) Resolve(context.Context, string) (FieldPolicy, bool) {
-	return r.responsePolicy, true
-}
-
-func (r storageTestResolver) ResolveStorage(context.Context, string) (StorageFieldPolicy, bool) {
-	return r.storagePolicy, true
-}
-
-func (r storageTestResolver) ListStoragePolicies(context.Context, string) []StorageFieldPolicy {
-	return []StorageFieldPolicy{r.storagePolicy}
+func (r storageTestResolver) ListStoragePolicies(_ context.Context, tableName string) []StorageFieldPolicy {
+	result := make([]StorageFieldPolicy, 0, len(r.policies))
+	for _, policy := range r.policies {
+		if policy.TableName == tableName {
+			result = append(result, policy)
+		}
+	}
+	return result
 }
 
 type storageTestStore struct {
-	values []*StorageValue
+	values    []*StorageValue
+	batchCall int
 }
 
-func (s *storageTestStore) Find(_ context.Context, tenantID int64, entityRef, recordKey, fieldRef string) (*StorageValue, error) {
+func (s *storageTestStore) Find(_ context.Context, storagePolicyID, recordID int64) (*StorageValue, error) {
 	for _, value := range s.values {
-		if value.TenantID == tenantID && value.EntityRef == entityRef && value.RecordKey == recordKey && value.FieldRef == fieldRef {
+		if value.StoragePolicyID == storagePolicyID && value.RecordID == recordID {
 			return value, nil
 		}
 	}
 	return nil, ErrStorageValueNotFound
 }
 
-func (s *storageTestStore) ListByRecord(_ context.Context, tenantID int64, entityRef, recordKey string) ([]*StorageValue, error) {
+func (s *storageTestStore) ListByRecords(_ context.Context, storagePolicyID int64, recordIDs []int64) ([]*StorageValue, error) {
+	s.batchCall++
 	result := make([]*StorageValue, 0)
 	for _, value := range s.values {
-		if value.TenantID == tenantID && value.EntityRef == entityRef && value.RecordKey == recordKey {
-			result = append(result, value)
+		if value.StoragePolicyID != storagePolicyID {
+			continue
 		}
-	}
-	return result, nil
-}
-
-func (s *storageTestStore) ListByTenant(_ context.Context, tenantIDs []int64) ([]*StorageValue, error) {
-	result := make([]*StorageValue, 0)
-	for _, value := range s.values {
-		for _, tenantID := range tenantIDs {
-			if value.TenantID == tenantID {
+		for _, recordID := range recordIDs {
+			if value.RecordID == recordID {
 				result = append(result, value)
 				break
 			}
@@ -59,13 +51,10 @@ func (s *storageTestStore) ListByTenant(_ context.Context, tenantIDs []int64) ([
 	return result, nil
 }
 
-func (s *storageTestStore) ListByDigest(_ context.Context, tenantID int64, entityRef, fieldRef string, digest []byte) ([]*StorageValue, error) {
+func (s *storageTestStore) ListByDigest(_ context.Context, storagePolicyID int64, digest []byte) ([]*StorageValue, error) {
 	result := make([]*StorageValue, 0)
 	for _, value := range s.values {
-		if tenantID > 0 && value.TenantID != tenantID {
-			continue
-		}
-		if value.EntityRef == entityRef && value.FieldRef == fieldRef && string(value.Digest) == string(digest) {
+		if value.StoragePolicyID == storagePolicyID && string(value.Digest) == string(digest) {
 			result = append(result, value)
 		}
 	}
@@ -74,7 +63,7 @@ func (s *storageTestStore) ListByDigest(_ context.Context, tenantID int64, entit
 
 func (s *storageTestStore) Save(_ context.Context, value *StorageValue) error {
 	for index, existing := range s.values {
-		if existing.TenantID == value.TenantID && existing.EntityRef == value.EntityRef && existing.RecordKey == value.RecordKey && existing.FieldRef == value.FieldRef {
+		if existing.StoragePolicyID == value.StoragePolicyID && existing.RecordID == value.RecordID {
 			value.ID = existing.ID
 			s.values[index] = value
 			return nil
@@ -108,76 +97,128 @@ func (a *storageTestAccessor) Set(_ context.Context, _ any, _ string, value any)
 	return nil
 }
 
+// TestRedactStoragePrepareAndRestore 验证入库脱敏、摘要查询和原文恢复。
 func TestRedactStoragePrepareAndRestore(t *testing.T) {
 	protector, err := NewStorageProtector("test-secret")
 	if err != nil {
 		t.Fatal(err)
 	}
-	storageRule := FieldPolicy{Mode: PolicyModeApplyRule, Transform: func(value any) any { return "***" }}
-	resolver := storageTestResolver{
-		responsePolicy: FieldPolicy{Mode: PolicyModeApplyRule, Fingerprint: "response"},
-		storagePolicy: StorageFieldPolicy{
-			FieldRef:           "user.phone",
-			EntityRef:          "user",
-			ColumnName:         "phone",
-			Mode:               StorageModeMask,
-			SearchMode:         SearchModeDigest,
-			StorageRuleVersion: 1,
-			StorageRule:        storageRule,
-		},
+	policy := StorageFieldPolicy{
+		ID:         1001,
+		TableName:  "base_user",
+		ColumnName: "phone",
+		Rule:       FieldPolicy{Mode: PolicyModeApplyRule, Transform: func(any) any { return "***" }},
 	}
 	store := &storageTestStore{}
-	accessor := &storageTestAccessor{}
-	storage := NewRedactStorage(store, resolver, protector, accessor)
-
-	stored, prepared, err := storage.PrepareString(context.Background(), "user.phone", 7, "13812345678")
+	storage := NewRedactStorage(store, storageTestResolver{policies: []StorageFieldPolicy{policy}}, protector, &storageTestAccessor{})
+	var stored string
+	var prepared *StorageValue
+	stored, prepared, err = storage.PrepareString(context.Background(), policy, "13812345678")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if stored != "***" || prepared == nil || len(prepared.Ciphertext) == 0 || len(prepared.Digest) == 0 {
-		t.Fatalf("unexpected prepared value: stored=%q prepared=%#v", stored, prepared)
+		t.Fatalf("入库脱敏结果错误: stored=%q prepared=%#v", stored, prepared)
 	}
-	if err = storage.SavePreparedValues(context.Background(), map[string]*StorageValue{"user.phone": prepared}, "42"); err != nil {
+	if err = storage.SavePreparedValues(context.Background(), map[int64]*StorageValue{policy.ID: prepared}, 42); err != nil {
 		t.Fatal(err)
 	}
-
-	keys, err := storage.FindRecordKeysByDigest(context.Background(), 7, "user", "user.phone", "13812345678")
+	var recordIDs []int64
+	recordIDs, err = storage.FindRecordIDsByDigest(context.Background(), policy, "13812345678")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(keys) != 1 || keys[0] != "42" {
-		t.Fatalf("unexpected digest keys: %#v", keys)
+	if len(recordIDs) != 1 || recordIDs[0] != 42 {
+		t.Fatalf("摘要查询结果错误: %#v", recordIDs)
 	}
-
-	restored, found, err := storage.RestoreString(context.Background(), 7, "user", "42", "user.phone", stored)
+	var restored string
+	var found bool
+	restored, found, err = storage.RestoreString(context.Background(), policy, 42, stored)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !found || restored != "13812345678" {
-		t.Fatalf("unexpected restored value: value=%q found=%v", restored, found)
+		t.Fatalf("原文恢复结果错误: value=%q found=%v", restored, found)
 	}
 }
 
+// TestRedactStoragePrepareEntityUsesAccessor 验证实体字段访问器参与入库脱敏。
 func TestRedactStoragePrepareEntityUsesAccessor(t *testing.T) {
 	protector, err := NewStorageProtector("test-secret")
 	if err != nil {
 		t.Fatal(err)
 	}
-	resolver := storageTestResolver{storagePolicy: StorageFieldPolicy{
-		FieldRef:    "user.phone",
-		EntityRef:   "user",
-		ColumnName:  "phone",
-		Mode:        StorageModeMask,
-		SearchMode:  SearchModeDigest,
-		StorageRule: FieldPolicy{Mode: PolicyModeApplyRule, Transform: func(value any) any { return "***" }},
-	}}
+	policy := StorageFieldPolicy{
+		ID:         1001,
+		TableName:  "base_user",
+		ColumnName: "phone",
+		Rule:       FieldPolicy{Mode: PolicyModeApplyRule, Transform: func(any) any { return "***" }},
+	}
 	accessor := &storageTestAccessor{value: "13812345678"}
-	storage := NewRedactStorage(&storageTestStore{}, resolver, protector, accessor)
-	values, err := storage.PrepareEntity(context.Background(), 7, "user", new(struct{}))
+	storage := NewRedactStorage(&storageTestStore{}, storageTestResolver{policies: []StorageFieldPolicy{policy}}, protector, accessor)
+	var values map[int64]*StorageValue
+	values, err = storage.PrepareEntity(context.Background(), "base_user", new(struct{}))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(values) != 1 || accessor.value != "***" {
-		t.Fatalf("unexpected entity preparation: values=%#v value=%v", values, accessor.value)
+		t.Fatalf("实体入库脱敏结果错误: values=%#v value=%v", values, accessor.value)
 	}
+}
+
+// TestRedactStorageRestoreEntities 验证查询结果按策略批量恢复原文。
+func TestRedactStorageRestoreEntities(t *testing.T) {
+	protector, err := NewStorageProtector("test-secret")
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := StorageFieldPolicy{
+		ID:         1001,
+		TableName:  "base_user",
+		ColumnName: "phone",
+		Rule: FieldPolicy{Mode: PolicyModeApplyRule, Transform: func(value any) any {
+			return Mask(value.(string), 3, 4, "*")
+		}},
+	}
+	store := &storageTestStore{}
+	storage := NewRedactStorage(store, storageTestResolver{policies: []StorageFieldPolicy{policy}}, protector, storageTestMapAccessor{})
+	entities := []ResponseEntity{
+		{RecordID: 42, Entity: map[string]string{"phone": "138****5678"}},
+		{RecordID: 43, Entity: map[string]string{"phone": "139****5678"}},
+	}
+	for _, entity := range entities {
+		plain := "13812345678"
+		if entity.RecordID == 43 {
+			plain = "13912345678"
+		}
+		var prepared *StorageValue
+		_, prepared, err = storage.PrepareString(context.Background(), policy, plain)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = storage.SavePreparedValues(context.Background(), map[int64]*StorageValue{policy.ID: prepared}, entity.RecordID); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err = storage.RestoreEntities(context.Background(), []StorageFieldPolicy{policy}, entities); err != nil {
+		t.Fatal(err)
+	}
+	if entities[0].Entity.(map[string]string)["phone"] != "13812345678" || entities[1].Entity.(map[string]string)["phone"] != "13912345678" {
+		t.Fatalf("批量恢复结果错误: %#v", entities)
+	}
+	if store.batchCall != 1 {
+		t.Fatalf("期望批量读取一次，实际读取 %d 次", store.batchCall)
+	}
+}
+
+type storageTestMapAccessor struct{}
+
+func (storageTestMapAccessor) ValueOf(_ context.Context, entity any, fieldName string) (any, bool, error) {
+	value := entity.(map[string]string)[fieldName]
+	return value, value == "", nil
+}
+
+func (storageTestMapAccessor) Set(_ context.Context, entity any, fieldName string, value any) error {
+	entity.(map[string]string)[fieldName] = value.(string)
+	return nil
 }

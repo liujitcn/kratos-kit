@@ -223,6 +223,12 @@ func registerCallbacks(db *gorm.DB) error {
 			return err
 		}
 	}
+	for i, fn := range getCallbackQueryAfters() {
+		err = db.Callback().Query().After("gorm:after_query").Register(fmt.Sprintf("after_query_%d", i), fn)
+		if err != nil {
+			return err
+		}
+	}
 	for i, fn := range getCallbackRows() {
 		err = db.Callback().Row().Before("gorm:row").Register(fmt.Sprintf("before_row_%d", i), fn)
 		if err != nil {
@@ -241,14 +247,32 @@ func registerCallbacks(db *gorm.DB) error {
 			return err
 		}
 	}
+	for i, fn := range getCallbackCreateAfters() {
+		err = db.Callback().Create().After("gorm:after_create").Before("gorm:commit_or_rollback_transaction").Register(fmt.Sprintf("after_create_%d", i), fn)
+		if err != nil {
+			return err
+		}
+	}
 	for i, item := range getCallbackUpdates() {
 		err = db.Callback().Update().Before(item.anchor).Register(fmt.Sprintf("before_update_%d", i), item.fn)
 		if err != nil {
 			return err
 		}
 	}
+	for i, fn := range getCallbackUpdateAfters() {
+		err = db.Callback().Update().After("gorm:after_update").Before("gorm:commit_or_rollback_transaction").Register(fmt.Sprintf("after_update_%d", i), fn)
+		if err != nil {
+			return err
+		}
+	}
 	for i, fn := range getCallbackDeletes() {
 		err = db.Callback().Delete().Before("gorm:delete").Register(fmt.Sprintf("before_delete_%d", i), fn)
+		if err != nil {
+			return err
+		}
+	}
+	for i, fn := range getCallbackDeleteAfters() {
+		err = db.Callback().Delete().After("gorm:after_delete").Before("gorm:commit_or_rollback_transaction").Register(fmt.Sprintf("after_delete_%d", i), fn)
 		if err != nil {
 			return err
 		}

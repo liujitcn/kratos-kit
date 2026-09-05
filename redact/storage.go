@@ -13,42 +13,6 @@ import (
 
 const storageCipherPrefix = "enc:"
 
-// StorageMode 表示敏感字段在数据库中的保存方式。
-type StorageMode uint8
-
-const (
-	// StorageModeUnspecified 表示未配置存储方式。
-	StorageModeUnspecified StorageMode = iota
-	// StorageModePlain 表示主表保存明文。
-	StorageModePlain
-	// StorageModeMask 表示主表保存脱敏值，并在旁表保存加密原文。
-	StorageModeMask
-	// StorageModeHash 表示主表保存不可逆摘要。
-	StorageModeHash
-)
-
-// Valid 判断存储方式是否为支持的枚举值。
-func (m StorageMode) Valid() bool {
-	return m >= StorageModePlain && m <= StorageModeHash
-}
-
-// SearchMode 表示敏感字段的查询方式。
-type SearchMode uint8
-
-const (
-	// SearchModeUnspecified 表示未配置查询方式。
-	SearchModeUnspecified SearchMode = iota
-	// SearchModeNone 表示不支持敏感字段查询。
-	SearchModeNone
-	// SearchModeDigest 表示使用 HMAC 摘要进行精确查询。
-	SearchModeDigest
-)
-
-// Valid 判断查询方式是否为支持的枚举值。
-func (m SearchMode) Valid() bool {
-	return m >= SearchModeNone && m <= SearchModeDigest
-}
-
 // StorageProtector 提供可恢复密文和精确查询摘要能力。
 type StorageProtector struct {
 	encryptionKey []byte
@@ -74,7 +38,8 @@ func (p *StorageProtector) Encrypt(value, associatedData string) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("创建存储加密器失败: %w", err)
 	}
-	aead, err := cipher.NewGCM(block)
+	var aead cipher.AEAD
+	aead, err = cipher.NewGCM(block)
 	if err != nil {
 		return "", fmt.Errorf("创建存储 AEAD 失败: %w", err)
 	}
@@ -101,18 +66,21 @@ func (p *StorageProtector) Decrypt(value, associatedData string) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("解析字段密文失败: %w", err)
 	}
-	block, err := aes.NewCipher(p.encryptionKey)
+	var block cipher.Block
+	block, err = aes.NewCipher(p.encryptionKey)
 	if err != nil {
 		return "", fmt.Errorf("创建存储解密器失败: %w", err)
 	}
-	aead, err := cipher.NewGCM(block)
+	var aead cipher.AEAD
+	aead, err = cipher.NewGCM(block)
 	if err != nil {
 		return "", fmt.Errorf("创建存储 AEAD 失败: %w", err)
 	}
 	if len(encoded) <= aead.NonceSize() {
 		return "", errors.New("字段密文长度无效")
 	}
-	plaintext, err := aead.Open(nil, encoded[:aead.NonceSize()], encoded[aead.NonceSize():], []byte(associatedData))
+	var plaintext []byte
+	plaintext, err = aead.Open(nil, encoded[:aead.NonceSize()], encoded[aead.NonceSize():], []byte(associatedData))
 	if err != nil {
 		return "", fmt.Errorf("解密字段原文失败: %w", err)
 	}

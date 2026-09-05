@@ -219,14 +219,6 @@ func ApplyDynamic(ctx context.Context, resolver PolicyResolver, fieldRef string,
 	}
 	policy, ok := resolver.Resolve(ctx, fieldRef)
 	if !ok {
-		if DirectionFromContext(ctx) == DirectionResponse {
-			if text, textOK := value.(string); textOK {
-				sanitized := SanitizeText(text)
-				if sanitized != text {
-					return sanitized, true
-				}
-			}
-		}
 		return value, false
 	}
 	return policy.Apply(value), true

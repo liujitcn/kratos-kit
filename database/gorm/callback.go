@@ -9,11 +9,15 @@ import (
 var (
 	registeredCallbackMu sync.RWMutex
 	callbackQueries      []func(db *gorm.DB)
+	callbackQueryAfters  []func(db *gorm.DB)
 	callbackRows         []func(db *gorm.DB)
 	callbackRaws         []func(db *gorm.DB)
 	callbackCreates      []func(db *gorm.DB)
+	callbackCreateAfters []func(db *gorm.DB)
 	callbackUpdates      []callbackUpdate
+	callbackUpdateAfters []func(db *gorm.DB)
 	callbackDeletes      []func(db *gorm.DB)
+	callbackDeleteAfters []func(db *gorm.DB)
 )
 
 type callbackUpdate struct {
@@ -39,6 +43,16 @@ func RegisterCallbackQueries(fn ...func(g *gorm.DB)) {
 	registeredCallbackMu.Lock()
 	defer registeredCallbackMu.Unlock()
 	callbackQueries = append(callbackQueries, fn...)
+}
+
+// RegisterCallbackQueryAfter 注册查询完成后的钩子。
+func RegisterCallbackQueryAfter(fn func(g *gorm.DB)) {
+	if fn == nil {
+		return
+	}
+	registeredCallbackMu.Lock()
+	defer registeredCallbackMu.Unlock()
+	callbackQueryAfters = append(callbackQueryAfters, fn)
 }
 
 // RegisterCallbackRow 注册单行和流式查询钩子。
@@ -81,6 +95,16 @@ func RegisterCallbackCreates(fn ...func(g *gorm.DB)) {
 	callbackCreates = append(callbackCreates, fn...)
 }
 
+// RegisterCallbackCreateAfter 注册创建完成后的钩子。
+func RegisterCallbackCreateAfter(fn func(g *gorm.DB)) {
+	if fn == nil {
+		return
+	}
+	registeredCallbackMu.Lock()
+	defer registeredCallbackMu.Unlock()
+	callbackCreateAfters = append(callbackCreateAfters, fn)
+}
+
 // RegisterCallbackUpdate 注册更新钩子。
 func RegisterCallbackUpdate(fn func(g *gorm.DB)) {
 	RegisterCallbackUpdateBefore("gorm:before_update", fn)
@@ -113,6 +137,16 @@ func RegisterCallbackUpdates(fn ...func(g *gorm.DB)) {
 	}
 }
 
+// RegisterCallbackUpdateAfter 注册更新完成后的钩子。
+func RegisterCallbackUpdateAfter(fn func(g *gorm.DB)) {
+	if fn == nil {
+		return
+	}
+	registeredCallbackMu.Lock()
+	defer registeredCallbackMu.Unlock()
+	callbackUpdateAfters = append(callbackUpdateAfters, fn)
+}
+
 // RegisterCallbackDelete 注册删除钩子。
 func RegisterCallbackDelete(fn func(g *gorm.DB)) {
 	if fn == nil {
@@ -133,6 +167,16 @@ func RegisterCallbackDeletes(fn ...func(g *gorm.DB)) {
 	callbackDeletes = append(callbackDeletes, fn...)
 }
 
+// RegisterCallbackDeleteAfter 注册删除完成后的钩子。
+func RegisterCallbackDeleteAfter(fn func(g *gorm.DB)) {
+	if fn == nil {
+		return
+	}
+	registeredCallbackMu.Lock()
+	defer registeredCallbackMu.Unlock()
+	callbackDeleteAfters = append(callbackDeleteAfters, fn)
+}
+
 // getCallbackQueries 返回已注册的查询钩子副本。
 func getCallbackQueries() []func(g *gorm.DB) {
 	registeredCallbackMu.RLock()
@@ -142,6 +186,18 @@ func getCallbackQueries() []func(g *gorm.DB) {
 	}
 	dup := make([]func(g *gorm.DB), len(callbackQueries))
 	copy(dup, callbackQueries)
+	return dup
+}
+
+// getCallbackQueryAfters 返回已注册的查询完成钩子副本。
+func getCallbackQueryAfters() []func(g *gorm.DB) {
+	registeredCallbackMu.RLock()
+	defer registeredCallbackMu.RUnlock()
+	if len(callbackQueryAfters) == 0 {
+		return nil
+	}
+	dup := make([]func(g *gorm.DB), len(callbackQueryAfters))
+	copy(dup, callbackQueryAfters)
 	return dup
 }
 
@@ -181,6 +237,18 @@ func getCallbackCreates() []func(g *gorm.DB) {
 	return dup
 }
 
+// getCallbackCreateAfters 返回已注册的创建完成钩子副本。
+func getCallbackCreateAfters() []func(g *gorm.DB) {
+	registeredCallbackMu.RLock()
+	defer registeredCallbackMu.RUnlock()
+	if len(callbackCreateAfters) == 0 {
+		return nil
+	}
+	dup := make([]func(g *gorm.DB), len(callbackCreateAfters))
+	copy(dup, callbackCreateAfters)
+	return dup
+}
+
 // getCallbackUpdates 返回已注册的更新钩子副本。
 func getCallbackUpdates() []callbackUpdate {
 	registeredCallbackMu.RLock()
@@ -193,6 +261,18 @@ func getCallbackUpdates() []callbackUpdate {
 	return dup
 }
 
+// getCallbackUpdateAfters 返回已注册的更新完成钩子副本。
+func getCallbackUpdateAfters() []func(g *gorm.DB) {
+	registeredCallbackMu.RLock()
+	defer registeredCallbackMu.RUnlock()
+	if len(callbackUpdateAfters) == 0 {
+		return nil
+	}
+	dup := make([]func(g *gorm.DB), len(callbackUpdateAfters))
+	copy(dup, callbackUpdateAfters)
+	return dup
+}
+
 // getCallbackDeletes 返回已注册的删除钩子副本。
 func getCallbackDeletes() []func(g *gorm.DB) {
 	registeredCallbackMu.RLock()
@@ -202,5 +282,17 @@ func getCallbackDeletes() []func(g *gorm.DB) {
 	}
 	dup := make([]func(g *gorm.DB), len(callbackDeletes))
 	copy(dup, callbackDeletes)
+	return dup
+}
+
+// getCallbackDeleteAfters 返回已注册的删除完成钩子副本。
+func getCallbackDeleteAfters() []func(g *gorm.DB) {
+	registeredCallbackMu.RLock()
+	defer registeredCallbackMu.RUnlock()
+	if len(callbackDeleteAfters) == 0 {
+		return nil
+	}
+	dup := make([]func(g *gorm.DB), len(callbackDeleteAfters))
+	copy(dup, callbackDeleteAfters)
 	return dup
 }
