@@ -17,12 +17,17 @@ import (
 
 // CreateGrpcServer 创建 GRPC 服务端。
 func CreateGrpcServer(cfg *configv1.Bootstrap, mds ...middleware.Middleware) (*grpc.Server, error) {
+	return CreateGrpcServerWithOptions(cfg, nil, mds...)
+}
+
+// CreateGrpcServerWithOptions 保留配置与中间件组装，并追加当前应用的传输拦截器等实例选项。
+func CreateGrpcServerWithOptions(cfg *configv1.Bootstrap, opts []grpc.ServerOption, mds ...middleware.Middleware) (*grpc.Server, error) {
 	options, err := initGrpcServerConfig(cfg, mds...)
 	if err != nil {
 		return nil, fmt.Errorf("init grpc server config failed: %w", err)
 	}
 
-	srv := grpc.NewServer(options...)
+	srv := grpc.NewServer(append(options, opts...)...)
 
 	return srv, nil
 }

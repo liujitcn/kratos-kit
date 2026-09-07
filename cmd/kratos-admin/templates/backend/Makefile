@@ -70,7 +70,7 @@ wire:
 # 生成当前项目全部协议、OpenAPI 和 Wire 产物。
 gen: gorm-gen api openapi ts wire fmt
 
-# 验证项目编译和依赖完整性。
+# 验证业务模块及其服务入口的编译和依赖完整性。
 test:
 	@go test ./...
 

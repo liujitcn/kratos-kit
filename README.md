@@ -45,7 +45,7 @@
 - `cmd/normalize-go-imports`：通用 Go import 别名规范化命令，可安装后在任意项目目录执行
 - `cmd/kratos-admin`：生成包含前后端和项目脚本的完整项目
 - `cmd/protoc-gen-go-redact`：按 Proto 字段规则生成服务端响应脱敏代码，并维护可发布到 Buf 的 `redact/v1` 契约
-- `redact`：运行时脱敏接口、自定义规则注册和 gRPC 流式响应包装；由 `cmd/protoc-gen-go-redact` 生成代码依赖
+- `redact`：运行时脱敏接口、自定义规则注册和 gRPC 流式响应包装；策略解析器通过构造参数或请求上下文注入，不保存进程级默认策略实例，由 `cmd/protoc-gen-go-redact` 生成代码依赖
 
 `database/gorm` 的 `Data` 配置支持 `database` 与 `databases` 两种形式。多个固定数据源应按名称分别创建客户端和 `data.Data`，每个客户端启动时主动校验连接；跨数据源事务、Join 与请求级动态切库不在该封装的职责范围内。
 

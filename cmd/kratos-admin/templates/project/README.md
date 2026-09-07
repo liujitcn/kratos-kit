@@ -24,6 +24,7 @@
 
 前端源码由上游 CLI 生成，后端通过公开的 `kratos-admin/backend` ProviderSet 接入 Admin，
 不复制 Admin 的 `internal` 代码。
+后端业务代码和服务入口属于同一个 Go module，`make test` 覆盖整个后端。
 
 ## 启动
 

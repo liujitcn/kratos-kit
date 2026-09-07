@@ -21,8 +21,6 @@ var ProviderSet = wire.NewSet(
 
 // hostProviderSet 将当前项目业务模块与 Admin 的具名贡献合并为 Core 集合。
 var hostProviderSet = wire.NewSet(
-	projectModule.NewModuleResources,
-	projectModule.NewModules,
 	ProvideResources,
 	ProvideModules,
 	ProvideTasks,
@@ -30,22 +28,18 @@ var hostProviderSet = wire.NewSet(
 	ProvideConsumers,
 )
 
-// ProvideResources 合并 Admin 和当前项目的静态资源。
-func ProvideResources(
-	adminResources adminbackend.AdminResources,
-	projectResources projectModule.ProjectResources,
-) coremodule.Resources {
+// ProvideResources 在业务模块内部创建项目资源，并合并 Admin 的静态资源。
+func ProvideResources(adminResources adminbackend.AdminResources) coremodule.Resources {
+	projectResources := projectModule.NewModuleResources()
 	resources := make(coremodule.Resources, 0, len(adminResources)+len(projectResources))
 	resources = append(resources, coremodule.Resources(adminResources)...)
 	resources = append(resources, projectResources...)
 	return resources
 }
 
-// ProvideModules 合并 Admin 和当前项目的协议模块。
-func ProvideModules(
-	adminModules adminbackend.AdminModules,
-	projectModules projectModule.ProjectModules,
-) coremodule.Modules {
+// ProvideModules 在业务根包内完成项目模块构造，并合并 Admin 的协议模块。
+func ProvideModules(adminModules adminbackend.AdminModules) coremodule.Modules {
+	projectModules := projectModule.NewModules()
 	modules := make(coremodule.Modules, 0, len(adminModules)+len(projectModules))
 	modules = append(modules, coremodule.Modules(adminModules)...)
 	modules = append(modules, projectModules...)

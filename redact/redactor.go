@@ -30,10 +30,15 @@ type DynamicRedactor interface {
 }
 
 type (
-	sceneContextKey     struct{}
-	operationContextKey struct{}
-	directionContextKey struct{}
+	sceneContextKey          struct{}
+	operationContextKey      struct{}
+	directionContextKey      struct{}
+	policyResolverContextKey struct{}
 )
+
+type policyResolverContextValue struct {
+	resolver PolicyResolver
+}
 
 // Direction 表示脱敏策略作用于请求还是响应。
 type Direction uint8
@@ -169,30 +174,24 @@ type PolicyResolver interface {
 	Resolve(ctx context.Context, fieldRef string) (FieldPolicy, bool)
 }
 
-var defaultPolicyResolver struct {
-	sync.RWMutex
-	value PolicyResolver
+// WithPolicyResolver 将应用实例的策略解析器传入当前请求，不影响其他请求或应用。
+func WithPolicyResolver(ctx context.Context, resolver PolicyResolver) context.Context {
+	return context.WithValue(ctx, policyResolverContextKey{}, policyResolverContextValue{resolver: resolver})
 }
 
-// SetDefaultPolicyResolver 设置进程级默认运行时策略解析器。
-func SetDefaultPolicyResolver(resolver PolicyResolver) {
-	defaultPolicyResolver.Lock()
-	defaultPolicyResolver.value = resolver
-	defaultPolicyResolver.Unlock()
+// PolicyResolverFromContext 读取当前请求的策略解析器，未注入时返回空值。
+func PolicyResolverFromContext(ctx context.Context) PolicyResolver {
+	if ctx == nil {
+		return nil
+	}
+	value, _ := ctx.Value(policyResolverContextKey{}).(policyResolverContextValue)
+	return value.resolver
 }
 
-// DefaultPolicyResolver 返回进程级默认运行时策略解析器。
-func DefaultPolicyResolver() PolicyResolver {
-	defaultPolicyResolver.RLock()
-	resolver := defaultPolicyResolver.value
-	defaultPolicyResolver.RUnlock()
-	return resolver
-}
-
-// ApplyWith 按运行时策略执行动态脱敏；未配置解析器时执行消息默认规则。
+// ApplyWith 优先使用显式解析器，其次使用请求解析器，均未提供时执行消息默认规则。
 func ApplyWith(ctx context.Context, resolver PolicyResolver, in any) {
 	if resolver == nil {
-		resolver = DefaultPolicyResolver()
+		resolver = PolicyResolverFromContext(ctx)
 	}
 	if resolver == nil {
 		Apply(in)

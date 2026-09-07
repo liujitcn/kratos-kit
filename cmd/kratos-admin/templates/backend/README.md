@@ -11,8 +11,14 @@
 - Admin 定时任务、SSE 流和队列消费者；
 - 当前项目业务模块的 HTTP、gRPC、MCP、资源和任务扩展入口。
 
-Admin 通过公开的 `github.com/liujitcn/kratos-admin/backend` ProviderSet 接入，生成项目不
-依赖 Admin 的 `internal` 包。
+业务根包通过 `github.com/liujitcn/kratos-admin/backend` ProviderSet 接入 Admin。
+Admin 在自身包内完成数据适配器装配，生成项目只使用公共构造入口和 Core 接口，
+不引用、复制或修改 Admin 的 `internal` 代码。
+
+## 模块结构
+
+后端只有一个 Go module：`__MODULE_PATH__`，业务代码和 `internal/cmd/server` 服务入口都属于
+该模块。没有额外的宿主 `go.mod` 或 `go.work`，`go test ./...` 与 `make test` 都覆盖整个后端。
 
 ## 配置和启动
 

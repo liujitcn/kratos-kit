@@ -4,9 +4,50 @@ import (
 	"context"
 	"strings"
 	"testing"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type emptyPolicyResolver struct{}
+
+type fixedPolicyResolver struct {
+	value string
+}
+
+// Resolve 返回当前测试实例独有的替换策略。
+func (r fixedPolicyResolver) Resolve(context.Context, string) (FieldPolicy, bool) {
+	return FieldPolicy{Mode: PolicyModeApplyRule, Transform: func(any) any { return r.value }}, true
+}
+
+// TestApplyWithIsolatesResolvers 验证上下文解析器相互隔离，显式参数优先且不影响无解析器调用。
+func TestApplyWithIsolatesResolvers(t *testing.T) {
+	for _, value := range []string{"first", "second"} {
+		t.Run(value, func(t *testing.T) {
+			t.Parallel()
+			ctx := WithPolicyResolver(context.Background(), fixedPolicyResolver{value: value})
+			message := wrapperspb.String("original")
+			ApplyWith(ctx, nil, message)
+			if message.Value != value {
+				t.Fatalf("请求解析器未生效: %s", message.Value)
+			}
+			ApplyWith(ctx, fixedPolicyResolver{value: "explicit"}, message)
+			if message.Value != "explicit" {
+				t.Fatalf("显式解析器未覆盖上下文解析器: %s", message.Value)
+			}
+			if PolicyResolverFromContext(context.Background()) != nil || PolicyResolverFromContext(nil) != nil {
+				t.Fatal("解析器泄露到其他请求")
+			}
+			if PolicyResolverFromContext(WithPolicyResolver(ctx, nil)) != nil {
+				t.Fatal("显式空解析器未清除继承的请求策略")
+			}
+			message = wrapperspb.String("original")
+			ApplyWith(context.Background(), nil, message)
+			if message.Value != "original" {
+				t.Fatalf("未注入解析器的请求受其他实例影响: %s", message.Value)
+			}
+		})
+	}
+}
 
 // Resolve 表示测试解析器没有匹配到字段策略。
 func (emptyPolicyResolver) Resolve(context.Context, string) (FieldPolicy, bool) {

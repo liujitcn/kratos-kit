@@ -194,7 +194,7 @@ func initializeProject(target, frontendModule string) error {
 	return initializeProjectWithRunner(target, frontendModule, runProjectCommandInDirectory)
 }
 
-// initializeProjectWithRunner 使用指定命令执行器从官方源刷新前端 CLI 并初始化完整项目。
+// initializeProjectWithRunner 刷新前端 CLI，通过 Admin 公开入口生成并验证单模块后端。
 func initializeProjectWithRunner(target, frontendModule string, runner projectCommandRunner) error {
 	var err error
 	for _, cli := range frontendCLIs {
