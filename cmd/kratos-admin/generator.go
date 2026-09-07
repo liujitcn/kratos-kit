@@ -194,14 +194,17 @@ func initializeProject(target, frontendModule string) error {
 	return initializeProjectWithRunner(target, frontendModule, runProjectCommandInDirectory)
 }
 
-// initializeProjectWithRunner 使用指定命令执行器初始化完整项目。
+// initializeProjectWithRunner 使用指定命令执行器从官方源刷新前端 CLI 并初始化完整项目。
 func initializeProjectWithRunner(target, frontendModule string, runner projectCommandRunner) error {
 	var err error
 	for _, cli := range frontendCLIs {
+		// 仅对本次生成绕过镜像同步延迟与 dlx 旧缓存，不修改用户全局配置。
 		err = runner(
 			target,
 			".",
 			"pnpm",
+			"--config.@liujitcn:registry=https://registry.npmjs.org/",
+			"--config.dlx-cache-max-age=0",
 			"dlx",
 			cli.packageName,
 			"create",

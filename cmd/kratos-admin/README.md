@@ -49,6 +49,10 @@ kratos-admin create shop-admin \
 - `@liujitcn/kratos-uni-app-cli@latest`
 - `@liujitcn/kratos-taro-app-cli@latest`
 
+每次生成都会通过 pnpm 命令行参数将 `@liujitcn` 作用域临时指向 npm 官方源，并设置
+`dlx-cache-max-age=0`，避免镜像同步延迟或 dlx 旧缓存导致执行旧版 CLI。无需手动清理
+缓存或设置环境变量；其他作用域沿用原有源，用户的全局及项目 pnpm 配置不会被修改。
+
 生成过程会在后端初始化时执行 `go get github.com/liujitcn/kratos-admin/backend@latest`，
 并使用 Backend 模块自身 `go.mod` 声明的 Admin API 版本，避免强制覆盖依赖导致跨版本组合。
 随后执行后端 `go mod tidy`、Wire 和 `go test ./...`。任一前端 CLI 或后端初始化失败，

@@ -150,6 +150,9 @@ go install github.com/liujitcn/kratos-kit/cmd/kratos-admin@latest
 kratos-admin create shop-admin
 ```
 
+前端生成会临时使用 npm 官方源解析 `@liujitcn` 包并刷新 dlx 执行缓存，自动获取最新 CLI，
+无需手动清理缓存或配置环境变量，也不会修改全局及项目 pnpm 配置。
+
 生成时使用 `backend@latest` 及其 `go.mod` 声明的 API 依赖解析最新 Admin Backend/API，并生成
 MySQL、Redis 及本地 Docker Compose 配置。扩展业务时在生成项目中增加自己的 Proto、Biz、
 Data、Service、Module、Migration 和前端 CLI 模块，不复制 Admin 的 `internal` 代码。
