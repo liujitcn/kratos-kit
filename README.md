@@ -150,7 +150,7 @@ go install github.com/liujitcn/kratos-kit/cmd/kratos-admin@latest
 kratos-admin create shop-admin
 ```
 
-生成时使用 `backend@latest` 及其自身匹配的 API 依赖解析最新 Admin Backend/API，并生成
+生成时使用 `backend@latest` 及其 `go.mod` 声明的 API 依赖解析最新 Admin Backend/API，并生成
 MySQL、Redis 及本地 Docker Compose 配置。扩展业务时在生成项目中增加自己的 Proto、Biz、
 Data、Service、Module、Migration 和前端 CLI 模块，不复制 Admin 的 `internal` 代码。
 

@@ -18,7 +18,6 @@ import (
 const (
 	projectTemplateRoot = "templates/project"
 	backendTemplateRoot = "templates/backend"
-	adminBackendAPIRef  = "github.com/liujitcn/kratos-admin/backend/api@v0.0.4-0.20260831030712-38ce3e11fc46"
 )
 
 var projectDirectories = []string{
@@ -35,6 +34,8 @@ var frontendCLIs = []frontendCLI{
 var projectTemplates embed.FS
 
 type projectInitializer func(string, string) error
+
+type projectCommandRunner func(string, string, string, ...string) error
 
 type frontendCLI struct {
 	name        string
@@ -190,10 +191,16 @@ func renderTemplates(target, templateRoot string, tokens map[string]string) erro
 
 // initializeProject 生成前端、解析最新后端依赖、Wire 产物，并验证完整项目可以编译。
 func initializeProject(target, frontendModule string) error {
+	return initializeProjectWithRunner(target, frontendModule, runProjectCommandInDirectory)
+}
+
+// initializeProjectWithRunner 使用指定命令执行器初始化完整项目。
+func initializeProjectWithRunner(target, frontendModule string, runner projectCommandRunner) error {
 	var err error
 	for _, cli := range frontendCLIs {
-		err = runProjectCommand(
+		err = runner(
 			target,
+			".",
 			"pnpm",
 			"dlx",
 			cli.packageName,
@@ -207,8 +214,9 @@ func initializeProject(target, frontendModule string) error {
 		}
 	}
 	backendTarget := filepath.Join(target, "backend")
-	err = runProjectCommand(
+	err = runner(
 		backendTarget,
+		".",
 		"go",
 		"get",
 		"github.com/liujitcn/kratos-admin/backend@latest",
@@ -216,16 +224,11 @@ func initializeProject(target, frontendModule string) error {
 	if err != nil {
 		return fmt.Errorf("解析最新 Admin Backend 依赖失败: %w", err)
 	}
-	// 当前 Backend 发布模块的 go.mod 仍声明旧 API 版本，显式使用同一发布提交的 API 子模块。
-	err = runProjectCommand(backendTarget, "go", "get", adminBackendAPIRef)
-	if err != nil {
-		return fmt.Errorf("解析匹配的 Admin API 依赖失败: %w", err)
-	}
-	err = runProjectCommand(backendTarget, "go", "mod", "tidy")
+	err = runner(backendTarget, ".", "go", "mod", "tidy")
 	if err != nil {
 		return err
 	}
-	err = runProjectCommandInDirectory(
+	err = runner(
 		backendTarget,
 		"internal/cmd/server",
 		"go",
@@ -236,7 +239,7 @@ func initializeProject(target, frontendModule string) error {
 	if err != nil {
 		return err
 	}
-	err = runProjectCommand(backendTarget, "go", "test", "./...")
+	err = runner(backendTarget, ".", "go", "test", "./...")
 	if err != nil {
 		return err
 	}

@@ -50,7 +50,7 @@ kratos-admin create shop-admin \
 - `@liujitcn/kratos-taro-app-cli@latest`
 
 生成过程会在后端初始化时执行 `go get github.com/liujitcn/kratos-admin/backend@latest`，
-并拉取同一发布提交的 Admin API 子模块，避免 Backend 与 API 契约跨版本组合。
+并使用 Backend 模块自身 `go.mod` 声明的 Admin API 版本，避免强制覆盖依赖导致跨版本组合。
 随后执行后端 `go mod tidy`、Wire 和 `go test ./...`。任一前端 CLI 或后端初始化失败，
 本命令都会清理本次新建的不完整项目目录。
 
