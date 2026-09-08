@@ -29,9 +29,6 @@ def json_sources() -> list[Path]:
     """发现后端 Core 与所有前端业务模块的简体中文语言包。"""
     roots = [
         ROOT / "backend/internal/i18n/assets",
-        ROOT / "frontend/admin/packages/modules/__FRONTEND_MODULE__/src/locales",
-        ROOT / "frontend/uni-app/packages/modules/__FRONTEND_MODULE__/src/locales",
-        ROOT / "frontend/taro-app/packages/modules/__FRONTEND_MODULE__/src/locales",
     ]
     for terminal in ("admin", "uni-app", "taro-app"):
         roots.extend(sorted((ROOT / f"frontend/{terminal}/packages/modules").glob("*/src/locales")))

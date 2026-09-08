@@ -1,9 +1,9 @@
 package biz
 
 import (
-	business "__MODULE_PATH__/internal/biz/__FRONTEND_MODULE__"
-	"github.com/google/wire"
+[[[range $i, $module := .Modules]]] business[[[$i]]] "[[[$.GoModule]]]/internal/biz/[[[$module]]]"
+[[[end]]] "github.com/google/wire"
 )
 
-// ProviderSet 汇总项目的 biz 层依赖。
-var ProviderSet = wire.NewSet(business.ProviderSet)
+// ProviderSet 汇总项目所有业务模块的 biz 层依赖。
+var ProviderSet = wire.NewSet([[[range $i, $module := .Modules]]]business[[[$i]]].ProviderSet,[[[end]]])

@@ -41,22 +41,35 @@ shop-admin
 └── README.md
 ```
 
-业务 module 默认使用项目名（例如 `shop-admin`），同时用于前端与后端业务目录。
+业务 module 默认是 `system`，与项目名独立，同时用于前端与后端业务目录。
 也可以直接传入仓库路径：
 
 ```bash
 kratos-admin create github.com/example/test
 ```
 
-此时项目目录和业务 module 都是 `test`，后端 `backend/go.mod` 的 module 为
+此时项目目录为 `test`，业务 module 为 `system`，后端 `backend/go.mod` 的 module 为
 `github.com/example/test/backend`。仅传项目名时，Go module 默认为
 `github.com/example/<project>/backend`。仍可显式覆盖后端 Go module 和业务 module：
 
 ```bash
 kratos-admin create shop-admin \
   --module github.com/acme/shop-admin/backend \
-  --frontend-module shop
+  --modules system,order
 ```
+
+多个业务模块使用逗号分隔，也可以重复传参：
+
+```bash
+kratos-admin create github.com/example/test --modules system,order
+kratos-admin create github.com/example/test --modules system --modules order
+```
+
+兼容 `--frontend-module` 参数，`--module` 仍仅用于覆盖后端 Go module 路径。
+显式指定模块清单时不会额外添加 `system`。三端各保留一个宿主，每端都生成
+`packages/modules/system`、`packages/modules/order` 等业务包并注册到模块清单。
+后端逐模块生成 biz/service/server、Proto 目录和三端 Buf 配置；Wire、国际化、打包与发布覆盖全部模块。
+本地管理端 `system` 继承内置 System 能力并合并本地视图，运行时只注册一次。
 
 生成时不预创建后端根目录下的 `adapter`、`client`、`backups`、`codegen`、`data`、
 `logs`；配置和构建脚本保留运行时路径，实际使用时再创建对应目录。

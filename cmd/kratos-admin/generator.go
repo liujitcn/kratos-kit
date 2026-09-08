@@ -1,14 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"unicode"
 
 	"golang.org/x/mod/module"
@@ -94,13 +97,12 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 	if err != nil {
 		return "", fmt.Errorf("无效的 Go module %q: %w", modulePath, err)
 	}
-	frontendModule := options.frontendModule
-	if frontendModule == "" {
-		frontendModule = projectName
+	var modules []string
+	modules, err = parseBusinessModules(options.frontendModule)
+	if err != nil {
+		return "", err
 	}
-	if strings.ContainsAny(frontendModule, "/, \\ \t\r\n") {
-		return "", fmt.Errorf("无效的前端 module 名称: %s", frontendModule)
-	}
+	frontendModule := strings.Join(modules, ",")
 	target = filepath.Join(cwd, projectName)
 	_, err = os.Stat(target)
 	if err == nil {
@@ -132,8 +134,11 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 		"__MODULE_PATH__":      modulePath,
 		"__PROJECT_NAME__":     projectName,
 		"__PACKAGE_NAME__":     projectPackageName(projectName),
-		"__BUSINESS_PACKAGE__": projectPackageName(frontendModule),
-		"__FRONTEND_MODULE__":  frontendModule,
+		"__BUSINESS_PACKAGE__": projectPackageName(modules[0]),
+		"__FRONTEND_MODULE__":  modules[0],
+		"__MODULES__":          frontendModule,
+		"__MODULES_SPACE__":    strings.Join(modules, " "),
+		"__MODULES_PYTHON__":   "\"" + strings.Join(modules, "\", \"") + "\",",
 		"__DATABASE_NAME__":    projectPackageName(projectName),
 	}
 	err = renderTemplates(target, projectTemplateRoot, tokens)
@@ -149,22 +154,26 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 	if err != nil {
 		return "", err
 	}
-	for _, directory := range projectDirectories {
-		directory = replaceTokens(directory, tokens)
-		path := filepath.Join(target, filepath.FromSlash(directory))
-		err = os.MkdirAll(path, 0o755)
-		if err != nil {
-			return "", fmt.Errorf("创建项目目录 %s: %w", directory, err)
-		}
-		var entries []os.DirEntry
-		entries, err = os.ReadDir(path)
-		if err != nil {
-			return "", err
-		}
-		if len(entries) == 0 {
-			err = os.WriteFile(filepath.Join(path, ".gitkeep"), nil, 0o644)
+	for _, directoryTemplate := range projectDirectories {
+		for _, moduleName := range modules {
+			tokens["__FRONTEND_MODULE__"] = moduleName
+			directory := directoryTemplate
+			directory = replaceTokens(directory, tokens)
+			path := filepath.Join(target, filepath.FromSlash(directory))
+			err = os.MkdirAll(path, 0o755)
+			if err != nil {
+				return "", fmt.Errorf("创建项目目录 %s: %w", directory, err)
+			}
+			var entries []os.DirEntry
+			entries, err = os.ReadDir(path)
 			if err != nil {
 				return "", err
+			}
+			if len(entries) == 0 {
+				err = os.WriteFile(filepath.Join(path, ".gitkeep"), nil, 0o644)
+				if err != nil {
+					return "", err
+				}
 			}
 		}
 	}
@@ -180,7 +189,7 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 	return target, nil
 }
 
-// renderTemplates 将嵌入模板目录渲染到目标目录。
+// renderTemplates 渲染公共模板，并为每个业务模块展开带模块占位符的路径。
 func renderTemplates(target, templateRoot string, tokens map[string]string) error {
 	return fs.WalkDir(projectTemplates, templateRoot, func(templatePath string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
@@ -193,30 +202,47 @@ func renderTemplates(target, templateRoot string, tokens map[string]string) erro
 		if relativePath == "." {
 			return nil
 		}
-		renderedPath := replaceTokens(filepath.ToSlash(relativePath), tokens)
-		renderedPath = renameTemplateFile(renderedPath)
-		outputPath := filepath.Join(target, filepath.FromSlash(renderedPath))
-		if entry.IsDir() {
-			err = os.MkdirAll(outputPath, 0o755)
-			if err != nil {
-				return fmt.Errorf("创建模板目录 %s: %w", renderedPath, err)
+		modules := []string{tokens["__FRONTEND_MODULE__"]}
+		if strings.Contains(relativePath, "__FRONTEND_MODULE__") && tokens["__MODULES__"] != "" {
+			modules = strings.Split(tokens["__MODULES__"], ",")
+		}
+		for _, moduleName := range modules {
+			current := maps.Clone(tokens)
+			current["__FRONTEND_MODULE__"] = moduleName
+			current["__BUSINESS_PACKAGE__"] = projectPackageName(moduleName)
+			renderedPath := renameTemplateFile(replaceTokens(filepath.ToSlash(relativePath), current))
+			outputPath := filepath.Join(target, filepath.FromSlash(renderedPath))
+			if entry.IsDir() {
+				err = os.MkdirAll(outputPath, 0o755)
+			} else {
+				var content []byte
+				content, err = projectTemplates.ReadFile(templatePath)
+				if err != nil {
+					return err
+				}
+				var parsed *template.Template
+				parsed, err = template.New(templatePath).Delims("[[[", "]]]").Parse(string(content))
+				if err != nil {
+					return err
+				}
+				moduleList := tokens["__MODULES__"]
+				if moduleList == "" {
+					moduleList = tokens["__FRONTEND_MODULE__"]
+				}
+				var rendered bytes.Buffer
+				err = parsed.Execute(&rendered, map[string]any{"Modules": strings.Split(moduleList, ","), "GoModule": tokens["__MODULE_PATH__"]})
+				if err != nil {
+					return err
+				}
+				content = []byte(replaceTokens(rendered.String(), current))
+				mode := os.FileMode(0o644)
+				if strings.HasSuffix(renderedPath, ".sh") || strings.HasPrefix(string(content), "#!") {
+					mode = 0o755
+				}
+				err = os.WriteFile(outputPath, content, mode)
 			}
-			return nil
-		}
-		var content []byte
-		content, err = projectTemplates.ReadFile(templatePath)
-		if err != nil {
-			return fmt.Errorf("读取模板 %s: %w", templatePath, err)
-		}
-		content = []byte(replaceTokens(string(content), tokens))
-		err = os.WriteFile(outputPath, content, 0o644)
-		if err != nil {
-			return fmt.Errorf("写入模板文件 %s: %w", renderedPath, err)
-		}
-		if strings.HasSuffix(renderedPath, ".sh") || strings.HasPrefix(string(content), "#!") {
-			err = os.Chmod(outputPath, 0o755)
 			if err != nil {
-				return fmt.Errorf("设置模板脚本权限 %s: %w", renderedPath, err)
+				return fmt.Errorf("生成模板 %s: %w", renderedPath, err)
 			}
 		}
 		return nil
@@ -226,6 +252,10 @@ func renderTemplates(target, templateRoot string, tokens map[string]string) erro
 // initializeProject 输出初始化阶段进度，生成并验证后端后补齐前端工具链。
 func initializeProject(target, frontendModule string) error {
 	err := initializeProjectWithRunner(target, frontendModule, runProjectCommandInDirectory, projectDependencyResolver{backend: resolveBackendDependency, frontend: resolveFrontendVersion})
+	if err != nil {
+		return err
+	}
+	err = normalizeFrontendModules(target, strings.Split(frontendModule, ","))
 	if err != nil {
 		return err
 	}
@@ -245,18 +275,11 @@ func initializeProjectWithRunner(target, frontendModule string, runner projectCo
 		}
 		projectProgress.Printf("使用 %s CLI %s，复用 pnpm 可用缓存", cli.name, version)
 		// 精确版本隔离不同发布的 CLI 缓存，不再强制清空 dlx 缓存。
-		err = runner(
-			target,
-			".",
-			"pnpm",
-			"--config.@liujitcn:registry=https://registry.npmjs.org/",
-			"dlx",
-			cli.packageName+"@"+version,
-			"create",
-			filepath.Join(target, "frontend", cli.name),
-			"--module",
-			frontendModule,
-		)
+		args := []string{"--config.@liujitcn:registry=https://registry.npmjs.org/", "dlx", cli.packageName + "@" + version, "create", filepath.Join(target, "frontend", cli.name)}
+		for _, moduleName := range frontendModuleAliases(strings.Split(frontendModule, ",")) {
+			args = append(args, "--module", moduleName)
+		}
+		err = runner(target, ".", "pnpm", args...)
 		if err != nil {
 			return fmt.Errorf("生成 %s 前端失败: %w", cli.name, err)
 		}

@@ -153,7 +153,7 @@ def element_locale_path(locale: str) -> str:
 
 
 def language_metadata(file_sets: dict[str, dict[str, Path]], locales: list[str]) -> list[dict[str, str | int]]:
-    core_files = file_sets["admin-__FRONTEND_MODULE__"]
+    core_files = file_sets["backend"]
     default_messages = json.loads(core_files[DEFAULT_LOCALE].read_text(encoding="utf-8"))
     metadata: list[dict[str, str | int]] = []
     for index, locale in enumerate(locales, start=1):

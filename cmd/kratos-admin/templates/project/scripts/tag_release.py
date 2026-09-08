@@ -13,10 +13,10 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE_FILES = (
-    ROOT / "frontend/admin/packages/modules/__FRONTEND_MODULE__/package.json",
-    ROOT / "frontend/uni-app/packages/modules/__FRONTEND_MODULE__/package.json",
-    ROOT / "frontend/taro-app/packages/modules/__FRONTEND_MODULE__/package.json",
+PACKAGE_FILES = tuple(
+    ROOT / f"frontend/{terminal}/packages/modules/{module}/package.json"
+    for terminal in ("admin", "uni-app", "taro-app")
+    for module in (__MODULES_PYTHON__)
 )
 TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
 NPM_WORKFLOW = "publish-npm.yml"

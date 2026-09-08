@@ -20,7 +20,7 @@ func main() {
 	}
 }
 
-// run 解析项目名或仓库路径及模块覆盖参数，生成完整前后端项目。
+// run 解析项目路径与可重复指定的业务模块清单，生成完整前后端项目。
 func run(args []string, output io.Writer) error {
 	if len(args) == 0 ||
 		args[0] == "help" ||
@@ -44,14 +44,22 @@ func run(args []string, output io.Writer) error {
 	var modulePath string
 	flags.StringVar(&modulePath, "module", "", "后端 Go module，默认使用仓库路径/backend 或 github.com/example/<project>/backend")
 	var frontendModule string
-	flags.StringVar(&frontendModule, "frontend-module", "", "业务 module 名称，默认使用项目名")
+	addModules := func(value string) error {
+		if frontendModule != "" {
+			frontendModule += ","
+		}
+		frontendModule += value
+		return nil
+	}
+	flags.Func("frontend-module", "业务模块名，默认 system；支持逗号分隔或重复指定", addModules)
+	flags.Func("modules", "业务模块名，默认 system；支持逗号分隔或重复指定", addModules)
 	var err error
 	err = flags.Parse(args[2:])
 	if err != nil {
 		return err
 	}
 	if flags.NArg() != 0 {
-		return fmt.Errorf("create 只接受项目名、--module 和 --frontend-module 参数")
+		return fmt.Errorf("create 只接受项目名、--module、--modules 和 --frontend-module 参数")
 	}
 
 	var cwd string
@@ -80,7 +88,7 @@ func run(args []string, output io.Writer) error {
 func printHelp(output io.Writer) {
 	_, _ = fmt.Fprintf(
 		output,
-		"%s\n\n用法:\n  %s create <project|repository-path> [--module <go-module>] [--frontend-module <module>]\n\n业务 module 默认使用项目名，Go module 默认使用仓库路径/backend。\n\n示例:\n  %s create shop-admin\n  %s create github.com/example/test\n",
+		"%s\n\n用法:\n  %s create <project|repository-path> [--module <go-module>] [--modules <name[,name...]>]\n\n业务 module 默认 system，可用 --modules system,order 指定多个模块，Go module 默认使用仓库路径/backend。\n\n示例:\n  %s create shop-admin\n  %s create github.com/example/test\n",
 		"创建包含前后端和 Admin 能力的完整项目，前端通过管理端、uni-app 和 Taro CLI 生成。",
 		commandName,
 		commandName,
@@ -90,5 +98,5 @@ func printHelp(output io.Writer) {
 
 // usageText 返回支持项目名或仓库路径的简短用法。
 func usageText() string {
-	return "用法: " + commandName + " create <project|repository-path> [--module <go-module>] [--frontend-module <module>]"
+	return "用法: " + commandName + " create <project|repository-path> [--module <go-module>] [--modules <name[,name...]>]"
 }

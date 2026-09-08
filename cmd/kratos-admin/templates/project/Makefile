@@ -31,7 +31,7 @@ I18N_AUTO_LOCALIZE ?= $(I18N_AUTO_TRANSLATE)
 I18N_MIGRATION_VERSION ?=
 OPENAPI_INPUT ?= backend/internal/openapi/assets/openapi.yaml
 OPENAPI_OUTPUT_DIR ?= backend/internal/openapi/assets
-OPENAPI_I18N_CONTENT ?= backend/internal/i18n/assets frontend/admin/packages/modules/__FRONTEND_MODULE__/src/locales
+OPENAPI_I18N_CONTENT ?= backend/internal/i18n/assets $(wildcard frontend/admin/packages/modules/*/src/locales)
 
 # ===== 统一构建与打包参数 =====
 

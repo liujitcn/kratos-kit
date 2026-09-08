@@ -95,7 +95,7 @@ func TestProjectNaming(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if filepath.Base(target) != "test" || businessModule != "test" {
+			if filepath.Base(target) != "test" || businessModule != "system" {
 				t.Fatalf("项目名或业务模块错误: %s, %s", target, businessModule)
 			}
 			expectedModule := "github.com/example/test/backend"
@@ -112,10 +112,10 @@ func TestProjectNaming(t *testing.T) {
 					t.Errorf("%s 未使用预期 Go module: %s", file, expectedModule)
 				}
 			}
-			for _, directory := range []string{"backend/api/proto/test/admin/v1", "backend/internal/biz/test/admin"} {
+			for _, directory := range []string{"backend/api/proto/system/admin/v1", "backend/internal/biz/system/admin"} {
 				_, err = os.Stat(filepath.Join(target, directory))
 				if err != nil {
-					t.Errorf("业务目录未使用项目名: %s: %v", directory, err)
+					t.Errorf("业务目录未使用默认 system 模块: %s: %v", directory, err)
 				}
 			}
 			for _, directory := range []string{"adapter", "client", "backups", "codegen", "data", "logs"} {

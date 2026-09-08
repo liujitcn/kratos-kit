@@ -22,9 +22,10 @@ PNPM ?= pnpm
 CI ?= 1
 GO_BIN_DIR ?= $(or $(shell go env GOBIN),$(shell go env GOPATH)/bin)
 API_DIR ?= ../backend/api
+BUSINESS_MODULES := __MODULES_SPACE__
 PROTO_FILES := $(shell find "$(API_DIR)/proto" -type f -name '*.proto' 2>/dev/null)
-ADMIN_PROTO_FILES := $(filter-out $(API_DIR)/proto/__FRONTEND_MODULE__/app/%,$(PROTO_FILES))
-APP_PROTO_FILES := $(filter-out $(API_DIR)/proto/__FRONTEND_MODULE__/admin/%,$(PROTO_FILES))
+ADMIN_PROTO_FILES := $(filter-out $(foreach module,$(BUSINESS_MODULES),$(API_DIR)/proto/$(module)/app/%),$(PROTO_FILES))
+APP_PROTO_FILES := $(filter-out $(foreach module,$(BUSINESS_MODULES),$(API_DIR)/proto/$(module)/admin/%),$(PROTO_FILES))
 
 TS_PROTO_BIN ?= $(or \
 	$(shell command -v protoc-gen-ts_proto 2>/dev/null), \
@@ -81,7 +82,10 @@ ifneq ($(strip $(ADMIN_PROTO_FILES)),)
 	@echo "==> 生成管理端 TypeScript RPC 代码"
 	@test -n "$(TS_PROTO_BIN)" || (echo "未找到 protoc-gen-ts_proto，请先执行 make init，或全局安装 ts-proto" && exit 1)
 	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.admin.typescript.gen.yaml --exclude-path proto/__FRONTEND_MODULE__/app
+		set -e; for module in $(BUSINESS_MODULES); do \
+		if find "proto/$$module" ! -path "proto/$$module/app/*" -name '*.proto' -type f | grep -q .; then \
+		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template "buf.admin.$$module.typescript.gen.yaml" --path "proto/$$module" --exclude-path "proto/$$module/app"; \
+		fi; done
 	@echo "==> 管理端 TypeScript RPC 代码生成完成"
 else
 	@echo "未发现业务 Proto，跳过 admin RPC 生成"
@@ -99,7 +103,10 @@ ifneq ($(strip $(APP_PROTO_FILES)),)
 	@echo "==> 生成 uni-app TypeScript RPC 代码"
 	@test -n "$(TS_PROTO_BIN)" || (echo "未找到 protoc-gen-ts_proto，请先执行 make init，或全局安装 ts-proto" && exit 1)
 	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.uni-app.typescript.gen.yaml --exclude-path proto/__FRONTEND_MODULE__/admin
+		set -e; for module in $(BUSINESS_MODULES); do \
+		if find "proto/$$module" ! -path "proto/$$module/admin/*" -name '*.proto' -type f | grep -q .; then \
+		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template "buf.uni-app.$$module.typescript.gen.yaml" --path "proto/$$module" --exclude-path "proto/$$module/admin"; \
+		fi; done
 	@echo "==> uni-app TypeScript RPC 代码生成完成"
 else
 	@echo "未发现业务 Proto，跳过 uni-app RPC 生成"
@@ -111,7 +118,10 @@ ifneq ($(strip $(APP_PROTO_FILES)),)
 	@echo "==> 生成 Taro React TypeScript RPC 代码"
 	@test -n "$(TS_PROTO_BIN)" || (echo "未找到 protoc-gen-ts_proto，请先执行 make init，或全局安装 ts-proto" && exit 1)
 	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.taro-app.typescript.gen.yaml --exclude-path proto/__FRONTEND_MODULE__/admin
+		set -e; for module in $(BUSINESS_MODULES); do \
+		if find "proto/$$module" ! -path "proto/$$module/admin/*" -name '*.proto' -type f | grep -q .; then \
+		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template "buf.taro-app.$$module.typescript.gen.yaml" --path "proto/$$module" --exclude-path "proto/$$module/admin"; \
+		fi; done
 	@echo "==> Taro React TypeScript RPC 代码生成完成"
 else
 	@echo "未发现业务 Proto，跳过 taro-app RPC 生成"
@@ -265,7 +275,7 @@ build-package:
 package-admin:
 	@$(MAKE) check-admin
 	@$(MAKE) build-package
-	@for package_dir in admin/packages/modules/__FRONTEND_MODULE__; do \
+	@for package_dir in $(addprefix admin/packages/modules/,$(BUSINESS_MODULES)); do \
 		(cd "$$package_dir" && CI="$(CI)" $(PNPM) pack --pack-destination "$(NPM_PACK_DEST)") || exit 1; \
 	done
 
@@ -291,21 +301,21 @@ package:
 # 检查、打包并发布管理后台 npm 包
 publish-admin:
 	@$(MAKE) package-admin
-	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh admin/packages/modules/__FRONTEND_MODULE__
+	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh $(addprefix admin/packages/modules/,$(BUSINESS_MODULES))
 
 # 检查、打包并发布 uni-app npm 包
 publish-uni-app:
 	@$(MAKE) package-uni-app
-	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh uni-app/packages/modules/__FRONTEND_MODULE__
+	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh $(addprefix uni-app/packages/modules/,$(BUSINESS_MODULES))
 
 # 检查、打包并发布 Taro npm 包
 publish-taro-app:
 	@$(MAKE) package-taro-app
-	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh taro-app/packages/modules/__FRONTEND_MODULE__
+	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh $(addprefix taro-app/packages/modules/,$(BUSINESS_MODULES))
 
 # 发布已经检查并构建的全部 npm 包
 publish-only:
-	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh admin/packages/modules/__FRONTEND_MODULE__ uni-app/packages/modules/__FRONTEND_MODULE__ taro-app/packages/modules/__FRONTEND_MODULE__
+	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh $(addprefix admin/packages/modules/,$(BUSINESS_MODULES)) $(addprefix uni-app/packages/modules/,$(BUSINESS_MODULES)) $(addprefix taro-app/packages/modules/,$(BUSINESS_MODULES))
 
 # 按打包、发布的顺序发布全部 npm 包
 publish:

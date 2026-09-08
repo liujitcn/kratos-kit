@@ -20,10 +20,6 @@ plugins:
     out: ../../frontend/taro-app/packages/modules/__FRONTEND_MODULE__/src/rpc
     include_imports: true
     include_wkt: true
-    exclude_types:
-      - buf.validate
-      - gnostic.openapi.v3
-      - google.api
     strategy: all
     opt:
       - outputSchema=false

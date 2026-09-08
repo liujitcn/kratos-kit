@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"go/parser"
+	"go/token"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -148,5 +152,74 @@ func TestFrontendWorkspaceCompletion(t *testing.T) {
 	content, err = os.ReadFile(filepath.Join(target, "frontend/taro-app/apps/taro-app/package.json"))
 	if err != nil || !strings.Contains(string(content), "backend/data/taro-app") {
 		t.Fatal("Taro 输出路径未对齐")
+	}
+}
+
+// TestMultipleBusinessModules 验证多模块目录、Wire 汇总、RPC 及发布清单完整生成。
+func TestMultipleBusinessModules(t *testing.T) {
+	var selected string
+	target, err := createProjectWithOptions(projectOptions{projectName: "github.com/example/shop", frontendModule: "system,order"}, t.TempDir(), func(_ string, modules string) error { selected = modules; return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if selected != "system,order" {
+		t.Fatalf("初始化模块清单错误: %s", selected)
+	}
+	for _, module := range []string{"system", "order"} {
+		for _, file := range []string{
+			"backend/internal/biz/" + module + "/init.go",
+			"backend/internal/service/" + module + "/admin/v1/init.go",
+			"backend/internal/server/" + module + "/app/v1/init.go",
+			"backend/api/buf.admin." + module + ".typescript.gen.yaml",
+			"backend/api/buf.uni-app." + module + ".typescript.gen.yaml",
+			"backend/api/buf.taro-app." + module + ".typescript.gen.yaml",
+		} {
+			_, err = os.Stat(filepath.Join(target, file))
+			if err != nil {
+				t.Errorf("缺少模块入口 %s: %v", file, err)
+			}
+		}
+	}
+	for _, layer := range []string{"biz", "service", "server"} {
+		var content []byte
+		content, err = os.ReadFile(filepath.Join(target, "backend/internal", layer, "init.go"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, module := range []string{"system", "order"} {
+			if !strings.Contains(string(content), "github.com/example/shop/backend/internal/"+layer+"/"+module) {
+				t.Errorf("Wire 未汇总 %s/%s", layer, module)
+			}
+		}
+		_, err = parser.ParseFile(token.NewFileSet(), "init.go", content, parser.AllErrors)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	command := exec.Command("python3", "-c", `import runpy; data=runpy.run_path('scripts/tag_release.py'); files=data['PACKAGE_FILES']; assert len(files)==6; assert all(any('/'+m+'/' in str(p) for p in files) for m in ['system','order'])`)
+	command.Dir = target
+	var output []byte
+	output, err = command.CombinedOutput()
+	if err != nil {
+		t.Fatalf("发布清单错误: %v\n%s", err, output)
+	}
+}
+
+// TestBusinessModuleArguments 验证默认、多个模块、重复参数与非法模块名。
+func TestBusinessModuleArguments(t *testing.T) {
+	for _, input := range []string{"system,system", "system,", "../system", "core", "System"} {
+		_, err := parseBusinessModules(input)
+		if err == nil {
+			t.Errorf("应拒绝非法模块清单: %q", input)
+		}
+	}
+	var output bytes.Buffer
+	err := run([]string{"create", "demo", "--modules", "system", "--frontend-module", "system"}, &output)
+	if err == nil || !strings.Contains(err.Error(), "重复") {
+		t.Fatalf("重复参数未合并校验: %v", err)
+	}
+	aliases := frontendModuleAliases([]string{"system", "local-system", "order"})
+	if !slices.Equal(aliases, []string{"local-system-local", "local-system", "order"}) {
+		t.Fatalf("临时名称冲突: %v", aliases)
 	}
 }

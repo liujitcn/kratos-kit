@@ -17,10 +17,7 @@ if [[ "${skip_git_checks}" == "true" ]]; then
 fi
 
 if [[ "$#" -eq 0 ]]; then
-  set -- \
-    admin/packages/modules/__FRONTEND_MODULE__ \
-    uni-app/packages/modules/__FRONTEND_MODULE__ \
-    taro-app/packages/modules/__FRONTEND_MODULE__
+  set -- [[[range .Modules]]]admin/packages/modules/[[[.]]] uni-app/packages/modules/[[[.]]] taro-app/packages/modules/[[[.]]] [[[end]]]
 fi
 
 for package_dir in "$@"; do

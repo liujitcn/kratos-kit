@@ -9,11 +9,12 @@ import (
 	"strings"
 )
 
-// completeFrontendWorkspaces 为官方 CLI 的业务 workspace 补齐 Admin 共用检查和构建入口。
+// completeFrontendWorkspaces 为三端宿主及全部业务模块补齐检查、构建和语言入口。
 func completeFrontendWorkspaces(target, frontendModule string) error {
 	tokens := map[string]string{
 		"__PROJECT_NAME__":    filepath.Base(target),
-		"__FRONTEND_MODULE__": frontendModule,
+		"__FRONTEND_MODULE__": strings.Split(frontendModule, ",")[0],
+		"__MODULES__":         frontendModule,
 	}
 	frontendTarget := filepath.Join(target, "frontend")
 	err := renderTemplates(frontendTarget, "templates/frontend", tokens)
@@ -31,37 +32,51 @@ func completeFrontendWorkspaces(target, frontendModule string) error {
 		if err != nil {
 			return err
 		}
-		moduleTarget := filepath.Join(workspace, "packages", "modules", frontendModule)
-		for _, directory := range []string{"src/api", "src/rpc", "src/locales", "test"} {
-			directoryPath := filepath.Join(moduleTarget, directory)
-			err = os.MkdirAll(directoryPath, 0o755)
-			if err != nil {
-				return err
+		for _, moduleName := range strings.Split(frontendModule, ",") {
+			moduleTarget := filepath.Join(workspace, "packages", "modules", moduleName)
+			for _, directory := range []string{"src/api", "src/rpc", "src/locales", "test"} {
+				directoryPath := filepath.Join(moduleTarget, directory)
+				err = os.MkdirAll(directoryPath, 0o755)
+				if err != nil {
+					return err
+				}
+				var entries []os.DirEntry
+				entries, err = os.ReadDir(directoryPath)
+				if err != nil {
+					return err
+				}
+				if len(entries) == 0 {
+					err = os.WriteFile(filepath.Join(directoryPath, ".gitkeep"), nil, 0o644)
+					if err != nil {
+						return err
+					}
+				}
 			}
-			var entries []os.DirEntry
-			entries, err = os.ReadDir(directoryPath)
-			if err != nil {
-				return err
-			}
-			if len(entries) == 0 {
-				err = os.WriteFile(filepath.Join(directoryPath, ".gitkeep"), nil, 0o644)
+			for _, locale := range []string{"zh-CN", "en-US", "zh-TW", "ja-JP"} {
+				localePath := filepath.Join(moduleTarget, "src/locales", locale+".json")
+				_, err = os.Stat(localePath)
+				if err == nil {
+					continue
+				}
+				if !errors.Is(err, os.ErrNotExist) {
+					return err
+				}
+				err = os.WriteFile(localePath, []byte("{}\n"), 0o644)
 				if err != nil {
 					return err
 				}
 			}
-		}
-		for _, locale := range []string{"zh-CN", "en-US", "zh-TW", "ja-JP"} {
-			localePath := filepath.Join(moduleTarget, "src/locales", locale+".json")
-			_, err = os.Stat(localePath)
-			if err == nil {
-				continue
-			}
-			if !errors.Is(err, os.ErrNotExist) {
-				return err
-			}
-			err = os.WriteFile(localePath, []byte("{}\n"), 0o644)
-			if err != nil {
-				return err
+			if cli.name != "admin" {
+
+				// 业务模块只打包自己的源码或构建入口，不发布来自 npm 的框架包。
+				modulePatch := []byte(`{"scripts":{"build":"pnpm pack --pack-destination ../../../dist/npm"}}`)
+				if cli.name == "taro-app" {
+					modulePatch = []byte(`{"scripts":{"build":"pnpm build:entries && pnpm pack --pack-destination ../../../dist/npm"}}`)
+				}
+				err = mergeFrontendPackage(filepath.Join(moduleTarget, "package.json"), modulePatch)
+				if err != nil {
+					return err
+				}
 			}
 		}
 		if cli.name == "admin" {
@@ -79,16 +94,7 @@ func completeFrontendWorkspaces(target, frontendModule string) error {
 			if err != nil {
 				return err
 			}
-		} else {
-			// 业务模块只打包自己的源码或构建入口，不发布来自 npm 的框架包。
-			modulePatch := []byte(`{"scripts":{"build":"pnpm pack --pack-destination ../../../dist/npm"}}`)
-			if cli.name == "taro-app" {
-				modulePatch = []byte(`{"scripts":{"build":"pnpm build:entries && pnpm pack --pack-destination ../../../dist/npm"}}`)
-			}
-			err = mergeFrontendPackage(filepath.Join(moduleTarget, "package.json"), modulePatch)
-			if err != nil {
-				return err
-			}
+
 		}
 		if cli.name == "taro-app" {
 			packagePath := filepath.Join(workspace, "apps/taro-app/package.json")
@@ -126,7 +132,7 @@ func mergeFrontendPackage(packagePath string, patch []byte) error {
 		return err
 	}
 	for field, value := range changes {
-		if field == "scripts" || field == "devDependencies" {
+		if field == "scripts" || field == "devDependencies" || field == "dependencies" {
 			entries := make(map[string]json.RawMessage)
 			if current := manifest[field]; current != nil {
 				err = json.Unmarshal(current, &entries)
