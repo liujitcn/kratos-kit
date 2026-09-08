@@ -1,0 +1,9 @@
+package service
+
+import (
+	business "__MODULE_PATH__/internal/service/__FRONTEND_MODULE__"
+	"github.com/google/wire"
+)
+
+// ProviderSet 汇总项目的 service 层依赖。
+var ProviderSet = wire.NewSet(business.ProviderSet)

@@ -1,0 +1,9 @@
+package app
+
+import (
+	"__MODULE_PATH__/internal/service/__FRONTEND_MODULE__/app/v1"
+	"github.com/google/wire"
+)
+
+// ProviderSet 汇总当前业务的 app 端版本依赖。
+var ProviderSet = wire.NewSet(v1.ProviderSet)

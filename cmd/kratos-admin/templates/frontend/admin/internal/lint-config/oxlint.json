@@ -1,0 +1,38 @@
+{
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2020": true,
+    "vue": true
+  },
+  "plugins": ["vue", "typescript"],
+  "categories": {
+    "correctness": "warn",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "no-var": "error",
+    "no-unused-vars": "error",
+    "no-empty-function": "error",
+    "no-unused-expressions": "off",
+    "no-extra-boolean-cast": "off",
+    "no-unsafe-finally": "off",
+    "no-shadow": "off",
+    "no-underscore-dangle": "off",
+    "prefer-const": "off",
+    "no-use-before-define": "off",
+    "typescript/prefer-ts-expect-error": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-inferrable-types": "off",
+    "typescript/no-explicit-any": "off",
+    "typescript/ban-types": "off",
+    "typescript/no-namespace": "off",
+    "typescript/no-var-requires": "off",
+    "typescript/no-require-imports": "off",
+    "typescript/no-non-null-assertion": "off",
+    "vue/define-props-destructuring": "off",
+    "vue/no-deprecated-props-default-this": "off",
+    "vue/no-required-prop-with-default": "off"
+  }
+}

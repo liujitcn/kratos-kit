@@ -48,7 +48,7 @@ func TestGeneratedBackendBuilds(t *testing.T) {
 				return err
 			}
 		}
-		return initializeProjectWithRunner(target, frontendModule, runner)
+		return initializeProjectWithRunner(target, frontendModule, runner, projectDependencyResolver{backend: resolveBackendDependency, frontend: testFrontendVersion})
 	}
 	for _, modulePath := range []string{"github.com/example/test/backend", "github.com/acme/test/backend/v2"} {
 		t.Run(modulePath, func(t *testing.T) {
@@ -78,6 +78,51 @@ func TestGeneratedBackendBuilds(t *testing.T) {
 			err = runProjectCommandInDirectory(filepath.Join(target, "backend"), ".", "make", "build")
 			if err != nil {
 				t.Fatalf("项目 Makefile 构建失败: %v", err)
+			}
+		})
+	}
+}
+
+// TestProjectNaming 验证项目名和仓库路径生成正确的模块、导入与业务目录。
+func TestProjectNaming(t *testing.T) {
+	for _, input := range []string{"test", "github.com/example/test", "github.com/acme/test"} {
+		t.Run(input, func(t *testing.T) {
+			var businessModule string
+			target, err := createProjectWithOptions(projectOptions{projectName: input}, t.TempDir(), func(_ string, name string) error {
+				businessModule = name
+				return nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if filepath.Base(target) != "test" || businessModule != "test" {
+				t.Fatalf("项目名或业务模块错误: %s, %s", target, businessModule)
+			}
+			expectedModule := "github.com/example/test/backend"
+			if strings.Contains(input, "/") {
+				expectedModule = input + "/backend"
+			}
+			for _, file := range []string{"backend/go.mod", "backend/bootstrap.go"} {
+				var content []byte
+				content, err = os.ReadFile(filepath.Join(target, file))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !strings.Contains(string(content), expectedModule) {
+					t.Errorf("%s 未使用预期 Go module: %s", file, expectedModule)
+				}
+			}
+			for _, directory := range []string{"backend/api/proto/test/admin/v1", "backend/internal/biz/test/admin"} {
+				_, err = os.Stat(filepath.Join(target, directory))
+				if err != nil {
+					t.Errorf("业务目录未使用项目名: %s: %v", directory, err)
+				}
+			}
+			for _, directory := range []string{"adapter", "client", "backups", "codegen", "data", "logs"} {
+				_, err = os.Stat(filepath.Join(target, "backend", directory))
+				if !errors.Is(err, os.ErrNotExist) {
+					t.Errorf("不应预创建目录 %s: %v", directory, err)
+				}
 			}
 		})
 	}
@@ -121,19 +166,21 @@ func TestGeneratedSingleModule(t *testing.T) {
 func TestInitializeProjectChecksSingleModule(t *testing.T) {
 	var commands []string
 	runner := func(_ string, directory string, name string, args ...string) error {
-		if name == "go" {
+		if name == "go" || name == "make" {
 			commands = append(commands, strings.Join(append([]string{directory, name}, args...), " "))
 		}
 		return nil
 	}
-	err := initializeProjectWithRunner(t.TempDir(), "app", runner)
+	err := initializeProjectWithRunner(t.TempDir(), "app", runner, testDependencyResolver())
 	if err != nil {
 		t.Fatalf("初始化项目失败: %v", err)
 	}
 	expected := []string{
-		". go get github.com/liujitcn/kratos-admin/backend@latest",
+		". go mod edit -require=github.com/liujitcn/kratos-admin/backend@v0.0.37",
 		". go mod tidy",
+		"internal/module go run github.com/google/wire/cmd/wire@v0.7.0 .",
 		"internal/cmd/server go run github.com/google/wire/cmd/wire@v0.7.0 .",
+		". go fmt ./...",
 		". go test ./...",
 	}
 	if !slices.Equal(commands, expected) {
@@ -141,7 +188,7 @@ func TestInitializeProjectChecksSingleModule(t *testing.T) {
 	}
 }
 
-// TestInitializeProjectRefreshesFrontendCLIs 验证前端生成使用官方源并刷新 dlx 执行缓存。
+// TestInitializeProjectRefreshesFrontendCLIs 验证前端生成使用官方源与精确版本，不再强制刷新缓存。
 func TestInitializeProjectRefreshesFrontendCLIs(t *testing.T) {
 	target := t.TempDir()
 	var commands [][]string
@@ -156,7 +203,7 @@ func TestInitializeProjectRefreshesFrontendCLIs(t *testing.T) {
 		return nil
 	}
 
-	err := initializeProjectWithRunner(target, "orders", runner)
+	err := initializeProjectWithRunner(target, "orders", runner, testDependencyResolver())
 	if err != nil {
 		t.Fatalf("初始化项目命令失败: %v", err)
 	}
@@ -167,9 +214,8 @@ func TestInitializeProjectRefreshesFrontendCLIs(t *testing.T) {
 	for index, frontend := range frontends {
 		expected := []string{
 			"--config.@liujitcn:registry=https://registry.npmjs.org/",
-			"--config.dlx-cache-max-age=0",
 			"dlx",
-			"@liujitcn/kratos-" + frontend + "-cli@latest",
+			"@liujitcn/kratos-" + frontend + "-cli@0.0.37",
 			"create",
 			filepath.Join(target, "frontend", frontend),
 			"--module",
@@ -189,13 +235,13 @@ func TestInitializeProjectDoesNotOverrideAdminAPI(t *testing.T) {
 		return nil
 	}
 
-	err := initializeProjectWithRunner("/tmp/test-project", "app", runner)
+	err := initializeProjectWithRunner("/tmp/test-project", "app", runner, testDependencyResolver())
 	if err != nil {
 		t.Fatalf("初始化项目命令失败: %v", err)
 	}
 	backendGetCount := 0
 	for _, command := range commands {
-		if strings.Contains(command, "go get github.com/liujitcn/kratos-admin/backend@latest") {
+		if strings.Contains(command, "go mod edit -require=github.com/liujitcn/kratos-admin/backend@v0.0.37") {
 			backendGetCount++
 		}
 		if strings.Contains(command, "go get github.com/liujitcn/kratos-admin/backend/api@") {
@@ -203,6 +249,17 @@ func TestInitializeProjectDoesNotOverrideAdminAPI(t *testing.T) {
 		}
 	}
 	if backendGetCount != 1 {
-		t.Fatalf("Backend latest 安装命令数量错误: %d", backendGetCount)
+		t.Fatalf("Backend 缓存版本设置命令数量错误: %d", backendGetCount)
 	}
 }
+
+// testDependencyResolver 为生成流程测试提供已缓存的固定版本。
+func testDependencyResolver() projectDependencyResolver {
+	return projectDependencyResolver{
+		backend:  func() (backendDependency, error) { return backendDependency{version: "v0.0.37", cached: true}, nil },
+		frontend: testFrontendVersion,
+	}
+}
+
+// testFrontendVersion 为前端命令测试提供固定 npm 版本。
+func testFrontendVersion(string) (string, error) { return "0.0.37", nil }

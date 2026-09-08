@@ -1,0 +1,14 @@
+package module
+
+import (
+	"github.com/google/wire"
+	"__MODULE_PATH__/internal/biz"
+	"__MODULE_PATH__/internal/config"
+	"__MODULE_PATH__/internal/data"
+	"__MODULE_PATH__/internal/server"
+	"__MODULE_PATH__/internal/service"
+	"__MODULE_PATH__/internal/task"
+)
+
+// ProviderSet 装配当前项目业务依赖与协议模块。
+var ProviderSet = wire.NewSet(biz.ProviderSet, config.ProviderSet, data.ProviderSet, server.ProviderSet, service.ProviderSet, task.ProviderSet, NewModules)

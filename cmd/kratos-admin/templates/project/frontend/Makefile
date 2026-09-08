@@ -22,6 +22,9 @@ PNPM ?= pnpm
 CI ?= 1
 GO_BIN_DIR ?= $(or $(shell go env GOBIN),$(shell go env GOPATH)/bin)
 API_DIR ?= ../backend/api
+PROTO_FILES := $(shell find "$(API_DIR)/proto" -type f -name '*.proto' 2>/dev/null)
+ADMIN_PROTO_FILES := $(filter-out $(API_DIR)/proto/__FRONTEND_MODULE__/app/%,$(PROTO_FILES))
+APP_PROTO_FILES := $(filter-out $(API_DIR)/proto/__FRONTEND_MODULE__/admin/%,$(PROTO_FILES))
 
 TS_PROTO_BIN ?= $(or \
 	$(shell command -v protoc-gen-ts_proto 2>/dev/null), \
@@ -74,43 +77,45 @@ ts: ts-admin ts-uni-app ts-taro-app
 
 # 生成管理端 TypeScript RPC 代码。
 ts-admin: types-admin
+ifneq ($(strip $(ADMIN_PROTO_FILES)),)
 	@echo "==> 生成管理端 TypeScript RPC 代码"
 	@test -n "$(TS_PROTO_BIN)" || (echo "未找到 protoc-gen-ts_proto，请先执行 make init，或全局安装 ts-proto" && exit 1)
 	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.admin.typescript.gen.yaml --exclude-path proto/system/app
-	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.admin.core.typescript.gen.yaml --exclude-path proto/system/app
+		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.admin.typescript.gen.yaml --exclude-path proto/__FRONTEND_MODULE__/app
 	@echo "==> 管理端 TypeScript RPC 代码生成完成"
+else
+	@echo "未发现业务 Proto，跳过 admin RPC 生成"
+endif
 
 # 生成管理端自动导入声明。
 types-admin:
 	@echo "==> 生成管理端自动导入声明"
-	@if [ -f admin/scripts/generate-auto-import-types.mjs ]; then \
-		cd admin && CI="$(CI)" $(PNPM) run generate:auto-import-types; \
-	else \
-		echo "未发现自动导入声明脚本，跳过自动导入声明生成"; \
-	fi
+	@cd admin && CI="$(CI)" $(PNPM) run generate:auto-import-types
 	@echo "==> 管理端自动导入声明生成完成"
 
 # 生成 uni-app 端 TypeScript RPC 代码。
 ts-uni-app:
+ifneq ($(strip $(APP_PROTO_FILES)),)
 	@echo "==> 生成 uni-app TypeScript RPC 代码"
 	@test -n "$(TS_PROTO_BIN)" || (echo "未找到 protoc-gen-ts_proto，请先执行 make init，或全局安装 ts-proto" && exit 1)
 	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.uni-app.typescript.gen.yaml --exclude-path proto/system/admin
-	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.uni-app.core.typescript.gen.yaml --exclude-path proto/system/admin
+		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.uni-app.typescript.gen.yaml --exclude-path proto/__FRONTEND_MODULE__/admin
 	@echo "==> uni-app TypeScript RPC 代码生成完成"
+else
+	@echo "未发现业务 Proto，跳过 uni-app RPC 生成"
+endif
 
 # 生成 Taro React 端 TypeScript RPC 代码。
 ts-taro-app:
+ifneq ($(strip $(APP_PROTO_FILES)),)
 	@echo "==> 生成 Taro React TypeScript RPC 代码"
 	@test -n "$(TS_PROTO_BIN)" || (echo "未找到 protoc-gen-ts_proto，请先执行 make init，或全局安装 ts-proto" && exit 1)
 	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.taro-app.typescript.gen.yaml --exclude-path proto/system/admin
-	@cd "$(API_DIR)" && \
-		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.taro-app.core.typescript.gen.yaml --exclude-path proto/system/admin
+		PATH="$(TS_PROTO_BIN_DIR):$(GO_BIN_DIR):$$PATH" buf generate --template buf.taro-app.typescript.gen.yaml --exclude-path proto/__FRONTEND_MODULE__/admin
 	@echo "==> Taro React TypeScript RPC 代码生成完成"
+else
+	@echo "未发现业务 Proto，跳过 taro-app RPC 生成"
+endif
 
 # ===== 本地运行 =====
 
@@ -260,7 +265,7 @@ build-package:
 package-admin:
 	@$(MAKE) check-admin
 	@$(MAKE) build-package
-	@for package_dir in admin/packages/core admin/packages/modules/system admin/packages/cli; do \
+	@for package_dir in admin/packages/modules/__FRONTEND_MODULE__; do \
 		(cd "$$package_dir" && CI="$(CI)" $(PNPM) pack --pack-destination "$(NPM_PACK_DEST)") || exit 1; \
 	done
 
@@ -286,21 +291,21 @@ package:
 # 检查、打包并发布管理后台 npm 包
 publish-admin:
 	@$(MAKE) package-admin
-	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh admin/packages/core admin/packages/modules/system admin/packages/cli
+	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh admin/packages/modules/__FRONTEND_MODULE__
 
 # 检查、打包并发布 uni-app npm 包
 publish-uni-app:
 	@$(MAKE) package-uni-app
-	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh uni-app/packages/core uni-app/packages/modules/system uni-app/packages/cli
+	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh uni-app/packages/modules/__FRONTEND_MODULE__
 
 # 检查、打包并发布 Taro npm 包
 publish-taro-app:
 	@$(MAKE) package-taro-app
-	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh taro-app/packages/core taro-app/packages/ui taro-app/packages/modules/system taro-app/packages/cli
+	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh taro-app/packages/modules/__FRONTEND_MODULE__
 
 # 发布已经检查并构建的全部 npm 包
 publish-only:
-	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh admin/packages/core admin/packages/modules/system admin/packages/cli uni-app/packages/core uni-app/packages/modules/system uni-app/packages/cli taro-app/packages/core taro-app/packages/ui taro-app/packages/modules/system taro-app/packages/cli
+	@$(NPM_PUBLISH_ENV) bash scripts/publish_packages.sh admin/packages/modules/__FRONTEND_MODULE__ uni-app/packages/modules/__FRONTEND_MODULE__ taro-app/packages/modules/__FRONTEND_MODULE__
 
 # 按打包、发布的顺序发布全部 npm 包
 publish:
@@ -318,8 +323,8 @@ help:
 	@echo "  make check                        检查三个 workspace"
 	@echo "  make ts                            生成三个前端的 TypeScript RPC"
 	@echo "  make build                        构建管理端、uni-app、Taro 的 H5 + 微信小程序"
-	@echo "  make package                      检查并生成 10 个 npm 包"
-	@echo "  make publish                      打包并发布 10 个 npm 包"
+	@echo "  make package                      检查并生成 业务 npm 包"
+	@echo "  make publish                      打包并发布 业务 npm 包"
 	@echo ""
 	@echo "可用目标:"
 	@awk '/^[a-zA-Z\-_0-9]+:/ { \

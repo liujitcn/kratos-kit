@@ -1,3 +1,4 @@
+# 配置protoc生成规则
 version: v2
 
 clean: true
@@ -7,40 +8,62 @@ inputs:
 
 managed:
   enabled: true
+
   disable:
-    - module: buf.build/googleapis/googleapis
-    - module: buf.build/kratos/apis
-    - module: buf.build/gnostic/gnostic
-    - module: buf.build/gogo/protobuf
-    - module: buf.build/bufbuild/protovalidate
-    - module: buf.build/liujitcn/kratos-core
+    - module: 'buf.build/googleapis/googleapis'
+    - module: 'buf.build/kratos/apis'
+    - module: 'buf.build/gnostic/gnostic'
+    - module: 'buf.build/gogo/protobuf'
+    - module: 'buf.build/bufbuild/protovalidate'
+    - module: 'buf.build/liujitcn/kratos-core'
+
   override:
     - file_option: go_package_prefix
       value: __MODULE_PATH__/api/gen/go
 
 plugins:
+  # generate go code
+  #- plugin: buf.build/protocolbuffers/go
   - local: protoc-gen-go
     out: gen/go
     opt:
-      - paths=source_relative
+      - paths=source_relative # use relative paths
       - Merrors/errors.proto=github.com/go-kratos/kratos/v3/errors
+
+  # generate grpc service code
+  #- plugin: buf.build/grpc/go
   - local: protoc-gen-go-grpc
     out: gen/go
     opt:
-      - paths=source_relative
+      - paths=source_relative # use relative paths
+
+  # generate rest service code
   - local: protoc-gen-go-http
     out: gen/go
     opt:
-      - paths=source_relative
+      - paths=source_relative # use relative paths
+
+  # generate kratos errors code
   - local: protoc-gen-go-errors
     out: gen/go
     opt:
-      - paths=source_relative
+      - paths=source_relative # use relative paths
+
+  # 使用go-grpc插件生成 Agent Tool 代码
   - local: protoc-gen-go-agent-tool
     out: gen/go
     opt:
       - paths=source_relative
+
+  # 使用go-grpc插件生成 MCP Tool 代码
   - local: protoc-gen-go-mcp-tool
+    out: gen/go
+    strategy: all
+    opt:
+      - paths=source_relative
+
+  # 使用 Proto 生成响应脱敏包装代码
+  - local: protoc-gen-go-redact
     out: gen/go
     strategy: all
     opt:

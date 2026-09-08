@@ -1,30 +1,38 @@
 authn:
-  jwt:
-    # 仅用于本地开发，生产环境必须替换为 Secret Manager 注入的随机值。
-    secret: 9b235c062ec9f41ed9ecfca2cc4d86dfb477c4860cc5fae35764d3d9b0bf699c
-    access_token_expires: 3600s
-    refresh_token_expires: 2592000s
-    white_list:
-      match:
-        - "/base.v1.ConfigService/GetConfig"
-        - "/base.v1.LoginService/Captcha"
-        - "/base.v1.LoginService/VerifyCaptcha"
-        - "/base.v1.LoginService/PasswordPublicKey"
-        - "/base.v1.LoginService/RefreshToken"
-        - "/base.v1.MfaService/VerifyMfa"
-        - "/base.v1.MfaService/BeginMfaEnrollment"
-        - "/base.v1.MfaService/ConfirmMfaEnrollment"
-        - "/base.v1.LoginService/Login"
-        - "/base.v1.OauthService/ListOauthProvider"
-        - "/base.v1.OauthService/CreateOauthAuthorization"
-        - "/base.v1.OauthService/HandleOauthCallback"
-        - "/base.v1.OauthService/ExchangeOauthTicket"
-        - "/base.v1.OauthService/CreateOauthSession"
-        - "/base.v1.OauthService/BindOauthSession"
-        - "/base.v1.OauthService/HandleOauthBindingCallback"
-        - "/base.v1.OauthClientService/IssueOauthClientToken"
-        - "/base.v1.LanguageService/OptionLanguage"
-    optional_auth:
-      match:
-        - "/base.v1.SseService/SubscribeSse"
-        - "/system.app.v1.BaseMenuService/ListBaseMenu"
+    jwt:
+        access_token_expires: 3600s
+        optional_auth:
+            match:
+                - /base.v1.SseService/SubscribeSse
+                - /system.app.v1.BaseMenuService/ListBaseMenu
+                - /base.v1.LoginService/Logout
+            path: null
+            prefix: null
+            regex: null
+        refresh_token_expires: 2592000s
+        white_list:
+            match:
+                - /base.v1.ConfigService/GetConfig
+                - /base.v1.LoginService/Captcha
+                - /base.v1.LoginService/VerifyCaptcha
+                - /base.v1.LoginService/PasswordPublicKey
+                - /base.v1.LoginService/RefreshToken
+                - /base.v1.MfaService/VerifyMfa
+                - /base.v1.MfaService/BeginMfaEnrollment
+                - /base.v1.MfaService/ConfirmMfaEnrollment
+                - /base.v1.LoginService/Login
+                - /base.v1.OauthService/ListOauthProvider
+                - /base.v1.OauthService/CreateOauthAuthorization
+                - /base.v1.OauthService/HandleOauthCallback
+                - /base.v1.OauthService/ExchangeOauthTicket
+                - /base.v1.OauthService/CreateOauthSession
+                - /base.v1.OauthService/BindOauthSession
+                - /base.v1.OauthService/HandleOauthBindingCallback
+                - /base.v1.OauthClientService/IssueOauthClientToken
+                - /base.v1.LanguageService/OptionLanguage
+            path: null
+            prefix: null
+            regex: null
+    session:
+        idle_timeout: 1800s
+        max_lifetime: 43200s

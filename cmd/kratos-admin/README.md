@@ -1,7 +1,7 @@
 # kratos-admin
 
 `kratos-admin` 用于创建包含前后端的完整项目。项目根目录和后端由本命令内置模板
-生成，前端通过三个上游 CLI 生成，不把前端源码复制进 Go 模板。
+生成，前端通过三个上游 CLI 创建 workspace，再补齐与 Admin 一致的宿主入口、检查脚本和工具配置。
 
 ## 安装
 
@@ -21,21 +21,36 @@ kratos-admin create shop-admin
 
 ```text
 shop-admin
-├── backend       # Core + Admin + 当前项目业务模块
+├── backend
+│   ├── api/proto/<module>/{admin,app,config}/v1
+│   ├── internal/{biz,data,service,server,task,module}
+│   ├── internal/i18n/assets
+│   ├── internal/openapi/assets
+│   ├── migration/assets/v0.0.1/mysql
+│   ├── configs
+│   ├── scripts
+│   └── Makefile
 ├── frontend
 │   ├── admin     # @liujitcn/kratos-admin-cli
 │   ├── uni-app   # @liujitcn/kratos-uni-app-cli
 │   └── taro-app  # @liujitcn/kratos-taro-app-cli
-├── scripts       # 项目级前后端快捷脚本
-├── backend/scripts
+├── scripts       # Git hooks、国际化、证书和发布脚本
 ├── frontend/Makefile
 ├── frontend/scripts
 ├── Makefile
 └── README.md
 ```
 
-后端 Go module 默认是 `github.com/example/<project>/backend`，可以显式指定；前端
-默认创建 `app` 业务 module：
+业务 module 默认使用项目名（例如 `shop-admin`），同时用于前端与后端业务目录。
+也可以直接传入仓库路径：
+
+```bash
+kratos-admin create github.com/example/test
+```
+
+此时项目目录和业务 module 都是 `test`，后端 `backend/go.mod` 的 module 为
+`github.com/example/test/backend`。仅传项目名时，Go module 默认为
+`github.com/example/<project>/backend`。仍可显式覆盖后端 Go module 和业务 module：
 
 ```bash
 kratos-admin create shop-admin \
@@ -43,20 +58,38 @@ kratos-admin create shop-admin \
   --frontend-module shop
 ```
 
+生成时不预创建后端根目录下的 `adapter`、`client`、`backups`、`codegen`、`data`、
+`logs`；配置和构建脚本保留运行时路径，实际使用时再创建对应目录。
+
+后端 `biz`、`service`、`server` 的各级业务目录，以及 `config`、`task`、`data`、
+`module` 默认提供 `init.go` 和 Wire `ProviderSet`，逐层汇总到 `internal/module`。
+Proto、配置资源、脚本和生成代码目录不放置手写 Go 初始化文件。
+
 生成过程会依次调用以下 CLI，并迁移后端、前端各自的 Makefile 与脚本入口：
 
-- `@liujitcn/kratos-admin-cli@latest`
-- `@liujitcn/kratos-uni-app-cli@latest`
-- `@liujitcn/kratos-taro-app-cli@latest`
+- `@liujitcn/kratos-admin-cli`
+- `@liujitcn/kratos-uni-app-cli`
+- `@liujitcn/kratos-taro-app-cli`
 
-每次生成都会通过 pnpm 命令行参数将 `@liujitcn` 作用域临时指向 npm 官方源，并设置
-`dlx-cache-max-age=0`，避免镜像同步延迟或 dlx 旧缓存导致执行旧版 CLI。无需手动清理
-缓存或设置环境变量；其他作用域沿用原有源，用户的全局及项目 pnpm 配置不会被修改。
+每次生成先从 npm 官方源查询各 CLI 的 `dist-tags.latest`，再通过 `pnpm dlx 包名@精确版本`
+执行。取消强制刷新 dlx 缓存，同版本按 pnpm 的缓存有效期复用，新版本使用独立缓存。
+`@liujitcn` 作用域仅通过命令行参数临时指向 npm 官方源，其他作用域和全局配置保持原样。
 
-生成过程会在后端初始化时执行 `go get github.com/liujitcn/kratos-admin/backend@latest`，
-并使用 Backend 模块自身 `go.mod` 声明的 Admin API 版本，避免强制覆盖依赖导致跨版本组合。
-随后执行后端 `go mod tidy`、Wire 和 `go test ./...`。任一前端 CLI 或后端初始化失败，
+后端通过 `git ls-remote` 查询 `backend/v*` tag，按语义版本选择当前模块可用的最新稳定版本，
+与 `go env GOMODCACHE` 下的源码和下载缓存比较。已缓存时通过 `go mod edit -require=...@版本`
+写入依赖并跳过 `go get`，未缓存时执行 `go get ...@精确版本`。不再执行 `go get ...@latest`。
+Git 与 npm 元数据查询均限时 20 秒。Git 查询失败时改用 Go 代理查询（同样限时 20 秒）；
+两者都不可用时，明确提示无法确认最新版本，并使用本地完整缓存中的最高稳定版本继续生成。
+仅有不完整缓存或完全无缓存时仍报错；npm 查询失败仍明确报错。
+仍使用 Backend 自身声明的 Admin API 版本，避免强制覆盖依赖导致跨版本组合。
+随后执行后端 `go mod tidy`，通过固定版本 Wire 生成内部模块与服务入口，再格式化和执行 `go test ./...`。
+`tidy` 仍可能下载本地缺失的间接依赖；缓存命中不代表整个生成流程完全离线。
+最后补齐前端工具链并通过脚本生成语言注册文件。任一前端 CLI 或初始化步骤失败，
 本命令都会清理本次新建的不完整项目目录。
+
+终端会显示模板、前端生成、依赖解析、Wire 与后端验证、前端工具链五个阶段。
+每条子命令显示工作目录，实时输出标准输出和标准错误；执行期间每 10 秒报告当前命令和
+耗时，结束后显示完成或失败状态，避免下载依赖或编译期间长时间没有反馈。
 
 ### 后端模块边界
 
@@ -66,19 +99,42 @@ kratos-admin create shop-admin \
 Admin 的公开 `adapter/core` 和 `adapter/kit` 构造函数统一接收数据库客户端，在函数内部初始化
 所需仓储。Wire 只使用公开适配器和 Core/Kit 接口，生成项目不会引用 Admin 的 `internal` 包，
 也不复制依赖源码。脱敏策略通过实例和请求上下文传递，不依赖全局默认解析器。
-正式生成前须按 Kit redact/server-grpc、Core、Admin Backend 的依赖顺序发布修复版本；安装新版生成器不会修复旧版依赖。
 
 在 Backend 目录执行 `go test ./...` 或 `make test` 会同时覆盖业务代码和服务入口，构建使用
 `make build`。初始化时设置 `GOWORK=off`，避免继承调用方的 Go workspace。
+后端 Makefile 同样固定 `GOWORK=off`；`make cli` 安装 golangci-lint v2，以兼容 Go 1.27。
 
-生成项目使用 MySQL、Redis 和内存队列，并生成 `docker-compose.yaml`；进入项目后可执行
-`make infra-up` 准备本地依赖。随后执行 `make init` 安装后端工具和前端依赖，再按项目
-README 中的命令开发、生成和构建。
+生成项目沿用 Admin 的 MySQL、Redis、Consul 和 Vault 配置结构，不复制私有环境配置或凭据。
+先准备基础设施和 Vault 访问凭据，再执行 `make -C backend init`、`make -C frontend init`。
+新目录尚未初始化 Git 时先执行 `git init`，根目录 `make init` 只安装 Git hooks，与 Admin 一致。
+
+### 模板同步基准
+
+当前基准是 `kratos-admin v0.0.37`（`70be66e346dc5c6e811a7fa8e45d140f91773ab4`）。
+三层 Makefile 的目标名称、所在层级和执行顺序对齐该版本，不保留旧的根目录 `run/infra-up`
+或后端 `ts/docker-build` 转发目标。
+
+| 范围 | 同步方式 |
+| --- | --- |
+| Dockerfile、dockerignore、入口脚本、证书脚本、OpenAPI 多语言工具、重装脚本、Git hook | 复用基准公共文件，保留可执行权限 |
+| 根/后端/前端 Makefile、发布脚本 | 替换项目名称、业务包清单、Proto 输入与输出目录；只发布自己的业务包 |
+| 基础 configs、Go/OpenAPI Buf 配置 | 同步通用字段，保留项目数据库参数与空 AI 配置；不复制 `*.dev.yaml` |
+| 三端 RPC 配置 | 从对应上游模板派生，只生成当前业务模块，不生成 npm Core/System 包的源码 |
+| 语言工具 | 保留校验与生成逻辑，目录改为项目业务模块；空业务不要求 Admin 专属翻译 SQL/代码生成文案 |
+| 前端宿主与检查 | 补齐 App 生命周期、自动导入、tsconfig、lint、测试和打包命令；校验包导出，不要求冒用 Admin 仓库信息 |
+
+`Resource` 的 `Models/I18n/OpenAPI/Migrations` 均已挂接。模型和语言初始为空，migration 仅保留
+说明文件，目录通过占位文件保留。添加表后在 `internal/data.Models()` 汇总模型；项目迁移依赖 Admin。
+没有业务表或 Proto 时，对应生成目标明确跳过。安装工具时补齐这些命令实际依赖的 Wire 和脱敏插件。
+
+三个 H5 宿主统一输出到 `backend/data/{admin,uni-app,taro-app}`，由根 Makefile 构建并进入 Docker
+静态资源种子目录。管理端宿主不缓存 workspace 之外的 H5 输出，避免命中缓存后缺少 Docker 构建资源。
 
 ## 验证生成器
 
 ```bash
 GOWORK=off go test ./...
+GOWORK=off KRATOS_ADMIN_SOURCE_DIR=/path/to/kratos-admin go test -run TestMakefileTargetsMatchAdmin -v
 GOWORK=off KRATOS_ADMIN_INTEGRATION=1 go test -run TestGeneratedBackendBuilds -v
 ```
 
@@ -87,3 +143,7 @@ GOWORK=off KRATOS_ADMIN_INTEGRATION=1 go test -run TestGeneratedBackendBuilds -v
 依赖解析沿用当前 Go 代理设置。测试未发布的跨仓库修复时，可额外设置
 `KRATOS_ADMIN_BACKEND_DIR`、`KRATOS_CORE_DIR`、`KRATOS_KIT_REDACT_DIR` 和 `KRATOS_KIT_GRPC_DIR` 指向对应本地模块；
 这些替换仅作用于测试的临时项目。
+
+完整验证还应实际创建项目，执行三端 `make -C frontend init/check/build-h5/build-mp-weixin`、
+`make -C backend gen/test/package-binary`、`make i18n I18N_OFFLINE=1` 和 `make i18n-verify`，
+并用临时业务 Proto 验证 Go、脱敏、OpenAPI 和 TypeScript RPC 生成。发布及容器启动不属于验证步骤。

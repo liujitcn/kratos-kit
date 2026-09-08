@@ -1,4 +1,4 @@
-# 配置protoc生成规则
+# 配置 System 管理模块的 TypeScript RPC 生成规则
 version: v2
 
 clean: true
@@ -14,22 +14,10 @@ managed:
 
 inputs:
   - directory: .
-    paths:
-      - proto/base/v1/config.proto
-      - proto/base/v1/language.proto
-      - proto/base/v1/file.proto
-      - proto/base/v1/login.proto
-      - proto/base/v1/mfa.proto
-      - proto/base/v1/oauth.proto
-      - proto/base/v1/oauth_client.proto
-      - proto/system/admin/v1/auth.proto
-      - proto/system/admin/v1/base_dict.proto
-      - proto/system/admin/v1/base_tenant.proto
 
 plugins:
-  #  - remote: buf.build/community/stephenh-ts-proto
   - local: protoc-gen-ts_proto
-    out: ../../frontend/admin/packages/core/src/rpc
+    out: ../../frontend/admin/packages/modules/__FRONTEND_MODULE__/src/rpc
     include_imports: true
     include_wkt: true
     exclude_types:

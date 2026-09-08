@@ -18,16 +18,9 @@ fi
 
 if [[ "$#" -eq 0 ]]; then
   set -- \
-    admin/packages/core \
-    admin/packages/modules/system \
-    admin/packages/cli \
-    uni-app/packages/core \
-    uni-app/packages/modules/system \
-    uni-app/packages/cli \
-    taro-app/packages/core \
-    taro-app/packages/ui \
-    taro-app/packages/modules/system \
-    taro-app/packages/cli
+    admin/packages/modules/__FRONTEND_MODULE__ \
+    uni-app/packages/modules/__FRONTEND_MODULE__ \
+    taro-app/packages/modules/__FRONTEND_MODULE__
 fi
 
 for package_dir in "$@"; do

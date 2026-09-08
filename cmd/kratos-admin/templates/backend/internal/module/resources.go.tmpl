@@ -1,17 +1,25 @@
 package module
 
 import (
-	"embed"
 	"fmt"
 	"io/fs"
 
 	coremodule "github.com/liujitcn/kratos-core/module"
+	"github.com/liujitcn/kratos-kit/database/gorm"
+	_const "__MODULE_PATH__/internal/const"
+	"__MODULE_PATH__/internal/data"
+	"__MODULE_PATH__/internal/i18n"
+	"__MODULE_PATH__/internal/openapi"
+	"__MODULE_PATH__/migration"
 )
 
 type resource struct {
 	projectKey  string
 	projectName string
+	models coremodule.Models
+	i18n fs.FS
 	openAPI     fs.FS
+	migrations coremodule.Migrations
 }
 
 // ProjectResources 表示当前项目提供给 Core 的具名静态资源集合。
@@ -19,20 +27,18 @@ type ProjectResources []coremodule.Resource
 
 var _ coremodule.Resource = (*resource)(nil)
 
-//go:embed assets/*
-var openAPIAssets embed.FS
-
 // NewModuleResources 创建当前项目提供给 Core 的具名资源集合。
 func NewModuleResources() ProjectResources {
-	openAPI, err := fs.Sub(openAPIAssets, "assets")
-	if err != nil {
-		panic(fmt.Errorf("读取内嵌 OpenAPI 资源: %w", err))
-	}
 	return ProjectResources{
 		&resource{
-			projectKey:  "__PROJECT_NAME__",
-			projectName: "__PROJECT_NAME__",
-			openAPI:     openAPI,
+			projectKey:  fmt.Sprintf("%s-%s", _const.Project, _const.AppID),
+			projectName: _const.Name,
+			models: coremodule.Models{gorm.DefaultClientName: data.Models()},
+			i18n: i18n.Assets(),
+			openAPI: openapi.Assets(),
+			migrations: coremodule.Migrations{
+				{Name: migration.ModuleName, FS: migration.Assets(), Path: ".", Dependencies: []string{"admin"}},
+			},
 		},
 	}
 }
@@ -48,18 +54,13 @@ func (r *resource) ProjectName() string {
 }
 
 // Models 返回当前项目的数据库模型集合。
-func (*resource) Models() coremodule.Models {
-	return coremodule.Models{}
-}
-
-// Docs 返回当前项目的项目文档资源。
-func (*resource) Docs() fs.FS {
-	return nil
+func (r *resource) Models() coremodule.Models {
+	return r.models
 }
 
 // I18n 返回当前项目的国际化资源。
-func (*resource) I18n() fs.FS {
-	return nil
+func (r *resource) I18n() fs.FS {
+	return r.i18n
 }
 
 // OpenAPI 返回当前项目的 OpenAPI 资源。
@@ -68,6 +69,6 @@ func (r *resource) OpenAPI() fs.FS {
 }
 
 // Migrations 返回当前项目的数据库迁移资源。
-func (*resource) Migrations() coremodule.Migrations {
-	return nil
+func (r *resource) Migrations() coremodule.Migrations {
+	return r.migrations
 }

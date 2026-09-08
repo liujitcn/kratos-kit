@@ -1,10 +1,74 @@
-.DS_Store
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.app
+
+# Go build output
+bin/
+!frontend/taro-app/packages/cli/bin/
+!frontend/taro-app/packages/cli/bin/kratos-taro-app.mjs
+dist/
+
+# Go coverage
+*.cover
+coverage.out
+cover.out
+
+# Dependency directories (optional if using Go Modules)
+vendor/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# IDE files
 .idea/
 .vscode/
-backend/bin/
-backend/data/*.db
-backend/data/logs/
-frontend/node_modules/
-frontend/**/dist/
-frontend/**/.turbo/
-*.log
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Linux
+*~
+
+# Windows
+Thumbs.db
+
+# Test binary
+
+# Go cache
+.gocache/
+
+# Delve debugger
+__debug_bin
+
+.codex-output/
+certs/
+web/
+service_tmp/
+/backend/data/
+/backend/logs/
+/backend/backups/
+/backend/codegen/
+/backend/legacy-data/
+/backend/runtime/
+/backend/configs/root.key
+/gorse/data/
+
+.pnpm-store/
+*.tgz
+.turbo/
+.workbuddy/
+/docs/superpowers/

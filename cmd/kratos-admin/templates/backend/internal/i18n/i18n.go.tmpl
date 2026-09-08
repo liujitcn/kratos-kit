@@ -1,0 +1,18 @@
+package i18n
+
+import (
+	"embed"
+	"io/fs"
+)
+
+//go:embed assets/*.json
+var localesData embed.FS
+
+// Assets 返回当前项目的语言文件系统，交由 Core 统一加载。
+func Assets() fs.FS {
+	value, err := fs.Sub(localesData, "assets")
+	if err != nil {
+		panic(err)
+	}
+	return value
+}

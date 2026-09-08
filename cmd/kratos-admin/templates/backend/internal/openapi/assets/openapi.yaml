@@ -1,0 +1,7 @@
+openapi: 3.0.3
+info:
+  title: __PROJECT_NAME__
+  version: 1.0.0
+paths: {}
+components: {}
+tags: []

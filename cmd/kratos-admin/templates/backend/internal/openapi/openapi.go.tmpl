@@ -1,0 +1,18 @@
+package openapi
+
+import (
+	"embed"
+	"io/fs"
+)
+
+//go:embed assets
+var openAPIAssets embed.FS
+
+// Assets 返回当前项目的 OpenAPI 文件系统，交由 Core 统一加载。
+func Assets() fs.FS {
+	value, err := fs.Sub(openAPIAssets, "assets")
+	if err != nil {
+		panic(err)
+	}
+	return value
+}

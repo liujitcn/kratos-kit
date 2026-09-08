@@ -1,0 +1,51 @@
+oauth:
+    providers:
+        dingtalk:
+            client_id: mock-dingtalk-client-id
+            client_secret: mock-dingtalk-client-secret
+            redirect_uri: http://localhost:7001/api/v1/base/oauth/dingtalk/callback
+            scopes:
+                - openid
+        feishu:
+            client_id: mock-feishu-client-id
+            client_secret: mock-feishu-client-secret
+            redirect_uri: http://localhost:7001/api/v1/base/oauth/feishu/callback
+            scopes: []
+        gitee:
+            client_id: mock-gitee-client-id
+            client_secret: mock-gitee-client-secret
+            redirect_uri: http://localhost:7001/api/v1/base/oauth/gitee/callback
+            scopes:
+                - user_info
+        github:
+            client_id: mock-github-client-id
+            client_secret: mock-github-client-secret
+            redirect_uri: http://localhost:7001/api/v1/base/oauth/github/callback
+            scopes:
+                - user:email
+        google:
+            client_id: mock-google-client-id
+            client_secret: mock-google-client-secret
+            redirect_uri: http://localhost:7001/api/v1/base/oauth/google/callback
+            scopes:
+                - openid
+                - profile
+                - email
+        wechat:
+            client_id: mock-wechat-client-id
+            client_secret: mock-wechat-client-secret
+        wechatmini:
+            client_id: mock-wechatmini-client-id
+            client_secret: mock-wechatmini-client-secret
+            scopes: []
+        wechatmp:
+            client_id: mock-wechatmp-client-id
+            client_secret: mock-wechatmp-client-secret
+            redirect_uri: http://localhost:7001/api/v1/base/oauth/wechatmp/callback
+            scopes:
+                - snsapi_userinfo
+        wechatwork:
+            client_id: mock-wechatwork-client-id
+            client_secret: mock-wechatwork-client-secret
+            redirect_uri: http://localhost:7001/api/v1/base/oauth/wechatwork/callback
+            scopes: []

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -21,16 +20,32 @@ const (
 )
 
 var projectDirectories = []string{
-	"backend/data",
+	"backend/api/proto",
+	"backend/api/gen/go",
+	"backend/internal/data/gen",
+	"backend/internal/service",
+	"backend/internal/server",
+	"backend/internal/task",
+	"backend/internal/biz",
+	"backend/internal/config",
+	"backend/api/proto/__FRONTEND_MODULE__/admin/v1",
+	"backend/api/proto/__FRONTEND_MODULE__/app/v1",
+	"backend/api/proto/__FRONTEND_MODULE__/config/v1",
+	"backend/internal/biz/__FRONTEND_MODULE__/admin",
+	"backend/internal/biz/__FRONTEND_MODULE__/app",
+	"backend/internal/service/__FRONTEND_MODULE__/admin/v1",
+	"backend/internal/service/__FRONTEND_MODULE__/app/v1",
+	"backend/internal/server/__FRONTEND_MODULE__/admin/v1",
+	"backend/internal/server/__FRONTEND_MODULE__/app/v1",
 }
 
 var frontendCLIs = []frontendCLI{
-	{name: "admin", packageName: "@liujitcn/kratos-admin-cli@latest"},
-	{name: "uni-app", packageName: "@liujitcn/kratos-uni-app-cli@latest"},
-	{name: "taro-app", packageName: "@liujitcn/kratos-taro-app-cli@latest"},
+	{name: "admin", packageName: "@liujitcn/kratos-admin-cli"},
+	{name: "uni-app", packageName: "@liujitcn/kratos-uni-app-cli"},
+	{name: "taro-app", packageName: "@liujitcn/kratos-taro-app-cli"},
 }
 
-//go:embed templates
+//go:embed all:templates
 var projectTemplates embed.FS
 
 type projectInitializer func(string, string) error
@@ -62,7 +77,7 @@ func createProjectWithInitializer(
 	return createProjectWithOptions(projectOptions{projectName: projectName}, cwd, initializer)
 }
 
-// createProjectWithOptions 按项目名称、后端 module 和前端 module 创建完整项目。
+// createProjectWithOptions 推导项目模块名称，输出模板阶段进度并创建完整项目。
 func createProjectWithOptions(options projectOptions, cwd string, initializer projectInitializer) (target string, err error) {
 	projectName := path.Base(filepath.Clean(options.projectName))
 	if projectName == "." || projectName == "/" || projectName == "" {
@@ -71,6 +86,9 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 	modulePath := options.modulePath
 	if modulePath == "" {
 		modulePath = "github.com/example/" + projectName + "/backend"
+		if strings.Contains(options.projectName, "/") {
+			modulePath = options.projectName + "/backend"
+		}
 	}
 	err = module.CheckPath(modulePath)
 	if err != nil {
@@ -78,7 +96,7 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 	}
 	frontendModule := options.frontendModule
 	if frontendModule == "" {
-		frontendModule = "app"
+		frontendModule = projectName
 	}
 	if strings.ContainsAny(frontendModule, "/, \\ \t\r\n") {
 		return "", fmt.Errorf("无效的前端 module 名称: %s", frontendModule)
@@ -92,6 +110,7 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 		return "", fmt.Errorf("检查目标目录 %s: %w", target, err)
 	}
 
+	projectProgress.Printf("[1/5] 创建项目骨架：%s（Go module：%s）", target, modulePath)
 	err = os.Mkdir(target, 0o755)
 	if err != nil {
 		return "", fmt.Errorf("创建目标目录 %s: %w", target, err)
@@ -102,6 +121,7 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 		if initialized {
 			return
 		}
+		projectProgress.Printf("生成失败，清理未完成项目：%s", cleanupTarget)
 		cleanupErr := os.RemoveAll(cleanupTarget)
 		if cleanupErr != nil && err == nil {
 			err = fmt.Errorf("清理未完成项目 %s: %w", cleanupTarget, cleanupErr)
@@ -109,11 +129,12 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 	}()
 
 	tokens := map[string]string{
-		"__MODULE_PATH__":     modulePath,
-		"__PROJECT_NAME__":    projectName,
-		"__PACKAGE_NAME__":    projectPackageName(projectName),
-		"__FRONTEND_MODULE__": frontendModule,
-		"__DATABASE_NAME__":   projectPackageName(projectName),
+		"__MODULE_PATH__":      modulePath,
+		"__PROJECT_NAME__":     projectName,
+		"__PACKAGE_NAME__":     projectPackageName(projectName),
+		"__BUSINESS_PACKAGE__": projectPackageName(frontendModule),
+		"__FRONTEND_MODULE__":  frontendModule,
+		"__DATABASE_NAME__":    projectPackageName(projectName),
 	}
 	err = renderTemplates(target, projectTemplateRoot, tokens)
 	if err != nil {
@@ -129,9 +150,22 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 		return "", err
 	}
 	for _, directory := range projectDirectories {
-		err = os.MkdirAll(filepath.Join(target, filepath.FromSlash(directory)), 0o755)
+		directory = replaceTokens(directory, tokens)
+		path := filepath.Join(target, filepath.FromSlash(directory))
+		err = os.MkdirAll(path, 0o755)
 		if err != nil {
 			return "", fmt.Errorf("创建项目目录 %s: %w", directory, err)
+		}
+		var entries []os.DirEntry
+		entries, err = os.ReadDir(path)
+		if err != nil {
+			return "", err
+		}
+		if len(entries) == 0 {
+			err = os.WriteFile(filepath.Join(path, ".gitkeep"), nil, 0o644)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 	err = os.MkdirAll(filepath.Join(target, "frontend"), 0o755)
@@ -179,7 +213,7 @@ func renderTemplates(target, templateRoot string, tokens map[string]string) erro
 		if err != nil {
 			return fmt.Errorf("写入模板文件 %s: %w", renderedPath, err)
 		}
-		if strings.HasSuffix(renderedPath, ".sh") {
+		if strings.HasSuffix(renderedPath, ".sh") || strings.HasPrefix(string(content), "#!") {
 			err = os.Chmod(outputPath, 0o755)
 			if err != nil {
 				return fmt.Errorf("设置模板脚本权限 %s: %w", renderedPath, err)
@@ -189,24 +223,35 @@ func renderTemplates(target, templateRoot string, tokens map[string]string) erro
 	})
 }
 
-// initializeProject 生成前端、解析最新后端依赖、Wire 产物，并验证完整项目可以编译。
+// initializeProject 输出初始化阶段进度，生成并验证后端后补齐前端工具链。
 func initializeProject(target, frontendModule string) error {
-	return initializeProjectWithRunner(target, frontendModule, runProjectCommandInDirectory)
+	err := initializeProjectWithRunner(target, frontendModule, runProjectCommandInDirectory, projectDependencyResolver{backend: resolveBackendDependency, frontend: resolveFrontendVersion})
+	if err != nil {
+		return err
+	}
+	projectProgress.Printf("[5/5] 补齐前端工具链与语言注册文件")
+	return completeFrontendWorkspaces(target, frontendModule)
 }
 
-// initializeProjectWithRunner 刷新前端 CLI，通过 Admin 公开入口生成并验证单模块后端。
-func initializeProjectWithRunner(target, frontendModule string, runner projectCommandRunner) error {
+// initializeProjectWithRunner 按发布版本复用缓存，输出阶段进度并执行生成及验证命令。
+func initializeProjectWithRunner(target, frontendModule string, runner projectCommandRunner, resolve projectDependencyResolver) error {
 	var err error
 	for _, cli := range frontendCLIs {
-		// 仅对本次生成绕过镜像同步延迟与 dlx 旧缓存，不修改用户全局配置。
+		projectProgress.Printf("[2/5] 生成 %s 前端（业务 module：%s）", cli.name, frontendModule)
+		var version string
+		version, err = resolve.frontend(cli.packageName)
+		if err != nil {
+			return err
+		}
+		projectProgress.Printf("使用 %s CLI %s，复用 pnpm 可用缓存", cli.name, version)
+		// 精确版本隔离不同发布的 CLI 缓存，不再强制清空 dlx 缓存。
 		err = runner(
 			target,
 			".",
 			"pnpm",
 			"--config.@liujitcn:registry=https://registry.npmjs.org/",
-			"--config.dlx-cache-max-age=0",
 			"dlx",
-			cli.packageName,
+			cli.packageName+"@"+version,
 			"create",
 			filepath.Join(target, "frontend", cli.name),
 			"--module",
@@ -217,61 +262,41 @@ func initializeProjectWithRunner(target, frontendModule string, runner projectCo
 		}
 	}
 	backendTarget := filepath.Join(target, "backend")
-	err = runner(
-		backendTarget,
-		".",
-		"go",
-		"get",
-		"github.com/liujitcn/kratos-admin/backend@latest",
-	)
+	projectProgress.Printf("[3/5] 对比 Backend 发布 tag 与本地 Go 模块缓存")
+	var dependency backendDependency
+	dependency, err = resolve.backend()
 	if err != nil {
-		return fmt.Errorf("解析最新 Admin Backend 依赖失败: %w", err)
+		return err
+	}
+	if dependency.cached {
+		projectProgress.Printf("Backend %s 已缓存，跳过 go get", dependency.version)
+		err = runner(backendTarget, ".", "go", "mod", "edit", "-require="+adminBackendModule+"@"+dependency.version)
+	} else {
+		projectProgress.Printf("Backend %s 尚未缓存，获取指定版本", dependency.version)
+		err = runner(backendTarget, ".", "go", "get", adminBackendModule+"@"+dependency.version)
+	}
+	if err != nil {
+		return fmt.Errorf("设置 Admin Backend 依赖失败: %w", err)
 	}
 	err = runner(backendTarget, ".", "go", "mod", "tidy")
 	if err != nil {
 		return err
 	}
-	err = runner(
-		backendTarget,
-		"internal/cmd/server",
-		"go",
-		"run",
-		"github.com/google/wire/cmd/wire@v0.7.0",
-		".",
-	)
+	projectProgress.Printf("[4/5] 生成 Wire、格式化并测试后端")
+	// 创建项目时直接运行固定版本 Wire，不依赖用户预先安装全局生成工具。
+	for _, directory := range []string{"internal/module", "internal/cmd/server"} {
+		err = runner(backendTarget, directory, "go", "run", "github.com/google/wire/cmd/wire@v0.7.0", ".")
+		if err != nil {
+			return err
+		}
+	}
+	err = runner(backendTarget, ".", "go", "fmt", "./...")
 	if err != nil {
 		return err
 	}
 	err = runner(backendTarget, ".", "go", "test", "./...")
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-// runProjectCommand 在生成项目中执行命令并返回完整失败上下文。
-func runProjectCommand(target, name string, args ...string) error {
-	return runProjectCommandInDirectory(target, ".", name, args...)
-}
-
-// runProjectCommandInDirectory 在生成项目指定目录执行命令并返回完整失败上下文。
-func runProjectCommandInDirectory(target, directory, name string, args ...string) error {
-	command := exec.Command(name, args...)
-	command.Dir = filepath.Join(target, filepath.FromSlash(directory))
-	if name == "go" {
-		// 生成项目必须只使用自己的 go.mod，避免继承调用方的 Go workspace。
-		command.Env = append(os.Environ(), "GOWORK=off")
-	}
-	output, err := command.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf(
-			"在 %s 执行 %s %s 失败: %w\n%s",
-			command.Dir,
-			name,
-			strings.Join(args, " "),
-			err,
-			strings.TrimSpace(string(output)),
-		)
 	}
 	return nil
 }

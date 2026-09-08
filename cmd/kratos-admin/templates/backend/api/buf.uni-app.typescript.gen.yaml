@@ -1,4 +1,4 @@
-# 配置 uni-app core 包的 TypeScript RPC 生成规则
+# 配置 uni-app system 模块的 TypeScript RPC 生成规则
 version: v2
 
 clean: true
@@ -14,20 +14,10 @@ managed:
 
 inputs:
   - directory: .
-    paths:
-      - proto/base/v1/config.proto
-      - proto/base/v1/language.proto
-      - proto/base/v1/file.proto
-      - proto/base/v1/login.proto
-      - proto/base/v1/mfa.proto
-      - proto/base/v1/mcp.proto
-      - proto/base/v1/oauth.proto
-      - proto/base/v1/sse.proto
-      - proto/system/app/v1
 
 plugins:
   - local: protoc-gen-ts_proto
-    out: ../../frontend/uni-app/packages/core/src/rpc
+    out: ../../frontend/uni-app/packages/modules/__FRONTEND_MODULE__/src/rpc
     include_imports: true
     include_wkt: true
     exclude_types:

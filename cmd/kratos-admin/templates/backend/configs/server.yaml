@@ -1,15 +1,23 @@
 server:
   http:
     addr: :7001
-    timeout: 0s
-    enable_swagger: false
+    # 普通 HTTP 请求处理超时；公共 HTTP 服务会跳过流式请求。
+    timeout: 30s
+    max_body_bytes: 67108864
+    enable_swagger: true
     enable_pprof: false
+#    tls:
+#      file:
+#        cert_path: ../certs/dev-cert.pem
+#        key_path: ../certs/dev-key.pem
     cors:
+      allow_credentials: true
       headers:
         - "X-Requested-With"
         - "X-Request-ID"
         - "Content-Type"
         - "Authorization"
+        - "X-Refresh-Token-Transport"
       methods:
         - "GET"
         - "POST"
@@ -29,17 +37,19 @@ server:
       enable_recovery: true
       enable_tracing: true
       enable_validate: true
+      enable_circuit_breaker: true
       enable_metadata: true
 
   grpc:
     addr: 0.0.0.0:6001
     timeout: 10s
     middleware:
-      enable_logging: true
       enable_recovery: true
+      enable_logging: true
       enable_tracing: true
       enable_validate: true
       enable_metadata: true
+      enable_circuit_breaker: false
 
   mcp:
     transport: IN_PROCESS
@@ -49,7 +59,6 @@ server:
     transport: IN_PROCESS
     path: /events
     codec: json
-    timeout: 10s
     event_ttl: 300s
     auto_stream: true
     auto_reply: true

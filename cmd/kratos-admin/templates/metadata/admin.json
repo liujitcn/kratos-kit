@@ -1,0 +1,70 @@
+{
+  "name": "__PROJECT_NAME__-admin",
+  "scripts": {
+    "test": "node --test",
+    "lint:oxlint": "oxlint --fix --vue-plugin --config ./internal/lint-config/oxlint.json --ignore-path .oxlintignore ./apps ./packages ./internal ./scripts",
+    "lint:lint-staged": "lint-staged",
+    "lint:prettier": "prettier --write \"{apps,packages,internal,scripts}/**/*.{js,mjs,ts,json,tsx,css,less,scss,vue,html,md,yaml}\"",
+    "lint:stylelint": "stylelint --cache --fix \"{apps,packages}/**/*.{vue,less,postcss,css,scss}\" --cache-location node_modules/.cache/stylelint/",
+    "generate:auto-import-types": "node scripts/generate-auto-import-types.mjs"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
+    "@types/md5": "^2.3.5",
+    "@types/node": "^25.9.1",
+    "@types/nprogress": "^0.2.3",
+    "@types/qs": "^6.9.15",
+    "@types/sortablejs": "^1.15.8",
+    "autoprefixer": "^10.4.19",
+    "cz-git": "1.13.1",
+    "czg": "^1.13.1",
+    "lint-staged": "^15.2.5",
+    "oxlint": "^1.67.0",
+    "postcss": "^8.4.38",
+    "postcss-html": "^1.8.1",
+    "prettier": "^3.3.2",
+    "sass": "^1.100.0",
+    "standard-version": "^9.5.0",
+    "stylelint": "^17.12.0",
+    "stylelint-config-html": "^1.1.0",
+    "stylelint-config-recess-order": "^7.7.0",
+    "stylelint-config-recommended-scss": "^17.0.1",
+    "stylelint-config-recommended-vue": "^1.5.0",
+    "stylelint-config-standard": "^40.0.0",
+    "stylelint-config-standard-scss": "^17.0.0",
+    "stylelint-order": "8.1.1",
+    "ts-proto": "^2.11.8",
+    "turbo": "^2.5.6",
+    "typescript": "6.0.3",
+    "vite": "^8.0.14",
+    "vue-tsc": "^3.3.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "@vueuse/core": "14.4.0",
+      "element-plus": "2.14.5",
+      "svg-baker>braces": "3.0.3",
+      "svg-baker>micromatch": "4.0.8",
+      "svg-baker>postcss": "8.5.26",
+      "vue": "3.5.42",
+      "vue-router": "5.3.1"
+    },
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "es5-ext",
+      "esbuild",
+      "vue-demi",
+      "workbox-build"
+    ],
+    "ignoredBuiltDependencies": [
+      "@scarf/scarf"
+    ],
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2025-71330",
+        "CVE-2025-71329"
+      ]
+    }
+  }
+}

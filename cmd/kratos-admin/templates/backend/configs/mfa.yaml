@@ -1,0 +1,17 @@
+mfa:
+    login_challenge_expire: 300s
+    login_max_attempts: 5
+    recovery_code_count: 10
+    recovery_code_length: 10
+    setup_ticket_expire: 600s
+    totp:
+        algorithm: SHA1
+        digits: 6
+        issuer: Kratos Admin
+        period: 30
+        secret_size: 20
+        skew: 1
+    webauthn:
+        rp_id: localhost
+        rp_origins:
+            - https://test.com

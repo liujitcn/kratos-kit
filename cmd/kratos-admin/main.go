@@ -20,7 +20,7 @@ func main() {
 	}
 }
 
-// run 解析 create 命令并生成完整前后端项目。
+// run 解析项目名或仓库路径及模块覆盖参数，生成完整前后端项目。
 func run(args []string, output io.Writer) error {
 	if len(args) == 0 ||
 		args[0] == "help" ||
@@ -42,9 +42,9 @@ func run(args []string, output io.Writer) error {
 	var projectName string
 	projectName = args[1]
 	var modulePath string
-	flags.StringVar(&modulePath, "module", "", "后端项目的 Go module，默认 github.com/example/<project>/backend")
+	flags.StringVar(&modulePath, "module", "", "后端 Go module，默认使用仓库路径/backend 或 github.com/example/<project>/backend")
 	var frontendModule string
-	flags.StringVar(&frontendModule, "frontend-module", "app", "前端默认业务 module 名称")
+	flags.StringVar(&frontendModule, "frontend-module", "", "业务 module 名称，默认使用项目名")
 	var err error
 	err = flags.Parse(args[2:])
 	if err != nil {
@@ -76,11 +76,11 @@ func run(args []string, output io.Writer) error {
 	return err
 }
 
-// printHelp 输出命令帮助。
+// printHelp 输出项目名、仓库路径和模块覆盖参数的命令帮助。
 func printHelp(output io.Writer) {
 	_, _ = fmt.Fprintf(
 		output,
-		"%s\n\n用法:\n  %s create <project> [--module <go-module>] [--frontend-module <module>]\n\n示例:\n  %s create shop-admin\n  %s create shop-admin --module github.com/acme/shop-admin/backend --frontend-module shop\n",
+		"%s\n\n用法:\n  %s create <project|repository-path> [--module <go-module>] [--frontend-module <module>]\n\n业务 module 默认使用项目名，Go module 默认使用仓库路径/backend。\n\n示例:\n  %s create shop-admin\n  %s create github.com/example/test\n",
 		"创建包含前后端和 Admin 能力的完整项目，前端通过管理端、uni-app 和 Taro CLI 生成。",
 		commandName,
 		commandName,
@@ -88,7 +88,7 @@ func printHelp(output io.Writer) {
 	)
 }
 
-// usageText 返回命令行参数错误时使用的简短用法。
+// usageText 返回支持项目名或仓库路径的简短用法。
 func usageText() string {
-	return "用法: " + commandName + " create <project> [--module <go-module>] [--frontend-module <module>]"
+	return "用法: " + commandName + " create <project|repository-path> [--module <go-module>] [--frontend-module <module>]"
 }

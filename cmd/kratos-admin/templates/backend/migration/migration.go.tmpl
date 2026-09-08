@@ -1,0 +1,21 @@
+package migration
+
+import (
+	"embed"
+	"io/fs"
+)
+
+// ModuleName 是当前项目迁移的稳定模块名。
+const ModuleName = "__PROJECT_NAME__-backend"
+
+//go:embed assets
+var migrations embed.FS
+
+// Assets 返回当前项目迁移文件系统，交由 Core 按依赖顺序执行。
+func Assets() fs.FS {
+	value, err := fs.Sub(migrations, "assets")
+	if err != nil {
+		panic(err)
+	}
+	return value
+}

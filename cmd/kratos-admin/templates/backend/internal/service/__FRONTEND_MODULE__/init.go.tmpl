@@ -1,0 +1,10 @@
+package __BUSINESS_PACKAGE__
+
+import (
+	"__MODULE_PATH__/internal/service/__FRONTEND_MODULE__/admin"
+	"__MODULE_PATH__/internal/service/__FRONTEND_MODULE__/app"
+	"github.com/google/wire"
+)
+
+// ProviderSet 汇总当前业务的管理端与应用端依赖。
+var ProviderSet = wire.NewSet(admin.ProviderSet, app.ProviderSet)

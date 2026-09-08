@@ -1,2 +1,5 @@
 pprof:
   type: pyroscope
+  pyroscope:
+    application_name: admin-server
+    server_address: http://localhost:4040

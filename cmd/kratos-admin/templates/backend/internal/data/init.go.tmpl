@@ -1,0 +1,11 @@
+package data
+
+import "github.com/google/wire"
+
+// ProviderSet 提供当前项目的数据访问依赖。
+var ProviderSet = wire.NewSet()
+
+// Models 汇总当前项目的数据库模型，生成表结构后在此加入生成数据包的 Models。
+func Models() []interface{} {
+	return []interface{}{}
+}

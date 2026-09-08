@@ -1,9 +1,27 @@
 logger:
-  type: zap
-  zap:
-    level: debug
-    filepath: ./data/logs
-    max_size: 10
-    max_age: 30
-    max_backups: 3
-    enable_console: true
+    type: zap
+    zap:
+        enable_console: true
+        filepath: ./logs
+        level: debug
+        max_age: 30
+        max_backups: 5
+        max_size: 1
+    aliyun:
+        access_key: "<access_key>"
+        access_secret: "<access_secret>"
+        endpoint: ""
+        project: ""
+    fluent:
+        endpoint: tcp://localhost:24224
+    logrus:
+        disable_colors: false
+        disable_timestamp: false
+        formatter: text
+        level: debug
+        timestamp_format: "2006-01-02 15:04:05"
+    tencent:
+        access_key: "<access_key>"
+        access_secret: "<access_secret>"
+        endpoint: ""
+        topic_id: null
