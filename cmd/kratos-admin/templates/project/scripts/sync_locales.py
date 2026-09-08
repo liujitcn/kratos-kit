@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 import sys
+import subprocess
 from pathlib import Path
 
 
@@ -26,22 +27,10 @@ def discover_locale_directories() -> dict[str, Path]:
     return directories
 
 
-def discover_frontend_generated_files(locale_directories: dict[str, Path]) -> dict[str, Path]:
-    """根据已发现的前端语言目录定位生成的注册文件。"""
-    return {
-        name: directory / "generated.ts"
-        for name, directory in locale_directories.items()
-        if name != "backend"
-    }
-
-
 LOCALE_DIRECTORIES = discover_locale_directories()
-FRONTEND_GENERATED_FILES = discover_frontend_generated_files(LOCALE_DIRECTORIES)
 
 CODEGEN_MESSAGE_PREFIX = "system.code.gen."
 COMMON_MESSAGE_PREFIX = "common."
-DAYJS_LOCALE_DIRECTORY = ROOT / "frontend/admin/packages/core/node_modules/dayjs/locale"
-ELEMENT_LOCALE_DIRECTORY = ROOT / "frontend/admin/packages/core/node_modules/element-plus/es/locale/lang"
 MIGRATION_VERSION_PATTERN = re.compile(r"^v\d+\.\d+\.\d+$")
 LOCALE_CODE_PATTERN = re.compile(r"^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$")
 
@@ -125,33 +114,6 @@ def validate_locale_sets(file_sets: dict[str, dict[str, Path]]) -> list[str]:
     return ordered_locales(expected)
 
 
-def identifier(locale: str) -> str:
-    value = re.sub(r"[^A-Za-z0-9]", " ", locale).title().replace(" ", "")
-    return value or "Locale"
-
-
-def package_locale_path(locale: str, directory: Path) -> str:
-    normalized = locale.lower()
-    candidates = [normalized]
-    base = normalized.split("-", 1)[0]
-    if base != normalized:
-        candidates.append(base)
-    for candidate in candidates:
-        if any((directory / f"{candidate}{extension}").exists() for extension in (".js", ".mjs")):
-            return candidate
-    raise ValueError(
-        f"{directory.name} 缺少 {locale} 的组件语言映射，请安装依赖或补充对应 locale 文件"
-    )
-
-
-def dayjs_locale_path(locale: str) -> str:
-    return package_locale_path(locale, DAYJS_LOCALE_DIRECTORY)
-
-
-def element_locale_path(locale: str) -> str:
-    return package_locale_path(locale, ELEMENT_LOCALE_DIRECTORY)
-
-
 def language_metadata(file_sets: dict[str, dict[str, Path]], locales: list[str]) -> list[dict[str, str | int]]:
     core_files = file_sets["backend"]
     default_messages = json.loads(core_files[DEFAULT_LOCALE].read_text(encoding="utf-8"))
@@ -222,52 +184,6 @@ def render_language_migration_description(locales: list[str]) -> str:
     )
 
 
-def render_frontend_generated(locales: list[str], include_dayjs: bool, use_double_quotes: bool) -> str:
-    quote = '"' if use_double_quotes else "'"
-    semicolon = ";" if use_double_quotes else ""
-
-    def js_string(value: str) -> str:
-        return f"{quote}{value}{quote}"
-
-    lines = [
-        "/* 此文件由 scripts/sync_locales.py 生成，请勿手工修改。 */",
-    ]
-    if include_dayjs:
-        for locale in locales:
-            dayjs_path = dayjs_locale_path(locale)
-            if dayjs_path:
-                lines.append(f'import "dayjs/locale/{dayjs_path}";')
-        for locale in locales:
-            lines.append(
-                f'import elementLocale{identifier(locale)} from "element-plus/es/locale/lang/{element_locale_path(locale)}";'
-            )
-        lines.append("")
-    for locale in locales:
-        lines.append(f"import locale{identifier(locale)} from {js_string(f'./{locale}.json')}{semicolon}")
-    lines.extend(["", "export const LOCALE_MESSAGES = {"])
-    for locale in locales:
-        lines.append(f"  {js_string(locale)}: locale{identifier(locale)},")
-    lines.extend([
-        f"}} as const satisfies Record<string, Record<string, string>>{semicolon}",
-        "",
-        f"export type GeneratedLocale = keyof typeof LOCALE_MESSAGES{semicolon}",
-        f"export const DEFAULT_LOCALE: GeneratedLocale = {js_string(DEFAULT_LOCALE)}{semicolon}",
-        f"export const SUPPORTED_LOCALES = Object.keys(LOCALE_MESSAGES) as GeneratedLocale[]{semicolon}",
-    ])
-    if include_dayjs:
-        lines.extend(["", "export const DAYJS_LOCALE_MAP: Record<string, string> = {"])
-        for locale in locales:
-            dayjs_path = dayjs_locale_path(locale)
-            if dayjs_path:
-                lines.append(f'  "{locale}": "{dayjs_path}",')
-        lines.extend(["};"])
-        lines.extend(["", "export const ELEMENT_LOCALES = {"])
-        for locale in locales:
-            lines.append(f'  "{locale}": elementLocale{identifier(locale)},')
-        lines.extend(["} as const;"])
-    return "\n".join(lines) + "\n"
-
-
 def ensure_content(path: Path, content: str, write: bool) -> None:
     current = path.read_text(encoding="utf-8") if path.exists() else ""
     if current == content:
@@ -285,6 +201,7 @@ def ensure_migration_readme(path: Path, content: str, write: bool) -> None:
 
 
 def main() -> int:
+    """校验跨端语言集合，调用前端 CLI 同步脚本并按需生成后端迁移。"""
     parser = argparse.ArgumentParser(description="同步语言包集合和前端注册产物")
     parser.add_argument("--write", action="store_true", help="写入生成产物；默认只检查")
     parser.add_argument(
@@ -297,8 +214,11 @@ def main() -> int:
         file_sets = {name: locale_files(directory) for name, directory in LOCALE_DIRECTORIES.items()}
         locales = validate_locale_sets(file_sets)
         metadata = language_metadata(file_sets, locales)
-        for name, path in FRONTEND_GENERATED_FILES.items():
-            ensure_content(path, render_frontend_generated(locales, name == "admin-core", name == "admin-core"), args.write)
+        for terminal in ("admin", "uni-app", "taro-app"):
+            script = ROOT / "frontend" / terminal / "scripts/sync-locales.mjs"
+            if not script.exists():
+                raise ValueError(f"前端 CLI 语言同步脚本缺失: {script}")
+            subprocess.run(["node", str(script), *(["--write"] if args.write else [])], check=True)
         if args.migration_version:
             if not MIGRATION_VERSION_PATTERN.fullmatch(args.migration_version):
                 raise ValueError("迁移版本必须是 vX.Y.Z 格式")
@@ -315,7 +235,7 @@ def main() -> int:
                 render_language_migration_description(locales),
                 args.write,
             )
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
         print(error, file=sys.stderr)
         return 1
 

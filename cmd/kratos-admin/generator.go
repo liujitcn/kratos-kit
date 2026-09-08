@@ -112,7 +112,7 @@ func createProjectWithOptions(options projectOptions, cwd string, initializer pr
 		return "", fmt.Errorf("检查目标目录 %s: %w", target, err)
 	}
 
-	projectProgress.Printf("[1/5] 创建项目骨架：%s（Go module：%s）", target, modulePath)
+	projectProgress.Printf("[1/4] 创建项目骨架：%s（Go module：%s）", target, modulePath)
 	err = os.Mkdir(target, 0o755)
 	if err != nil {
 		return "", fmt.Errorf("创建目标目录 %s: %w", target, err)
@@ -249,25 +249,16 @@ func renderTemplates(target, templateRoot string, tokens map[string]string) erro
 	})
 }
 
-// initializeProject 输出初始化阶段进度，生成并验证后端后补齐前端工具链。
+// initializeProject 输出初始化阶段进度，调用三端 CLI 生成完整前端，再初始化并验证后端。
 func initializeProject(target, frontendModule string) error {
-	err := initializeProjectWithRunner(target, frontendModule, runProjectCommandInDirectory, projectDependencyResolver{backend: resolveBackendDependency, frontend: resolveFrontendVersion})
-	if err != nil {
-		return err
-	}
-	err = normalizeFrontendModules(target, strings.Split(frontendModule, ","))
-	if err != nil {
-		return err
-	}
-	projectProgress.Printf("[5/5] 补齐前端工具链与语言注册文件")
-	return completeFrontendWorkspaces(target, frontendModule)
+	return initializeProjectWithRunner(target, frontendModule, runProjectCommandInDirectory, projectDependencyResolver{backend: resolveBackendDependency, frontend: resolveFrontendVersion})
 }
 
 // initializeProjectWithRunner 按发布版本复用缓存，输出阶段进度并执行生成及验证命令。
 func initializeProjectWithRunner(target, frontendModule string, runner projectCommandRunner, resolve projectDependencyResolver) error {
 	var err error
 	for _, cli := range frontendCLIs {
-		projectProgress.Printf("[2/5] 生成 %s 前端（业务 module：%s）", cli.name, frontendModule)
+		projectProgress.Printf("[2/4] 生成 %s 前端（业务 module：%s）", cli.name, frontendModule)
 		var version string
 		version, err = resolve.frontend(cli.packageName)
 		if err != nil {
@@ -275,8 +266,8 @@ func initializeProjectWithRunner(target, frontendModule string, runner projectCo
 		}
 		projectProgress.Printf("使用 %s CLI %s，复用 pnpm 可用缓存", cli.name, version)
 		// 精确版本隔离不同发布的 CLI 缓存，不再强制清空 dlx 缓存。
-		args := []string{"--config.@liujitcn:registry=https://registry.npmjs.org/", "dlx", cli.packageName + "@" + version, "create", filepath.Join(target, "frontend", cli.name)}
-		for _, moduleName := range frontendModuleAliases(strings.Split(frontendModule, ",")) {
+		args := []string{"--config.@liujitcn:registry=https://registry.npmjs.org/", "dlx", cli.packageName + "@" + version, "create", filepath.Join(target, "frontend", cli.name), "--kratos-project"}
+		for _, moduleName := range strings.Split(frontendModule, ",") {
 			args = append(args, "--module", moduleName)
 		}
 		err = runner(target, ".", "pnpm", args...)
@@ -285,7 +276,7 @@ func initializeProjectWithRunner(target, frontendModule string, runner projectCo
 		}
 	}
 	backendTarget := filepath.Join(target, "backend")
-	projectProgress.Printf("[3/5] 对比 Backend 发布 tag 与本地 Go 模块缓存")
+	projectProgress.Printf("[3/4] 对比 Backend 发布 tag 与本地 Go 模块缓存")
 	var dependency backendDependency
 	dependency, err = resolve.backend()
 	if err != nil {
@@ -305,7 +296,7 @@ func initializeProjectWithRunner(target, frontendModule string, runner projectCo
 	if err != nil {
 		return err
 	}
-	projectProgress.Printf("[4/5] 生成 Wire、格式化并测试后端")
+	projectProgress.Printf("[4/4] 生成 Wire、格式化并测试后端")
 	// 创建项目时直接运行固定版本 Wire，不依赖用户预先安装全局生成工具。
 	for _, directory := range []string{"internal/module", "internal/cmd/server"} {
 		err = runner(backendTarget, directory, "go", "run", "github.com/google/wire/cmd/wire@v0.7.0", ".")

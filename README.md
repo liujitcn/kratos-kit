@@ -150,7 +150,7 @@ go install github.com/liujitcn/kratos-kit/cmd/kratos-admin@latest
 kratos-admin create shop-admin
 ```
 
-前端生成会临时使用 npm 官方源解析 `@liujitcn` 包并刷新 dlx 执行缓存，自动获取最新 CLI，
+前端全部由三端 npm CLI 生成，Go 仅传参调用，不补写前端文件。生成时临时使用 npm 官方源解析 `@liujitcn` 包，按精确版本复用 dlx 缓存，
 无需手动清理缓存或配置环境变量，也不会修改全局及项目 pnpm 配置。
 
 生成时使用 `backend@latest` 及其 `go.mod` 声明的 API 依赖解析最新 Admin Backend/API，并生成

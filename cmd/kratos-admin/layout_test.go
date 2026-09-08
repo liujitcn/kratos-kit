@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"go/parser"
 	"go/token"
@@ -62,9 +61,8 @@ func TestMakefileTargetsMatchAdmin(t *testing.T) {
 	}
 	targetPattern := regexp.MustCompile(`(?m)^([a-zA-Z][a-zA-Z0-9_-]*):`)
 	for template, source := range map[string]string{
-		"templates/project/Makefile":          "Makefile",
-		"templates/backend/Makefile":          "backend/Makefile",
-		"templates/project/frontend/Makefile": "frontend/Makefile",
+		"templates/project/Makefile": "Makefile",
+		"templates/backend/Makefile": "backend/Makefile",
 	} {
 		content, err := projectTemplates.ReadFile(template)
 		if err != nil {
@@ -90,68 +88,19 @@ func TestMakefileTargetsMatchAdmin(t *testing.T) {
 	}
 }
 
-// TestFrontendWorkspaceCompletion 验证补齐前端工具链时保留 CLI 依赖并统一 H5 输出。
-func TestFrontendWorkspaceCompletion(t *testing.T) {
-	target, err := createProjectWithOptions(projectOptions{projectName: "orders", frontendModule: "orders"}, t.TempDir(), func(string, string) error { return nil })
+// TestFrontendOwnedByCLI 验证 Go 骨架不生成任何前端文件。
+func TestFrontendOwnedByCLI(t *testing.T) {
+	target, err := createProjectWithOptions(projectOptions{projectName: "orders"}, t.TempDir(), func(string, string) error { return nil })
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"admin", "uni-app", "taro-app"} {
-		for path, content := range map[string]string{
-			"package.json":                         `{"scripts":{"dev":"keep-existing-command"},"dependencies":{"@example/keep":"1.0.0"}}`,
-			"packages/modules/orders/package.json": `{"name":"@local/orders","version":"0.0.1","private":true}`,
-			"apps/" + name + "/package.json":       `{"scripts":{"build:h5":"cross-env KRATOS_TARO_OUTPUT_ROOT=dist/build/h5 build"}}`,
-		} {
-			output := filepath.Join(target, "frontend", name, path)
-			err = os.MkdirAll(filepath.Dir(output), 0o755)
-			if err != nil {
-				t.Fatal(err)
-			}
-			err = os.WriteFile(output, []byte(content), 0o644)
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
-	}
-	config := filepath.Join(target, "frontend/admin/apps/admin/vite.config.ts")
-	err = os.WriteFile(config, []byte("export default { optimizeDependencies: adminModuleOptimizeDependencies };"), 0o644)
+	var entries []os.DirEntry
+	entries, err = os.ReadDir(filepath.Join(target, "frontend"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = completeFrontendWorkspaces(target, "orders")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, name := range []string{"admin", "uni-app", "taro-app"} {
-		var content []byte
-		content, err = os.ReadFile(filepath.Join(target, "frontend", name, "package.json"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		var manifest struct {
-			Scripts      map[string]string
-			Dependencies map[string]string
-		}
-		err = json.Unmarshal(content, &manifest)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if manifest.Scripts["test"] == "" || manifest.Scripts["dev"] != "keep-existing-command" || manifest.Dependencies["@example/keep"] != "1.0.0" {
-			t.Errorf("%s 未正确合并 CLI 元数据: %s", name, content)
-		}
-		_, err = os.Stat(filepath.Join(target, "frontend", name, "packages/modules/orders/src/locales/generated.ts"))
-		if err != nil {
-			t.Errorf("%s 语言注册文件未通过脚本生成: %v", name, err)
-		}
-	}
-	var content []byte
-	content, err = os.ReadFile(config)
-	if err != nil || !strings.Contains(string(content), "backend/data/admin") {
-		t.Fatal("管理端输出路径未对齐")
-	}
-	content, err = os.ReadFile(filepath.Join(target, "frontend/taro-app/apps/taro-app/package.json"))
-	if err != nil || !strings.Contains(string(content), "backend/data/taro-app") {
-		t.Fatal("Taro 输出路径未对齐")
+	if len(entries) != 0 {
+		t.Fatalf("Go 不应生成前端文件: %v", entries)
 	}
 }
 
@@ -218,8 +167,5 @@ func TestBusinessModuleArguments(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "重复") {
 		t.Fatalf("重复参数未合并校验: %v", err)
 	}
-	aliases := frontendModuleAliases([]string{"system", "local-system", "order"})
-	if !slices.Equal(aliases, []string{"local-system-local", "local-system", "order"}) {
-		t.Fatalf("临时名称冲突: %v", aliases)
-	}
+
 }

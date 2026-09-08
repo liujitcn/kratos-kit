@@ -28,7 +28,7 @@
 └── README.md
 ```
 
-前端源码由上游 CLI 生成，后端通过公开的 `kratos-admin/backend` ProviderSet 接入 Admin，
+前端源码、语言注册和检查构建工具全部由三端 npm CLI 生成；后端通过公开的 `kratos-admin/backend` ProviderSet 接入 Admin，
 不复制 Admin 的 `internal` 代码。
 后端业务代码和服务入口属于同一个 Go module，`make -C backend test` 覆盖整个后端。
 前端保持 `apps/<terminal>` 宿主与 `packages/modules/<module>` 业务模块布局，业务模块清单为 `__MODULES__`；

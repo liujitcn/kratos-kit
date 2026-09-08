@@ -218,6 +218,7 @@ func TestInitializeProjectRefreshesFrontendCLIs(t *testing.T) {
 			"@liujitcn/kratos-" + frontend + "-cli@0.0.37",
 			"create",
 			filepath.Join(target, "frontend", frontend),
+			"--kratos-project",
 			"--module",
 			"orders",
 		}

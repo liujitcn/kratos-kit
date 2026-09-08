@@ -1,7 +1,8 @@
 # kratos-admin
 
 `kratos-admin` 用于创建包含前后端的完整项目。项目根目录和后端由本命令内置模板
-生成，前端通过三个上游 CLI 创建 workspace，再补齐与 Admin 一致的宿主入口、检查脚本和工具配置。
+生成；前端全部由三个 npm CLI 生成。Go 只解析版本、传入模块与集成参数并执行 CLI，
+不内置前端模板，不重命名或改写前端文件。
 
 ## 安装
 
@@ -70,6 +71,9 @@ kratos-admin create github.com/example/test --modules system --modules order
 `packages/modules/system`、`packages/modules/order` 等业务包并注册到模块清单。
 后端逐模块生成 biz/service/server、Proto 目录和三端 Buf 配置；Wire、国际化、打包与发布覆盖全部模块。
 本地管理端 `system` 继承内置 System 能力并合并本地视图，运行时只注册一次。
+内置 System 包仍参与 Vite 源码扫描、自动导入和 Swagger 依赖预构建。
+三端所有本地业务模块都会注册脚本生成的语言资源；管理端 `system` 按语言合并内置与本地文案，
+避免启动时出现 `User is not defined` 或 `@local/system 缺少 zh-CN 语言包`。
 
 生成时不预创建后端根目录下的 `adapter`、`client`、`backups`、`codegen`、`data`、
 `logs`；配置和构建脚本保留运行时路径，实际使用时再创建对应目录。
@@ -84,6 +88,11 @@ Proto、配置资源、脚本和生成代码目录不放置手写 Go 初始化�
 - `@liujitcn/kratos-uni-app-cli`
 - `@liujitcn/kratos-taro-app-cli`
 
+三端 CLI 直接接收 `--module system` 等业务模块参数，并启用 `--kratos-project`：
+该模式统一 H5 输出目录，管理端 CLI 还生成共享 `frontend/Makefile` 和 `frontend/scripts`。
+CLI 原生支持本地 `system`，不再使用临时模块名。需先发布支持新参数的三端 CLI，
+再通过 Go 命令从 npm 创建项目；本地回归测试可以验证尚未发布的 CLI 源码。
+
 每次生成先从 npm 官方源查询各 CLI 的 `dist-tags.latest`，再通过 `pnpm dlx 包名@精确版本`
 执行。取消强制刷新 dlx 缓存，同版本按 pnpm 的缓存有效期复用，新版本使用独立缓存。
 `@liujitcn` 作用域仅通过命令行参数临时指向 npm 官方源，其他作用域和全局配置保持原样。
@@ -97,10 +106,10 @@ Git 与 npm 元数据查询均限时 20 秒。Git 查询失败时改用 Go 代�
 仍使用 Backend 自身声明的 Admin API 版本，避免强制覆盖依赖导致跨版本组合。
 随后执行后端 `go mod tidy`，通过固定版本 Wire 生成内部模块与服务入口，再格式化和执行 `go test ./...`。
 `tidy` 仍可能下载本地缺失的间接依赖；缓存命中不代表整个生成流程完全离线。
-最后补齐前端工具链并通过脚本生成语言注册文件。任一前端 CLI 或初始化步骤失败，
+前端 CLI 自行生成工具链和语言注册文件。任一前端 CLI 或初始化步骤失败，
 本命令都会清理本次新建的不完整项目目录。
 
-终端会显示模板、前端生成、依赖解析、Wire 与后端验证、前端工具链五个阶段。
+终端会显示模板、前端 CLI 生成、依赖解析、Wire 与后端验证四个阶段。
 每条子命令显示工作目录，实时输出标准输出和标准错误；执行期间每 10 秒报告当前命令和
 耗时，结束后显示完成或失败状态，避免下载依赖或编译期间长时间没有反馈。
 
@@ -130,11 +139,12 @@ Admin 的公开 `adapter/core` 和 `adapter/kit` 构造函数统一接收数据�
 | 范围 | 同步方式 |
 | --- | --- |
 | Dockerfile、dockerignore、入口脚本、证书脚本、OpenAPI 多语言工具、重装脚本、Git hook | 复用基准公共文件，保留可执行权限 |
-| 根/后端/前端 Makefile、发布脚本 | 替换项目名称、业务包清单、Proto 输入与输出目录；只发布自己的业务包 |
+| 根/后端 Makefile、发布脚本 | 替换项目名称、业务包清单、Proto 输入与输出目录；只发布自己的业务包 |
+| 前端 Makefile、发布与重装脚本 | 由管理端 npm CLI 的 `--kratos-project` 模式生成 |
 | 基础 configs、Go/OpenAPI Buf 配置 | 同步通用字段，保留项目数据库参数与空 AI 配置；不复制 `*.dev.yaml` |
 | 三端 RPC 配置 | 从对应上游模板派生，只生成当前业务模块，不生成 npm Core/System 包的源码 |
 | 语言工具 | 保留校验与生成逻辑，目录改为项目业务模块；空业务不要求 Admin 专属翻译 SQL/代码生成文案 |
-| 前端宿主与检查 | 补齐 App 生命周期、自动导入、tsconfig、lint、测试和打包命令；校验包导出，不要求冒用 Admin 仓库信息 |
+| 前端宿主与检查 | 三端 npm CLI 直接生成生命周期、语言注册、自动导入、tsconfig、lint、测试和打包配置 |
 
 `Resource` 的 `Models/I18n/OpenAPI/Migrations` 均已挂接。模型和语言初始为空，migration 仅保留
 说明文件，目录通过占位文件保留。添加表后在 `internal/data.Models()` 汇总模型；项目迁移依赖 Admin。
@@ -148,6 +158,7 @@ Admin 的公开 `adapter/core` 和 `adapter/kit` 构造函数统一接收数据�
 ```bash
 GOWORK=off go test ./...
 GOWORK=off KRATOS_ADMIN_SOURCE_DIR=/path/to/kratos-admin go test -run TestMakefileTargetsMatchAdmin -v
+GOWORK=off KRATOS_ADMIN_SOURCE_DIR=/path/to/kratos-admin go test -run TestFrontendRuntimeRegistration -v
 GOWORK=off KRATOS_ADMIN_INTEGRATION=1 go test -run TestGeneratedBackendBuilds -v
 ```
 
@@ -156,6 +167,10 @@ GOWORK=off KRATOS_ADMIN_INTEGRATION=1 go test -run TestGeneratedBackendBuilds -v
 依赖解析沿用当前 Go 代理设置。测试未发布的跨仓库修复时，可额外设置
 `KRATOS_ADMIN_BACKEND_DIR`、`KRATOS_CORE_DIR`、`KRATOS_KIT_REDACT_DIR` 和 `KRATOS_KIT_GRPC_DIR` 指向对应本地模块；
 这些替换仅作用于测试的临时项目。
+
+前端运行时回归测试使用指定源码仓库的三端 CLI（管理端 CLI 需先构建，并安装管理端工具依赖），
+真实生成 `system,order` 模块，检查语言注册、内置文案保留、System 单次注册和自动导入转换。
+该测试不连接后端，不替代实际环境的登录联调。
 
 完整验证还应实际创建项目，执行三端 `make -C frontend init/check/build-h5/build-mp-weixin`、
 `make -C backend gen/test/package-binary`、`make i18n I18N_OFFLINE=1` 和 `make i18n-verify`，
