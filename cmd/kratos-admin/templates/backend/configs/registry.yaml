@@ -1,7 +1,7 @@
 registry:
-    type: consul
+    type:
     consul:
         address: 127.0.0.1:8500
         health_check: false
         scheme: http
-        token: 03e92c67-5da7-3f4f-6659-8fb2d137aaa5
+        token:
