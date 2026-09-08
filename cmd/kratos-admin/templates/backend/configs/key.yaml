@@ -1,9 +1,5 @@
-type: vault
+type: file
 scope: default
-root_name: secret/data/kratos/default/root
 root_version: v1
-vault:
-  address: http://127.0.0.1:8200
-  value_key: value
 file:
   path: /Users/liujun/Documents/cert/root.key
