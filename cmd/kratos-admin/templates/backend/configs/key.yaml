@@ -2,4 +2,4 @@ type: file
 scope: default
 root_version: v1
 file:
-  path: /Users/liujun/Documents/cert/root.key
+  path: root.key
