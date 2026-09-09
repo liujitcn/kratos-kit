@@ -17,7 +17,7 @@
 - `tracer`：OpenTelemetry TracerProvider 与 exporter 工厂（`std`/`zipkin`/`otlp-http`/`otlp-grpc`）
 - `tracing`：OpenTelemetry 追踪适配层
 - `ai`：AI 客户端与编排封装（含 `model`、`eino`、`langchaingo` 子模块）
-- `auth`：认证与鉴权封装；认证支持 API Key、Basic、HMAC、JWT、mTLS、OAuth2、OIDC、Session，鉴权支持 Casbin、OPA、Cerbos 和 Zanzibar 适配端口
+- `auth`：认证与鉴权封装；支持按会话签发、轮换及撤销令牌，不同设备使用独立令牌和有效期；认证支持 API Key、Basic、HMAC、JWT、mTLS、OAuth2、OIDC、Session，鉴权支持 Casbin、OPA、Cerbos 和 Zanzibar 适配端口
 - `oauth`：第三方 OAuth SDK 封装（直接使用 `api` 下 OAuth 配置，支持 GitHub、Gitee、Google、微信开放平台、微信公众号、微信小程序、企业微信、钉钉、飞书；闭环支持 state、PKCE、授权地址、code 换 token、用户信息，不包含业务登录态）
 - `cache`：内存/Redis 缓存封装
 - `queue`：内存/Redis 队列封装

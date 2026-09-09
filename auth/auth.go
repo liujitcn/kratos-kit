@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-kratos/kratos/v3/middleware"
 	"github.com/go-kratos/kratos/v3/transport"
@@ -30,7 +31,7 @@ func Server(userToken *data.UserToken) middleware.Middleware {
 			}
 
 			// 校验访问令牌是否存在
-			if err := verifyAccessToken(userToken, authnClaims); err != nil {
+			if err := verifyAccessToken(ctx, userToken, authnClaims); err != nil {
 				return nil, err
 			}
 
@@ -67,7 +68,7 @@ func FromContext(ctx context.Context) (*data.UserTokenPayload, error) {
 }
 
 // verifyAccessToken 校验访问令牌
-func verifyAccessToken(userToken *data.UserToken, authnClaims *engine.AuthClaims) error {
+func verifyAccessToken(ctx context.Context, userToken *data.UserToken, authnClaims *engine.AuthClaims) error {
 	userID, err := authnClaims.GetInt64(data.ClaimFieldUserID)
 	if err != nil {
 		return ErrExtractUserInfoFailed
@@ -76,8 +77,15 @@ func verifyAccessToken(userToken *data.UserToken, authnClaims *engine.AuthClaims
 	if userID == 0 {
 		return nil
 	}
-	// 校验访问令牌是否存在
-	if !userToken.IsExistAccessToken(userID) {
+	// 校验当前请求携带的访问令牌，支持同一用户保留多个会话。
+	accessToken := ""
+	if tr, ok := transport.FromServerContext(ctx); ok {
+		parts := strings.Fields(tr.RequestHeader().Get("Authorization"))
+		if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+			accessToken = parts[1]
+		}
+	}
+	if !userToken.IsAccessTokenValid(userID, accessToken) {
 		return ErrAccessTokenExpired
 	}
 

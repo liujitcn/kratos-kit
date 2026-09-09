@@ -70,7 +70,7 @@ func OptionalServer(authenticator engine.RequestAuthenticator, userToken *data.U
 			if err != nil || authnClaims == nil {
 				return handler(ctx, req)
 			}
-			if err = verifyAccessToken(userToken, authnClaims); err != nil {
+			if err = verifyAccessToken(ctx, userToken, authnClaims); err != nil {
 				return handler(ctx, req)
 			}
 			return handler(authnMiddleware.NewContext(ctx, authnClaims), req)
