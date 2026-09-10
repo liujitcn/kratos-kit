@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -106,5 +107,20 @@ func TestApplyDynamicKeepsUnconfiguredValue(t *testing.T) {
 	result, applied := ApplyDynamic(context.Background(), emptyPolicyResolver{}, "example.v1.Message.content", value)
 	if applied || result != value {
 		t.Fatalf("未配置字段不应执行隐式脱敏: value=%q applied=%v", result, applied)
+	}
+}
+
+// TestApplyWithMessageMap 验证非空消息 Map 递归脱敏不会重复读取 Map 值描述符。
+func TestApplyWithMessageMap(t *testing.T) {
+	message := &structpb.Struct{Fields: map[string]*structpb.Value{
+		"locale": structpb.NewStringValue("original"),
+	}}
+	ApplyWith(context.Background(), emptyPolicyResolver{}, message)
+	if message.Fields["locale"].GetStringValue() != "original" {
+		t.Fatal("无策略时不应改变 Map 内容")
+	}
+	ApplyWith(context.Background(), fixedPolicyResolver{value: "masked"}, message)
+	if message.Fields["locale"].GetStringValue() != "masked" {
+		t.Fatal("Map 消息字段未执行脱敏策略")
 	}
 }

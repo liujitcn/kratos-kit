@@ -325,8 +325,8 @@ func applyDynamicList(ctx context.Context, resolver PolicyResolver, fieldRef str
 	}
 }
 
-func applyDynamicMap(ctx context.Context, resolver PolicyResolver, fieldRef string, values protoreflect.Map, field protoreflect.FieldDescriptor) {
-	valueDescriptor := field.MapValue()
+// applyDynamicMap 使用调用方传入的值描述符递归处理 Map 脱敏。
+func applyDynamicMap(ctx context.Context, resolver PolicyResolver, fieldRef string, values protoreflect.Map, valueDescriptor protoreflect.FieldDescriptor) {
 	values.Range(func(key protoreflect.MapKey, value protoreflect.Value) bool {
 		if valueDescriptor.Kind() == protoreflect.MessageKind || valueDescriptor.Kind() == protoreflect.GroupKind {
 			ApplyWith(ctx, resolver, value.Message().Interface())
