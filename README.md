@@ -414,3 +414,7 @@ make tag MODULE=auth/authn # 从 auth/authn 目录开始递归检查 go.mod 并�
 - [tx7do/kratos-authz](https://github.com/tx7do/kratos-authz)
 
 若涉及版权或授权边界问题，请优先以上游项目许可证与仓库声明为准，并联系维护者处理。
+
+### 迁移记录文件引用
+
+`database/gorm/migration` 的迁移记录使用 `up_files`、`down_files`、`description_files` 三个 JSON 字段保存有序文件路径及 SHA-256，不保存 SQL 或 Markdown 正文。执行时读取 SQL，全部成功后写入引用；文件路径相对注册文件系统，包含版本、数据库类型及可选数据源目录。宿主模型须同步字段定义；旧正文列及历史记录需在备份后显式转换，迁移器不会自动重放已执行版本。历史资源应随应用保留，Core 提供按引用读取和校验能力。

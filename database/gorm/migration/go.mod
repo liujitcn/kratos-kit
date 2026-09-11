@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/migration
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm v0.0.42
+	github.com/liujitcn/kratos-kit/database/gorm v0.0.44
 	gorm.io/gorm v1.31.2
 )
 
@@ -34,14 +34,14 @@ require (
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/liujitcn/go-utils v0.0.41 // indirect
 	github.com/liujitcn/kratos-kit/api v0.0.36 // indirect
-	github.com/liujitcn/kratos-kit/auth v0.0.26 // indirect
+	github.com/liujitcn/kratos-kit/auth v0.0.28 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.24 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.20 // indirect
+	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.21 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.23 // indirect
-	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.19 // indirect
-	github.com/liujitcn/kratos-kit/cache v0.0.21 // indirect
+	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.20 // indirect
+	github.com/liujitcn/kratos-kit/cache v0.0.22 // indirect
 	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.19 // indirect
-	github.com/liujitcn/kratos-kit/utils v0.0.22 // indirect
+	github.com/liujitcn/kratos-kit/utils v0.0.23 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/paulmach/orb v0.11.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect

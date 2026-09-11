@@ -2,8 +2,8 @@ package migration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strings"
 
 	databaseGorm "github.com/liujitcn/kratos-kit/database/gorm"
 	"gorm.io/gorm"
@@ -29,13 +29,22 @@ func applyMigrationAssets(
 		if _, exists := applied[asset.versionName]; exists {
 			continue
 		}
-		upSQL := make([]string, 0, len(asset.upScripts))
+		upFiles := make([]FileReference, 0, len(asset.upScripts))
 		for _, script := range asset.upScripts {
-			upSQL = append(upSQL, string(script.sql))
+			upFiles = append(upFiles, NewFileReference(script.name, script.sql))
 		}
-		downSQL := make([]string, 0, len(asset.downScripts))
+		downFiles := make([]FileReference, 0, len(asset.downScripts))
 		for _, script := range asset.downScripts {
-			downSQL = append(downSQL, string(script.sql))
+			downFiles = append(downFiles, NewFileReference(script.name, script.sql))
+		}
+		var upReferences, downReferences []byte
+		upReferences, err = json.Marshal(upFiles)
+		if err != nil {
+			return err
+		}
+		downReferences, err = json.Marshal(downFiles)
+		if err != nil {
+			return err
 		}
 		err = targetClient.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			for _, script := range asset.upScripts {
@@ -50,12 +59,12 @@ func applyMigrationAssets(
 			return fmt.Errorf("执行迁移版本 %s 失败: %w", asset.versionName, err)
 		}
 		history := &baseMigration{
-			Module:      module.String(),
-			DataSource:  dataSource,
-			Version:     asset.versionName,
-			UpSql:       strings.Join(upSQL, "\n\n"),
-			DownSql:     strings.Join(downSQL, "\n\n"),
-			Description: asset.description,
+			Module:           module.String(),
+			DataSource:       dataSource,
+			Version:          asset.versionName,
+			UpFiles:          string(upReferences),
+			DownFiles:        string(downReferences),
+			DescriptionFiles: asset.description,
 		}
 		err = centralClient.WithContext(ctx).Create(history).Error
 		if err != nil {

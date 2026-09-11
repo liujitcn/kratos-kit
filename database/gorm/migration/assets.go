@@ -40,7 +40,7 @@ type migrationAsset struct {
 	upScripts []migrationScript
 	// downScripts 是按文件名排序的回退脚本集合。
 	downScripts []migrationScript
-	// description 是描述文件的完整文本内容。
+	// description 是描述文件引用的 JSON。
 	description string
 }
 
@@ -107,15 +107,14 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 			if err != nil {
 				return nil, err
 			}
-			var descriptionBuilder strings.Builder
-			for _, descriptionFileName := range descriptionFileNames {
-				descriptionPath := path.Join(targetFile.path, descriptionFileName)
-				var descriptionContent []byte
-				descriptionContent, err = fs.ReadFile(f, descriptionPath)
-				if err != nil {
-					return nil, fmt.Errorf("读取迁移描述文件 %s 失败: %w", descriptionPath, err)
-				}
-				descriptionBuilder.Write(descriptionContent)
+			descriptionPaths := make([]string, 0, len(descriptionFileNames))
+			for _, fileName := range descriptionFileNames {
+				descriptionPaths = append(descriptionPaths, path.Join(targetFile.path, fileName))
+			}
+			var description string
+			description, err = EncodeFileReferences(f, descriptionPaths)
+			if err != nil {
+				return nil, err
 			}
 			var upScripts []migrationScript
 			upScripts, err = readMigrationScripts(f, targetFile.path, upFileNames)
@@ -134,7 +133,7 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 				dataSource:   targetFile.dataSource,
 				upScripts:    upScripts,
 				downScripts:  downScripts,
-				description:  descriptionBuilder.String(),
+				description:  description,
 			})
 		}
 	}
@@ -279,7 +278,7 @@ func readMigrationScripts(f fs.FS, versionPath string, fileNames []string) ([]mi
 			return nil, fmt.Errorf("读取迁移脚本 %s 失败: %w", filePath, err)
 		}
 		scripts = append(scripts, migrationScript{
-			name: fileName,
+			name: filePath,
 			sql:  sqlContent,
 		})
 	}
