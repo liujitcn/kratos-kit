@@ -11,7 +11,7 @@
 | SQL 日志 | `debug: true` 时输出 GORM Info 级别 SQL 日志，慢 SQL 阈值为 1 秒 |
 | 链路追踪 | `enable_trace: true` 时启用 GORM OpenTelemetry tracing 插件 |
 | Prometheus | `enable_metrics: true` 时启用 GORM Prometheus 插件 |
-| 自动迁移 | `enable_migrate: true` 时对已注册模型执行 `AutoMigrate` |
+| 自动迁移 | `enable_migrate: true` 时对已注册模型执行 `AutoMigrate`；Doris 支持建表和新增字段 |
 | 版本化迁移 | 已注册的 `migration/assets` SQL 默认执行，不受 `enable_migrate` 影响 |
 | 表注释 | 自动迁移后为实现 `TableCommenter` 的已注册模型回填表注释 |
 | 审计字段 | 创建时填充 `created_by`、`updated_by`、`created_at`、`updated_at`；更新时刷新 `updated_by`、`updated_at` |
@@ -393,7 +393,9 @@ err := db.Scopes(gormkit.SkipDataIsolation).
 2. 执行 GORM `AutoMigrate`。
 3. 为实现 `TableCommenter` 的模型回填表注释。
 
-表注释回填当前使用 `ALTER TABLE ... COMMENT = ...`，主要适用于 MySQL/Doris。其他数据库可以使用 `AutoMigrate`，但模型不应实现 `TableCommenter`，除非对应数据库确认支持该语法。
+Doris 自动迁移使用专用 OLAP 建表语法：模型主键作为 `UNIQUE KEY` 和 HASH 分桶字段；无主键模型使用首个可迁移字段；默认 `BUCKETS 8`、`replication_num=1`。需要调整副本数时，可在迁移前使用 `db.Set("gorm:doris_replication_num", 3)`。Doris 自动迁移支持创建表和新增字段，已有字段的类型、默认值、Key、分区、分桶等复杂变更应通过 `database/gorm/migration` 的版本化 SQL 完成。
+
+表注释回填在 MySQL 使用 `ALTER TABLE ... COMMENT = ...`，在 Doris 使用 `ALTER TABLE ... MODIFY COMMENT ...`。其他数据库可以使用 `AutoMigrate`，但模型不应实现 `TableCommenter`，除非对应数据库确认支持对应语法。
 
 ## 自定义回调
 

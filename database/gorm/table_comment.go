@@ -118,7 +118,11 @@ func buildTableCommentSQL(db *gorm.DB, table interface{}, comment string) (strin
 
 	stmt.WriteQuoted(table)
 
-	_, err = stmt.WriteString(" COMMENT = ")
+	commentClause := " COMMENT = "
+	if db.Dialector.Name() == "doris" {
+		commentClause = " MODIFY COMMENT "
+	}
+	_, err = stmt.WriteString(commentClause)
 	if err != nil {
 		return "", err
 	}
