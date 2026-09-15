@@ -1,19 +1,30 @@
 package data
 
-import "github.com/liujitcn/kratos-kit/auth/authn/engine"
+import (
+	"encoding/json"
+
+	"github.com/liujitcn/kratos-kit/auth/authn/engine"
+)
 
 const (
-	ClaimFieldTenantID   = "tid"
-	ClaimFieldTenantCode = "tcode"
-	ClaimFieldUserID     = "uid"
-	ClaimFieldUserCode   = "ucode"
-	ClaimFieldRoleID     = "rid"
-	ClaimFieldRoleName   = "rname"
-	ClaimFieldRoleCode   = "rcode"
-	ClaimFieldDeptID     = "did"
-	ClaimFieldDeptName   = "dname"
-	ClaimFieldDataScope  = "ds"
+	ClaimFieldTenantID       = "tid"
+	ClaimFieldTenantCode     = "tcode"
+	ClaimFieldUserID         = "uid"
+	ClaimFieldUserCode       = "ucode"
+	ClaimFieldRoleID         = "rid"
+	ClaimFieldRoleName       = "rname"
+	ClaimFieldRoleCode       = "rcode"
+	ClaimFieldDeptID         = "did"
+	ClaimFieldDeptName       = "dname"
+	ClaimFieldDataScope      = "ds"
+	ClaimFieldTenantProjects = "tprojects"
 )
+
+// TenantProjectScope 表示用户在一个目标租户下的项目范围，项目 ID 为 0 时表示全部项目。
+type TenantProjectScope struct {
+	TenantId  int64   `json:"tenant_id"`
+	ProjectId []int64 `json:"project_id"`
+}
 
 // UserTokenPayload 用户JWT令牌载荷
 type UserTokenPayload struct {
@@ -28,6 +39,8 @@ type UserTokenPayload struct {
 	DeptId     int64
 	DeptName   string
 	DataScope  int32
+	// TenantProjects 保存登录用户按目标租户分组的项目范围。
+	TenantProjects []TenantProjectScope
 }
 
 func NewUserTokenPayloadWithClaims(claims *engine.AuthClaims) (*UserTokenPayload, error) {
@@ -42,7 +55,7 @@ func NewUserTokenPayloadWithClaims(claims *engine.AuthClaims) (*UserTokenPayload
 
 // MakeAuthClaims 构建认证声明
 func (t *UserTokenPayload) MakeAuthClaims() *engine.AuthClaims {
-	return &engine.AuthClaims{
+	claims := &engine.AuthClaims{
 		engine.ClaimFieldSubject: t.UserName,
 		ClaimFieldTenantID:       t.TenantId,
 		ClaimFieldTenantCode:     t.TenantCode,
@@ -55,6 +68,10 @@ func (t *UserTokenPayload) MakeAuthClaims() *engine.AuthClaims {
 		ClaimFieldDeptName:       t.DeptName,
 		ClaimFieldDataScope:      t.DataScope,
 	}
+	if t.TenantProjects != nil {
+		(*claims)[ClaimFieldTenantProjects] = t.TenantProjects
+	}
+	return claims
 }
 
 // ExtractAuthClaims 解析认证声明
@@ -103,6 +120,44 @@ func (t *UserTokenPayload) ExtractAuthClaims(claims *engine.AuthClaims) error {
 	t.DataScope, err = claims.GetInt32(ClaimFieldDataScope)
 	if err != nil {
 		return err
+	}
+	value, exists := (*claims)[ClaimFieldTenantProjects]
+	if exists {
+		var encoded []byte
+		encoded, err = json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(encoded, &t.TenantProjects)
+		if err != nil {
+			return err
+		}
+		if err = validateTenantProjects(t.TenantProjects); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// validateTenantProjects 校验租户项目范围的结构和全部项目标记。
+func validateTenantProjects(scopes []TenantProjectScope) error {
+	for _, scope := range scopes {
+		if scope.TenantId <= 0 || scope.ProjectId == nil {
+			return engine.ErrorInvalidType
+		}
+		seen := make(map[int64]struct{}, len(scope.ProjectId))
+		for _, projectID := range scope.ProjectId {
+			if projectID < 0 {
+				return engine.ErrorInvalidType
+			}
+			if _, exists := seen[projectID]; exists {
+				return engine.ErrorInvalidType
+			}
+			seen[projectID] = struct{}{}
+			if projectID == 0 && len(scope.ProjectId) != 1 {
+				return engine.ErrorInvalidType
+			}
+		}
 	}
 	return nil
 }
