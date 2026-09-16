@@ -1,298 +1,123 @@
 package gorm
 
 import (
-	"sync"
-
+	"github.com/liujitcn/kratos-kit/database/gorm/internal/callback"
 	"gorm.io/gorm"
 )
 
-var (
-	registeredCallbackMu sync.RWMutex
-	callbackQueries      []func(db *gorm.DB)
-	callbackQueryAfters  []func(db *gorm.DB)
-	callbackRows         []func(db *gorm.DB)
-	callbackRaws         []func(db *gorm.DB)
-	callbackCreates      []func(db *gorm.DB)
-	callbackCreateAfters []func(db *gorm.DB)
-	callbackUpdates      []callbackUpdate
-	callbackUpdateAfters []func(db *gorm.DB)
-	callbackDeletes      []func(db *gorm.DB)
-	callbackDeleteAfters []func(db *gorm.DB)
+// ProjectScope 是服务端解析后的租户项目范围，[0] 表示对应租户全部项目。
+type ProjectScope = callback.ProjectScope
+
+// ProjectScopeLoader 从可信身份实时加载项目范围，失败时禁止访问。
+type ProjectScopeLoader = callback.ProjectScopeLoader
+
+const (
+	// DefaultTenantCode 表示拥有跨租户访问能力的默认租户编码。
+	DefaultTenantCode = callback.DefaultTenantCode
+	// DataScopeUnknown 表示未声明角色数据范围。
+	DataScopeUnknown = callback.DataScopeUnknown
+	// DataScopeAll 表示角色拥有全部数据范围。
+	DataScopeAll = callback.DataScopeAll
+	// DataScopeDeptAndChildren 表示角色拥有本部门及子部门数据范围。
+	DataScopeDeptAndChildren = callback.DataScopeDeptAndChildren
+	// DataScopeSelfDept 表示角色仅拥有本部门数据范围。
+	DataScopeSelfDept = callback.DataScopeSelfDept
+	// DataScopeSelfUser 表示角色仅拥有本人数据范围。
+	DataScopeSelfUser = callback.DataScopeSelfUser
 )
 
-type callbackUpdate struct {
-	anchor string
-	fn     func(db *gorm.DB)
+var (
+	// ErrTenantContextMissing 表示租户表操作缺少有效的租户身份。
+	ErrTenantContextMissing = callback.ErrTenantContextMissing
+	// ErrDataScopeContextMissing 表示数据权限表操作缺少有效的用户身份。
+	ErrDataScopeContextMissing = callback.ErrDataScopeContextMissing
+	// ErrRawDataIsolationUnsupported 表示原生 SQL 无法安全追加数据隔离条件。
+	ErrRawDataIsolationUnsupported = callback.ErrRawDataIsolationUnsupported
+	// ErrProjectScopeDenied 表示项目范围缺失、非法或写入越权。
+	ErrProjectScopeDenied = callback.ErrProjectScopeDenied
+)
+
+// SkipDataIsolation 在独立会话中跳过租户、角色、项目和原生 SQL 隔离，仅供可信系统任务使用。
+func SkipDataIsolation(db *gorm.DB) *gorm.DB {
+	return callback.SkipDataIsolation(db)
 }
 
-// RegisterCallbackQuery 注册查询钩子。
-func RegisterCallbackQuery(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackQueries = append(callbackQueries, fn)
+// RegisterProjectIsolation 为指定数据库的业务表注册项目隔离，表与字段必须由宿主显式提供。
+func RegisterProjectIsolation(db *gorm.DB, columns map[string]string, load ProjectScopeLoader) error {
+	return callback.RegisterProjectIsolation(db, columns, load)
 }
 
-// RegisterCallbackQueries 批量注册查询钩子。
-func RegisterCallbackQueries(fn ...func(g *gorm.DB)) {
-	if len(fn) == 0 {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackQueries = append(callbackQueries, fn...)
+// RegisterCallbackQuery 注册查询钩子，必须在创建客户端前注册。
+func RegisterCallbackQuery(fn func(*gorm.DB)) {
+	callback.RegisterCallbackQuery(fn)
 }
 
-// RegisterCallbackQueryAfter 注册查询完成后的钩子。
-func RegisterCallbackQueryAfter(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackQueryAfters = append(callbackQueryAfters, fn)
+// RegisterCallbackQueries 批量注册查询钩子，必须在创建客户端前注册。
+func RegisterCallbackQueries(fn ...func(*gorm.DB)) {
+	callback.RegisterCallbackQueries(fn...)
 }
 
-// RegisterCallbackRow 注册单行和流式查询钩子。
-func RegisterCallbackRow(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackRows = append(callbackRows, fn)
+// RegisterCallbackQueryAfter 注册查询完成后的钩子，必须在创建客户端前注册。
+func RegisterCallbackQueryAfter(fn func(*gorm.DB)) {
+	callback.RegisterCallbackQueryAfter(fn)
 }
 
-// RegisterCallbackRaw 注册原生 SQL 钩子。
-func RegisterCallbackRaw(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackRaws = append(callbackRaws, fn)
+// RegisterCallbackRow 注册单行和流式查询钩子，必须在创建客户端前注册。
+func RegisterCallbackRow(fn func(*gorm.DB)) {
+	callback.RegisterCallbackRow(fn)
 }
 
-// RegisterCallbackCreate 注册创建钩子。
-func RegisterCallbackCreate(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackCreates = append(callbackCreates, fn)
+// RegisterCallbackRaw 注册原生 SQL 钩子，必须在创建客户端前注册。
+func RegisterCallbackRaw(fn func(*gorm.DB)) {
+	callback.RegisterCallbackRaw(fn)
 }
 
-// RegisterCallbackCreates 批量注册创建钩子。
-func RegisterCallbackCreates(fn ...func(g *gorm.DB)) {
-	if len(fn) == 0 {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackCreates = append(callbackCreates, fn...)
+// RegisterCallbackCreate 注册创建钩子，必须在创建客户端前注册。
+func RegisterCallbackCreate(fn func(*gorm.DB)) {
+	callback.RegisterCallbackCreate(fn)
 }
 
-// RegisterCallbackCreateAfter 注册创建完成后的钩子。
-func RegisterCallbackCreateAfter(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackCreateAfters = append(callbackCreateAfters, fn)
+// RegisterCallbackCreates 批量注册创建钩子，必须在创建客户端前注册。
+func RegisterCallbackCreates(fn ...func(*gorm.DB)) {
+	callback.RegisterCallbackCreates(fn...)
 }
 
-// RegisterCallbackUpdate 注册更新钩子。
-func RegisterCallbackUpdate(fn func(g *gorm.DB)) {
-	RegisterCallbackUpdateBefore("gorm:before_update", fn)
+// RegisterCallbackCreateAfter 注册创建完成且事务提交前的钩子，必须在创建客户端前注册。
+func RegisterCallbackCreateAfter(fn func(*gorm.DB)) {
+	callback.RegisterCallbackCreateAfter(fn)
 }
 
-// RegisterCallbackUpdateBefore 注册指定更新节点前执行的钩子。
-func RegisterCallbackUpdateBefore(anchor string, fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	if anchor == "" {
-		anchor = "gorm:before_update"
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackUpdates = append(callbackUpdates, callbackUpdate{anchor: anchor, fn: fn})
+// RegisterCallbackUpdate 注册更新钩子，必须在创建客户端前注册。
+func RegisterCallbackUpdate(fn func(*gorm.DB)) {
+	callback.RegisterCallbackUpdate(fn)
 }
 
-// RegisterCallbackUpdates 批量注册更新钩子。
-func RegisterCallbackUpdates(fn ...func(g *gorm.DB)) {
-	if len(fn) == 0 {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	for _, item := range fn {
-		if item != nil {
-			callbackUpdates = append(callbackUpdates, callbackUpdate{anchor: "gorm:before_update", fn: item})
-		}
-	}
+// RegisterCallbackUpdates 批量注册更新钩子，必须在创建客户端前注册。
+func RegisterCallbackUpdates(fn ...func(*gorm.DB)) {
+	callback.RegisterCallbackUpdates(fn...)
 }
 
-// RegisterCallbackUpdateAfter 注册更新完成后的钩子。
-func RegisterCallbackUpdateAfter(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackUpdateAfters = append(callbackUpdateAfters, fn)
+// RegisterCallbackUpdateAfter 注册更新完成且事务提交前的钩子，必须在创建客户端前注册。
+func RegisterCallbackUpdateAfter(fn func(*gorm.DB)) {
+	callback.RegisterCallbackUpdateAfter(fn)
 }
 
-// RegisterCallbackDelete 注册删除钩子。
-func RegisterCallbackDelete(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackDeletes = append(callbackDeletes, fn)
+// RegisterCallbackDelete 注册删除钩子，必须在创建客户端前注册。
+func RegisterCallbackDelete(fn func(*gorm.DB)) {
+	callback.RegisterCallbackDelete(fn)
 }
 
-// RegisterCallbackDeletes 批量注册删除钩子。
-func RegisterCallbackDeletes(fn ...func(g *gorm.DB)) {
-	if len(fn) == 0 {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackDeletes = append(callbackDeletes, fn...)
+// RegisterCallbackDeletes 批量注册删除钩子，必须在创建客户端前注册。
+func RegisterCallbackDeletes(fn ...func(*gorm.DB)) {
+	callback.RegisterCallbackDeletes(fn...)
 }
 
-// RegisterCallbackDeleteAfter 注册删除完成后的钩子。
-func RegisterCallbackDeleteAfter(fn func(g *gorm.DB)) {
-	if fn == nil {
-		return
-	}
-	registeredCallbackMu.Lock()
-	defer registeredCallbackMu.Unlock()
-	callbackDeleteAfters = append(callbackDeleteAfters, fn)
+// RegisterCallbackDeleteAfter 注册删除完成且事务提交前的钩子，必须在创建客户端前注册。
+func RegisterCallbackDeleteAfter(fn func(*gorm.DB)) {
+	callback.RegisterCallbackDeleteAfter(fn)
 }
 
-// getCallbackQueries 返回已注册的查询钩子副本。
-func getCallbackQueries() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackQueries) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackQueries))
-	copy(dup, callbackQueries)
-	return dup
-}
-
-// getCallbackQueryAfters 返回已注册的查询完成钩子副本。
-func getCallbackQueryAfters() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackQueryAfters) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackQueryAfters))
-	copy(dup, callbackQueryAfters)
-	return dup
-}
-
-// getCallbackRows 返回已注册的单行和流式查询钩子副本。
-func getCallbackRows() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackRows) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackRows))
-	copy(dup, callbackRows)
-	return dup
-}
-
-// getCallbackRaws 返回已注册的原生 SQL 钩子副本。
-func getCallbackRaws() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackRaws) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackRaws))
-	copy(dup, callbackRaws)
-	return dup
-}
-
-// getCallbackCreates 返回已注册的创建钩子副本。
-func getCallbackCreates() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackCreates) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackCreates))
-	copy(dup, callbackCreates)
-	return dup
-}
-
-// getCallbackCreateAfters 返回已注册的创建完成钩子副本。
-func getCallbackCreateAfters() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackCreateAfters) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackCreateAfters))
-	copy(dup, callbackCreateAfters)
-	return dup
-}
-
-// getCallbackUpdates 返回已注册的更新钩子副本。
-func getCallbackUpdates() []callbackUpdate {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackUpdates) == 0 {
-		return nil
-	}
-	dup := make([]callbackUpdate, len(callbackUpdates))
-	copy(dup, callbackUpdates)
-	return dup
-}
-
-// getCallbackUpdateAfters 返回已注册的更新完成钩子副本。
-func getCallbackUpdateAfters() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackUpdateAfters) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackUpdateAfters))
-	copy(dup, callbackUpdateAfters)
-	return dup
-}
-
-// getCallbackDeletes 返回已注册的删除钩子副本。
-func getCallbackDeletes() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackDeletes) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackDeletes))
-	copy(dup, callbackDeletes)
-	return dup
-}
-
-// getCallbackDeleteAfters 返回已注册的删除完成钩子副本。
-func getCallbackDeleteAfters() []func(g *gorm.DB) {
-	registeredCallbackMu.RLock()
-	defer registeredCallbackMu.RUnlock()
-	if len(callbackDeleteAfters) == 0 {
-		return nil
-	}
-	dup := make([]func(g *gorm.DB), len(callbackDeleteAfters))
-	copy(dup, callbackDeleteAfters)
-	return dup
+// RegisterCallbackUpdateBefore 注册指定更新节点前执行的钩子，必须在创建客户端前注册。
+func RegisterCallbackUpdateBefore(anchor string, fn func(*gorm.DB)) {
+	callback.RegisterCallbackUpdateBefore(anchor, fn)
 }

@@ -5,7 +5,8 @@ go 1.27.0
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/liujitcn/kratos-kit/api v0.0.36
-	github.com/liujitcn/kratos-kit/auth v0.0.26
+	github.com/liujitcn/kratos-kit/auth v0.0.29
+	github.com/liujitcn/kratos-kit/auth/authn v0.0.24
 	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.19
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.2
@@ -38,7 +39,6 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/liujitcn/go-utils v0.0.41 // indirect
-	github.com/liujitcn/kratos-kit/auth/authn v0.0.24 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.20 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.23 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.19 // indirect

@@ -1,6 +1,6 @@
 # database/gorm
 
-`database/gorm` 是基于 GORM 的数据库客户端封装，统一提供驱动注册、连接池、自动迁移、可观测性、审计字段填充、租户隔离和角色数据范围过滤。
+`database/gorm` 是基于 GORM 的数据库客户端封装，统一提供驱动注册、连接池、自动迁移、可观测性、审计字段填充、租户隔离、角色数据范围过滤和按数据库注册的项目隔离。
 
 ## 能力概览
 
@@ -17,8 +17,43 @@
 | 审计字段 | 创建时填充 `created_by`、`updated_by`、`created_at`、`updated_at`；更新时刷新 `updated_by`、`updated_at` |
 | 租户隔离 | 自动填充 `tenant_id`，并为查询、更新、删除和关联查询追加租户条件 |
 | 数据范围 | 根据登录 token 中的数据范围过滤本人、本部门、本部门及下级部门数据 |
-| 安全边界 | 受保护数据缺少身份时默认拒绝；无法安全改写的 Raw SQL 或复杂 JOIN 默认拒绝 |
-| 扩展回调 | 支持注册 Query、Row、Raw、Create、Update、Delete 回调 |
+| 项目隔离 | 宿主显式提供表与项目字段映射；查询按租户项目配对过滤，新增校验归属，更新禁止修改归属 |
+| 安全边界 | 租户、角色范围和通用 Raw 防护保留无身份系统调用豁免；项目隔离默认拒绝缺少身份的受保护访问；普通认证请求的不可安全改写 SQL 默认拒绝 |
+| 扩展回调 | 支持 Query、Row、Raw、Create、Update、Delete 及查询、写入后置回调 |
+
+## 回调职责与生命周期
+
+| 文件 | 职责 |
+| --- | --- |
+| `callback.go` | 保留根包公开回调函数、类型、常量和错误，统一转交内部实现 |
+| `migrate.go` | 保留根包公开模型注册入口 |
+| `internal/callback/registry.go` | 自定义回调注册表和一次性快照 |
+| `internal/callback/install.go` | 内置回调名称、执行顺序以及公共安装逻辑 |
+| `internal/callback/tenant.go` | 租户查询条件与新增租户填充 |
+| `internal/callback/data_scope.go` | 本人、部门、下级部门的数据范围表达式 |
+| `internal/callback/project.go` | 显式注册项目隔离、加载项目范围和校验写入 |
+| `internal/callback/audit.go` | 创建和更新审计字段 |
+| `internal/callback/isolation.go` | 会话豁免、无身份调用策略、Raw 防护和 Row 拒绝处理 |
+| `internal/callback/join.go` / `internal/callback/sql.go` | 各类隔离共用的模型关联、JOIN 条件改写与 SQL 片段解析 |
+| `internal/callback/models.go` | 客户端模型范围及隔离、审计字段元数据缓存 |
+
+回调实现集中在 `internal/callback`，不反向依赖根包，避免与 `NewGormClient` 形成循环引用。客户端通过内部模型绑定入口共享迁移与回调元数据；外部项目仍使用原有 `gormkit.RegisterCallback*`、`gormkit.RegisterProjectIsolation`、`gormkit.SkipDataIsolation` 和模型注册函数，无需调整导入路径。
+
+注册器和项目隔离单元测试与实现同目录；根目录的 `client_callbacks_test.go`、`client_joins_test.go` 从公开客户端入口验证自动迁移及多类回调的组合行为。
+
+`NewGormClient` 显式安装内置回调，再安装包级自定义回调的快照，不依赖各文件的 `init()` 顺序。原生 `gorm.Open()` 不安装这些内置能力。项目隔离由宿主在客户端创建后、处理请求前调用 `RegisterProjectIsolation` 安装，也可以单独安装在原生 GORM 数据库上。
+
+内置名称使用 `kratos:<能力>:<操作>`，例如 `kratos:tenant:query`、`kratos:data_scope:update`、`kratos:audit:create`、`kratos:isolation:raw`；项目回调保留 `kratos:project:<操作>`。自定义回调名称为 `kratos:custom:<操作>:<序号>`，不再使用 `before_query_0` 等旧的匿名序号名称。公开 `RegisterCallback*` 函数全部保留，依赖旧内部名称的直接 GORM 操作应改用具名回调。
+
+| 操作 | 内置执行顺序 |
+| --- | --- |
+| Query / Row | 角色范围 → 租户条件 → 已注册的项目条件 → GORM 查询 |
+| Create | 审计填充 → 租户填充 → GORM BeforeCreate → 已注册的项目归属校验 → GORM 写入 |
+| Update | 审计填充 → GORM BeforeUpdate → 角色范围 → 租户条件 → 已注册的项目归属校验及过滤 → GORM 写入 |
+| Delete | 角色范围 → 租户条件 → 已注册的项目条件 → GORM 删除 |
+| Raw | 通用原生 SQL 防护 → 已注册的项目原生 SQL 防护 |
+
+表中省略 GORM 自带的关联保存等节点；自定义回调按指定锚点执行，同一位置按注册顺序执行。查询后置回调位于 `gorm:after_query` 后；写入后置回调位于对应 `gorm:after_*` 后、事务提交或回滚前，错误仍能触发默认事务回滚。
 
 ## 安装
 
@@ -284,6 +319,8 @@ err = runner.Run(ctx, moduleName)
 - 未携带 token：跳过租户填充与隔离，不追加租户条件。
 - 已携带 token 但缺少有效租户 ID：受保护操作返回 `ErrTenantContextMissing`。
 
+租户更新回调约束原记录的 WHERE 范围，不独立校验更新参数中的归属变更。非项目表的业务层应禁止普通请求修改 `tenant_id`；项目表另由项目回调保护归属字段。
+
 ### 默认租户
 
 `TenantCode == "0000"` 的默认租户拥有跨租户访问能力，查询、更新和删除不追加租户条件。
@@ -337,6 +374,26 @@ err = runner.Run(ctx, moduleName)
 
 未携带 token 时跳过角色数据范围条件。未知的非零限制型数据范围按无权限处理。
 
+## 项目隔离
+
+宿主为每个数据库显式注册业务表及项目列，不会仅因模型声明 `project_id` 就自动启用：
+
+```go
+err := gormkit.RegisterProjectIsolation(db, map[string]string{
+    "business_order": "project_id",
+}, nil)
+```
+
+加载器为 `nil` 时，从认证载荷的 `TenantProjects` 读取范围；也可以提供 `ProjectScopeLoader` 实时加载可信授权。范围按租户分组：`map[int64][]int64{1: {101, 102}, 2: {0}}` 表示租户 1 的两个项目和租户 2 的全部项目，空范围没有项目权限。
+
+- 查询、Row、更新、删除和 JOIN 都按 `(tenant_id, project_id)` 配对过滤，并与现有租户、角色范围取交集。
+- 新增必须提供项目编号；回调逐条校验租户、项目均为正数且属于授权范围，不自动选择或填充项目编号。普通租户编号先由租户回调填充。
+- 普通更新禁止写入租户和项目归属字段；跨归属迁移必须走明确授权的专用业务流程。
+- 默认认证加载路径缺少身份时返回 `ErrProjectScopeDenied`，缺少项目范围时查询不命中、写入拒绝；自定义加载器报错时保留错误。
+- `ProjectScope.System` 由可信加载器为系统任务设置，仅豁免项目回调，不取消租户、角色范围和通用 Raw 防护。
+- 默认租户 `0000` 不自动拥有全部项目；`DataScopeAll` 也不取消项目限制。
+- 项目回调拒绝普通请求的原生 SQL；显式 `SkipDataIsolation` 会同时豁免项目隔离。
+
 ## JOIN 处理
 
 回调支持 GORM 模型关联、嵌套关联和可安全识别的原生 JOIN。
@@ -375,7 +432,9 @@ err := db.Scopes(gormkit.SkipDataIsolation).
 	Scan(&rows).Error
 ```
 
-`SkipDataIsolation` 会同时跳过租户隔离、角色数据范围和 Raw SQL 拒绝逻辑，不应由普通请求参数控制。`NewGormClient` 内部的自动迁移和表注释回填已经自动使用该豁免。
+`SkipDataIsolation` 会同时跳过租户隔离、角色数据范围、项目隔离和 Raw SQL 拒绝逻辑，不应由普通请求参数控制。它返回独立会话，保留原有模型、条件、context、模型注册元数据和事务连接；必须使用返回值或通过 `Scopes` 调用。原连接以及同一事务内后续普通操作不会继承该豁免，审计填充也不会被豁免。
+
+`NewGormClient` 内部的自动迁移和表注释回填使用独立豁免会话。迁移结束后，业务查询仍执行正常隔离。客户端根对象可以重复派生查询；普通 GORM 链式查询对象仍应遵循 GORM 自身的会话复用规则。
 
 ## 错误
 
@@ -384,6 +443,7 @@ err := db.Scopes(gormkit.SkipDataIsolation).
 | `ErrTenantContextMissing` | 已携带 token，但受保护租户表缺少有效租户身份 |
 | `ErrDataScopeContextMissing` | 数据范围回调无法从数据库语句中取得上下文 |
 | `ErrRawDataIsolationUnsupported` | Raw SQL 或 JOIN 无法安全追加隔离条件，需要改写或由可信任务显式跳过 |
+| `ErrProjectScopeDenied` | 项目范围缺失、非法或写入归属越权 |
 
 ## 自动迁移和表注释
 
@@ -402,14 +462,24 @@ Doris 自动迁移使用专用 OLAP 建表语法：模型主键作为 `UNIQUE KE
 模块提供以下注册入口：
 
 - `RegisterCallbackQuery`、`RegisterCallbackQueries`
+- `RegisterCallbackQueryAfter`
 - `RegisterCallbackRow`
 - `RegisterCallbackRaw`
 - `RegisterCallbackCreate`、`RegisterCallbackCreates`
+- `RegisterCallbackCreateAfter`
 - `RegisterCallbackUpdate`、`RegisterCallbackUpdates`
 - `RegisterCallbackUpdateBefore`
+- `RegisterCallbackUpdateAfter`
 - `RegisterCallbackDelete`、`RegisterCallbackDeletes`
+- `RegisterCallbackDeleteAfter`
 
 自定义回调同样应在 `NewGormClient` 之前注册，已创建的客户端不会自动加载后续注册项。
+
+单个和批量注册均忽略 `nil` 处理器。安装失败返回包含回调名称的错误；不要在业务请求期间变更回调注册。
+
+## 回归验证
+
+在本模块目录执行 `go test ./...` 和 `go vet ./...`。集成测试通过真实 `NewGormClient` 创建 SQLite 内存数据库，覆盖迁移后的隔离、独立会话豁免及事务回滚、审计填充、角色范围、租户项目叠加、Query/Row/Raw、JOIN 与全部公开扩展回调入口。数据库方言特有行为仍需在对应驱动和数据库环境中验证。
 
 ## 索引建议
 

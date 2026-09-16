@@ -1,4 +1,4 @@
-package gorm
+package callback
 
 import (
 	"context"
@@ -38,13 +38,6 @@ type dataScopeIdentity struct {
 	tenantID   int64
 	tenantCode string
 	dataScope  int32
-}
-
-func init() {
-	RegisterCallbackQuery(addDataScopeWhere)
-	RegisterCallbackRow(addDataScopeWhere)
-	RegisterCallbackUpdateBefore("gorm:update", addDataScopeWhere)
-	RegisterCallbackDelete(addDataScopeWhere)
 }
 
 // addDataScopeWhere 为当前查询、更新和删除语句追加角色数据范围条件。

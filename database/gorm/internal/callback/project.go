@@ -1,4 +1,4 @@
-package gorm
+package callback
 
 import (
 	"context"
@@ -32,28 +32,14 @@ func RegisterProjectIsolation(db *gorm.DB, columns map[string]string, load Proje
 		isolation.columns[table] = column
 		isolation.tables[table] = struct{}{}
 	}
-	var err error
-	err = db.Callback().Query().Before("gorm:query").Register("kratos:project:query", isolation.filter)
-	if err != nil {
-		return err
-	}
-	err = db.Callback().Row().Before("gorm:row").Register("kratos:project:row", isolation.filter)
-	if err != nil {
-		return err
-	}
-	err = db.Callback().Update().Before("gorm:update").Register("kratos:project:update", isolation.update)
-	if err != nil {
-		return err
-	}
-	err = db.Callback().Delete().Before("gorm:delete").Register("kratos:project:delete", isolation.filter)
-	if err != nil {
-		return err
-	}
-	err = db.Callback().Raw().Before("gorm:raw").Register("kratos:project:raw", isolation.raw)
-	if err != nil {
-		return err
-	}
-	return db.Callback().Create().Before("gorm:create").Register("kratos:project:create", isolation.create)
+	return installCallbacks(db, []callbackDefinition{
+		{operation: "query", name: "kratos:project:query", before: "gorm:query", after: "kratos:tenant:query", handler: isolation.filter},
+		{operation: "row", name: "kratos:project:row", before: "gorm:row", after: "kratos:tenant:row", handler: isolation.filter},
+		{operation: "update", name: "kratos:project:update", before: "gorm:update", after: "kratos:tenant:update", handler: isolation.update},
+		{operation: "delete", name: "kratos:project:delete", before: "gorm:delete", after: "kratos:tenant:delete", handler: isolation.filter},
+		{operation: "raw", name: "kratos:project:raw", before: "gorm:raw", after: "kratos:isolation:raw", handler: isolation.raw},
+		{operation: "create", name: "kratos:project:create", before: "gorm:create", after: "gorm:before_create", handler: isolation.create},
+	})
 }
 
 type projectIsolation struct {
@@ -64,7 +50,7 @@ type projectIsolation struct {
 
 // filter 在主表和关联表上追加租户项目成对的范围，保留原有租户和部门条件。
 func (p *projectIsolation) filter(db *gorm.DB) {
-	if db.Error != nil || p.skipped(db) {
+	if db.Error != nil || hasDataIsolationBypass(db) {
 		return
 	}
 	if db.Statement.SQL.Len() > 0 {
@@ -102,7 +88,7 @@ func (p *projectIsolation) filter(db *gorm.DB) {
 
 // update 禁止通过普通更新迁移记录的租户或项目归属，再约束原记录范围。
 func (p *projectIsolation) update(db *gorm.DB) {
-	if db.Error != nil || p.skipped(db) {
+	if db.Error != nil || hasDataIsolationBypass(db) {
 		return
 	}
 	if statementUsesRegisteredTable(db, p.tables) {
@@ -145,7 +131,7 @@ func (p *projectIsolation) update(db *gorm.DB) {
 
 // create 校验每一条新增记录的目标项目，避免拥有列表权限却向任意项目写入。
 func (p *projectIsolation) create(db *gorm.DB) {
-	if db.Error != nil || p.skipped(db) || !statementUsesRegisteredTable(db, p.tables) {
+	if db.Error != nil || hasDataIsolationBypass(db) || !statementUsesRegisteredTable(db, p.tables) {
 		return
 	}
 	scope, err := p.scope(db)
@@ -207,7 +193,7 @@ func (p *projectIsolation) create(db *gorm.DB) {
 
 // raw 拒绝普通请求通过原生 SQL 绕过项目过滤，内部任务必须显式声明身份。
 func (p *projectIsolation) raw(db *gorm.DB) {
-	if db.Error != nil || p.skipped(db) {
+	if db.Error != nil || hasDataIsolationBypass(db) {
 		return
 	}
 	scope, err := p.scope(db)
@@ -245,6 +231,20 @@ func (p *projectIsolation) scope(db *gorm.DB) (ProjectScope, error) {
 	return scope, nil
 }
 
+// mainTable 取得带别名查询的实际表名。
+func (p *projectIsolation) mainTable(db *gorm.DB) string {
+	if _, ok := p.tables[db.Statement.Table]; ok {
+		return db.Statement.Table
+	}
+	if db.Statement.TableExpr != nil {
+		parts := strings.Fields(db.Statement.TableExpr.SQL)
+		if len(parts) > 0 {
+			return normalizeRawSQLIdentifier(db, parts[0])
+		}
+	}
+	return ""
+}
+
 // projectScopeFromAuth 从认证载荷读取按租户分组的项目范围，缺少范围时保持拒绝访问。
 func projectScopeFromAuth(ctx context.Context) (ProjectScope, error) {
 	authInfo, err := auth.FromContext(ctx)
@@ -264,26 +264,6 @@ func projectScopeFromAuth(ctx context.Context) (ProjectScope, error) {
 		scope.Tenants[item.TenantId] = slices.Clone(item.ProjectId)
 	}
 	return scope, nil
-}
-
-// mainTable 取得带别名查询的实际表名。
-func (p *projectIsolation) mainTable(db *gorm.DB) string {
-	if _, ok := p.tables[db.Statement.Table]; ok {
-		return db.Statement.Table
-	}
-	if db.Statement.TableExpr != nil {
-		parts := strings.Fields(db.Statement.TableExpr.SQL)
-		if len(parts) > 0 {
-			return normalizeRawSQLIdentifier(db, parts[0])
-		}
-	}
-	return ""
-}
-
-// skipped 只接受可信代码显式设置的隔离跳过标记，缺少身份不能自动放行。
-func (p *projectIsolation) skipped(db *gorm.DB) bool {
-	value, ok := db.Get(skipDataIsolationSettingKey)
-	return ok && value == true
 }
 
 // projectExpression 按租户分组构建项目范围，空集合使用不可能存在的项目ID。

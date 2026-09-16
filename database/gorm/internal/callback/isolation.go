@@ -1,4 +1,4 @@
-package gorm
+package callback
 
 import (
 	"errors"
@@ -24,31 +24,22 @@ var (
 	ErrRawDataIsolationUnsupported = errors.New("raw SQL requires explicit data isolation bypass")
 )
 
-func init() {
-	RegisterCallbackRaw(rejectRawDataIsolation)
-}
-
-// SkipDataIsolation 显式跳过租户和角色数据范围隔离，仅供可信的系统任务使用。
+// SkipDataIsolation 在独立会话中跳过租户、角色、项目和原生 SQL 隔离，仅供可信系统任务使用。
 func SkipDataIsolation(db *gorm.DB) *gorm.DB {
 	if db == nil {
 		return nil
 	}
-	return db.Set(skipDataIsolationSettingKey, true)
+	// 保留已有查询条件、模型元数据和事务连接，但不向调用方的 Statement 写入豁免。
+	return db.Session(&gorm.Session{}).Set(skipDataIsolationSettingKey, true)
 }
 
-// shouldSkipDataIsolation 判断当前语句是否需要跳过数据隔离。
+// shouldSkipDataIsolation 保留租户、角色范围和通用 Raw 防护对无身份系统调用的既有豁免。
 func shouldSkipDataIsolation(db *gorm.DB) bool {
 	if db == nil {
 		return false
 	}
-	value, settingExists := db.Get(skipDataIsolationSettingKey)
-	if settingExists {
-		var skip bool
-		var isBool bool
-		skip, isBool = value.(bool)
-		if isBool && skip {
-			return true
-		}
+	if hasDataIsolationBypass(db) {
+		return true
 	}
 	if db.Statement == nil {
 		return false
@@ -58,6 +49,15 @@ func shouldSkipDataIsolation(db *gorm.DB) bool {
 	}
 	authInfo, err := auth.FromContext(db.Statement.Context)
 	return err != nil || authInfo == nil
+}
+
+// hasDataIsolationBypass 判断可信调用方是否为当前会话显式开启隔离豁免。
+func hasDataIsolationBypass(db *gorm.DB) bool {
+	if db == nil {
+		return false
+	}
+	value, exists := db.Get(skipDataIsolationSettingKey)
+	return exists && value == true
 }
 
 // rejectUnsafeRawStatement 拒绝进入查询回调的原生 SQL。

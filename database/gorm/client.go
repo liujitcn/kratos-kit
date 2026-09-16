@@ -18,6 +18,7 @@ import (
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/database/gorm/driver"
+	"github.com/liujitcn/kratos-kit/database/gorm/internal/callback"
 	"github.com/liujitcn/kratos-kit/database/gorm/logger"
 	"github.com/liujitcn/kratos-kit/database/gorm/util"
 )
@@ -147,9 +148,8 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 		return nil, cleanup, fmt.Errorf("failed ping database[%s]: %w", clientLabel, err)
 	}
 
-	registry := newMigrateRegistry(clientOpts.migrateModels, clientOpts.modelsExplicit)
-	db = db.Set(migrateRegistryKey, registry)
-	if err = registerCallbacks(db); err != nil {
+	db = callback.BindModels(db, clientOpts.migrateModels, clientOpts.modelsExplicit)
+	if err = callback.Install(db); err != nil {
 		return nil, cleanup, err
 	}
 	if cfg.MaxIdleConnections != nil {
@@ -171,7 +171,7 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 
 	// 自动迁移会汇总当前客户端模型，并补充数据库表注释。
 	if cfg.EnableMigrate {
-		models := getMigrateModels(db)
+		models := callback.MigrateModels(db)
 		if len(models) > 0 {
 			// 自动迁移和注释回填属于可信系统任务，允许执行原生 SQL。
 			systemDB := SkipDataIsolation(client.DB)
@@ -213,72 +213,6 @@ func (c *Client) Driver() string {
 		return c.Dialector.Name()
 	}
 	return ""
-}
-
-// registerCallbacks 按注册顺序将包级回调安装到 GORM 客户端。
-func registerCallbacks(db *gorm.DB) error {
-	var err error
-	for i, fn := range getCallbackQueries() {
-		err = db.Callback().Query().Before("gorm:query").Register(fmt.Sprintf("before_query_%d", i), fn)
-		if err != nil {
-			return err
-		}
-	}
-	for i, fn := range getCallbackQueryAfters() {
-		err = db.Callback().Query().After("gorm:after_query").Register(fmt.Sprintf("after_query_%d", i), fn)
-		if err != nil {
-			return err
-		}
-	}
-	for i, fn := range getCallbackRows() {
-		err = db.Callback().Row().Before("gorm:row").Register(fmt.Sprintf("before_row_%d", i), fn)
-		if err != nil {
-			return err
-		}
-	}
-	for i, fn := range getCallbackRaws() {
-		err = db.Callback().Raw().Before("gorm:raw").Register(fmt.Sprintf("before_raw_%d", i), fn) //nolint:forbidigo
-		if err != nil {
-			return err
-		}
-	}
-	for i, fn := range getCallbackCreates() {
-		err = db.Callback().Create().Before("gorm:before_create").Register(fmt.Sprintf("before_create_%d", i), fn)
-		if err != nil {
-			return err
-		}
-	}
-	for i, fn := range getCallbackCreateAfters() {
-		err = db.Callback().Create().After("gorm:after_create").Before("gorm:commit_or_rollback_transaction").Register(fmt.Sprintf("after_create_%d", i), fn)
-		if err != nil {
-			return err
-		}
-	}
-	for i, item := range getCallbackUpdates() {
-		err = db.Callback().Update().Before(item.anchor).Register(fmt.Sprintf("before_update_%d", i), item.fn)
-		if err != nil {
-			return err
-		}
-	}
-	for i, fn := range getCallbackUpdateAfters() {
-		err = db.Callback().Update().After("gorm:after_update").Before("gorm:commit_or_rollback_transaction").Register(fmt.Sprintf("after_update_%d", i), fn)
-		if err != nil {
-			return err
-		}
-	}
-	for i, fn := range getCallbackDeletes() {
-		err = db.Callback().Delete().Before("gorm:delete").Register(fmt.Sprintf("before_delete_%d", i), fn)
-		if err != nil {
-			return err
-		}
-	}
-	for i, fn := range getCallbackDeleteAfters() {
-		err = db.Callback().Delete().After("gorm:after_delete").Before("gorm:commit_or_rollback_transaction").Register(fmt.Sprintf("after_delete_%d", i), fn)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // ensureMySQLMultiStatements 为支持版本化 SQL 迁移的 MySQL 连接补充多语句执行参数。

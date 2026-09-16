@@ -1,4 +1,4 @@
-package gorm
+package callback
 
 import (
 	"context"
@@ -20,11 +20,6 @@ var auditFieldNames = []string{
 	"UpdatedBy",
 	"CreatedAt",
 	"UpdatedAt",
-}
-
-func init() {
-	RegisterCallbackCreate(fillCreatedFields)
-	RegisterCallbackUpdate(fillUpdatedFields)
 }
 
 // fillCreatedFields 在创建时回填审计字段。
