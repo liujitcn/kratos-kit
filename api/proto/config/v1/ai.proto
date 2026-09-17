@@ -54,7 +54,7 @@ message AI {
     int32 timeout_seconds = 7;    // 默认30秒
     int32 max_retries = 8;        // 默认3次
 
-    // 模型 API 风格：未配置时默认聊天补全协议
+    // 模型 API 类型：未配置时默认聊天补全协议
     APIType api_type = 9;
   }
 

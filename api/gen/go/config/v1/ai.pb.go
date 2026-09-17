@@ -72,7 +72,7 @@ func (AI_Model_ModelType) EnumDescriptor() ([]byte, []int) {
 	return file_config_v1_ai_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
-// 模型 API 风格枚举：不同网关对 OpenAI 协议的支持程度不同，按实际部署选择
+// 模型 API 类型枚举：不同网关对 OpenAI 协议的支持程度不同，按实际部署选择
 type AI_Model_APIType int32
 
 const (
@@ -182,7 +182,7 @@ type AI_Model struct {
 	// 超时、重试
 	TimeoutSeconds int32 `protobuf:"varint,7,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"` // 默认30秒
 	MaxRetries     int32 `protobuf:"varint,8,opt,name=max_retries,json=maxRetries,proto3" json:"max_retries,omitempty"`             // 默认3次
-	// 模型 API 风格：未配置时默认聊天补全协议
+	// 模型 API 类型：未配置时默认聊天补全协议
 	ApiType       AI_Model_APIType `protobuf:"varint,9,opt,name=api_type,json=apiType,proto3,enum=config.v1.AI_Model_APIType" json:"api_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
