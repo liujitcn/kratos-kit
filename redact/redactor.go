@@ -394,12 +394,56 @@ func Regex(value, pattern, replacement string) string {
 	return compiledValue.(*regexp.Regexp).ReplaceAllString(value, replacement)
 }
 
-// Mask 保留字符串首尾指定数量的字节，并用掩码字符替换中间内容。
+// Mask 保留字符串首尾指定数量的字符，并用掩码字符替换中间内容。
 func Mask(value string, keepFirst, keepLast int, maskChar string) string {
-	if len(value) <= keepFirst+keepLast {
+	return MaskWithMin(value, keepFirst, keepLast, 0, maskChar)
+}
+
+// MaskWithMin 保留字符串首尾指定数量的字符，并保证至少替换指定数量的中间字符。
+func MaskWithMin(value string, keepFirst, keepLast, minMask int, maskChar string) string {
+	chars := []rune(value)
+	if len(chars) == 0 {
 		return value
 	}
-	return value[:keepFirst] + strings.Repeat(maskChar, len(value)-keepFirst-keepLast) + value[len(value)-keepLast:]
+	if keepFirst < 0 {
+		keepFirst = 0
+	}
+	if keepLast < 0 {
+		keepLast = 0
+	}
+	if minMask < 0 {
+		minMask = 0
+	}
+	if keepFirst > len(chars) {
+		keepFirst = len(chars)
+	}
+	if keepLast > len(chars)-keepFirst {
+		keepLast = len(chars) - keepFirst
+	}
+	if minMask > len(chars) {
+		minMask = len(chars)
+	}
+
+	masked := len(chars) - keepFirst - keepLast
+	if masked < minMask {
+		need := minMask - masked
+		if need <= keepLast {
+			keepLast -= need
+		} else {
+			need -= keepLast
+			keepLast = 0
+			if need > keepFirst {
+				keepFirst = 0
+			} else {
+				keepFirst -= need
+			}
+		}
+	}
+	masked = len(chars) - keepFirst - keepLast
+	if masked == 0 {
+		return value
+	}
+	return string(chars[:keepFirst]) + strings.Repeat(maskChar, masked) + string(chars[len(chars)-keepLast:])
 }
 
 // Email 按邮箱本地部分和域名分别执行掩码。
@@ -592,6 +636,7 @@ func newRuleTransform(ruleType, ruleJSON string) (func(any) any, error) {
 		var rule struct {
 			KeepFirst uint32 `json:"keep_first"`
 			KeepLast  uint32 `json:"keep_last"`
+			MinMask   uint32 `json:"min_mask"`
 			MaskChar  string `json:"mask_char"`
 		}
 		err = json.Unmarshal(rawRule, &rule)
@@ -606,7 +651,7 @@ func newRuleTransform(ruleType, ruleJSON string) (func(any) any, error) {
 			if !ok {
 				return value
 			}
-			return Mask(text, int(rule.KeepFirst), int(rule.KeepLast), rule.MaskChar)
+			return MaskWithMin(text, int(rule.KeepFirst), int(rule.KeepLast), int(rule.MinMask), rule.MaskChar)
 		}, nil
 	case "REGEX":
 		var rule struct {

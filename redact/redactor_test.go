@@ -66,6 +66,8 @@ func TestRuleTransforms(t *testing.T) {
 		assertion func(*testing.T, string)
 	}{
 		{name: "MASK", ruleType: "MASK", rule: `{"mask":{"keep_first":3,"keep_last":4,"mask_char":"*"}}`, input: "13800138000", want: "138****8000"},
+		{name: "MASK_UNICODE", ruleType: "MASK", rule: `{"mask":{"keep_first":1,"keep_last":1,"min_mask":1,"mask_char":"*"}}`, input: "管理员", want: "管*员"},
+		{name: "MASK_MIN", ruleType: "MASK", rule: `{"mask":{"keep_first":1,"keep_last":1,"min_mask":1,"mask_char":"*"}}`, input: "张三", want: "张*"},
 		{name: "EMAIL", ruleType: "EMAIL", rule: `{"email":{"keep_local_first":2,"mask_domain":false,"mask_char":"*"}}`, input: "alice@example.com", want: "al***@example.com"},
 		{name: "REGEX", ruleType: "REGEX", rule: `{"regex":{"pattern":"(?s).+","replacement":"[REDACTED]"}}`, input: "token=secret-value", want: "[REDACTED]"},
 		{name: "TRUNCATE", ruleType: "TRUNCATE", rule: `{"truncate":{"length":10,"suffix":"..."}}`, input: "RedactDemoUser", want: "RedactDemo..."},
