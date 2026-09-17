@@ -14,7 +14,7 @@ import (
 
 // ProjectScope 是服务端解析后的租户项目范围，[0]表示对应租户全部项目。
 type ProjectScope struct {
-	// System 仅由可信的内部任务加载器设置，不接受请求参数或请求头。
+	// System 表示当前身份拥有全部项目范围，由可信内部任务或默认租户认证主体设置。
 	System  bool
 	Tenants map[int64][]int64
 }
@@ -250,6 +250,9 @@ func projectScopeFromAuth(ctx context.Context) (ProjectScope, error) {
 	authInfo, err := auth.FromContext(ctx)
 	if err != nil || authInfo == nil {
 		return ProjectScope{}, ErrProjectScopeDenied
+	}
+	if authInfo.TenantCode == DefaultTenantCode {
+		return ProjectScope{System: true}, nil
 	}
 	scope := ProjectScope{Tenants: make(map[int64][]int64, len(authInfo.TenantProjects))}
 	for _, item := range authInfo.TenantProjects {

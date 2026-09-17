@@ -215,7 +215,7 @@ func TestCallbackProjectComposition(t *testing.T) {
 	}
 }
 
-// TestCallbackProjectClaims 验证默认项目加载器读取认证范围，缺少身份或范围时不会放大权限。
+// TestCallbackProjectClaims 验证默认租户自动拥有全部项目，普通租户缺少范围时不会放大权限。
 func TestCallbackProjectClaims(t *testing.T) {
 	db := newCallbackClient(t)
 	seedCallbackRecords(t, db)
@@ -231,6 +231,10 @@ func TestCallbackProjectClaims(t *testing.T) {
 	err = db.WithContext(callbackContext(1, "0001", DataScopeAll)).Model(&callbackRecord{}).Count(&count).Error
 	if err != nil || count != 0 {
 		t.Fatalf("缺少项目范围未收敛为空: count=%d err=%v", count, err)
+	}
+	err = db.WithContext(callbackContext(1, DefaultTenantCode, DataScopeAll)).Model(&callbackRecord{}).Count(&count).Error
+	if err != nil || count != 4 {
+		t.Fatalf("默认租户未拥有全部项目范围: count=%d err=%v", count, err)
 	}
 	identity := &data.UserTokenPayload{TenantId: 1, TenantCode: "0001", UserId: 11, UserName: "callback-test", DataScope: DataScopeAll,
 		TenantProjects: []data.TenantProjectScope{{TenantId: 1, ProjectId: []int64{101}}},
