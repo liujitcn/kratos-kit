@@ -4,7 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
-	cryptorand "crypto/rand"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
@@ -44,7 +44,7 @@ func (p *StorageProtector) Encrypt(value, associatedData string) (string, error)
 		return "", fmt.Errorf("创建存储 AEAD 失败: %w", err)
 	}
 	nonce := make([]byte, aead.NonceSize())
-	if _, err = cryptorand.Read(nonce); err != nil {
+	if _, err = rand.Read(nonce); err != nil {
 		return "", fmt.Errorf("生成存储随机数失败: %w", err)
 	}
 	ciphertext := aead.Seal(nil, nonce, []byte(value), []byte(associatedData))

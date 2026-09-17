@@ -72,6 +72,56 @@ func (AI_Model_ModelType) EnumDescriptor() ([]byte, []int) {
 	return file_config_v1_ai_proto_rawDescGZIP(), []int{0, 0, 0}
 }
 
+// 模型 API 风格枚举：不同网关对 OpenAI 协议的支持程度不同，按实际部署选择
+type AI_Model_APIType int32
+
+const (
+	AI_Model_API_TYPE_UNSPECIFIED      AI_Model_APIType = 0
+	AI_Model_API_TYPE_CHAT_COMPLETIONS AI_Model_APIType = 1 // /v1/chat/completions 聊天补全协议
+	AI_Model_API_TYPE_RESPONSES        AI_Model_APIType = 2 // /v1/responses Responses 协议
+)
+
+// Enum value maps for AI_Model_APIType.
+var (
+	AI_Model_APIType_name = map[int32]string{
+		0: "API_TYPE_UNSPECIFIED",
+		1: "API_TYPE_CHAT_COMPLETIONS",
+		2: "API_TYPE_RESPONSES",
+	}
+	AI_Model_APIType_value = map[string]int32{
+		"API_TYPE_UNSPECIFIED":      0,
+		"API_TYPE_CHAT_COMPLETIONS": 1,
+		"API_TYPE_RESPONSES":        2,
+	}
+)
+
+func (x AI_Model_APIType) Enum() *AI_Model_APIType {
+	p := new(AI_Model_APIType)
+	*p = x
+	return p
+}
+
+func (x AI_Model_APIType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AI_Model_APIType) Descriptor() protoreflect.EnumDescriptor {
+	return file_config_v1_ai_proto_enumTypes[1].Descriptor()
+}
+
+func (AI_Model_APIType) Type() protoreflect.EnumType {
+	return &file_config_v1_ai_proto_enumTypes[1]
+}
+
+func (x AI_Model_APIType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AI_Model_APIType.Descriptor instead.
+func (AI_Model_APIType) EnumDescriptor() ([]byte, []int) {
+	return file_config_v1_ai_proto_rawDescGZIP(), []int{0, 0, 1}
+}
+
 // AI 配置
 type AI struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -132,8 +182,10 @@ type AI_Model struct {
 	// 超时、重试
 	TimeoutSeconds int32 `protobuf:"varint,7,opt,name=timeout_seconds,json=timeoutSeconds,proto3" json:"timeout_seconds,omitempty"` // 默认30秒
 	MaxRetries     int32 `protobuf:"varint,8,opt,name=max_retries,json=maxRetries,proto3" json:"max_retries,omitempty"`             // 默认3次
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// 模型 API 风格：未配置时默认聊天补全协议
+	ApiType       AI_Model_APIType `protobuf:"varint,9,opt,name=api_type,json=apiType,proto3,enum=config.v1.AI_Model_APIType" json:"api_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AI_Model) Reset() {
@@ -220,6 +272,13 @@ func (x *AI_Model) GetMaxRetries() int32 {
 		return x.MaxRetries
 	}
 	return 0
+}
+
+func (x *AI_Model) GetApiType() AI_Model_APIType {
+	if x != nil {
+		return x.ApiType
+	}
+	return AI_Model_API_TYPE_UNSPECIFIED
 }
 
 // 云端大模型配置（所有平台通用）
@@ -348,9 +407,9 @@ var File_config_v1_ai_proto protoreflect.FileDescriptor
 
 const file_config_v1_ai_proto_rawDesc = "" +
 	"\n" +
-	"\x12config/v1/ai.proto\x12\tconfig.v1\"\x86\x05\n" +
+	"\x12config/v1/ai.proto\x12\tconfig.v1\"\x9a\x06\n" +
 	"\x02AI\x12)\n" +
-	"\x05model\x18\x01 \x01(\v2\x13.config.v1.AI.ModelR\x05model\x1a\xd4\x04\n" +
+	"\x05model\x18\x01 \x01(\v2\x13.config.v1.AI.ModelR\x05model\x1a\xe8\x05\n" +
 	"\x05Model\x121\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1d.config.v1.AI.Model.ModelTypeR\x04type\x12\x1d\n" +
 	"\n" +
@@ -362,7 +421,8 @@ const file_config_v1_ai_proto_rawDesc = "" +
 	"\x05local\x18\x06 \x01(\v2\x1f.config.v1.AI.Model.LocalConfigR\x05local\x12'\n" +
 	"\x0ftimeout_seconds\x18\a \x01(\x05R\x0etimeoutSeconds\x12\x1f\n" +
 	"\vmax_retries\x18\b \x01(\x05R\n" +
-	"maxRetries\x1ae\n" +
+	"maxRetries\x126\n" +
+	"\bapi_type\x18\t \x01(\x0e2\x1b.config.v1.AI.Model.APITypeR\aapiType\x1ae\n" +
 	"\vCloudConfig\x12\x17\n" +
 	"\aapi_key\x18\x01 \x01(\tR\x06apiKey\x12\x19\n" +
 	"\bbase_url\x18\x02 \x01(\tR\abaseUrl\x12\"\n" +
@@ -374,7 +434,11 @@ const file_config_v1_ai_proto_rawDesc = "" +
 	"\tModelType\x12\x1a\n" +
 	"\x16MODEL_TYPE_UNSPECIFIED\x10\x00\x12\x0f\n" +
 	"\vCLOUD_MODEL\x10\x01\x12\x0f\n" +
-	"\vLOCAL_MODEL\x10\x02B\x9b\x01\n" +
+	"\vLOCAL_MODEL\x10\x02\"Z\n" +
+	"\aAPIType\x12\x18\n" +
+	"\x14API_TYPE_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19API_TYPE_CHAT_COMPLETIONS\x10\x01\x12\x16\n" +
+	"\x12API_TYPE_RESPONSES\x10\x02B\x9b\x01\n" +
 	"\rcom.config.v1B\aAiProtoP\x01Z<github.com/liujitcn/kratos-kit/api/gen/go/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\x06proto3"
 
@@ -390,25 +454,27 @@ func file_config_v1_ai_proto_rawDescGZIP() []byte {
 	return file_config_v1_ai_proto_rawDescData
 }
 
-var file_config_v1_ai_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_config_v1_ai_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_config_v1_ai_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_config_v1_ai_proto_goTypes = []any{
 	(AI_Model_ModelType)(0),      // 0: config.v1.AI.Model.ModelType
-	(*AI)(nil),                   // 1: config.v1.AI
-	(*AI_Model)(nil),             // 2: config.v1.AI.Model
-	(*AI_Model_CloudConfig)(nil), // 3: config.v1.AI.Model.CloudConfig
-	(*AI_Model_LocalConfig)(nil), // 4: config.v1.AI.Model.LocalConfig
+	(AI_Model_APIType)(0),        // 1: config.v1.AI.Model.APIType
+	(*AI)(nil),                   // 2: config.v1.AI
+	(*AI_Model)(nil),             // 3: config.v1.AI.Model
+	(*AI_Model_CloudConfig)(nil), // 4: config.v1.AI.Model.CloudConfig
+	(*AI_Model_LocalConfig)(nil), // 5: config.v1.AI.Model.LocalConfig
 }
 var file_config_v1_ai_proto_depIdxs = []int32{
-	2, // 0: config.v1.AI.model:type_name -> config.v1.AI.Model
+	3, // 0: config.v1.AI.model:type_name -> config.v1.AI.Model
 	0, // 1: config.v1.AI.Model.type:type_name -> config.v1.AI.Model.ModelType
-	3, // 2: config.v1.AI.Model.cloud:type_name -> config.v1.AI.Model.CloudConfig
-	4, // 3: config.v1.AI.Model.local:type_name -> config.v1.AI.Model.LocalConfig
-	4, // [4:4] is the sub-list for method output_type
-	4, // [4:4] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	4, // 2: config.v1.AI.Model.cloud:type_name -> config.v1.AI.Model.CloudConfig
+	5, // 3: config.v1.AI.Model.local:type_name -> config.v1.AI.Model.LocalConfig
+	1, // 4: config.v1.AI.Model.api_type:type_name -> config.v1.AI.Model.APIType
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_ai_proto_init() }
@@ -421,7 +487,7 @@ func file_config_v1_ai_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_ai_proto_rawDesc), len(file_config_v1_ai_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	kratosgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
+	"github.com/go-kratos/kratos/v3/transport/grpc"
 )
 
 // TestCreateGrpcServerWithOptions 验证每次创建仅应用自身选项，不改变原始服务器类型。
@@ -13,7 +13,7 @@ func TestCreateGrpcServerWithOptions(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			called := 0
-			server, err := CreateGrpcServerWithOptions(nil, []kratosgrpc.ServerOption{func(*kratosgrpc.Server) { called++ }})
+			server, err := CreateGrpcServerWithOptions(nil, []grpc.ServerOption{func(*grpc.Server) { called++ }})
 			if err != nil {
 				t.Fatal(err)
 			}

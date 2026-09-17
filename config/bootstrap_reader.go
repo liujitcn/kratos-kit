@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	kratosconfig "github.com/go-kratos/kratos/v3/config"
+	"github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/encoding"
 	"github.com/go-kratos/kratos/v3/log"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -18,7 +18,7 @@ import (
 var bootstrapConfigPlaceholderPattern = regexp.MustCompile(`\${(.*?)}`)
 
 // loadBootstrapConfigWithoutWatch 读取并合并配置源，但不为临时配置源启动 watcher。
-func loadBootstrapConfigWithoutWatch(sources []kratosconfig.Source, decoder kratosconfig.Decoder) (*configv1.Bootstrap, error) {
+func loadBootstrapConfigWithoutWatch(sources []config.Source, decoder config.Decoder) (*configv1.Bootstrap, error) {
 	bootstrapConfig := &configv1.Bootstrap{}
 	err := LoadConfigWithoutWatch(sources, decoder, bootstrapConfig)
 	if err != nil {
@@ -28,7 +28,7 @@ func loadBootstrapConfigWithoutWatch(sources []kratosconfig.Source, decoder krat
 }
 
 // LoadConfigWithoutWatch 读取并合并配置源一次，不启动配置 watcher。
-func LoadConfigWithoutWatch(sources []kratosconfig.Source, decoder kratosconfig.Decoder, target any) error {
+func LoadConfigWithoutWatch(sources []config.Source, decoder config.Decoder, target any) error {
 	values, err := loadConfigValuesWithoutWatch(sources, decoder)
 	if err != nil {
 		return err
@@ -49,11 +49,11 @@ func LoadConfigWithoutWatch(sources []kratosconfig.Source, decoder kratosconfig.
 }
 
 // loadConfigValuesWithoutWatch 读取并合并配置源的原始值，不启动配置 watcher。
-func loadConfigValuesWithoutWatch(sources []kratosconfig.Source, decoder kratosconfig.Decoder) (map[string]any, error) {
+func loadConfigValuesWithoutWatch(sources []config.Source, decoder config.Decoder) (map[string]any, error) {
 	values := make(map[string]any)
 	var err error
 	for _, source := range sources {
-		var keyValues []*kratosconfig.KeyValue
+		var keyValues []*config.KeyValue
 		keyValues, err = source.Load()
 		if err != nil {
 			return nil, err
@@ -78,7 +78,7 @@ func loadConfigValuesWithoutWatch(sources []kratosconfig.Source, decoder kratosc
 }
 
 // decodeBootstrapKeyValue 使用 Kratos 默认规则解码不带敏感字段处理器的配置项。
-func decodeBootstrapKeyValue(src *kratosconfig.KeyValue, target map[string]any) error {
+func decodeBootstrapKeyValue(src *config.KeyValue, target map[string]any) error {
 	if src == nil {
 		return fmt.Errorf("config: key value is nil")
 	}

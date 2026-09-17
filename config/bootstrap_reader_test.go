@@ -8,24 +8,24 @@ import (
 	"testing"
 	"time"
 
-	kratosconfig "github.com/go-kratos/kratos/v3/config"
-	kratoslog "github.com/go-kratos/kratos/v3/log"
+	"github.com/go-kratos/kratos/v3/config"
+	"github.com/go-kratos/kratos/v3/log"
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 )
 
 type bootstrapTestSource struct {
-	keyValues  []*kratosconfig.KeyValue
+	keyValues  []*config.KeyValue
 	watchCalls int
 	watcher    *bootstrapTestWatcher
 }
 
 // Load 返回测试配置内容。
-func (s *bootstrapTestSource) Load() ([]*kratosconfig.KeyValue, error) {
+func (s *bootstrapTestSource) Load() ([]*config.KeyValue, error) {
 	return s.keyValues, nil
 }
 
 // Watch 记录正式配置是否启动 watcher。
-func (s *bootstrapTestSource) Watch() (kratosconfig.Watcher, error) {
+func (s *bootstrapTestSource) Watch() (config.Watcher, error) {
 	s.watchCalls++
 	s.watcher = newBootstrapTestWatcher()
 	return s.watcher, nil
@@ -33,12 +33,12 @@ func (s *bootstrapTestSource) Watch() (kratosconfig.Watcher, error) {
 
 type bootstrapTestWatcher struct {
 	done     chan struct{}
-	updates  chan []*kratosconfig.KeyValue
+	updates  chan []*config.KeyValue
 	stopOnce sync.Once
 }
 
 // Next 阻塞到测试 watcher 被停止。
-func (w *bootstrapTestWatcher) Next() ([]*kratosconfig.KeyValue, error) {
+func (w *bootstrapTestWatcher) Next() ([]*config.KeyValue, error) {
 	select {
 	case <-w.done:
 		return nil, context.Canceled
@@ -59,13 +59,13 @@ func (w *bootstrapTestWatcher) Stop() error {
 func newBootstrapTestWatcher() *bootstrapTestWatcher {
 	return &bootstrapTestWatcher{
 		done:    make(chan struct{}),
-		updates: make(chan []*kratosconfig.KeyValue),
+		updates: make(chan []*config.KeyValue),
 	}
 }
 
 // TestLoadBootstrapConfigWithoutWatch 验证临时配置加载不会启动 watcher。
 func TestLoadBootstrapConfigWithoutWatch(t *testing.T) {
-	source := &bootstrapTestSource{keyValues: []*kratosconfig.KeyValue{
+	source := &bootstrapTestSource{keyValues: []*config.KeyValue{
 		{
 			Key:    "config.yaml",
 			Format: "yaml",
@@ -78,7 +78,7 @@ func TestLoadBootstrapConfigWithoutWatch(t *testing.T) {
 	}
 
 	var remoteConfig *configv1.Config
-	remoteConfig, err = loadRemoteConfigSourceConfigsWithDecoder([]kratosconfig.Source{source}, cipher.Decoder())
+	remoteConfig, err = loadRemoteConfigSourceConfigsWithDecoder([]config.Source{source}, cipher.Decoder())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,11 +98,11 @@ func TestLoadBootstrapConfigWithoutWatch(t *testing.T) {
 
 // TestConfigProviderStartsWatchers 验证正式配置加载仍会启动 watcher。
 func TestConfigProviderStartsWatchers(t *testing.T) {
-	previousLogger := kratoslog.Default()
-	kratoslog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
-	defer kratoslog.SetDefault(previousLogger)
+	previousLogger := log.Default()
+	log.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	defer log.SetDefault(previousLogger)
 
-	source := &bootstrapTestSource{keyValues: []*kratosconfig.KeyValue{
+	source := &bootstrapTestSource{keyValues: []*config.KeyValue{
 		{
 			Key:    "server.yaml",
 			Format: "yaml",
@@ -113,7 +113,7 @@ func TestConfigProviderStartsWatchers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	provider, err := newConfigProviderWithDecoder([]kratosconfig.Source{source}, nil, cipher.Decoder())
+	provider, err := newConfigProviderWithDecoder([]config.Source{source}, nil, cipher.Decoder())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,12 +124,12 @@ func TestConfigProviderStartsWatchers(t *testing.T) {
 		t.Fatalf("formal config started %d watcher(s), want 1", source.watchCalls)
 	}
 	changed := make(chan struct{})
-	if err = provider.Watch("server.http.addr", func(string, kratosconfig.Value) {
+	if err = provider.Watch("server.http.addr", func(string, config.Value) {
 		close(changed)
 	}); err != nil {
 		t.Fatal(err)
 	}
-	source.watcher.updates <- []*kratosconfig.KeyValue{
+	source.watcher.updates <- []*config.KeyValue{
 		{
 			Key:    "server.yaml",
 			Format: "yaml",

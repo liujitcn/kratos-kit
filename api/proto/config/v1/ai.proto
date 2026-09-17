@@ -14,6 +14,14 @@ message AI {
       LOCAL_MODEL = 2;     // 本地Ollama
     }
 
+    // 模型 API 类型枚举：不同网关对 OpenAI 协议的支持程度不同，按实际部署选择
+    enum APIType {
+      API_TYPE_UNSPECIFIED = 0;
+
+      API_TYPE_CHAT_COMPLETIONS = 1;   // /v1/chat/completions 聊天补全协议
+      API_TYPE_RESPONSES = 2;          // /v1/responses Responses 协议
+    }
+
     // 云端大模型配置（所有平台通用）
     message CloudConfig {
       string api_key = 1;         // API Key
@@ -45,6 +53,9 @@ message AI {
     // 超时、重试
     int32 timeout_seconds = 7;    // 默认30秒
     int32 max_retries = 8;        // 默认3次
+
+    // 模型 API 风格：未配置时默认聊天补全协议
+    APIType api_type = 9;
   }
 
   Model model = 1; // 大模型配置

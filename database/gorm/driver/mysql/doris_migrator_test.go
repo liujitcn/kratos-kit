@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	gormmysql "gorm.io/driver/mysql"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -37,7 +37,7 @@ func (r *sqlRecorder) Trace(_ context.Context, _ time.Time, fc func() (string, i
 // TestDorisCreateTableSQL 验证 Doris 建表 SQL 的 Key、分桶、类型和注释语法。
 func TestDorisCreateTableSQL(t *testing.T) {
 	recorder := &sqlRecorder{Interface: logger.Default.LogMode(logger.Silent)}
-	db, err := gorm.Open(dorisDialector{base: gormmysql.New(gormmysql.Config{DSN: "root@tcp(127.0.0.1:9030)/test", SkipInitializeWithVersion: true})}, &gorm.Config{
+	db, err := gorm.Open(dorisDialector{base: mysql.New(mysql.Config{DSN: "root@tcp(127.0.0.1:9030)/test", SkipInitializeWithVersion: true})}, &gorm.Config{
 		DryRun:               true,
 		DisableAutomaticPing: true,
 		Logger:               recorder,
@@ -72,7 +72,7 @@ func TestDorisCreateTableSQL(t *testing.T) {
 // TestDorisCreateTableWithoutPrimaryKey 验证无主键模型使用首个字段作为 Key 和分桶字段。
 func TestDorisCreateTableWithoutPrimaryKey(t *testing.T) {
 	recorder := &sqlRecorder{Interface: logger.Default.LogMode(logger.Silent)}
-	db, err := gorm.Open(dorisDialector{base: gormmysql.New(gormmysql.Config{DSN: "root@tcp(127.0.0.1:9030)/test", SkipInitializeWithVersion: true})}, &gorm.Config{
+	db, err := gorm.Open(dorisDialector{base: mysql.New(mysql.Config{DSN: "root@tcp(127.0.0.1:9030)/test", SkipInitializeWithVersion: true})}, &gorm.Config{
 		DryRun:               true,
 		DisableAutomaticPing: true,
 		Logger:               recorder,

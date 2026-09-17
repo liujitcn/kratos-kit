@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	kratosconfig "github.com/go-kratos/kratos/v3/config"
+	"github.com/go-kratos/kratos/v3/config"
 	"github.com/go-kratos/kratos/v3/config/file"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
@@ -23,7 +23,7 @@ func loadKeyConfigWithEnv(configPath, env string) (*configv1.Key, error) {
 		return nil, err
 	}
 
-	sources := make([]kratosconfig.Source, 0, 2)
+	sources := make([]config.Source, 0, 2)
 	basePath := filepath.Join(configPath, keyConfigFile)
 	if keyPathExists(basePath) {
 		sources = append(sources, file.NewSource(basePath))
