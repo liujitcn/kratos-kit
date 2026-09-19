@@ -72,7 +72,7 @@ message Oss {
 
   // type 为对象存储类型。
   string type = 1;
-  // root_directory 为存储空间根目录。
+  // root_directory 为存储空间根目录，默认值为 ./data。
   string root_directory = 2;
   // aliyun 为阿里云 OSS 配置。
   optional Aliyun aliyun = 3;

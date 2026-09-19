@@ -7,14 +7,13 @@
 package configv1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -453,9 +452,11 @@ type Server_Http struct {
 	// enable_swagger 表示是否启用 Swagger UI。
 	EnableSwagger bool `protobuf:"varint,20,opt,name=enable_swagger,json=enableSwagger,proto3" json:"enable_swagger,omitempty"`
 	// enable_pprof 表示是否启用 pprof。
-	EnablePprof   bool `protobuf:"varint,21,opt,name=enable_pprof,json=enablePprof,proto3" json:"enable_pprof,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	EnablePprof bool `protobuf:"varint,21,opt,name=enable_pprof,json=enablePprof,proto3" json:"enable_pprof,omitempty"`
+	// static_root_directory 为自动注册前端静态目录的根目录，默认值为 ./web。
+	StaticRootDirectory string `protobuf:"bytes,22,opt,name=static_root_directory,json=staticRootDirectory,proto3" json:"static_root_directory,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *Server_Http) Reset() {
@@ -549,6 +550,13 @@ func (x *Server_Http) GetEnablePprof() bool {
 		return x.EnablePprof
 	}
 	return false
+}
+
+func (x *Server_Http) GetStaticRootDirectory() string {
+	if x != nil {
+		return x.StaticRootDirectory
+	}
+	return ""
 }
 
 // Grpc 描述 gRPC 服务端配置。
@@ -1483,7 +1491,7 @@ var File_config_v1_server_proto protoreflect.FileDescriptor
 
 const file_config_v1_server_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xde\x1f\n" +
+	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x92 \n" +
 	"\x06Server\x12/\n" +
 	"\x04http\x18\x01 \x01(\v2\x16.config.v1.Server.HttpH\x00R\x04http\x88\x01\x01\x12/\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x16.config.v1.Server.GrpcH\x01R\x04grpc\x88\x01\x01\x12,\n" +
@@ -1505,7 +1513,7 @@ const file_config_v1_server_proto_rawDesc = "" +
 	"\thistogram\x18\x01 \x01(\bR\thistogram\x12\x18\n" +
 	"\acounter\x18\x02 \x01(\bR\acounter\x12\x14\n" +
 	"\x05gauge\x18\x03 \x01(\bR\x05gauge\x12\x18\n" +
-	"\asummary\x18\x04 \x01(\bR\asummary\x1a\xbf\x04\n" +
+	"\asummary\x18\x04 \x01(\bR\asummary\x1a\xf3\x04\n" +
 	"\x04Http\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
@@ -1518,7 +1526,8 @@ const file_config_v1_server_proto_rawDesc = "" +
 	"middleware\x12 \n" +
 	"\x03tls\x18\f \x01(\v2\x0e.config.v1.TlsR\x03tls\x12%\n" +
 	"\x0eenable_swagger\x18\x14 \x01(\bR\renableSwagger\x12!\n" +
-	"\fenable_pprof\x18\x15 \x01(\bR\venablePprof\x1a\xd2\x01\n" +
+	"\fenable_pprof\x18\x15 \x01(\bR\venablePprof\x122\n" +
+	"\x15static_root_directory\x18\x16 \x01(\tR\x13staticRootDirectory\x1a\xd2\x01\n" +
 	"\x04Cors\x12\x18\n" +
 	"\aheaders\x18\x01 \x03(\tR\aheaders\x12\x18\n" +
 	"\amethods\x18\x02 \x03(\tR\amethods\x12\x18\n" +

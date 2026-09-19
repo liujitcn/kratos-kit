@@ -7,12 +7,11 @@
 package configv1
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -27,7 +26,7 @@ type Oss struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// type 为对象存储类型。
 	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	// root_directory 为存储空间根目录。
+	// root_directory 为存储空间根目录，默认值为 ./data。
 	RootDirectory string `protobuf:"bytes,2,opt,name=root_directory,json=rootDirectory,proto3" json:"root_directory,omitempty"`
 	// aliyun 为阿里云 OSS 配置。
 	Aliyun *Oss_Aliyun `protobuf:"bytes,3,opt,name=aliyun,proto3,oneof" json:"aliyun,omitempty"`

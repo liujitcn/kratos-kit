@@ -83,6 +83,8 @@ message Server {
     bool enable_swagger = 20;
     // enable_pprof 表示是否启用 pprof。
     bool enable_pprof = 21;
+    // static_root_directory 为自动注册前端静态目录的根目录，默认值为 ./web。
+    string static_root_directory = 22;
   }
 
   // Grpc 描述 gRPC 服务端配置。
