@@ -3,6 +3,8 @@ package oss
 import (
 	"context"
 	"fmt"
+	"path"
+	"strings"
 
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/oss/aliyun"
@@ -31,6 +33,7 @@ func NewOSS(cfg *configv1.Oss) (OSS, error) {
 	}
 
 	rootDirectory := cfg.RootDirectory
+	objectRootDirectory := normalizeObjectRootDirectory(rootDirectory)
 
 	switch Type(cfg.Type) {
 	default:
@@ -41,17 +44,17 @@ func NewOSS(cfg *configv1.Oss) (OSS, error) {
 		if cfg.Ftp == nil {
 			return nil, fmt.Errorf("oss: %s config is nil", Ftp)
 		}
-		return ftp.NewOSS(cfg.Ftp, rootDirectory), nil
+		return ftp.NewOSS(cfg.Ftp, objectRootDirectory), nil
 	case Aliyun:
 		if cfg.Aliyun == nil {
 			return nil, fmt.Errorf("oss: %s config is nil", Aliyun)
 		}
-		return aliyun.NewOSS(cfg.Aliyun, rootDirectory), nil
+		return aliyun.NewOSS(cfg.Aliyun, objectRootDirectory), nil
 	case Minio:
 		if cfg.Minio == nil {
 			return nil, fmt.Errorf("oss: %s config is nil", Minio)
 		}
-		return minio.NewOSS(cfg.Minio, rootDirectory), nil
+		return minio.NewOSS(cfg.Minio, objectRootDirectory), nil
 	case S3:
 		if cfg.S3 == nil {
 			return nil, fmt.Errorf("oss: %s config is nil", S3)
@@ -65,11 +68,20 @@ func NewOSS(cfg *configv1.Oss) (OSS, error) {
 			UseSSL:         cfg.S3.UseSsl,
 			ForcePathStyle: cfg.S3.ForcePathStyle,
 			Bucket:         cfg.S3.BucketName,
-			RootDirectory:  rootDirectory,
+			RootDirectory:  objectRootDirectory,
 		})
 		if err != nil {
 			return nil, err
 		}
 		return storage, nil
 	}
+}
+
+// normalizeObjectRootDirectory 规范对象存储根目录，保留本地存储的文件系统路径语义。
+func normalizeObjectRootDirectory(rootDirectory string) string {
+	normalized := path.Clean(strings.TrimSpace(rootDirectory))
+	if normalized == "." || normalized == "/" {
+		return ""
+	}
+	return strings.Trim(normalized, "/")
 }
