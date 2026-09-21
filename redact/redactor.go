@@ -33,6 +33,7 @@ type (
 	sceneContextKey          struct{}
 	operationContextKey      struct{}
 	directionContextKey      struct{}
+	tenantContextKey         struct{}
 	policyResolverContextKey struct{}
 )
 
@@ -108,6 +109,23 @@ func DirectionFromContext(ctx context.Context) Direction {
 		return DirectionResponse
 	}
 	return direction
+}
+
+// WithTenantID 将当前响应数据所属租户写入脱敏上下文。
+func WithTenantID(ctx context.Context, tenantID int64) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, tenantContextKey{}, tenantID)
+}
+
+// TenantIDFromContext 返回当前响应数据所属租户，未设置时返回零。
+func TenantIDFromContext(ctx context.Context) int64 {
+	if ctx == nil {
+		return 0
+	}
+	tenantID, _ := ctx.Value(tenantContextKey{}).(int64)
+	return tenantID
 }
 
 // Apply 对实现 Redactor 的值执行脱敏；未实现该接口的值保持不变。
@@ -278,6 +296,12 @@ func sanitizeFreeTextMap(values protoreflect.Map, valueDescriptor protoreflect.F
 func applyDynamicMessage(ctx context.Context, resolver PolicyResolver, message protoreflect.Message) {
 	if !message.IsValid() {
 		return
+	}
+	if tenantField := message.Descriptor().Fields().ByName("tenant_id"); tenantField != nil && tenantField.Kind() == protoreflect.Int64Kind {
+		tenantID := message.Get(tenantField).Int()
+		if tenantID > 0 {
+			ctx = WithTenantID(ctx, tenantID)
+		}
 	}
 	fields := message.Descriptor().Fields()
 	for index := 0; index < fields.Len(); index++ {

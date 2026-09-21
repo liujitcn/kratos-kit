@@ -1,9 +1,5 @@
 go 1.27.0
 
-replace github.com/liujitcn/kratos-kit/redact v0.0.1 => ./redact
-
-replace github.com/liujitcn/kratos-kit/key v0.0.1 => ./key
-
 use (
 	.
 	./ai/eino

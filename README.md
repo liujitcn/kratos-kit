@@ -21,7 +21,7 @@
 - `oauth`：第三方 OAuth SDK 封装（直接使用 `api` 下 OAuth 配置，支持 GitHub、Gitee、Google、微信开放平台、微信公众号、微信小程序、企业微信、钉钉、飞书；闭环支持 state、PKCE、授权地址、code 换 token、用户信息，不包含业务登录态）
 - `cache`：内存/Redis 缓存封装
 - `queue`：内存/Redis 队列封装
-- `locker`：Redis 分布式锁封装
+- `locker`：统一的进程内锁与 Redis 分布式锁，未配置 Redis 时使用进程内实现
 - `oss`：本地/FTP/MinIO/阿里云 OSS/AWS S3 及兼容对象存储封装
 - `translator`：基于配置的统一机器翻译封装，内置 Google/百度/阿里云/火山引擎
 - [`database/gorm`](database/gorm/README.md)：GORM 客户端封装，提供多数据库 driver、连接池、迁移与可观测性；回调实现集中在 `internal/callback`，根包保留公开入口，支持具名审计、租户、角色范围、项目隔离及自定义前后置回调，系统任务豁免限定在独立会话；版本化迁移仅在脚本全部成功后记录，失败会记录错误并阻止应用启动

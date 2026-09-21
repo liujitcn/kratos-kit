@@ -13,6 +13,7 @@ var ErrStorageValueNotFound = errors.New("敏感值不存在")
 // StorageFieldPolicy 描述一个数据库字段的入库脱敏策略。
 type StorageFieldPolicy struct {
 	ID         int64
+	TenantID   int64
 	TableName  string
 	ColumnName string
 	Rule       FieldPolicy
@@ -21,6 +22,7 @@ type StorageFieldPolicy struct {
 // StorageValue 表示旁表中保存的敏感字段加密原文和查询摘要。
 type StorageValue struct {
 	ID              int64
+	TenantID        int64
 	StoragePolicyID int64
 	RecordID        int64
 	Ciphertext      []byte
@@ -29,20 +31,21 @@ type StorageValue struct {
 
 // StoragePolicyResolver 提供数据库字段入库策略解析能力。
 type StoragePolicyResolver interface {
-	ListStoragePolicies(context.Context, string) []StorageFieldPolicy
+	ListStoragePolicies(context.Context, int64, string) []StorageFieldPolicy
 }
 
 // StorageValueStore 提供敏感值旁表的持久化能力。
 type StorageValueStore interface {
-	Find(context.Context, int64, int64) (*StorageValue, error)
-	ListByRecords(context.Context, int64, []int64) ([]*StorageValue, error)
-	ListByDigest(context.Context, int64, []byte) ([]*StorageValue, error)
+	Find(context.Context, int64, int64, int64) (*StorageValue, error)
+	ListByRecords(context.Context, int64, int64, []int64) ([]*StorageValue, error)
+	ListByDigest(context.Context, int64, int64, []byte) ([]*StorageValue, error)
 	Save(context.Context, *StorageValue) error
 	Delete(context.Context, *StorageValue) error
 }
 
 // ResponseEntity 描述一个需要恢复数据库敏感原文的业务实体。
 type ResponseEntity struct {
+	TenantID int64
 	RecordID int64
 	Entity   any
 }
@@ -76,7 +79,7 @@ func (s *RedactStorage) PrepareString(ctx context.Context, policy StorageFieldPo
 	if s == nil || value == "" {
 		return value, nil, nil
 	}
-	if policy.ID <= 0 || policy.TableName == "" || policy.ColumnName == "" {
+	if policy.ID <= 0 || policy.TenantID <= 0 || policy.TableName == "" || policy.ColumnName == "" {
 		return "", nil, errors.New("敏感字段入库策略无效")
 	}
 	if policy.Rule.Mode != PolicyModeApplyRule || policy.Rule.Transform == nil {
@@ -93,24 +96,27 @@ func (s *RedactStorage) PrepareString(ctx context.Context, policy StorageFieldPo
 	if masked == value {
 		return value, nil, nil
 	}
-	ciphertext, err := s.protector.Encrypt(value, storageAssociatedData(policy.ID))
+	ciphertext, err := s.protector.Encrypt(value, storageAssociatedData(policy.TenantID, policy.ID))
 	if err != nil {
 		return "", nil, err
 	}
 	var digest []byte
-	digest, err = s.protector.Digest(value, storageDigestData(policy.ID))
+	digest, err = s.protector.Digest(value, storageDigestData(policy.TenantID, policy.ID))
 	if err != nil {
 		return "", nil, err
 	}
-	return masked, &StorageValue{StoragePolicyID: policy.ID, Ciphertext: []byte(ciphertext), Digest: digest}, nil
+	return masked, &StorageValue{TenantID: policy.TenantID, StoragePolicyID: policy.ID, Ciphertext: []byte(ciphertext), Digest: digest}, nil
 }
 
 // PrepareEntity 根据物理表入库策略批量处理模型中的敏感字符串字段。
-func (s *RedactStorage) PrepareEntity(ctx context.Context, tableName string, entity any) (map[int64]*StorageValue, error) {
+func (s *RedactStorage) PrepareEntity(ctx context.Context, tenantID int64, tableName string, entity any) (map[int64]*StorageValue, error) {
 	if s == nil || s.policyResolver == nil || entity == nil {
 		return nil, nil
 	}
-	policies := s.policyResolver.ListStoragePolicies(ctx, tableName)
+	if tenantID <= 0 {
+		return nil, errors.New("存储脱敏租户ID不能为空")
+	}
+	policies := s.policyResolver.ListStoragePolicies(ctx, tenantID, tableName)
 	return s.PrepareEntityWithPolicies(ctx, entity, policies)
 }
 
@@ -182,11 +188,14 @@ func (s *RedactStorage) SavePrepared(ctx context.Context, value *StorageValue, r
 }
 
 // DeletePrepared 删除指定入库策略和业务记录对应的旁表敏感值。
-func (s *RedactStorage) DeletePrepared(ctx context.Context, storagePolicyID, recordID int64) error {
+func (s *RedactStorage) DeletePrepared(ctx context.Context, tenantID, storagePolicyID, recordID int64) error {
 	if s == nil || s.valueStore == nil {
 		return errors.New("敏感字段旁表存储未初始化")
 	}
-	value, err := s.valueStore.Find(ctx, storagePolicyID, recordID)
+	if tenantID <= 0 {
+		return errors.New("敏感字段旁表租户ID不能为空")
+	}
+	value, err := s.valueStore.Find(ctx, tenantID, storagePolicyID, recordID)
 	if errors.Is(err, ErrStorageValueNotFound) {
 		return nil
 	}
@@ -198,10 +207,10 @@ func (s *RedactStorage) DeletePrepared(ctx context.Context, storagePolicyID, rec
 
 // RestoreString 根据入库策略恢复字段原文；无法恢复时返回主表值并标记未恢复。
 func (s *RedactStorage) RestoreString(ctx context.Context, policy StorageFieldPolicy, recordID int64, stored string) (string, bool, error) {
-	if s == nil || s.valueStore == nil || s.protector == nil || recordID <= 0 {
+	if s == nil || s.valueStore == nil || s.protector == nil || policy.TenantID <= 0 || recordID <= 0 {
 		return stored, false, nil
 	}
-	value, err := s.valueStore.Find(ctx, policy.ID, recordID)
+	value, err := s.valueStore.Find(ctx, policy.TenantID, policy.ID, recordID)
 	if errors.Is(err, ErrStorageValueNotFound) {
 		return stored, false, nil
 	}
@@ -209,7 +218,7 @@ func (s *RedactStorage) RestoreString(ctx context.Context, policy StorageFieldPo
 		return "", false, err
 	}
 	var plaintext string
-	plaintext, err = s.protector.Decrypt(string(value.Ciphertext), storageAssociatedData(policy.ID))
+	plaintext, err = s.protector.Decrypt(string(value.Ciphertext), storageAssociatedData(policy.TenantID, policy.ID))
 	if err != nil {
 		return "", false, err
 	}
@@ -229,14 +238,17 @@ func (s *RedactStorage) RestoreEntities(ctx context.Context, policies []StorageF
 	}
 	var err error
 	for _, policy := range policies {
+		if policy.TenantID <= 0 {
+			return errors.New("敏感字段入库策略租户ID不能为空")
+		}
 		recordIDs := make([]int64, 0, len(entities))
 		for _, entity := range entities {
-			if entity.Entity != nil && entity.RecordID > 0 {
+			if entity.TenantID == policy.TenantID && entity.Entity != nil && entity.RecordID > 0 {
 				recordIDs = append(recordIDs, entity.RecordID)
 			}
 		}
 		var values []*StorageValue
-		values, err = s.valueStore.ListByRecords(ctx, policy.ID, recordIDs)
+		values, err = s.valueStore.ListByRecords(ctx, policy.TenantID, policy.ID, recordIDs)
 		if err != nil {
 			return err
 		}
@@ -245,12 +257,15 @@ func (s *RedactStorage) RestoreEntities(ctx context.Context, policies []StorageF
 			valueByRecordID[value.RecordID] = value
 		}
 		for _, entity := range entities {
+			if entity.TenantID != policy.TenantID {
+				continue
+			}
 			value, ok := valueByRecordID[entity.RecordID]
 			if !ok {
 				continue
 			}
 			var plaintext string
-			plaintext, err = s.protector.Decrypt(string(value.Ciphertext), storageAssociatedData(policy.ID))
+			plaintext, err = s.protector.Decrypt(string(value.Ciphertext), storageAssociatedData(policy.TenantID, policy.ID))
 			if err != nil {
 				return err
 			}
@@ -267,12 +282,15 @@ func (s *RedactStorage) FindRecordIDsByDigest(ctx context.Context, policy Storag
 	if s == nil || s.valueStore == nil || s.protector == nil {
 		return nil, errors.New("敏感字段查询保护器未初始化")
 	}
-	digest, err := s.protector.Digest(plainValue, storageDigestData(policy.ID))
+	if policy.TenantID <= 0 {
+		return nil, errors.New("敏感字段入库策略租户ID不能为空")
+	}
+	digest, err := s.protector.Digest(plainValue, storageDigestData(policy.TenantID, policy.ID))
 	if err != nil {
 		return nil, err
 	}
 	var values []*StorageValue
-	values, err = s.valueStore.ListByDigest(ctx, policy.ID, digest)
+	values, err = s.valueStore.ListByDigest(ctx, policy.TenantID, policy.ID, digest)
 	if err != nil {
 		return nil, err
 	}
@@ -284,11 +302,11 @@ func (s *RedactStorage) FindRecordIDsByDigest(ctx context.Context, policy Storag
 }
 
 // storageAssociatedData 生成字段级加密关联数据。
-func storageAssociatedData(storagePolicyID int64) string {
-	return "storage-policy\x00" + strconv.FormatInt(storagePolicyID, 10)
+func storageAssociatedData(tenantID, storagePolicyID int64) string {
+	return "tenant\x00" + strconv.FormatInt(tenantID, 10) + "\x00storage-policy\x00" + strconv.FormatInt(storagePolicyID, 10)
 }
 
 // storageDigestData 生成字段级查询摘要关联数据。
-func storageDigestData(storagePolicyID int64) string {
-	return "storage-policy-digest\x00" + strconv.FormatInt(storagePolicyID, 10)
+func storageDigestData(tenantID, storagePolicyID int64) string {
+	return "tenant\x00" + strconv.FormatInt(tenantID, 10) + "\x00storage-policy-digest\x00" + strconv.FormatInt(storagePolicyID, 10)
 }
