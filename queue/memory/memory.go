@@ -1,7 +1,9 @@
 package memory
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -9,6 +11,7 @@ import (
 	"uuid"
 
 	"github.com/liujitcn/kratos-kit/queue/data"
+	"github.com/liujitcn/kratos-kit/transport/hptimer"
 )
 
 type queueChan chan data.Message
@@ -22,15 +25,20 @@ type Memory struct {
 	closing   chan struct{}
 	closeOnce sync.Once
 	consumers sync.WaitGroup
+	delayed   *hptimer.HighPrecisionTimer
+	plans     sync.Map
 }
 
 // NewMemory 内存模式
 func NewMemory(poolNum int64) *Memory {
-	return &Memory{
+	memory := &Memory{
 		queue:   new(sync.Map),
 		PoolNum: poolNum,
 		closing: make(chan struct{}),
 	}
+	memory.delayed = hptimer.NewHighPrecisionTimer(nil)
+	memory.delayed.Start()
+	return memory
 }
 
 // Append 追加消息到指定内存队列。
@@ -65,6 +73,46 @@ func (s *Memory) Append(stream string, message data.Message) error {
 		case <-s.closing:
 		}
 	}(message, q)
+	return nil
+}
+
+// Schedule 按指定时间向内存队列投递消息；相同流和消息编号会覆盖原计划。
+func (s *Memory) Schedule(stream string, message data.Message, executeAt time.Time) error {
+	if stream == "" {
+		return errors.New("queue stream is empty")
+	}
+	if message.ID == "" {
+		return errors.New("delayed message id is empty")
+	}
+	if s.isClosed() {
+		return errors.New("queue is shut down")
+	}
+	taskID := hptimer.TimerTaskID(delayedTaskID(stream, message.ID))
+	if _, exists := s.plans.Load(taskID); exists {
+		_ = s.delayed.RemoveTask(taskID)
+	}
+	added := s.delayed.AddTask(hptimer.NewTimerTask(taskID, executeAt,
+		hptimer.WithCallback(func(_ context.Context) error {
+			s.plans.Delete(taskID)
+			return s.Append(stream, message)
+		}),
+	))
+	if added == "" {
+		return fmt.Errorf("schedule delayed message failed: %s", taskID)
+	}
+	s.plans.Store(taskID, struct{}{})
+	return nil
+}
+
+// Cancel 取消指定流中尚未触发的内存延迟消息。
+func (s *Memory) Cancel(stream string, messageID string) error {
+	if stream == "" || messageID == "" {
+		return nil
+	}
+	taskID := hptimer.TimerTaskID(delayedTaskID(stream, messageID))
+	if _, exists := s.plans.LoadAndDelete(taskID); exists {
+		_ = s.delayed.RemoveTask(taskID)
+	}
 	return nil
 }
 
@@ -114,11 +162,19 @@ func (s *Memory) Shutdown() {
 	s.mutex.Lock()
 	s.closeOnce.Do(func() { close(s.closing) })
 	s.mutex.Unlock()
+	if s.delayed != nil {
+		s.delayed.Stop()
+	}
 	// 只有在 Run 已经成功进入等待态时才允许 Done，避免出现负数计数 panic。
 	if !s.running.CompareAndSwap(true, false) {
 		return
 	}
 	s.wait.Done()
+}
+
+// delayedTaskID 生成内存延迟任务的进程内稳定编号。
+func delayedTaskID(stream string, messageID string) string {
+	return stream + "\x00" + messageID
 }
 
 // Wait 等待已注册的内存队列消费者退出。

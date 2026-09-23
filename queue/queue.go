@@ -2,6 +2,7 @@ package queue
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-kratos/kratos/v3/log"
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
@@ -16,6 +17,12 @@ type Queue interface {
 	Register(stream string, fn data.ConsumerFunc)
 	Run()
 	Shutdown()
+}
+
+// DelayedQueue 定义可选的延迟消息调度能力。
+type DelayedQueue interface {
+	Schedule(stream string, message data.Message, executeAt time.Time) error
+	Cancel(stream string, messageID string) error
 }
 
 // NewQueue 根据配置创建内存或 Redis 队列实例。

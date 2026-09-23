@@ -1,6 +1,9 @@
 package redis
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -9,6 +12,7 @@ import (
 	"github.com/liujitcn/kratos-kit/queue/data"
 	"github.com/liujitcn/kratos-kit/queue/redisqueue"
 	"github.com/liujitcn/kratos-kit/utils"
+	redisClient "github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -26,10 +30,26 @@ type queueProducer interface {
 type Redis struct {
 	consumer queueConsumer
 	producer queueProducer
+	delayed  redisClient.UniversalClient
 
-	mux     sync.Mutex
-	running bool
-	wait    sync.WaitGroup
+	mux           sync.Mutex
+	running       bool
+	wait          sync.WaitGroup
+	delayedCancel context.CancelFunc
+}
+
+const (
+	delayedScheduleKey = "kratos:queue:delayed:schedule"
+	delayedPayloadKey  = "kratos:queue:delayed:payload"
+	delayedLockPrefix  = "kratos:queue:delayed:lock:"
+	delayedBatchSize   = 100
+	delayedPollPeriod  = 500 * time.Millisecond
+	delayedLockTTL     = 30 * time.Second
+)
+
+type delayedMessage struct {
+	Stream  string       `json:"stream"`
+	Message data.Message `json:"message"`
 }
 
 // durationValue 安全读取可选时长配置，缺省时返回零值以便后续统一走默认值补齐逻辑。
@@ -102,9 +122,16 @@ func NewRedis(redisCfg *configv1.Data_Redis, queueCfg *configv1.Data_Queue) (*Re
 		return nil, fmt.Errorf("create redis producer failed: %w", err)
 	}
 
+	delayedClient := redisClient.NewUniversalClient(redisOptions)
+	if err = delayedClient.Ping(context.Background()).Err(); err != nil {
+		_ = delayedClient.Close()
+		return nil, fmt.Errorf("create delayed redis client failed: %w", err)
+	}
+
 	return &Redis{
 		consumer: consumer,
 		producer: producer,
+		delayed:  delayedClient,
 	}, nil
 }
 
@@ -121,6 +148,9 @@ func (s *Redis) start() {
 	}
 	s.running = true
 	s.wait.Add(1)
+	delayedCtx, delayedCancel := context.WithCancel(context.Background())
+	s.delayedCancel = delayedCancel
+	s.wait.Add(1)
 	s.mux.Unlock()
 
 	go func() {
@@ -132,6 +162,10 @@ func (s *Redis) start() {
 		}()
 		s.consumer.Run()
 	}()
+	go func() {
+		defer s.wait.Done()
+		s.runDelayed(delayedCtx)
+	}()
 }
 
 // Append 追加消息到 Redis 队列。
@@ -141,6 +175,39 @@ func (s *Redis) Append(stream string, message data.Message) error {
 		Stream: stream,
 		Values: message.Values,
 	})
+}
+
+// Schedule 按指定时间保存 Redis 延迟消息；相同流和消息编号会覆盖原计划。
+func (s *Redis) Schedule(stream string, message data.Message, executeAt time.Time) error {
+	if stream == "" {
+		return errors.New("queue stream is empty")
+	}
+	if message.ID == "" {
+		return errors.New("delayed message id is empty")
+	}
+	payload, err := json.Marshal(delayedMessage{Stream: stream, Message: message})
+	if err != nil {
+		return fmt.Errorf("marshal delayed message failed: %w", err)
+	}
+	member := delayedMember(stream, message.ID)
+	pipe := s.delayed.TxPipeline()
+	pipe.HSet(context.Background(), delayedPayloadKey, member, payload)
+	pipe.ZAdd(context.Background(), delayedScheduleKey, redisClient.Z{Score: float64(executeAt.UnixMilli()), Member: member})
+	_, err = pipe.Exec(context.Background())
+	return err
+}
+
+// Cancel 取消指定流中尚未转入 Redis Stream 的延迟消息。
+func (s *Redis) Cancel(stream string, messageID string) error {
+	if stream == "" || messageID == "" {
+		return nil
+	}
+	member := delayedMember(stream, messageID)
+	pipe := s.delayed.TxPipeline()
+	pipe.ZRem(context.Background(), delayedScheduleKey, member)
+	pipe.HDel(context.Background(), delayedPayloadKey, member)
+	_, err := pipe.Exec(context.Background())
+	return err
 }
 
 // Register 注册 Redis 队列消费处理函数，并在首次注册后自动启动消费循环。
@@ -162,7 +229,85 @@ func (s *Redis) Run() {
 
 // Shutdown 关闭 Redis 队列消费。
 func (s *Redis) Shutdown() {
+	s.mux.Lock()
+	if s.delayedCancel != nil {
+		s.delayedCancel()
+	}
+	s.mux.Unlock()
 	if s.consumer != nil {
 		s.consumer.Shutdown()
 	}
+	s.wait.Wait()
+	if s.delayed != nil {
+		_ = s.delayed.Close()
+	}
+}
+
+// runDelayed 周期扫描到期计划，通过短租约保证多实例下只有一个实例负责投递。
+func (s *Redis) runDelayed(ctx context.Context) {
+	ticker := time.NewTicker(delayedPollPeriod)
+	defer ticker.Stop()
+	for {
+		if err := s.dispatchDue(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			// 延迟调度失败不会终止即时队列；计划仍保留并在下一轮重试。
+			time.Sleep(delayedPollPeriod)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
+// dispatchDue 抢占并投递一批到期消息，成功写入 Stream 后才删除计划。
+func (s *Redis) dispatchDue(ctx context.Context) error {
+	members, err := s.delayed.ZRangeByScore(ctx, delayedScheduleKey, &redisClient.ZRangeBy{
+		Min: "-inf", Max: fmt.Sprintf("%d", time.Now().UnixMilli()), Offset: 0, Count: delayedBatchSize,
+	}).Result()
+	if err != nil {
+		return err
+	}
+	for _, member := range members {
+		if err = s.dispatchDelayedMember(ctx, member); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// dispatchDelayedMember 使用带过期时间的 Redis 锁抢占单项计划。
+func (s *Redis) dispatchDelayedMember(ctx context.Context, member string) error {
+	lockKey := delayedLockPrefix + member
+	claimed, err := s.delayed.SetNX(ctx, lockKey, "1", delayedLockTTL).Result()
+	if err != nil || !claimed {
+		return err
+	}
+	defer s.delayed.Del(context.Background(), lockKey)
+	raw, err := s.delayed.HGet(ctx, delayedPayloadKey, member).Bytes()
+	if errors.Is(err, redisClient.Nil) {
+		return s.delayed.ZRem(ctx, delayedScheduleKey, member).Err()
+	}
+	if err != nil {
+		return err
+	}
+	var delayed delayedMessage
+	if err = json.Unmarshal(raw, &delayed); err != nil {
+		return fmt.Errorf("unmarshal delayed message failed: %w", err)
+	}
+	// Message.ID 是延迟计划的业务稳定编号，不是 Redis Stream 的毫秒序列编号。
+	delayed.Message.ID = ""
+	if err = s.Append(delayed.Stream, delayed.Message); err != nil {
+		return err
+	}
+	pipe := s.delayed.TxPipeline()
+	pipe.ZRem(ctx, delayedScheduleKey, member)
+	pipe.HDel(ctx, delayedPayloadKey, member)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+// delayedMember 生成 Redis 延迟计划的稳定成员编号。
+func delayedMember(stream string, messageID string) string {
+	return stream + "\x00" + messageID
 }
