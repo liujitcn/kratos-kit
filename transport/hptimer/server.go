@@ -177,6 +177,14 @@ func (s *Server) AddTask(task *TimerTask) TimerTaskID {
 	return s.hpTimer.AddTask(task)
 }
 
+// UpsertTask 添加或替换同编号任务。
+func (s *Server) UpsertTask(task *TimerTask) TimerTaskID {
+	if !s.started.Load() || s.hpTimer == nil {
+		return ""
+	}
+	return s.hpTimer.UpsertTask(task)
+}
+
 // RemoveTask 删除任务
 func (s *Server) RemoveTask(taskID TimerTaskID) bool {
 	if !s.started.Load() {

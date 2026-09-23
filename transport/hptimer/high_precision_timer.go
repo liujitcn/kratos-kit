@@ -166,7 +166,7 @@ func (ht *HighPrecisionTimer) AddTask(task *TimerTask) TimerTaskID {
 
 	// 如果新加入的任务成为堆顶（即比之前的最早任务更早），通知 run 重置 timer
 	// 非阻塞发送，避免因信号未被消费而阻塞 AddTask
-	if ht.timer != nil && ht.heap.Len() > 0 && ht.heap[0] == task {
+	if ht.heap.Len() > 0 && ht.heap[0] == task {
 		select {
 		case ht.wakeup <- struct{}{}:
 		default:
@@ -174,6 +174,28 @@ func (ht *HighPrecisionTimer) AddTask(task *TimerTask) TimerTaskID {
 	}
 
 	return task.ID
+}
+
+// UpsertTask 添加或替换同编号任务，用于延迟任务改期。
+func (ht *HighPrecisionTimer) UpsertTask(task *TimerTask) TimerTaskID {
+	if task == nil || task.ID == "" {
+		return ""
+	}
+	ht.mu.Lock()
+	if existing, ok := ht.tasks[task.ID]; ok {
+		if existing.cancel != nil {
+			existing.cancel()
+		}
+		for index, item := range ht.heap {
+			if item.ID == task.ID {
+				heap.Remove(&ht.heap, index)
+				break
+			}
+		}
+		delete(ht.tasks, task.ID)
+	}
+	ht.mu.Unlock()
+	return ht.AddTask(task)
 }
 
 // RemoveTask 删除定时任务
@@ -225,7 +247,7 @@ func (ht *HighPrecisionTimer) run() {
 		if ht.heap.Len() == 0 {
 			ht.mu.Unlock()
 			select {
-			case <-time.After(1 * time.Millisecond):
+			case <-ht.wakeup:
 			case <-ht.ctx.Done():
 				return
 			}
@@ -319,6 +341,7 @@ func (ht *HighPrecisionTimer) handleRepeatTask(task *TimerTask, now time.Time) {
 		Interval: task.Interval,
 		Cron:     task.Cron,
 		Priority: task.Priority,
+		Data:     task.Data,
 		Callback: task.Callback,
 		Ctx:      task.Ctx,
 		cancel:   task.cancel,
