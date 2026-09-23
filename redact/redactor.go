@@ -487,12 +487,16 @@ func Email(value string, keepLocalFirst int, maskDomain bool, maskChar string) s
 	return local + "@" + domain
 }
 
-// Truncate 保留字符串前指定长度的字节，并追加后缀。
+// Truncate 保留字符串前指定数量的 Unicode 字符，并追加后缀。
 func Truncate(value string, length int, suffix string) string {
-	if len(value) <= length {
+	chars := []rune(value)
+	if len(chars) <= length {
 		return value
 	}
-	return value[:length] + suffix
+	if length <= 0 {
+		return suffix
+	}
+	return string(chars[:length]) + suffix
 }
 
 // HashMD5 使用 MD5 生成十六进制摘要。
