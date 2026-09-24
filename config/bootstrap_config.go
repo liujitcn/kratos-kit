@@ -104,11 +104,6 @@ func initBootstrapConfig() {
 		}
 		addConfigLocked(commonConfig.Authz)
 
-		if commonConfig.GetOauth() == nil {
-			commonConfig.Oauth = &configv1.OAuth{}
-		}
-		addConfigLocked(commonConfig.Oauth)
-
 		if commonConfig.GetTranslator() == nil {
 			commonConfig.Translator = &configv1.Translator{}
 		}

@@ -5,9 +5,9 @@ go 1.27.0
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/liujitcn/go-utils/crypto v0.0.17
-	github.com/liujitcn/kratos-kit v0.0.83
-	github.com/liujitcn/kratos-kit/api v0.0.36
-	github.com/liujitcn/kratos-kit/key v0.0.4
+	github.com/liujitcn/kratos-kit v0.0.88
+	github.com/liujitcn/kratos-kit/api v0.0.40
+	github.com/liujitcn/kratos-kit/key v0.0.6
 	google.golang.org/protobuf v1.36.12
 )
 
