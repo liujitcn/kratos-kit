@@ -6,7 +6,7 @@
 
 包含：
 
-- 根据 `api/gen/go/config/v1.OAuth` 初始化 Provider 管理器。
+- 根据 `oauth/provider.Config` 参数初始化 Provider 管理器。
 - 过滤配置不完整或不支持的 Provider，并返回当前可展示的跳转授权 Provider 列表。
 - 生成第三方授权地址。
 - 使用授权码或客户端凭证获取 Token。
@@ -45,29 +45,27 @@
 
 ```go
 import (
-    configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
     "github.com/liujitcn/kratos-kit/oauth"
+    "github.com/liujitcn/kratos-kit/oauth/provider"
 )
 
-manager, err := oauth.NewManager(&configv1.OAuth{
-    Providers: map[string]*configv1.Provider{
-        string(oauth.Github): {
-            ClientId:     "xxx",
+manager, err := oauth.NewManager(map[oauth.Type]*provider.Config{
+        oauth.Github: {
+            ClientID:     "xxx",
             ClientSecret: "xxx",
-            RedirectUri:  "http://localhost:8000/oauth/github/callback",
+            RedirectURI:  "http://localhost:8000/oauth/github/callback",
             Scopes:       []string{"user:email"},
         },
-        string(oauth.WechatMP): {
-            ClientId:     "公众号 appid",
+        oauth.WechatMP: {
+            ClientID:     "公众号 appid",
             ClientSecret: "公众号 secret",
-            RedirectUri:  "http://localhost:8000/oauth/wechatmp/callback",
+            RedirectURI:  "http://localhost:8000/oauth/wechatmp/callback",
             Scopes:       []string{"snsapi_userinfo"},
         },
-        string(oauth.WechatMini): {
-            ClientId:     "小程序 appid",
+        oauth.WechatMini: {
+            ClientID:     "小程序 appid",
             ClientSecret: "小程序 secret",
         },
-    },
 })
 if err != nil {
     return err

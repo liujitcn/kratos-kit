@@ -13,12 +13,12 @@ import (
 	"github.com/liujitcn/kratos-kit/locker/contract"
 	"github.com/liujitcn/kratos-kit/utils"
 	"github.com/redis/go-redis/extra/redisotel/v9"
-	goredis "github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
 )
 
 // Redis 是基于 Redis 的分布式锁实现。
 type Redis struct {
-	client goredis.UniversalClient
+	client redis.UniversalClient
 	mutex  *redislock.Client
 }
 
@@ -41,7 +41,7 @@ func New(cfg *configv1.Data_Redis) (*Redis, error) {
 	if err != nil {
 		return nil, fmt.Errorf("redis options failed: %w", err)
 	}
-	client := goredis.NewUniversalClient(redisOptions)
+	client := redis.NewUniversalClient(redisOptions)
 	if client == nil {
 		return nil, errors.New("failed opening connection to redis")
 	}

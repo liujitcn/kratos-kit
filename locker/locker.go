@@ -4,7 +4,7 @@ import (
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/locker/contract"
 	"github.com/liujitcn/kratos-kit/locker/memory"
-	redislocker "github.com/liujitcn/kratos-kit/locker/redis"
+	"github.com/liujitcn/kratos-kit/locker/redis"
 )
 
 const (
@@ -33,5 +33,5 @@ func NewLocker(cfg *configv1.Data_Redis) (Locker, error) {
 	if cfg == nil {
 		return memory.New(), nil
 	}
-	return redislocker.New(cfg)
+	return redis.New(cfg)
 }

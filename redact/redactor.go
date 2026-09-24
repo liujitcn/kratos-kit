@@ -149,11 +149,13 @@ const (
 
 // FieldPolicy 表示单个字段的运行时脱敏策略。
 type FieldPolicy struct {
-	Mode        PolicyMode
-	Transform   func(value any) any
-	RuleID      int64
-	RuleVersion int32
-	Fingerprint string
+	Mode             PolicyMode
+	Transform        func(value any) any
+	RuleType         string
+	EncryptAlgorithm string
+	RuleID           int64
+	RuleVersion      int32
+	Fingerprint      string
 }
 
 // NewFieldPolicy 根据数据库中的策略模式、规则类型和 JSON 规则创建字段策略。
@@ -166,7 +168,21 @@ func NewFieldPolicy(mode PolicyMode, ruleType, ruleJSON string) (FieldPolicy, er
 		if err != nil {
 			return FieldPolicy{}, err
 		}
-		return FieldPolicy{Mode: mode, Transform: transform}, nil
+		policy := FieldPolicy{Mode: mode, Transform: transform, RuleType: strings.ToUpper(strings.TrimSpace(ruleType))}
+		if policy.RuleType == "ENCRYPT" {
+			var rules map[string]json.RawMessage
+			if err = json.Unmarshal([]byte(ruleJSON), &rules); err != nil {
+				return FieldPolicy{}, fmt.Errorf("ENCRYPT 规则无效: %w", err)
+			}
+			var rule struct {
+				Algorithm string `json:"algorithm"`
+			}
+			if err = json.Unmarshal(rules["encrypt"], &rule); err != nil {
+				return FieldPolicy{}, fmt.Errorf("ENCRYPT 规则无效: %w", err)
+			}
+			policy.EncryptAlgorithm = rule.Algorithm
+		}
+		return policy, nil
 	default:
 		return FieldPolicy{}, fmt.Errorf("不支持的脱敏策略模式: %d", mode)
 	}
@@ -660,6 +676,18 @@ func newRuleTransform(ruleType, ruleJSON string) (func(any) any, error) {
 	}
 
 	switch ruleType {
+	case "ENCRYPT":
+		var rule struct {
+			Algorithm string `json:"algorithm"`
+		}
+		err = json.Unmarshal(rawRule, &rule)
+		if err != nil {
+			return nil, fmt.Errorf("ENCRYPT 规则无效: %w", err)
+		}
+		if rule.Algorithm != "AES_GCM" && rule.Algorithm != "SM4_GCM" {
+			return nil, fmt.Errorf("不支持的 ENCRYPT 算法: %s", rule.Algorithm)
+		}
+		return func(value any) any { return value }, nil
 	case "MASK":
 		var rule struct {
 			KeepFirst uint32 `json:"keep_first"`

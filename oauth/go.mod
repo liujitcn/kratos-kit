@@ -4,7 +4,6 @@ go 1.27.0
 
 require (
 	github.com/liujitcn/go-utils/http v0.0.7
-	github.com/liujitcn/kratos-kit/api v0.0.36
 	github.com/liujitcn/kratos-kit/cache v0.0.21
 )
 
@@ -14,6 +13,7 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/liujitcn/go-utils v0.0.41 // indirect
+	github.com/liujitcn/kratos-kit/api v0.0.36 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.22 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.19.0 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.19.0 // indirect

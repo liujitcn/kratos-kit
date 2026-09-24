@@ -27,7 +27,7 @@ api/
 
 | 文件 | 主要消息 | 当前能力 |
 | --- | --- | --- |
-| `bootstrap.proto` | `Bootstrap` | 聚合服务端、客户端、数据、链路、日志、注册中心、配置中心、对象存储、通知、认证、授权、pprof、AI、OAuth、翻译和 MFA 配置。 |
+| `bootstrap.proto` | `Bootstrap` | 聚合服务端、客户端、数据、链路、日志、注册中心、配置中心、对象存储、通知、认证、授权、pprof、AI、翻译和 MFA 配置。 |
 | `app_info.proto` | `AppInfo`、`Endpoint` | 应用标识、实例、版本、主机、端点、环境、区域、标签和构建信息。 |
 | `server.proto` | `Server` | HTTP、gRPC、MCP、SSE 服务端；包含中间件、TLS、CORS、Swagger、pprof、请求体限制和健康检查。 |
 | `client.proto` | `Client` | HTTP、gRPC、MCP、SSE 客户端；包含 JWT、元数据、重试、令牌桶限流、Prometheus 指标和 TLS。 |
@@ -39,7 +39,6 @@ api/
 | `authn.proto` | `Authentication` | JWT 签名、访问/刷新令牌有效期、强制白名单、可选认证规则和服务端 Session 生命周期。 |
 | `authz.proto` | `Authorization` | Casbin 策略前缀及按 URL/HTTP 方法排除授权检查。 |
 | `mfa.proto` | `Mfa` | 加密密钥、登录/绑定挑战、失败次数、恢复码、TOTP 和 WebAuthn。 |
-| `oauth.proto` | `OAuth`、`Provider` | 按 Provider 名称配置 OAuth Client ID、密钥、回调地址和 Scope。 |
 | `translator.proto` | `Translator` | Google、百度、阿里云、火山引擎翻译 Provider，支持超时和扩展参数。 |
 | `tracer.proto` | `Tracer`、`BatcherOptions` | 导出器、端点、采样率、连接安全、BatchSpanProcessor 和 TraceContext/Baggage。 |
 | `pprof.proto` | `Pprof` | Pyroscope 上报地址、认证、上传频率、标签和性能数据类型。 |
@@ -68,7 +67,6 @@ api/
 | `authz` | `Authorization` | Casbin 授权配置。 |
 | `pprof` | `Pprof` | Pyroscope 性能数据上报。 |
 | `ai` | `AI` | 云端或 Ollama 本地大模型。 |
-| `oauth` | `OAuth` | 按名称配置第三方 OAuth Provider。 |
 | `translator` | `Translator` | Google、百度、阿里云或火山引擎翻译。 |
 | `mfa` | `Mfa` | MFA 加密、挑战、恢复码、TOTP 和 WebAuthn。 |
 
@@ -79,7 +77,7 @@ api/
 
 - `Bootstrap` 的顶层配置以及各 Provider 配置大多使用 `optional` 消息字段，应用可以区分
   “未配置”和“已配置但使用零值”。
-- `map` 字段用于命名配置或扩展参数，例如 `Data.databases`、`OAuth.providers`、
+- `map` 字段用于命名配置或扩展参数，例如 `Data.databases`、
   `Translator.options`；`repeated` 字段用于端点、Header、标签和规则列表。
 - Proto 字段编号是兼容性契约。新增字段应使用未占用编号，不要修改或复用既有编号；
   `mfa.proto` 中的 `reserved` 字段和名称也不得重新使用。
@@ -160,10 +158,6 @@ Provider 按自身协议提供端点、命名空间、认证、心跳、缓存�
 直接提交到 Proto 配置或仓库，应通过 Secret Manager、Kubernetes Secret、环境变量或工作
 负载身份注入。
 
-`OAuth.providers` 是以 Provider 名称为键的映射，Provider 配置包含 Client ID、Client
-Secret、回调地址和 Scope。常见名称包括 `github`、`gitee`、`google`、`wechat`、
-`wechatmp`、`wechatmini`、`wechatwork`、`dingtalk` 和 `feishu`。
-
 `Key` 描述应用启动阶段的根密钥 Provider，支持 `file`、`vault`、`aws`、`google`、
 `azure` 和 `kubernetes`。公共字段为 Provider 类型、派生范围和根密钥名称；Provider
 扩展字段分别为文件路径、Vault 地址/命名空间/value key、AWS 区域/版本阶段、Google
@@ -202,12 +196,12 @@ cfg := &configv1.Bootstrap{
 ```
 
 `Bootstrap` 当前的顶层字段为：`server`、`client`、`data`、`trace`、`logger`、
-`registry`、`config`、`oss`、`notify`、`authn`、`authz`、`pprof`、`ai`、`oauth`、
+`registry`、`config`、`oss`、`notify`、`authn`、`authz`、`pprof`、`ai`、
 `translator` 和 `mfa`。`AppInfo` 是独立的运行时元数据消息，不嵌入 `Bootstrap`。
 
 AI 使用 `configv1.AI`，其 `AI.Model` 与上游 `kratos-bootstrap` 的模型配置保持一致；
-旧的 `Client.Llm` 配置已移除。OAuth 使用独立的 `configv1.OAuth`，按 `providers`
-映射创建 Provider。翻译使用 `configv1.Translator`，按 `type` 选择厂商。密钥配置使用
+旧的 `Client.Llm` 配置已移除。OAuth Provider 参数由 `kratos-kit/oauth/provider.Config`
+直接承载，不属于 Bootstrap 启动配置。翻译使用 `configv1.Translator`，按 `type` 选择厂商。密钥配置使用
 独立的 `configv1.Key`，不放入 `Bootstrap`。
 
 ## 依赖与工具

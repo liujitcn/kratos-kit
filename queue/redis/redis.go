@@ -12,7 +12,7 @@ import (
 	"github.com/liujitcn/kratos-kit/queue/data"
 	"github.com/liujitcn/kratos-kit/queue/redisqueue"
 	"github.com/liujitcn/kratos-kit/utils"
-	redisClient "github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -30,7 +30,7 @@ type queueProducer interface {
 type Redis struct {
 	consumer queueConsumer
 	producer queueProducer
-	delayed  redisClient.UniversalClient
+	delayed  redis.UniversalClient
 
 	mux           sync.Mutex
 	running       bool
@@ -122,7 +122,7 @@ func NewRedis(redisCfg *configv1.Data_Redis, queueCfg *configv1.Data_Queue) (*Re
 		return nil, fmt.Errorf("create redis producer failed: %w", err)
 	}
 
-	delayedClient := redisClient.NewUniversalClient(redisOptions)
+	delayedClient := redis.NewUniversalClient(redisOptions)
 	if err = delayedClient.Ping(context.Background()).Err(); err != nil {
 		_ = delayedClient.Close()
 		return nil, fmt.Errorf("create delayed redis client failed: %w", err)
@@ -192,7 +192,7 @@ func (s *Redis) Schedule(stream string, message data.Message, executeAt time.Tim
 	member := delayedMember(stream, message.ID)
 	pipe := s.delayed.TxPipeline()
 	pipe.HSet(context.Background(), delayedPayloadKey, member, payload)
-	pipe.ZAdd(context.Background(), delayedScheduleKey, redisClient.Z{Score: float64(executeAt.UnixMilli()), Member: member})
+	pipe.ZAdd(context.Background(), delayedScheduleKey, redis.Z{Score: float64(executeAt.UnixMilli()), Member: member})
 	_, err = pipe.Exec(context.Background())
 	return err
 }
@@ -262,7 +262,7 @@ func (s *Redis) runDelayed(ctx context.Context) {
 
 // dispatchDue 抢占并投递一批到期消息，成功写入 Stream 后才删除计划。
 func (s *Redis) dispatchDue(ctx context.Context) error {
-	members, err := s.delayed.ZRangeByScore(ctx, delayedScheduleKey, &redisClient.ZRangeBy{
+	members, err := s.delayed.ZRangeByScore(ctx, delayedScheduleKey, &redis.ZRangeBy{
 		Min: "-inf", Max: fmt.Sprintf("%d", time.Now().UnixMilli()), Offset: 0, Count: delayedBatchSize,
 	}).Result()
 	if err != nil {
@@ -285,7 +285,7 @@ func (s *Redis) dispatchDelayedMember(ctx context.Context, member string) error 
 	}
 	defer s.delayed.Del(context.Background(), lockKey)
 	raw, err := s.delayed.HGet(ctx, delayedPayloadKey, member).Bytes()
-	if errors.Is(err, redisClient.Nil) {
+	if errors.Is(err, redis.Nil) {
 		return s.delayed.ZRem(ctx, delayedScheduleKey, member).Err()
 	}
 	if err != nil {

@@ -2,6 +2,58 @@ package provider
 
 import "context"
 
+// Parameters 表示 Provider 厂商扩展参数的结构化 JSON 对象。
+type Parameters map[string]any
+
+// Config 描述 OAuth Provider 的标准参数和厂商扩展参数。
+type Config struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
+	Scopes       []string
+	Parameters   Parameters
+}
+
+// GetClientId 返回 OAuth Client ID。
+func (c *Config) GetClientId() string {
+	if c == nil {
+		return ""
+	}
+	return c.ClientID
+}
+
+// GetClientSecret 返回 OAuth Client Secret。
+func (c *Config) GetClientSecret() string {
+	if c == nil {
+		return ""
+	}
+	return c.ClientSecret
+}
+
+// GetRedirectUri 返回 OAuth 回调地址。
+func (c *Config) GetRedirectUri() string {
+	if c == nil {
+		return ""
+	}
+	return c.RedirectURI
+}
+
+// GetScopes 返回 OAuth Scope 列表。
+func (c *Config) GetScopes() []string {
+	if c == nil {
+		return nil
+	}
+	return c.Scopes
+}
+
+// GetParameters 返回厂商扩展参数。
+func (c *Config) GetParameters() Parameters {
+	if c == nil {
+		return nil
+	}
+	return c.Parameters
+}
+
 // Type OAuth Provider 类型枚举。
 type Type string
 

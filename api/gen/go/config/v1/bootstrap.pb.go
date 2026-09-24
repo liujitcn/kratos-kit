@@ -51,12 +51,10 @@ type Bootstrap struct {
 	Pprof *Pprof `protobuf:"bytes,12,opt,name=pprof,proto3,oneof" json:"pprof,omitempty"`
 	// ai 为ai相关配置。
 	Ai *AI `protobuf:"bytes,13,opt,name=ai,proto3,oneof" json:"ai,omitempty"`
-	// oauth 为三方登录授权配置。
-	Oauth *OAuth `protobuf:"bytes,14,opt,name=oauth,proto3,oneof" json:"oauth,omitempty"`
 	// translator 为机器翻译配置。
-	Translator *Translator `protobuf:"bytes,15,opt,name=translator,proto3,oneof" json:"translator,omitempty"`
+	Translator *Translator `protobuf:"bytes,14,opt,name=translator,proto3,oneof" json:"translator,omitempty"`
 	// mfa 为多因素认证配置。
-	Mfa           *Mfa `protobuf:"bytes,16,opt,name=mfa,proto3,oneof" json:"mfa,omitempty"`
+	Mfa           *Mfa `protobuf:"bytes,15,opt,name=mfa,proto3,oneof" json:"mfa,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -182,13 +180,6 @@ func (x *Bootstrap) GetAi() *AI {
 	return nil
 }
 
-func (x *Bootstrap) GetOauth() *OAuth {
-	if x != nil {
-		return x.Oauth
-	}
-	return nil
-}
-
 func (x *Bootstrap) GetTranslator() *Translator {
 	if x != nil {
 		return x.Translator
@@ -207,7 +198,7 @@ var File_config_v1_bootstrap_proto protoreflect.FileDescriptor
 
 const file_config_v1_bootstrap_proto_rawDesc = "" +
 	"\n" +
-	"\x19config/v1/bootstrap.proto\x12\tconfig.v1\x1a\x12config/v1/ai.proto\x1a\x15config/v1/authn.proto\x1a\x15config/v1/authz.proto\x1a\x16config/v1/client.proto\x1a\x16config/v1/config.proto\x1a\x14config/v1/data.proto\x1a\x16config/v1/logger.proto\x1a\x13config/v1/mfa.proto\x1a\x16config/v1/notify.proto\x1a\x15config/v1/oauth.proto\x1a\x13config/v1/oss.proto\x1a\x15config/v1/pprof.proto\x1a\x18config/v1/registry.proto\x1a\x16config/v1/server.proto\x1a\x16config/v1/tracer.proto\x1a\x1aconfig/v1/translator.proto\"\xa7\a\n" +
+	"\x19config/v1/bootstrap.proto\x12\tconfig.v1\x1a\x12config/v1/ai.proto\x1a\x15config/v1/authn.proto\x1a\x15config/v1/authz.proto\x1a\x16config/v1/client.proto\x1a\x16config/v1/config.proto\x1a\x14config/v1/data.proto\x1a\x16config/v1/logger.proto\x1a\x13config/v1/mfa.proto\x1a\x16config/v1/notify.proto\x1a\x13config/v1/oss.proto\x1a\x15config/v1/pprof.proto\x1a\x18config/v1/registry.proto\x1a\x16config/v1/server.proto\x1a\x16config/v1/tracer.proto\x1a\x1aconfig/v1/translator.proto\"\xf0\x06\n" +
 	"\tBootstrap\x12.\n" +
 	"\x06server\x18\x01 \x01(\v2\x11.config.v1.ServerH\x00R\x06server\x88\x01\x01\x12.\n" +
 	"\x06client\x18\x02 \x01(\v2\x11.config.v1.ClientH\x01R\x06client\x88\x01\x01\x12(\n" +
@@ -223,12 +214,11 @@ const file_config_v1_bootstrap_proto_rawDesc = "" +
 	"\x05authz\x18\v \x01(\v2\x18.config.v1.AuthorizationH\n" +
 	"R\x05authz\x88\x01\x01\x12+\n" +
 	"\x05pprof\x18\f \x01(\v2\x10.config.v1.PprofH\vR\x05pprof\x88\x01\x01\x12\"\n" +
-	"\x02ai\x18\r \x01(\v2\r.config.v1.AIH\fR\x02ai\x88\x01\x01\x12+\n" +
-	"\x05oauth\x18\x0e \x01(\v2\x10.config.v1.OAuthH\rR\x05oauth\x88\x01\x01\x12:\n" +
+	"\x02ai\x18\r \x01(\v2\r.config.v1.AIH\fR\x02ai\x88\x01\x01\x12:\n" +
 	"\n" +
-	"translator\x18\x0f \x01(\v2\x15.config.v1.TranslatorH\x0eR\n" +
+	"translator\x18\x0e \x01(\v2\x15.config.v1.TranslatorH\rR\n" +
 	"translator\x88\x01\x01\x12%\n" +
-	"\x03mfa\x18\x10 \x01(\v2\x0e.config.v1.MfaH\x0fR\x03mfa\x88\x01\x01B\t\n" +
+	"\x03mfa\x18\x0f \x01(\v2\x0e.config.v1.MfaH\x0eR\x03mfa\x88\x01\x01B\t\n" +
 	"\a_serverB\t\n" +
 	"\a_clientB\a\n" +
 	"\x05_dataB\b\n" +
@@ -241,8 +231,7 @@ const file_config_v1_bootstrap_proto_rawDesc = "" +
 	"\x06_authnB\b\n" +
 	"\x06_authzB\b\n" +
 	"\x06_pprofB\x05\n" +
-	"\x03_aiB\b\n" +
-	"\x06_oauthB\r\n" +
+	"\x03_aiB\r\n" +
 	"\v_translatorB\x06\n" +
 	"\x04_mfaB\xa2\x01\n" +
 	"\rcom.config.v1B\x0eBootstrapProtoP\x01Z<github.com/liujitcn/kratos-kit/api/gen/go/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
@@ -276,9 +265,8 @@ var file_config_v1_bootstrap_proto_goTypes = []any{
 	(*Authorization)(nil),  // 11: config.v1.Authorization
 	(*Pprof)(nil),          // 12: config.v1.Pprof
 	(*AI)(nil),             // 13: config.v1.AI
-	(*OAuth)(nil),          // 14: config.v1.OAuth
-	(*Translator)(nil),     // 15: config.v1.Translator
-	(*Mfa)(nil),            // 16: config.v1.Mfa
+	(*Translator)(nil),     // 14: config.v1.Translator
+	(*Mfa)(nil),            // 15: config.v1.Mfa
 }
 var file_config_v1_bootstrap_proto_depIdxs = []int32{
 	1,  // 0: config.v1.Bootstrap.server:type_name -> config.v1.Server
@@ -294,14 +282,13 @@ var file_config_v1_bootstrap_proto_depIdxs = []int32{
 	11, // 10: config.v1.Bootstrap.authz:type_name -> config.v1.Authorization
 	12, // 11: config.v1.Bootstrap.pprof:type_name -> config.v1.Pprof
 	13, // 12: config.v1.Bootstrap.ai:type_name -> config.v1.AI
-	14, // 13: config.v1.Bootstrap.oauth:type_name -> config.v1.OAuth
-	15, // 14: config.v1.Bootstrap.translator:type_name -> config.v1.Translator
-	16, // 15: config.v1.Bootstrap.mfa:type_name -> config.v1.Mfa
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	14, // 13: config.v1.Bootstrap.translator:type_name -> config.v1.Translator
+	15, // 14: config.v1.Bootstrap.mfa:type_name -> config.v1.Mfa
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_bootstrap_proto_init() }
@@ -318,7 +305,6 @@ func file_config_v1_bootstrap_proto_init() {
 	file_config_v1_logger_proto_init()
 	file_config_v1_mfa_proto_init()
 	file_config_v1_notify_proto_init()
-	file_config_v1_oauth_proto_init()
 	file_config_v1_oss_proto_init()
 	file_config_v1_pprof_proto_init()
 	file_config_v1_registry_proto_init()

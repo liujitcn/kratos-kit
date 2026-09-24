@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	httpx "github.com/liujitcn/go-utils/http"
-	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/oauth/provider"
 )
 
@@ -23,11 +22,11 @@ var googleDefaultScopes = []string{"openid", "profile", "email"}
 
 // Provider 实现 Google OAuth 能力。
 type Provider struct {
-	conf *configv1.Provider
+	conf *provider.Config
 }
 
 // New 创建 Google OAuth Provider。
-func New(conf *configv1.Provider) *Provider {
+func New(conf *provider.Config) *Provider {
 	return &Provider{
 		conf: conf,
 	}
