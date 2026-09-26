@@ -28,10 +28,15 @@ type Cache interface {
 	HSet(key, field, value string) error
 	HDel(key string, field string) error
 	HExists(key, field string) error
+	// TakeTokenBuckets 原子判断并扣减同一请求的多个令牌桶。
+	TakeTokenBuckets(requests []TokenBucketRequest) (bool, time.Duration, error)
 }
 
 // Entry 表示一个缓存条目的只读快照。
 type Entry = store.Entry
+
+// TokenBucketRequest 描述一次令牌桶扣减所需的键和参数。
+type TokenBucketRequest = store.TokenBucketRequest
 
 func NewCache(cfg *configv1.Data_Redis) (Cache, func(), error) {
 	var cache Cache

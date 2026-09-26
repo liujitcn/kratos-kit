@@ -57,18 +57,18 @@ func NewRedis(cfg *configv1.Data_Redis) (*Redis, func(), error) {
 		return nil, nil, fmt.Errorf("failed ping redis: %w", err)
 	}
 	return &Redis{
-			client: client,
-			meta:   make(map[string]entryMeta),
-		}, func() {
-			log.Info("cache redis cleanup...")
-			if client != nil {
-				err = client.Close()
-				if err != nil {
-					log.Error("failed close redis", "error", err)
-					return
-				}
+		client: client,
+		meta:   make(map[string]entryMeta),
+	}, func() {
+		log.Info("cache redis cleanup...")
+		if client != nil {
+			err = client.Close()
+			if err != nil {
+				log.Error("failed close redis", "error", err)
+				return
 			}
-		}, nil
+		}
+	}, nil
 }
 
 // List 返回 Redis 中支持的缓存条目及其运行时元数据。
@@ -186,6 +186,11 @@ func (s *Redis) HDel(key, field string) error {
 
 func (s *Redis) HExists(key, field string) error {
 	return s.client.HExists(context.TODO(), key, field).Err()
+}
+
+// TakeTokenBuckets 原子判断并扣减同一请求的多个令牌桶。
+func (s *Redis) TakeTokenBuckets(requests []store.TokenBucketRequest) (bool, time.Duration, error) {
+	return takeTokenBuckets(context.TODO(), s.client, requests, s.recordMeta)
 }
 
 func scanKeys(client *redis.Client) ([]string, error) {

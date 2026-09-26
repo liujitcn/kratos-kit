@@ -25,20 +25,24 @@ type mapItem struct {
 }
 
 type Memory struct {
-	strItems map[string]*strItem
-	strMutex sync.RWMutex
-	mapItems map[string]*mapItem
-	mapMutex sync.RWMutex
+	strItems               map[string]*strItem
+	strMutex               sync.RWMutex
+	mapItems               map[string]*mapItem
+	mapMutex               sync.RWMutex
+	tokenBuckets           map[string]tokenBucketState
+	tokenMutex             sync.Mutex
+	lastTokenBucketCleanup time.Time
 }
 
 // NewMemory memory模式
 func NewMemory() (*Memory, func(), error) {
 	return &Memory{
-			strItems: make(map[string]*strItem),
-			mapItems: make(map[string]*mapItem),
-		}, func() {
-			log.Info("cache memory cleanup...")
-		}, nil
+		strItems:     make(map[string]*strItem),
+		mapItems:     make(map[string]*mapItem),
+		tokenBuckets: make(map[string]tokenBucketState),
+	}, func() {
+		log.Info("cache memory cleanup...")
+	}, nil
 }
 
 // List 返回内存缓存中的字符串和 Hash 条目及其元数据。
