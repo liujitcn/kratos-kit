@@ -82,6 +82,7 @@ use (
 	./metrics/datadog
 	./metrics/otel
 	./metrics/prometheus
+	./notify
 	./oauth
 	./oss
 	./oss/s3
@@ -124,3 +125,7 @@ use (
 	./workflow/goworkflows
 	./workflow/temporal
 )
+
+replace github.com/liujitcn/kratos-kit/notify v0.0.1 => ./notify
+
+replace github.com/liujitcn/kratos-kit/ai/model v0.0.7 => ./ai/model

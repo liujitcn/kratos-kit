@@ -56,6 +56,7 @@ type agentMethodTemplateData struct {
 	RequestType       string
 	InputType         string
 	OutputType        string
+	UseJSONInput      bool
 	RequestValue      string
 	ToolName          string
 	Description       string
@@ -153,8 +154,9 @@ func newAgentMethodTemplateData(g *protogen.GeneratedFile, service *protogen.Ser
 	inputType := "*" + requestType
 	outputType := "*" + responseType
 	requestValue := "req"
-	if messageHasRecursiveReference(method.Input) {
-		inputType = "any"
+	useJSONInput := messageHasRecursiveReference(method.Input)
+	if useJSONInput {
+		inputType = "map[string]any"
 		requestValue = "realReq"
 	}
 	if messageHasRecursiveReference(method.Output) {
@@ -170,6 +172,7 @@ func newAgentMethodTemplateData(g *protogen.GeneratedFile, service *protogen.Ser
 		RequestType:     requestType,
 		InputType:       inputType,
 		OutputType:      outputType,
+		UseJSONInput:    useJSONInput,
 		RequestValue:    requestValue,
 		ToolName:        strconv.Quote(kitutils.ToolNameFromRPCPath("/" + string(service.Desc.FullName()) + "/" + string(method.Desc.Name()))),
 		Description:     strconv.Quote(utils.ToolDescription(service, method)),

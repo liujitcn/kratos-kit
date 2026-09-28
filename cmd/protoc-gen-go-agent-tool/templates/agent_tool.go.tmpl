@@ -21,7 +21,7 @@ func {{.ConstructorName}}({{.ServerName}} {{.ServiceName}}Server) ({{$.Invokable
 		{{.ToolName}},
 		{{.Description}},
 		func(ctx {{$.ContextPackage}}, req {{.InputType}}) ({{.OutputType}}, error) {
-{{if eq .InputType "any"}}			realReq := &{{.RequestType}}{}
+{{if .UseJSONInput}}			realReq := &{{.RequestType}}{}
 			if req != nil {
 				reqBytes, err := {{$.JSONMarshal}}(req)
 				if err != nil {

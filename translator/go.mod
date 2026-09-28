@@ -8,7 +8,7 @@ require (
 	github.com/liujitcn/go-utils/translator/baidu v0.0.5
 	github.com/liujitcn/go-utils/translator/google v0.0.5
 	github.com/liujitcn/go-utils/translator/volc v0.0.4
-	github.com/liujitcn/kratos-kit/api v0.0.36
+	github.com/liujitcn/kratos-kit/api v0.0.41
 )
 
 require (

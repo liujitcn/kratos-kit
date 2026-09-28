@@ -141,7 +141,7 @@ Admin 的公开 `adapter/core` 和 `adapter/kit` 构造函数统一接收数据�
 | Dockerfile、dockerignore、入口脚本、证书脚本、OpenAPI 多语言工具、重装脚本、Git hook | 复用基准公共文件，保留可执行权限 |
 | 根/后端 Makefile、发布脚本 | 替换项目名称、业务包清单、Proto 输入与输出目录；只发布自己的业务包 |
 | 前端 Makefile、发布与重装脚本 | 由管理端 npm CLI 的 `--kratos-project` 模式生成 |
-| 基础 configs、Go/OpenAPI Buf 配置 | 同步通用字段，保留项目数据库参数与空 AI 配置；不复制 `*.dev.yaml` |
+| 基础 configs、Go/OpenAPI Buf 配置 | 同步通用启动字段并保留项目数据库参数；模型 Provider 由业务系统管理，不生成 AI 启动配置；不复制 `*.dev.yaml` |
 | 三端 RPC 配置 | 从对应上游模板派生，只生成当前业务模块，不生成 npm Core/System 包的源码 |
 | 语言工具 | 保留校验与生成逻辑，目录改为项目业务模块；空业务不要求 Admin 专属翻译 SQL/代码生成文案 |
 | 前端宿主与检查 | 三端 npm CLI 直接生成生命周期、语言注册、自动导入、tsconfig、lint、测试和打包配置 |

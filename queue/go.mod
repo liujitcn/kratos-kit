@@ -4,10 +4,10 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.36
+	github.com/liujitcn/kratos-kit/api v0.0.41
 	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.16
 	github.com/liujitcn/kratos-kit/transport/hptimer v0.0.7
-	github.com/liujitcn/kratos-kit/utils v0.0.22
+	github.com/liujitcn/kratos-kit/utils v0.0.24
 	github.com/redis/go-redis/v9 v9.22.0
 	google.golang.org/protobuf v1.36.12
 )

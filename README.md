@@ -19,7 +19,8 @@
 - `ai`：AI 客户端与编排封装（含 `model`、`eino`、`langchaingo` 子模块）
 - `auth`：认证与鉴权封装；支持按会话签发、轮换及撤销令牌，不同设备使用独立令牌和有效期；认证支持 API Key、Basic、HMAC、JWT、mTLS、OAuth2、OIDC、Session，鉴权支持 Casbin、OPA、Cerbos 和 Zanzibar 适配端口
 - `oauth`：第三方 OAuth SDK 封装（直接使用 `api` 下 OAuth 配置，支持 GitHub、Gitee、Google、微信开放平台、微信公众号、微信小程序、企业微信、钉钉、飞书；闭环支持 state、PKCE、授权地址、code 换 token、用户信息，不包含业务登录态）
-- `cache`：内存/Redis 缓存封装
+- `notify`：通知发送渠道 SDK，提供可替换的 Sender 管理器，支持 SMTP、Webhook、钉钉、飞书、微信公众号、企业微信和独立短信服务商适配
+- `cache`：内存/Redis 缓存封装，提供 Redis Cluster 同槽位原子执行的多算法限流状态存储
 - `queue`：内存/Redis 队列封装
 - `locker`：统一的进程内锁与 Redis 分布式锁，未配置 Redis 时使用进程内实现
 - `oss`：本地/FTP/MinIO/阿里云 OSS/AWS S3 及兼容对象存储封装
@@ -95,6 +96,7 @@ go get github.com/liujitcn/kratos-kit/broker/nats@latest
 go get github.com/liujitcn/kratos-kit/swagger-ui@latest
 go get github.com/liujitcn/kratos-kit/pprof@latest
 go get github.com/liujitcn/kratos-kit/oauth@latest
+go get github.com/liujitcn/kratos-kit/notify@latest
 go get github.com/liujitcn/kratos-kit/translator@latest
 go get github.com/liujitcn/kratos-kit/ai/model@latest
 go get github.com/liujitcn/kratos-kit/ai/eino@latest
@@ -298,40 +300,10 @@ vault:
 独立模块 `config/fs`、`config/http`、`config/redis`、`config/vault`、
 `config/zookeeper`、`config/oss` 可直接作为 Kratos `config.Source` 使用。
 
-## AI 配置
+## AI 客户端
 
-AI 相关配置位于 `bootstrap.ai`，其中 `ai.model` 参照上游 `kratos-bootstrap` 的模型配置结构。旧的 `client.llm` 配置已移除。
-
-云端 OpenAI 兼容 API：
-
-```yaml
-ai:
-  model:
-    type: CLOUD_MODEL
-    model_name: gpt-4o
-    temperature: 0.7
-    max_tokens: 4096
-    timeout_seconds: 60
-    max_retries: 3
-    cloud:
-      api_key: sk-xxx
-      base_url: https://api.openai.com/v1
-      organization: org_xxx
-```
-
-本地 Ollama：
-
-```yaml
-ai:
-  model:
-    type: LOCAL_MODEL
-    model_name: llama3
-    timeout_seconds: 120
-    local:
-      host: 127.0.0.1
-      port: 11434
-      use_gpu: true
-```
+AI 模型客户端通过 `github.com/liujitcn/kratos-kit/ai/model.ModelConfig` 接收运行时参数；
+模型密钥和 endpoint 不属于 `Bootstrap`，由业务系统按自身安全边界维护。
 
 ## API 代码生成
 
@@ -396,6 +368,7 @@ make tag MODULE=auth/authn # 从 auth/authn 目录开始递归检查 go.mod 并�
 - [workflow/goworkflows/README.md](workflow/goworkflows/README.md)
 - [workflow/temporal/README.md](workflow/temporal/README.md)
 - [oauth/README.md](oauth/README.md)
+- [notify/README.md](notify/README.md)
 - [auth/authn/README.md](auth/authn/README.md)
 - [auth/authz/README.md](auth/authz/README.md)
 - [auth/authn/engine/jwt/README.md](auth/authn/engine/jwt/README.md)
