@@ -2,34 +2,9 @@
 
 `ai/model` 基于 `github.com/sashabaranov/go-openai` 封装 OpenAI 兼容客户端创建能力。
 
-## 配置
+## 运行时参数
 
-模块使用 `configv1.AI_Model`。云端模型配置：
-
-```yaml
-ai:
-  model:
-    type: CLOUD_MODEL
-    model_name: gpt-4o
-    timeout_seconds: 60
-    cloud:
-      api_key: sk-xxx
-      base_url: https://api.openai.com/v1
-      organization: org_xxx
-```
-
-本地 Ollama 配置：
-
-```yaml
-ai:
-  model:
-    type: LOCAL_MODEL
-    model_name: llama3
-    timeout_seconds: 120
-    local:
-      host: 127.0.0.1
-      port: 11434
-```
+客户端使用 `ModelConfig` 接收 Provider、模型名称、密钥、基础地址和请求参数，不读取 `Bootstrap` 或 YAML。
 
 ## API
 
@@ -48,18 +23,15 @@ import (
 	"context"
 
 	aiModel "github.com/liujitcn/kratos-kit/ai/model"
-	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	openai "github.com/sashabaranov/go-openai"
 )
 
 func Example(ctx context.Context) error {
-	cfg := &configv1.AI_Model{
-		Type:      configv1.AI_Model_CLOUD_MODEL,
+	cfg := &aiModel.ModelConfig{
+		Provider:  aiModel.ProviderOpenAICompatible,
 		ModelName: "gpt-4o",
-		Cloud: &configv1.AI_Model_CloudConfig{
-			ApiKey:  "sk-xxx",
-			BaseUrl: "https://api.openai.com/v1",
-		},
+		APIKey:    "sk-xxx",
+		BaseURL:   "https://api.openai.com/v1",
 	}
 
 	client, err := aiModel.NewClient(cfg)
@@ -68,7 +40,7 @@ func Example(ctx context.Context) error {
 	}
 
 	_, err = client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: cfg.GetModelName(),
+		Model: cfg.ModelName,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleUser, Content: "你好"},
 		},
