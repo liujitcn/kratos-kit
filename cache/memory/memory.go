@@ -25,24 +25,24 @@ type mapItem struct {
 }
 
 type Memory struct {
-	strItems               map[string]*strItem
-	strMutex               sync.RWMutex
-	mapItems               map[string]*mapItem
-	mapMutex               sync.RWMutex
-	tokenBuckets           map[string]tokenBucketState
-	tokenMutex             sync.Mutex
-	lastTokenBucketCleanup time.Time
+	strItems           map[string]*strItem
+	strMutex           sync.RWMutex
+	mapItems           map[string]*mapItem
+	mapMutex           sync.RWMutex
+	rateLimitItems     map[string]rateLimitState
+	rateLimitMutex     sync.Mutex
+	rateLimitCleanupAt time.Time
 }
 
 // NewMemory memory模式
 func NewMemory() (*Memory, func(), error) {
 	return &Memory{
-		strItems:     make(map[string]*strItem),
-		mapItems:     make(map[string]*mapItem),
-		tokenBuckets: make(map[string]tokenBucketState),
-	}, func() {
-		log.Info("cache memory cleanup...")
-	}, nil
+			strItems:       make(map[string]*strItem),
+			mapItems:       make(map[string]*mapItem),
+			rateLimitItems: make(map[string]rateLimitState),
+		}, func() {
+			log.Info("cache memory cleanup...")
+		}, nil
 }
 
 // List 返回内存缓存中的字符串和 Hash 条目及其元数据。
@@ -75,7 +75,7 @@ func (s *Memory) List() ([]store.Entry, error) {
 }
 
 func (s *Memory) Connect() error {
-	if s.strItems == nil || s.mapItems == nil {
+	if s.strItems == nil || s.mapItems == nil || s.rateLimitItems == nil {
 		return errors.New("memory connect fail")
 	}
 	return nil
@@ -84,6 +84,9 @@ func (s *Memory) Connect() error {
 func (s *Memory) DisConnect() error {
 	s.strItems = nil
 	s.mapItems = nil
+	s.rateLimitMutex.Lock()
+	s.rateLimitItems = nil
+	s.rateLimitMutex.Unlock()
 	return nil
 }
 
