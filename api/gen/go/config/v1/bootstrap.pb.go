@@ -41,20 +41,16 @@ type Bootstrap struct {
 	Config *Config `protobuf:"bytes,7,opt,name=config,proto3,oneof" json:"config,omitempty"`
 	// oss 为对象存储配置。
 	Oss *Oss `protobuf:"bytes,8,opt,name=oss,proto3,oneof" json:"oss,omitempty"`
-	// notify 为通知配置。
-	Notify *Notification `protobuf:"bytes,9,opt,name=notify,proto3,oneof" json:"notify,omitempty"`
 	// authn 为认证配置。
-	Authn *Authentication `protobuf:"bytes,10,opt,name=authn,proto3,oneof" json:"authn,omitempty"`
+	Authn *Authentication `protobuf:"bytes,9,opt,name=authn,proto3,oneof" json:"authn,omitempty"`
 	// authz 为授权配置。
-	Authz *Authorization `protobuf:"bytes,11,opt,name=authz,proto3,oneof" json:"authz,omitempty"`
+	Authz *Authorization `protobuf:"bytes,10,opt,name=authz,proto3,oneof" json:"authz,omitempty"`
 	// pprof 为性能分析配置。
-	Pprof *Pprof `protobuf:"bytes,12,opt,name=pprof,proto3,oneof" json:"pprof,omitempty"`
-	// ai 为ai相关配置。
-	Ai *AI `protobuf:"bytes,13,opt,name=ai,proto3,oneof" json:"ai,omitempty"`
+	Pprof *Pprof `protobuf:"bytes,11,opt,name=pprof,proto3,oneof" json:"pprof,omitempty"`
 	// translator 为机器翻译配置。
-	Translator *Translator `protobuf:"bytes,14,opt,name=translator,proto3,oneof" json:"translator,omitempty"`
+	Translator *Translator `protobuf:"bytes,12,opt,name=translator,proto3,oneof" json:"translator,omitempty"`
 	// mfa 为多因素认证配置。
-	Mfa           *Mfa `protobuf:"bytes,15,opt,name=mfa,proto3,oneof" json:"mfa,omitempty"`
+	Mfa           *Mfa `protobuf:"bytes,13,opt,name=mfa,proto3,oneof" json:"mfa,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -145,13 +141,6 @@ func (x *Bootstrap) GetOss() *Oss {
 	return nil
 }
 
-func (x *Bootstrap) GetNotify() *Notification {
-	if x != nil {
-		return x.Notify
-	}
-	return nil
-}
-
 func (x *Bootstrap) GetAuthn() *Authentication {
 	if x != nil {
 		return x.Authn
@@ -169,13 +158,6 @@ func (x *Bootstrap) GetAuthz() *Authorization {
 func (x *Bootstrap) GetPprof() *Pprof {
 	if x != nil {
 		return x.Pprof
-	}
-	return nil
-}
-
-func (x *Bootstrap) GetAi() *AI {
-	if x != nil {
-		return x.Ai
 	}
 	return nil
 }
@@ -198,7 +180,7 @@ var File_config_v1_bootstrap_proto protoreflect.FileDescriptor
 
 const file_config_v1_bootstrap_proto_rawDesc = "" +
 	"\n" +
-	"\x19config/v1/bootstrap.proto\x12\tconfig.v1\x1a\x12config/v1/ai.proto\x1a\x15config/v1/authn.proto\x1a\x15config/v1/authz.proto\x1a\x16config/v1/client.proto\x1a\x16config/v1/config.proto\x1a\x14config/v1/data.proto\x1a\x16config/v1/logger.proto\x1a\x13config/v1/mfa.proto\x1a\x16config/v1/notify.proto\x1a\x13config/v1/oss.proto\x1a\x15config/v1/pprof.proto\x1a\x18config/v1/registry.proto\x1a\x16config/v1/server.proto\x1a\x16config/v1/tracer.proto\x1a\x1aconfig/v1/translator.proto\"\xf0\x06\n" +
+	"\x19config/v1/bootstrap.proto\x12\tconfig.v1\x1a\x15config/v1/authn.proto\x1a\x15config/v1/authz.proto\x1a\x16config/v1/client.proto\x1a\x16config/v1/config.proto\x1a\x14config/v1/data.proto\x1a\x16config/v1/logger.proto\x1a\x13config/v1/mfa.proto\x1a\x13config/v1/oss.proto\x1a\x15config/v1/pprof.proto\x1a\x18config/v1/registry.proto\x1a\x16config/v1/server.proto\x1a\x16config/v1/tracer.proto\x1a\x1aconfig/v1/translator.proto\"\x84\x06\n" +
 	"\tBootstrap\x12.\n" +
 	"\x06server\x18\x01 \x01(\v2\x11.config.v1.ServerH\x00R\x06server\x88\x01\x01\x12.\n" +
 	"\x06client\x18\x02 \x01(\v2\x11.config.v1.ClientH\x01R\x06client\x88\x01\x01\x12(\n" +
@@ -208,17 +190,15 @@ const file_config_v1_bootstrap_proto_rawDesc = "" +
 	"\bregistry\x18\x06 \x01(\v2\x13.config.v1.RegistryH\x05R\bregistry\x88\x01\x01\x12.\n" +
 	"\x06config\x18\a \x01(\v2\x11.config.v1.ConfigH\x06R\x06config\x88\x01\x01\x12%\n" +
 	"\x03oss\x18\b \x01(\v2\x0e.config.v1.OssH\aR\x03oss\x88\x01\x01\x124\n" +
-	"\x06notify\x18\t \x01(\v2\x17.config.v1.NotificationH\bR\x06notify\x88\x01\x01\x124\n" +
-	"\x05authn\x18\n" +
-	" \x01(\v2\x19.config.v1.AuthenticationH\tR\x05authn\x88\x01\x01\x123\n" +
-	"\x05authz\x18\v \x01(\v2\x18.config.v1.AuthorizationH\n" +
-	"R\x05authz\x88\x01\x01\x12+\n" +
-	"\x05pprof\x18\f \x01(\v2\x10.config.v1.PprofH\vR\x05pprof\x88\x01\x01\x12\"\n" +
-	"\x02ai\x18\r \x01(\v2\r.config.v1.AIH\fR\x02ai\x88\x01\x01\x12:\n" +
+	"\x05authn\x18\t \x01(\v2\x19.config.v1.AuthenticationH\bR\x05authn\x88\x01\x01\x123\n" +
+	"\x05authz\x18\n" +
+	" \x01(\v2\x18.config.v1.AuthorizationH\tR\x05authz\x88\x01\x01\x12+\n" +
+	"\x05pprof\x18\v \x01(\v2\x10.config.v1.PprofH\n" +
+	"R\x05pprof\x88\x01\x01\x12:\n" +
 	"\n" +
-	"translator\x18\x0e \x01(\v2\x15.config.v1.TranslatorH\rR\n" +
+	"translator\x18\f \x01(\v2\x15.config.v1.TranslatorH\vR\n" +
 	"translator\x88\x01\x01\x12%\n" +
-	"\x03mfa\x18\x0f \x01(\v2\x0e.config.v1.MfaH\x0eR\x03mfa\x88\x01\x01B\t\n" +
+	"\x03mfa\x18\r \x01(\v2\x0e.config.v1.MfaH\fR\x03mfa\x88\x01\x01B\t\n" +
 	"\a_serverB\t\n" +
 	"\a_clientB\a\n" +
 	"\x05_dataB\b\n" +
@@ -226,12 +206,10 @@ const file_config_v1_bootstrap_proto_rawDesc = "" +
 	"\a_loggerB\v\n" +
 	"\t_registryB\t\n" +
 	"\a_configB\x06\n" +
-	"\x04_ossB\t\n" +
-	"\a_notifyB\b\n" +
+	"\x04_ossB\b\n" +
 	"\x06_authnB\b\n" +
 	"\x06_authzB\b\n" +
-	"\x06_pprofB\x05\n" +
-	"\x03_aiB\r\n" +
+	"\x06_pprofB\r\n" +
 	"\v_translatorB\x06\n" +
 	"\x04_mfaB\xa2\x01\n" +
 	"\rcom.config.v1B\x0eBootstrapProtoP\x01Z<github.com/liujitcn/kratos-kit/api/gen/go/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
@@ -260,13 +238,11 @@ var file_config_v1_bootstrap_proto_goTypes = []any{
 	(*Registry)(nil),       // 6: config.v1.Registry
 	(*Config)(nil),         // 7: config.v1.Config
 	(*Oss)(nil),            // 8: config.v1.Oss
-	(*Notification)(nil),   // 9: config.v1.Notification
-	(*Authentication)(nil), // 10: config.v1.Authentication
-	(*Authorization)(nil),  // 11: config.v1.Authorization
-	(*Pprof)(nil),          // 12: config.v1.Pprof
-	(*AI)(nil),             // 13: config.v1.AI
-	(*Translator)(nil),     // 14: config.v1.Translator
-	(*Mfa)(nil),            // 15: config.v1.Mfa
+	(*Authentication)(nil), // 9: config.v1.Authentication
+	(*Authorization)(nil),  // 10: config.v1.Authorization
+	(*Pprof)(nil),          // 11: config.v1.Pprof
+	(*Translator)(nil),     // 12: config.v1.Translator
+	(*Mfa)(nil),            // 13: config.v1.Mfa
 }
 var file_config_v1_bootstrap_proto_depIdxs = []int32{
 	1,  // 0: config.v1.Bootstrap.server:type_name -> config.v1.Server
@@ -277,18 +253,16 @@ var file_config_v1_bootstrap_proto_depIdxs = []int32{
 	6,  // 5: config.v1.Bootstrap.registry:type_name -> config.v1.Registry
 	7,  // 6: config.v1.Bootstrap.config:type_name -> config.v1.Config
 	8,  // 7: config.v1.Bootstrap.oss:type_name -> config.v1.Oss
-	9,  // 8: config.v1.Bootstrap.notify:type_name -> config.v1.Notification
-	10, // 9: config.v1.Bootstrap.authn:type_name -> config.v1.Authentication
-	11, // 10: config.v1.Bootstrap.authz:type_name -> config.v1.Authorization
-	12, // 11: config.v1.Bootstrap.pprof:type_name -> config.v1.Pprof
-	13, // 12: config.v1.Bootstrap.ai:type_name -> config.v1.AI
-	14, // 13: config.v1.Bootstrap.translator:type_name -> config.v1.Translator
-	15, // 14: config.v1.Bootstrap.mfa:type_name -> config.v1.Mfa
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	9,  // 8: config.v1.Bootstrap.authn:type_name -> config.v1.Authentication
+	10, // 9: config.v1.Bootstrap.authz:type_name -> config.v1.Authorization
+	11, // 10: config.v1.Bootstrap.pprof:type_name -> config.v1.Pprof
+	12, // 11: config.v1.Bootstrap.translator:type_name -> config.v1.Translator
+	13, // 12: config.v1.Bootstrap.mfa:type_name -> config.v1.Mfa
+	13, // [13:13] is the sub-list for method output_type
+	13, // [13:13] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_bootstrap_proto_init() }
@@ -296,7 +270,6 @@ func file_config_v1_bootstrap_proto_init() {
 	if File_config_v1_bootstrap_proto != nil {
 		return
 	}
-	file_config_v1_ai_proto_init()
 	file_config_v1_authn_proto_init()
 	file_config_v1_authz_proto_init()
 	file_config_v1_client_proto_init()
@@ -304,7 +277,6 @@ func file_config_v1_bootstrap_proto_init() {
 	file_config_v1_data_proto_init()
 	file_config_v1_logger_proto_init()
 	file_config_v1_mfa_proto_init()
-	file_config_v1_notify_proto_init()
 	file_config_v1_oss_proto_init()
 	file_config_v1_pprof_proto_init()
 	file_config_v1_registry_proto_init()

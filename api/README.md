@@ -27,7 +27,7 @@ api/
 
 | 文件 | 主要消息 | 当前能力 |
 | --- | --- | --- |
-| `bootstrap.proto` | `Bootstrap` | 聚合服务端、客户端、数据、链路、日志、注册中心、配置中心、对象存储、通知、认证、授权、pprof、AI、翻译和 MFA 配置。 |
+| `bootstrap.proto` | `Bootstrap` | 聚合服务端、客户端、数据、链路、日志、注册中心、配置中心、对象存储、认证、授权、pprof、翻译和 MFA 配置。 |
 | `app_info.proto` | `AppInfo`、`Endpoint` | 应用标识、实例、版本、主机、端点、环境、区域、标签和构建信息。 |
 | `server.proto` | `Server` | HTTP、gRPC、MCP、SSE 服务端；包含中间件、TLS、CORS、Swagger、pprof、请求体限制和健康检查。 |
 | `client.proto` | `Client` | HTTP、gRPC、MCP、SSE 客户端；包含 JWT、元数据、重试、令牌桶限流、Prometheus 指标和 TLS。 |
@@ -42,10 +42,8 @@ api/
 | `translator.proto` | `Translator` | Google、百度、阿里云、火山引擎翻译 Provider，支持超时和扩展参数。 |
 | `tracer.proto` | `Tracer`、`BatcherOptions` | 导出器、端点、采样率、连接安全、BatchSpanProcessor 和 TraceContext/Baggage。 |
 | `pprof.proto` | `Pprof` | Pyroscope 上报地址、认证、上传频率、标签和性能数据类型。 |
-| `ai.proto` | `AI`、`AI.Model` | 云端模型与 Ollama 本地模型，包含模型名、温度、最大 Token、超时和重试。 |
 | `tls.proto` | `Tls` | 文件或内存证书、CA、域名和跳过服务端证书校验。 |
 | `key.proto` | `Key` | File、Vault、AWS、Google、Azure、Kubernetes 密钥 Provider 的非敏感启动参数。 |
-| `notify.proto` | `Notification` | 通知类型及短信 Provider 配置。 |
 
 ### Bootstrap 顶层字段
 
@@ -62,11 +60,9 @@ api/
 | `registry` | `Registry` | 服务注册与发现。 |
 | `config` | `Config` | 远程配置中心。 |
 | `oss` | `Oss` | 对象存储和上传安全扫描。 |
-| `notify` | `Notification` | 通知 Provider，目前提供短信配置。 |
 | `authn` | `Authentication` | JWT 和服务端 Session 认证配置。 |
 | `authz` | `Authorization` | Casbin 授权配置。 |
 | `pprof` | `Pprof` | Pyroscope 性能数据上报。 |
-| `ai` | `AI` | 云端或 Ollama 本地大模型。 |
 | `translator` | `Translator` | Google、百度、阿里云或火山引擎翻译。 |
 | `mfa` | `Mfa` | MFA 加密、挑战、恢复码、TOTP 和 WebAuthn。 |
 
@@ -139,7 +135,7 @@ Provider 按自身协议提供端点、命名空间、认证、心跳、缓存�
 
 `Oss` 支持 FTP、阿里云 OSS、MinIO、AWS S3 及兼容服务，公共字段为 `type` 和
 `root_directory`。`upload_security` 可在上传前执行外部扫描命令，命令参数由上传模块
-固定追加。`Notification` 当前提供短信 Provider，可配置接入地址、地域和认证信息。
+固定追加。
 
 ### 认证、安全与第三方登录
 
@@ -196,11 +192,11 @@ cfg := &configv1.Bootstrap{
 ```
 
 `Bootstrap` 当前的顶层字段为：`server`、`client`、`data`、`trace`、`logger`、
-`registry`、`config`、`oss`、`notify`、`authn`、`authz`、`pprof`、`ai`、
+`registry`、`config`、`oss`、`authn`、`authz`、`pprof`、
 `translator` 和 `mfa`。`AppInfo` 是独立的运行时元数据消息，不嵌入 `Bootstrap`。
 
-AI 使用 `configv1.AI`，其 `AI.Model` 与上游 `kratos-bootstrap` 的模型配置保持一致；
-旧的 `Client.Llm` 配置已移除。OAuth Provider 参数由 `kratos-kit/oauth/provider.Config`
+AI 客户端运行时参数由 `ai/model.ModelConfig` 承载，不属于 `Bootstrap` 启动配置。
+OAuth Provider 参数由 `kratos-kit/oauth/provider.Config`
 直接承载，不属于 Bootstrap 启动配置。翻译使用 `configv1.Translator`，按 `type` 选择厂商。密钥配置使用
 独立的 `configv1.Key`，不放入 `Bootstrap`。
 

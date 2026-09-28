@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package config.v1;
 
-import "config/v1/ai.proto";
 import "config/v1/authn.proto";
 import "config/v1/authz.proto";
 import "config/v1/client.proto";
@@ -10,7 +9,6 @@ import "config/v1/config.proto";
 import "config/v1/data.proto";
 import "config/v1/logger.proto";
 import "config/v1/mfa.proto";
-import "config/v1/notify.proto";
 import "config/v1/oss.proto";
 import "config/v1/pprof.proto";
 import "config/v1/registry.proto";
@@ -36,18 +34,14 @@ message Bootstrap {
   optional Config config = 7;
   // oss 为对象存储配置。
   optional Oss oss = 8;
-  // notify 为通知配置。
-  optional Notification notify = 9;
   // authn 为认证配置。
-  optional Authentication authn = 10;
+  optional Authentication authn = 9;
   // authz 为授权配置。
-  optional Authorization authz = 11;
+  optional Authorization authz = 10;
   // pprof 为性能分析配置。
-  optional Pprof pprof = 12;
-  // ai 为ai相关配置。
-  optional AI ai = 13;
+  optional Pprof pprof = 11;
   // translator 为机器翻译配置。
-  optional Translator translator = 14;
+  optional Translator translator = 12;
   // mfa 为多因素认证配置。
-  optional Mfa mfa = 15;
+  optional Mfa mfa = 13;
 }
