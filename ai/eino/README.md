@@ -7,35 +7,9 @@
 - `NewChatModel` 创建基于 `/v1/chat/completions` 的 `model.AgenticModel`
 - `NewResponsesModel` 创建基于 `/v1/responses` 的 `model.AgenticModel`
 
-## 配置
+## 运行时参数
 
-模块使用 `configv1.AI_Model`。云端模型配置：
-
-```yaml
-ai:
-  model:
-    type: CLOUD_MODEL
-    model_name: gpt-4o
-    temperature: 0.7
-    max_tokens: 4096
-    timeout_seconds: 60
-    cloud:
-      api_key: sk-xxx
-      base_url: https://api.openai.com/v1
-```
-
-本地 Ollama 配置：
-
-```yaml
-ai:
-  model:
-    type: LOCAL_MODEL
-    model_name: llama3
-    timeout_seconds: 120
-    local:
-      host: 127.0.0.1
-      port: 11434
-```
+模型客户端使用 `ai/model.ModelConfig` 接收运行时参数，不读取启动 YAML 配置。
 
 本地模型是否能使用 `NewResponsesModel` 取决于本地 OpenAI 兼容服务是否实现 `/v1/responses`。
 
@@ -63,17 +37,15 @@ import (
 
 	"github.com/cloudwego/eino/schema"
 	aiEino "github.com/liujitcn/kratos-kit/ai/eino"
-	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	modelconfig "github.com/liujitcn/kratos-kit/ai/model"
 )
 
 func Example(ctx context.Context) error {
-	cfg := &configv1.AI_Model{
-		Type:      configv1.AI_Model_CLOUD_MODEL,
+	cfg := &modelconfig.ModelConfig{
+		Provider:  modelconfig.ProviderOpenAICompatible,
 		ModelName: "gpt-4o",
-		Cloud: &configv1.AI_Model_CloudConfig{
-			ApiKey:  "sk-xxx",
-			BaseUrl: "https://api.openai.com/v1",
-		},
+		APIKey:    "sk-xxx",
+		BaseURL:   "https://api.openai.com/v1",
 	}
 
 	responsesModel, err := aiEino.NewResponsesModel(ctx, cfg)

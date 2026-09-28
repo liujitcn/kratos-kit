@@ -2,32 +2,9 @@
 
 `ai/langchaingo` 基于 LangChainGo 封装 LLM 创建、Agent、Chain、Memory、Embedding 与 VectorStore 常用入口。
 
-## 配置
+## 运行时参数
 
-模块使用 `configv1.AI_Model`。云端模型配置：
-
-```yaml
-ai:
-  model:
-    type: CLOUD_MODEL
-    model_name: gpt-4o
-    timeout_seconds: 60
-    cloud:
-      api_key: sk-xxx
-      base_url: https://api.openai.com/v1
-```
-
-本地 Ollama 配置：
-
-```yaml
-ai:
-  model:
-    type: LOCAL_MODEL
-    model_name: llama3
-    local:
-      host: 127.0.0.1
-      port: 11434
-```
+模型客户端使用 `ai/model.ModelConfig` 接收运行时参数，不读取启动 YAML 配置。
 
 ## API
 
@@ -48,18 +25,16 @@ import (
 	"context"
 
 	aiLC "github.com/liujitcn/kratos-kit/ai/langchaingo"
-	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
+	modelconfig "github.com/liujitcn/kratos-kit/ai/model"
 	"github.com/tmc/langchaingo/tools"
 )
 
 func Example(ctx context.Context, agentTools []tools.Tool) error {
-	cfg := &configv1.AI_Model{
-		Type:      configv1.AI_Model_CLOUD_MODEL,
+	cfg := &modelconfig.ModelConfig{
+		Provider:  modelconfig.ProviderOpenAICompatible,
 		ModelName: "gpt-4o",
-		Cloud: &configv1.AI_Model_CloudConfig{
-			ApiKey:  "sk-xxx",
-			BaseUrl: "https://api.openai.com/v1",
-		},
+		APIKey:    "sk-xxx",
+		BaseURL:   "https://api.openai.com/v1",
 	}
 
 	llm, err := aiLC.NewModel(cfg)
