@@ -4,8 +4,8 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.36
-	github.com/liujitcn/kratos-kit/registry v0.0.23
+	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/registry v0.0.25
 	github.com/polarismesh/polaris-go v1.7.0
 )
 

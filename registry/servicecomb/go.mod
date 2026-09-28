@@ -6,8 +6,8 @@ require (
 	github.com/go-chassis/cari v0.9.0
 	github.com/go-chassis/sc-client v0.7.0
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.36
-	github.com/liujitcn/kratos-kit/registry v0.0.23
+	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/registry v0.0.25
 )
 
 require (
