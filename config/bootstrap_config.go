@@ -89,11 +89,6 @@ func initBootstrapConfig() {
 		}
 		addConfigLocked(commonConfig.Oss)
 
-		if commonConfig.GetNotify() == nil {
-			commonConfig.Notify = &configv1.Notification{}
-		}
-		addConfigLocked(commonConfig.Notify)
-
 		if commonConfig.GetAuthn() == nil {
 			commonConfig.Authn = &configv1.Authentication{}
 		}

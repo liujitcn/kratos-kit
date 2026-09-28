@@ -371,8 +371,8 @@ github.com/liujitcn/go-utils/translator v0.0.4 h1:P2cGkwf/TXb5GBz/SYnahijBZSMw/o
 github.com/liujitcn/go-utils/translator v0.0.4/go.mod h1:c7K/fvl1m/YcSTI33929VoesSTD1Lx5olMsMIXaJnUA=
 github.com/liujitcn/kratos-kit v0.0.88 h1:wzLg7BDDiq930ayMG5mb6bJKPl65ENCwNYKAhg6WXgA=
 github.com/liujitcn/kratos-kit v0.0.88/go.mod h1:4ufLgUUHoo4xWXNOjwLvHFVJkQorzlfLSHr09/bQRb4=
-github.com/liujitcn/kratos-kit/api v0.0.40 h1:aW0qKSUkwkZ2+ohS7cZr4o9pWvxtzv3ywka8y04LflE=
-github.com/liujitcn/kratos-kit/api v0.0.40/go.mod h1:DVRd76dXC0xH2h1qxgY3WqWlxefwIPvE69wiNM8PQnk=
+github.com/liujitcn/kratos-kit/api v0.0.41 h1:CDt/IfeJBPnTweIwlMvwQSvWMcNXzhi/q0NxVTSD6XE=
+github.com/liujitcn/kratos-kit/api v0.0.41/go.mod h1:DVRd76dXC0xH2h1qxgY3WqWlxefwIPvE69wiNM8PQnk=
 github.com/liujitcn/kratos-kit/auth v0.0.26 h1:d/T7ibyUoClez/f60UeGcK1ZLOdLJ/7yiBWXZMycbCo=
 github.com/liujitcn/kratos-kit/auth v0.0.26/go.mod h1:Y2t/ntq5AmMi9z8hmXC75yPSts+XhOVDXfA+QfRu8DQ=
 github.com/liujitcn/kratos-kit/auth/authn v0.0.24 h1:X2QmTnGSi2iG0SK9ATQgmZi5I3QAv+KsyaHHxwJNdf4=
