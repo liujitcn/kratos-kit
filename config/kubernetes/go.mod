@@ -4,8 +4,8 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.36
-	github.com/liujitcn/kratos-kit/config v0.0.31
+	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/config v0.0.36
 	k8s.io/api v0.36.0
 	k8s.io/apimachinery v0.36.0
 	k8s.io/client-go v0.36.0
@@ -103,7 +103,7 @@ require (
 	github.com/liujitcn/go-utils v0.0.41 // indirect
 	github.com/liujitcn/go-utils/crypto v0.0.17 // indirect
 	github.com/liujitcn/go-utils/translator v0.0.4 // indirect
-	github.com/liujitcn/kratos-kit v0.0.83 // indirect
+	github.com/liujitcn/kratos-kit v0.0.88 // indirect
 	github.com/liujitcn/kratos-kit/auth v0.0.26 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.24 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.20 // indirect
@@ -112,7 +112,7 @@ require (
 	github.com/liujitcn/kratos-kit/cache v0.0.21 // indirect
 	github.com/liujitcn/kratos-kit/database/gorm v0.0.42 // indirect
 	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.19 // indirect
-	github.com/liujitcn/kratos-kit/key v0.0.4 // indirect
+	github.com/liujitcn/kratos-kit/key v0.0.6 // indirect
 	github.com/liujitcn/kratos-kit/locker v0.0.17 // indirect
 	github.com/liujitcn/kratos-kit/oss v0.0.18 // indirect
 	github.com/liujitcn/kratos-kit/oss/s3 v0.0.4 // indirect
