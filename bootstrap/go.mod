@@ -6,13 +6,13 @@ require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/google/subcommands v1.2.0
 	github.com/liujitcn/go-utils v0.0.41
-	github.com/liujitcn/kratos-kit v0.0.83
-	github.com/liujitcn/kratos-kit/api v0.0.36
-	github.com/liujitcn/kratos-kit/config v0.0.32
-	github.com/liujitcn/kratos-kit/key v0.0.4
-	github.com/liujitcn/kratos-kit/logger v0.0.32
-	github.com/liujitcn/kratos-kit/registry v0.0.23
-	github.com/liujitcn/kratos-kit/tracer v0.0.17
+	github.com/liujitcn/kratos-kit v0.0.88
+	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/config v0.0.36
+	github.com/liujitcn/kratos-kit/key v0.0.7
+	github.com/liujitcn/kratos-kit/logger v0.0.34
+	github.com/liujitcn/kratos-kit/registry v0.0.25
+	github.com/liujitcn/kratos-kit/tracer v0.0.19
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/tools v0.48.0
