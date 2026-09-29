@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"reflect"
+	"strings"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -110,24 +111,39 @@ func buildTableCommentSQL(db *gorm.DB, table interface{}, comment string) (strin
 	tx := db.Session(&gorm.Session{NewDB: true, DryRun: true})
 	stmt := &gorm.Statement{DB: tx}
 
-	//noinspection SqlNoDataSourceInspection
-	_, err := stmt.WriteString("ALTER TABLE ")
-	if err != nil {
-		return "", err
-	}
+	var err error
+	if db.Dialector.Name() == "postgres" {
+		// postgres 只支持 COMMENT ON TABLE 语法，且 COMMENT 语句不接受绑定参数，
+		// IS 子句只能用字符串字面量；单引号翻倍转义，避免注释内容破坏字面量。
+		_, err = stmt.WriteString("COMMENT ON TABLE ")
+		if err != nil {
+			return "", err
+		}
+		stmt.WriteQuoted(table)
+		_, err = stmt.WriteString(" IS '" + strings.ReplaceAll(comment, "'", "''") + "'")
+		if err != nil {
+			return "", err
+		}
+	} else {
+		//noinspection SqlNoDataSourceInspection
+		_, err = stmt.WriteString("ALTER TABLE ")
+		if err != nil {
+			return "", err
+		}
 
-	stmt.WriteQuoted(table)
+		stmt.WriteQuoted(table)
 
-	commentClause := " COMMENT = "
-	if db.Dialector.Name() == "doris" {
-		commentClause = " MODIFY COMMENT "
-	}
-	_, err = stmt.WriteString(commentClause)
-	if err != nil {
-		return "", err
-	}
+		commentClause := " COMMENT = "
+		if db.Dialector.Name() == "doris" {
+			commentClause = " MODIFY COMMENT "
+		}
+		_, err = stmt.WriteString(commentClause)
+		if err != nil {
+			return "", err
+		}
 
-	stmt.AddVar(&stmt.SQL, comment)
+		stmt.AddVar(&stmt.SQL, comment)
+	}
 
 	if stmt.DB.Error != nil {
 		return "", stmt.DB.Error
