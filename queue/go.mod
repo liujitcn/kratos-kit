@@ -7,7 +7,7 @@ require (
 	github.com/liujitcn/kratos-kit/api v0.0.41
 	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.16
 	github.com/liujitcn/kratos-kit/transport/hptimer v0.0.7
-	github.com/liujitcn/kratos-kit/utils v0.0.24
+	github.com/liujitcn/kratos-kit/utils v0.0.25
 	github.com/redis/go-redis/v9 v9.22.0
 	google.golang.org/protobuf v1.36.12
 )

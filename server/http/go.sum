@@ -35,8 +35,7 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 h1:5VipnvEpbqr2gA2VbM+nYVbkIF28c5ZQfqCBQ5g2xfk=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0/go.mod h1:Hyl3n6Twe1hvtd9XUXDec4pTvgMSEixRuQKPTMH2bNs=
-github.com/klauspost/cpuid/v2 v2.2.10 h1:tBs3QSyvjDyFTq3uoc/9xFpCuOsJQFNPiAhYdw2skhE=
-github.com/klauspost/cpuid/v2 v2.2.10/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu1XKlok6oO0=
+github.com/klauspost/cpuid/v2 v2.3.0 h1:S4CRMLnYUhGeDFDqkGriYKdfoFlDnMtqTiI/sFzhA9Y=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
@@ -49,8 +48,7 @@ github.com/liujitcn/kratos-kit/metrics v0.0.3 h1:1HxdrMZixK9OF1lkZt4WehSVuCDlf2S
 github.com/liujitcn/kratos-kit/metrics v0.0.3/go.mod h1:lGm0MBSXLSZ1avuJ2aoHq7F7bDMT/HWuJ43iAEr2f3g=
 github.com/liujitcn/kratos-kit/tracing v0.0.12 h1:slOFXVaT06BWlz9Es2MchPluoJXVp2iGzrOisBOQ1zc=
 github.com/liujitcn/kratos-kit/tracing v0.0.12/go.mod h1:tVFcfYdTgPGpIHqdWqwLUD4/lALCpmrsrmnp58do/RI=
-github.com/liujitcn/kratos-kit/utils v0.0.24 h1:Xy/9+iurPM+IRyPlDgsJOZJFUmRqfQAt1z1kWuYw5Kk=
-github.com/liujitcn/kratos-kit/utils v0.0.24/go.mod h1:9PnJ3Gl4KAoSxZQBmS+d11k++AimqhnudeXZ1pc1hoQ=
+github.com/liujitcn/kratos-kit/utils v0.0.25 h1:mJSeer1BKBw129MuByIYbx5YChgkjo/jPChq3eCI/ZY=
 github.com/openzipkin/zipkin-go v0.4.3 h1:9EGwpqkgnwdEIJ+Od7QVSEIH+ocmm5nPat0G7sjsSdg=
 github.com/openzipkin/zipkin-go v0.4.3/go.mod h1:M9wCJZFWCo2RiY+o1eBCEMe0Dp2S5LDHcMZmk3RmK7c=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=

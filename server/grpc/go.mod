@@ -7,7 +7,7 @@ require (
 	github.com/liujitcn/kratos-kit/api v0.0.41
 	github.com/liujitcn/kratos-kit/metrics v0.0.3
 	github.com/liujitcn/kratos-kit/tracing v0.0.12
-	github.com/liujitcn/kratos-kit/utils v0.0.24
+	github.com/liujitcn/kratos-kit/utils v0.0.25
 	google.golang.org/grpc v1.83.1
 )
 

@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/liujitcn/kratos-kit/api v0.0.41
 	github.com/liujitcn/kratos-kit/transport/mcp v0.0.15
-	github.com/liujitcn/kratos-kit/utils v0.0.24
+	github.com/liujitcn/kratos-kit/utils v0.0.25
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 )
 

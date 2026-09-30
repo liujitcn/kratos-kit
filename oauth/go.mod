@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/oauth
 go 1.27.0
 
 require (
-	github.com/liujitcn/go-utils/http v0.0.7
+	github.com/liujitcn/go-utils/http v0.0.8
 	github.com/liujitcn/kratos-kit/cache v0.0.21
 )
 

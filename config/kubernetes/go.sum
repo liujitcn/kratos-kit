@@ -334,8 +334,8 @@ github.com/jpillora/backoff v1.0.0/go.mod h1:J/6gKK9jxlEcS3zixgDgUAsiuZ7yrSoa/FX
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
 github.com/json-iterator/go v1.1.10/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/json-iterator/go v1.1.11/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
-github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
+github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12 h1:9Nu54bhS/H/Kgo2/7xNSUuC5G28VR8ljfrLKU2G4IjU=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7VTCxuUUipMqKk8s4w=
@@ -385,8 +385,7 @@ github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.19 h1:KnGiRciHJkzdrqcq
 github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.19/go.mod h1:3KV3IrSVfKsAKLSa0pnk+ru0YDS1qKhPJAqZSnVNcZo=
 github.com/liujitcn/kratos-kit/cache v0.0.21 h1:3u4WPSvaeO9diSsjJ2x6L+TshbNN223FusanCbRznhs=
 github.com/liujitcn/kratos-kit/cache v0.0.21/go.mod h1:2kXaQantBLp8NIgrtz74gCqYUP34wJOPpIIB1yYyRZ0=
-github.com/liujitcn/kratos-kit/config v0.0.36 h1:iAA5NuJvUugj1TD9EjWmOFkJ/icqOOaijMMuKYaPMdY=
-github.com/liujitcn/kratos-kit/config v0.0.36/go.mod h1:Y3s9eD/vkpbYPK8WKuYv74jVB8O5DGHelhunokazM8Y=
+github.com/liujitcn/kratos-kit/config v0.0.37 h1:dORb3/Prv/u1Q8BQfaaFIfpUVplxWnrL1qZtKpNF/wA=
 github.com/liujitcn/kratos-kit/database/gorm v0.0.42 h1:RhPMVjpw88/htbkshKVNpfL/mWGRdnmpWgZ0ZQfL8MY=
 github.com/liujitcn/kratos-kit/database/gorm v0.0.42/go.mod h1:vXskgdI9piNvIu+2QYZkH510AukpK8930Uq9wcCDINs=
 github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.19 h1:XS2yM+ymXSvvtOx22jaWAMSvURga1YZWYLp/VDTqjBw=
