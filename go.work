@@ -103,6 +103,7 @@ use (
 	./registry/servicecomb
 	./registry/zookeeper
 	./retry
+	./secretcrypto
 	./server/grpc
 	./server/http
 	./server/mcp
