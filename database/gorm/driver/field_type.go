@@ -84,8 +84,11 @@ func NormalizeColumnType(rawType string, kind FieldKind) (neutral string, size i
 		return "int", 0, true
 	case "smallint", "bigint":
 		return value, 0, true
-	case "character varying", "character":
+	case "character varying":
 		return "varchar" + length, 0, true
+	case "character":
+		// PostgreSQL 的 char(N) 内省为 character(N)，归一为 MySQL 拼写 char(N)。
+		return "char" + length, 0, true
 	case "varchar", "char":
 		return value + length, 0, true
 	case "tinytext", "mediumtext", "longtext":

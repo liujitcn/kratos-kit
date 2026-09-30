@@ -24,6 +24,7 @@ func TestNormalizeColumnType(t *testing.T) {
 		{name: "int显示宽度", rawType: "int(11)", kind: FieldKindInt, expected: "int", keep: true},
 		{name: "smallint保留", rawType: "smallint", kind: FieldKindInt, expected: "smallint", keep: true},
 		{name: "character varying", rawType: "character varying(100)", kind: FieldKindString, expected: "varchar(100)", keep: true},
+		{name: "PG的char归一char", rawType: "character(64)", kind: FieldKindString, expected: "char(64)", keep: true},
 		{name: "varchar保留", rawType: "varchar(64)", kind: FieldKindString, expected: "varchar(64)", keep: true},
 		{name: "mediumtext归一text", rawType: "mediumtext", kind: FieldKindString, expected: "text", keep: true},
 		{name: "text保留", rawType: "text", kind: FieldKindString, expected: "text", keep: true},
