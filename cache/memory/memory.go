@@ -96,7 +96,7 @@ func (s *Memory) Get(key string) (string, error) {
 
 	item, ok := s.strItems[key]
 	if !ok {
-		return "", errors.New("key not found")
+		return "", store.ErrNotFound
 	}
 	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		delete(s.strItems, key)
@@ -141,7 +141,7 @@ func (s *Memory) GetDel(key string) (string, error) {
 
 	item, ok := s.strItems[key]
 	if !ok {
-		return "", errors.New("key not found")
+		return "", store.ErrNotFound
 	}
 	delete(s.strItems, key)
 	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
@@ -181,7 +181,7 @@ func (s *Memory) Expire(key string, dur time.Duration) error {
 
 	item, ok := s.strItems[key]
 	if !ok {
-		return errors.New("key not found")
+		return store.ErrNotFound
 	}
 	item.Expired = expiration(dur)
 	item.UpdatedAt = time.Now()
@@ -216,7 +216,7 @@ func (s *Memory) HGetAll(key string) (map[string]string, error) {
 		return nil, errors.New("key expired")
 	}
 	if !ok {
-		return nil, errors.New("key not found")
+		return nil, store.ErrNotFound
 	}
 	return item.Value, nil
 }
@@ -231,7 +231,7 @@ func (s *Memory) HGet(key, field string) (string, error) {
 		return "", errors.New("key expired")
 	}
 	if !ok {
-		return "", errors.New("key not found")
+		return "", store.ErrNotFound
 	}
 	var itemValue string
 	itemValue, ok = item.Value[field]
@@ -271,7 +271,7 @@ func (s *Memory) HDel(key, field string) error {
 
 	item, ok := s.mapItems[key]
 	if !ok {
-		return errors.New("key not found")
+		return store.ErrNotFound
 	}
 	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		return errors.New("key expired")
@@ -290,7 +290,7 @@ func (s *Memory) HExists(key, field string) error {
 
 	item, ok := s.mapItems[key]
 	if !ok {
-		return errors.New("key not found")
+		return store.ErrNotFound
 	}
 	if !item.Expired.IsZero() && time.Now().After(item.Expired) {
 		return errors.New("key expired")
