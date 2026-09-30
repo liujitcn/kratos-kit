@@ -2442,7 +2442,7 @@ github.com/liujitcn/kratos-kit/config v0.0.37/go.mod h1:PL+4hEelSPy/V3HIoBks6uJh
 github.com/liujitcn/kratos-kit/database/gorm v0.0.24/go.mod h1:Zewb9BEqhVLNQAnT8Fk5i/SHkI906c/BYFHrhboBBPY=
 github.com/liujitcn/kratos-kit/database/gorm v0.0.33/go.mod h1:oVl384601SUdWOYM+G8DjT/Batc8VYsXYbdmHhVCGE4=
 github.com/liujitcn/kratos-kit/database/gorm v0.0.41/go.mod h1:nJOPsqdbrIeAi+t0dafwY5ErTmG5Ev8u4q6c9/68o2c=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.21/go.mod h1:o8yW8lcmcz2evAQaCjeXjX2WMOFwmElz5S74bngDlb8=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.22/go.mod h1:o8yW8lcmcz2evAQaCjeXjX2WMOFwmElz5S74bngDlb8=
 github.com/liujitcn/kratos-kit/locker v0.0.9/go.mod h1:Cvlq140OYtan7FdEPfZ4JsNKcg4uKs1iNzVUzaue3cQ=
 github.com/liujitcn/kratos-kit/locker v0.0.16/go.mod h1:BYzE0Gxw7s6XdMY897Cf0eRYR+qst32gBhgG7hIDPzc=
 github.com/liujitcn/kratos-kit/logger v0.0.21/go.mod h1:iNg7U22TxKkJVwEEVGJuS+nw1w6kRg2bFV7aN1yZdxI=
