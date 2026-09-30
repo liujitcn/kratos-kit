@@ -181,6 +181,9 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 			if err = systemDB.AutoMigrate(models...); err != nil {
 				return nil, cleanup, err
 			}
+			if err = applyDialectBinarySizes(systemDB, models); err != nil {
+				return nil, cleanup, err
+			}
 			err = applyRegisteredTableComments(systemDB, models...)
 			if err != nil {
 				return nil, cleanup, err

@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/driver/sqlserver
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.21
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.22
 	gorm.io/driver/sqlserver v1.6.3
 )
 

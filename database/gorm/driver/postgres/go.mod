@@ -3,8 +3,9 @@ module github.com/liujitcn/kratos-kit/database/gorm/driver/postgres
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.21
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.22
 	gorm.io/driver/postgres v1.6.0
+	gorm.io/gorm v1.31.2
 )
 
 require (
@@ -20,5 +21,4 @@ require (
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
-	gorm.io/gorm v1.31.2 // indirect
 )

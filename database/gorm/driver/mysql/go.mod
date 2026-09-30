@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/driver/mysql
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.21
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.22
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.2
 )

@@ -6,7 +6,7 @@ require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/liujitcn/kratos-kit/api v0.0.41
 	github.com/liujitcn/kratos-kit/auth v0.0.31
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.21
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.22
 	gorm.io/gorm v1.31.2
 	gorm.io/plugin/opentelemetry v0.1.16
 	gorm.io/plugin/prometheus v0.1.0
