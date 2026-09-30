@@ -239,8 +239,8 @@ github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.19 h1:KnGiRciHJkzdrqcq
 github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.19/go.mod h1:3KV3IrSVfKsAKLSa0pnk+ru0YDS1qKhPJAqZSnVNcZo=
 github.com/liujitcn/kratos-kit/cache v0.0.21 h1:3u4WPSvaeO9diSsjJ2x6L+TshbNN223FusanCbRznhs=
 github.com/liujitcn/kratos-kit/cache v0.0.21/go.mod h1:2kXaQantBLp8NIgrtz74gCqYUP34wJOPpIIB1yYyRZ0=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.19 h1:XS2yM+ymXSvvtOx22jaWAMSvURga1YZWYLp/VDTqjBw=
-github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.19/go.mod h1:o8yW8lcmcz2evAQaCjeXjX2WMOFwmElz5S74bngDlb8=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.20 h1:QeE/j6Chm+07erHiesN54MGFAVg3t8AzD/+U4/+pkzs=
+github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.20/go.mod h1:o8yW8lcmcz2evAQaCjeXjX2WMOFwmElz5S74bngDlb8=
 github.com/liujitcn/kratos-kit/utils v0.0.22 h1:RcUMavri5FpoaFUFt/w703NTlrFViGI8fFujjKCEmVo=
 github.com/liujitcn/kratos-kit/utils v0.0.22/go.mod h1:UIIIE0SL04+9xmTkRCntfgkcUUk/md4t5dTtx9DnMng=
 github.com/mattn/go-sqlite3 v1.14.34 h1:3NtcvcUnFBPsuRcno8pUtupspG/GM+9nZ88zgJcp6Zk=

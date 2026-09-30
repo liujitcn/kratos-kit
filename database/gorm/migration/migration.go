@@ -129,7 +129,7 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*gor
 	for _, targetName := range targetNames {
 		targetClient := targets[targetName]
 		targetDriver := targetClient.Driver()
-		if targetDriver != databaseTypeMySQL && targetDriver != databaseTypeDoris {
+		if targetDriver != databaseTypeMySQL && targetDriver != databaseTypePostgres && targetDriver != databaseTypeDoris {
 			return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", name, targetDriver)
 		}
 		hasMatchingAsset := false
@@ -267,11 +267,11 @@ func (r *Runner) runMigration(
 		return fmt.Errorf("迁移模块 %s 数据库客户端不能为空", moduleName)
 	}
 	centralDriver := centralClient.Driver()
-	if centralDriver != databaseTypeMySQL {
+	if centralDriver != databaseTypeMySQL && centralDriver != databaseTypePostgres {
 		return fmt.Errorf("迁移记录数据源暂不支持数据库驱动 %s", centralDriver)
 	}
 	targetDriver := targetClient.Driver()
-	if targetDriver != databaseTypeMySQL && targetDriver != databaseTypeDoris {
+	if targetDriver != databaseTypeMySQL && targetDriver != databaseTypePostgres && targetDriver != databaseTypeDoris {
 		return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", moduleName, targetDriver)
 	}
 	if asset.databaseType != targetDriver {

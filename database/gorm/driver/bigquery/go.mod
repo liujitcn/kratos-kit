@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/driver/bigquery
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.19
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.20
 	gorm.io/driver/bigquery v1.2.0
 )
 

@@ -3,6 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/migration
 go 1.27.0
 
 require (
+	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/liujitcn/kratos-kit/database/gorm v0.0.44
 	gorm.io/gorm v1.31.2
 )
@@ -16,7 +17,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
-	github.com/go-kratos/kratos/v3 v3.0.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/form/v4 v4.3.0 // indirect

@@ -8,11 +8,14 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/go-kratos/kratos/v3/log"
 )
 
 const (
 	migrationVersionFormatHint = "支持格式：纯数字（如 000001）、v0.0.1、v0.0.1-20260511170946、v0.0.1.20260511170946"
 	databaseTypeMySQL          = "mysql"
+	databaseTypePostgres       = "postgres"
 	databaseTypeDoris          = "doris"
 )
 
@@ -95,7 +98,8 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 			return nil, fmt.Errorf("读取迁移版本目录 %s 失败: %w", versionPath, err)
 		}
 		var targetFiles []migrationTargetFiles
-		targetFiles, err = findMigrationTargets(f, versionPath, versionEntries)
+		var sharedDescriptions []string
+		targetFiles, sharedDescriptions, err = findMigrationTargets(f, versionPath, versionEntries)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +111,9 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 			if err != nil {
 				return nil, err
 			}
-			descriptionPaths := make([]string, 0, len(descriptionFileNames))
+			// 公用说明文件在前，数据源自有说明在后，按序合并进每个数据库类型资产的描述引用。
+			descriptionPaths := make([]string, 0, len(sharedDescriptions)+len(descriptionFileNames))
+			descriptionPaths = append(descriptionPaths, sharedDescriptions...)
 			for _, fileName := range descriptionFileNames {
 				descriptionPaths = append(descriptionPaths, path.Join(targetFile.path, fileName))
 			}
@@ -155,35 +161,44 @@ func loadMigrationAssets(f fs.FS, directory string) ([]migrationAsset, error) {
 	return assets, nil
 }
 
-// findMigrationTargets 按数据库类型和数据源划分版本目录中的迁移文件。
+// findMigrationTargets 按数据库类型和数据源划分版本目录中的迁移文件，并返回版本级公用说明文件。
 func findMigrationTargets(
 	f fs.FS,
 	versionPath string,
 	entries []fs.DirEntry,
-) ([]migrationTargetFiles, error) {
+) ([]migrationTargetFiles, []string, error) {
 	if len(entries) == 0 {
-		return nil, fmt.Errorf("迁移版本目录 %s 未提供数据库类型目录", versionPath)
+		return nil, nil, fmt.Errorf("迁移版本目录 %s 未提供数据库类型目录", versionPath)
 	}
 	targets := make([]migrationTargetFiles, 0, len(entries)+1)
+	sharedDescriptions := make([]string, 0)
 	var err error
 	for _, entry := range entries {
 		if !entry.IsDir() {
-			return nil, fmt.Errorf("迁移版本目录 %s 必须按数据库类型存放脚本，发现直系文件 %s", versionPath, entry.Name())
+			// 版本级 .md 说明文件在全部数据库类型间公用，挂到本版本每个资产上；其他直系文件仍拒绝。
+			if strings.HasSuffix(entry.Name(), ".md") {
+				sharedDescriptions = append(sharedDescriptions, path.Join(versionPath, entry.Name()))
+				continue
+			}
+			return nil, nil, fmt.Errorf("迁移版本目录 %s 必须按数据库类型存放脚本，发现直系文件 %s", versionPath, entry.Name())
 		}
 		databaseType := entry.Name()
-		if databaseType != databaseTypeMySQL && databaseType != databaseTypeDoris {
-			return nil, fmt.Errorf("迁移版本目录 %s 包含不支持的数据库类型 %s，仅支持 mysql、doris", versionPath, databaseType)
+		if databaseType != databaseTypeMySQL && databaseType != databaseTypePostgres && databaseType != databaseTypeDoris {
+			// 未支持的数据库类型目录跳过并告警，避免资产目录与代码版本不一致时阻断启动；
+			// 已配置数据源缺失匹配脚本仍会在执行前按数据源逐一报错。
+			log.Warn(fmt.Sprintf("迁移版本目录 %s 包含不支持的数据库类型 %s，已跳过", versionPath, databaseType))
+			continue
 		}
 		databasePath := path.Join(versionPath, databaseType)
 		var databaseEntries []fs.DirEntry
 		databaseEntries, err = fs.ReadDir(f, databasePath)
 		if err != nil {
-			return nil, fmt.Errorf("读取迁移数据库类型目录 %s 失败: %w", databasePath, err)
+			return nil, nil, fmt.Errorf("读取迁移数据库类型目录 %s 失败: %w", databasePath, err)
 		}
 		var databaseTargets []migrationTargetFiles
 		databaseTargets, err = findDatabaseMigrationTargets(f, databaseType, databasePath, databaseEntries)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		targets = append(targets, databaseTargets...)
 	}
@@ -193,7 +208,7 @@ func findMigrationTargets(
 		}
 		return strings.Compare(current.dataSource, other.dataSource)
 	})
-	return targets, nil
+	return targets, sharedDescriptions, nil
 }
 
 // findDatabaseMigrationTargets 按直系文件和一级子目录划分一个数据库类型下的数据源。
