@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/driver/sqlite
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.20
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.21
 	gorm.io/driver/sqlite v1.6.0
 )
 

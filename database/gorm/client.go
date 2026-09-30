@@ -175,6 +175,9 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 		if len(models) > 0 {
 			// 自动迁移和注释回填属于可信系统任务，允许执行原生 SQL。
 			systemDB := SkipDataIsolation(client.DB)
+			if err = applyDialectJSONTypes(systemDB, models); err != nil {
+				return nil, cleanup, err
+			}
 			if err = systemDB.AutoMigrate(models...); err != nil {
 				return nil, cleanup, err
 			}
