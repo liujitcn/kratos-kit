@@ -25,6 +25,23 @@ const (
 	FieldKindOther
 )
 
+// jsonDialectTypes 中性 json 列落地为非 json 拼写的方言映射；
+// 未列出的方言（mysql、doris、bigquery 等）原生支持 json 类型，直接使用。
+var jsonDialectTypes = map[string]string{
+	"postgres":  "jsonb",
+	"sqlite":    "text",
+	"oracle":    "clob",
+	"sqlserver": "nvarchar(max)",
+}
+
+// JSONColumnType 返回中性 json 列在指定数据库方言落地后的原生列类型。
+func JSONColumnType(dialect string) string {
+	if value, ok := jsonDialectTypes[strings.ToLower(strings.TrimSpace(dialect))]; ok {
+		return value
+	}
+	return "json"
+}
+
 // NormalizeColumnType 把源库类型拼写翻译为多数据库通用的中立方言。
 //
 // keep=false 表示该类型方言敏感（时间、布尔、字节、浮点），应去掉 type 标签交由 GORM 按目标驱动推导；
@@ -75,9 +92,10 @@ func NormalizeColumnType(rawType string, kind FieldKind) (neutral string, size i
 		return "text", 0, true
 	case "text", "clob":
 		return value, 0, true
-	case "json":
-		// 达梦等国产数据库没有 JSON 类型，统一用文本承载 JSON 字符串。
-		return "text", 0, true
+	case "json", "jsonb":
+		// JSON 列保留中性拼写，运行时迁移按方言落地（JSONColumnType），
+		// 达梦等没有原生 JSON 类型的数据库才退化为文本承载。
+		return "json", 0, true
 	case "enum", "set":
 		return "text", 0, true
 	case "float", "double":

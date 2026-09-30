@@ -27,7 +27,8 @@ func TestNormalizeColumnType(t *testing.T) {
 		{name: "varchar保留", rawType: "varchar(64)", kind: FieldKindString, expected: "varchar(64)", keep: true},
 		{name: "mediumtext归一text", rawType: "mediumtext", kind: FieldKindString, expected: "text", keep: true},
 		{name: "text保留", rawType: "text", kind: FieldKindString, expected: "text", keep: true},
-		{name: "json归一text", rawType: "json", kind: FieldKindString, expected: "text", keep: true},
+		{name: "json保留中性类型", rawType: "json", kind: FieldKindString, expected: "json", keep: true},
+		{name: "jsonb保留中性类型", rawType: "jsonb", kind: FieldKindString, expected: "json", keep: true},
 		{name: "blob字节去掉标签", rawType: "blob", kind: FieldKindBytes, expected: "", keep: false},
 		{name: "binary字节去掉标签", rawType: "binary(16)", kind: FieldKindBytes, expected: "", keep: false},
 		{name: "字符串二进制列", rawType: "varbinary(1023)", kind: FieldKindString, expected: "varchar(1023)", keep: true},
@@ -42,6 +43,31 @@ func TestNormalizeColumnType(t *testing.T) {
 				t.Fatalf("keep 期望 %v 实际 %v（%s）", testCase.keep, keep, value)
 			}
 			if keep && value != testCase.expected {
+				t.Fatalf("类型期望 %s 实际 %s", testCase.expected, value)
+			}
+		})
+	}
+}
+
+// TestJSONColumnType 验证中性 json 列按方言落地的原生类型。
+func TestJSONColumnType(t *testing.T) {
+	cases := []struct {
+		name     string
+		dialect  string
+		expected string
+	}{
+		{name: "postgres落地jsonb", dialect: "postgres", expected: "jsonb"},
+		{name: "方言大小写不敏感", dialect: "Postgres", expected: "jsonb"},
+		{name: "oracle落地clob", dialect: "oracle", expected: "clob"},
+		{name: "sqlserver落地nvarchar", dialect: "sqlserver", expected: "nvarchar(max)"},
+		{name: "sqlite落地text", dialect: "sqlite", expected: "text"},
+		{name: "mysql原生json", dialect: "mysql", expected: "json"},
+		{name: "doris原生json", dialect: "doris", expected: "json"},
+		{name: "未知方言默认json", dialect: "unknown", expected: "json"},
+	}
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			if value := JSONColumnType(testCase.dialect); value != testCase.expected {
 				t.Fatalf("类型期望 %s 实际 %s", testCase.expected, value)
 			}
 		})
