@@ -1,8 +1,6 @@
 package response
 
 import (
-	"encoding/json"
-	jsonv2 "encoding/json/v2"
 	"net/http"
 
 	"github.com/go-kratos/kratos/v3/encoding"
@@ -12,7 +10,8 @@ import (
 )
 
 // ProtoJSONEncoder 编码 HTTP 响应。
-// 仅当客户端协商结果为 JSON 且响应值为 protobuf 消息时，使用自定义 JSON 编码以数字形式输出 64 位整数。
+// 仅当客户端协商结果为 JSON 且响应值为 protobuf 消息时，使用自定义 JSON 编码，
+// 64 位整数超出 JS 安全整数范围时输出字符串，避免浏览器解析丢失精度。
 // 其他场景保持 Kratos 默认 codec 行为，避免破坏内容协商和非 protobuf 响应。
 func ProtoJSONEncoder(w http.ResponseWriter, r *http.Request, v interface{}) error {
 	if v == nil {
@@ -41,7 +40,7 @@ func marshal(codec encoding.Codec, v interface{}) ([]byte, error) {
 	if codec.Name() == kratosJSON.Name {
 		if message, ok := v.(proto.Message); ok {
 			// 保留 encoding/json v1 的兼容语义，同时使用 Go 1.27 的 json/v2 实现。
-			return jsonv2.Marshal(message, json.DefaultOptionsV1())
+			return MarshalJSSafe(message)
 		}
 	}
 
