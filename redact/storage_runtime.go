@@ -230,6 +230,8 @@ func (s *RedactStorage) RestoreString(ctx context.Context, policy StorageFieldPo
 }
 
 // RestoreEntities 按入库策略批量恢复实体中的敏感字段原文。
+// 调用方需保证 policies 按字段去重；策略租户与实体租户可以不同（默认租户的全局策略可保护其他租户的数据行），
+// 恢复始终按策略自身租户定位旁表记录。
 func (s *RedactStorage) RestoreEntities(ctx context.Context, policies []StorageFieldPolicy, entities []ResponseEntity) error {
 	if s == nil || len(policies) == 0 || len(entities) == 0 {
 		return nil
@@ -240,17 +242,17 @@ func (s *RedactStorage) RestoreEntities(ctx context.Context, policies []StorageF
 	if s.fieldAccessor == nil {
 		return errors.New("实体字段访问器未初始化")
 	}
+	recordIDs := make([]int64, 0, len(entities))
+	for _, entity := range entities {
+		if entity.Entity != nil && entity.RecordID > 0 {
+			recordIDs = append(recordIDs, entity.RecordID)
+		}
+	}
 	var err error
 	for _, policy := range policies {
 		// 租户ID为零表示全局策略，仅负数视为无效。
 		if policy.TenantID < 0 {
 			return errors.New("敏感字段入库策略租户ID不能为负数")
-		}
-		recordIDs := make([]int64, 0, len(entities))
-		for _, entity := range entities {
-			if entity.TenantID == policy.TenantID && entity.Entity != nil && entity.RecordID > 0 {
-				recordIDs = append(recordIDs, entity.RecordID)
-			}
 		}
 		var values []*StorageValue
 		values, err = s.valueStore.ListByRecords(ctx, policy.TenantID, policy.ID, recordIDs)
@@ -262,9 +264,6 @@ func (s *RedactStorage) RestoreEntities(ctx context.Context, policies []StorageF
 			valueByRecordID[value.RecordID] = value
 		}
 		for _, entity := range entities {
-			if entity.TenantID != policy.TenantID {
-				continue
-			}
 			value, ok := valueByRecordID[entity.RecordID]
 			if !ok {
 				continue
