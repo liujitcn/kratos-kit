@@ -24,6 +24,24 @@ func (d orderedIndexDialector) Migrator(db *gorm.DB) gorm.Migrator {
 	return orderedIndexMigrator{Migrator: d.Dialector.Migrator(db), db: db}
 }
 
+// SavePoint 创建事务保存点。gorm.Dialector 接口未声明保存点方法，包装器必须显式透传，
+// 否则嵌套事务（如 CreateInBatches 超过单批上限）断言 SavePointerDialectorInterface 失败，
+// 会报 unsupported driver。
+func (d orderedIndexDialector) SavePoint(db *gorm.DB, name string) error {
+	if savePointer, ok := d.Dialector.(gorm.SavePointerDialectorInterface); ok {
+		return savePointer.SavePoint(db, name)
+	}
+	return gorm.ErrUnsupportedDriver
+}
+
+// RollbackTo 回滚到指定事务保存点，透传逻辑与 SavePoint 一致。
+func (d orderedIndexDialector) RollbackTo(db *gorm.DB, name string) error {
+	if savePointer, ok := d.Dialector.(gorm.SavePointerDialectorInterface); ok {
+		return savePointer.RollbackTo(db, name)
+	}
+	return gorm.ErrUnsupportedDriver
+}
+
 // openOrderedPostgres 创建按索引定义序内省索引列的 PG 方言。
 func openOrderedPostgres(dsn string) gorm.Dialector {
 	return orderedIndexDialector{Dialector: postgres.Open(dsn)}
