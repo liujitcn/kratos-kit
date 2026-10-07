@@ -11,7 +11,7 @@
 - `Mask`、`Regex`、`Email`、`Truncate`、`Hash`、`UUID`、`IP`、`URL`、`FixedLength`：实现 Proto 规则对应的具体算法；`Truncate` 按 Unicode 字符数量截断，不会切断中文、日文等多字节字符。
 - `RegisterCustomRedactor`：注册命名的自定义脱敏函数。
 - `ServerStreamRedactor`、`BidiStreamRedactor`、`ClientStreamRedactor`：包装 gRPC 流式响应并在发送前执行脱敏。
-- `StoragePolicyResolver`、`StorageValueStore`、`RedactStorage`：通过抽象策略和存储接口执行敏感字段的加密、脱敏值保存、原文恢复和摘要查询。
+- `StoragePolicyResolver`、`StorageValueStore`、`RedactStorage`：通过抽象策略和存储接口执行敏感字段的加密、脱敏值保存、原文恢复和摘要查询；入库策略 `StorageFieldPolicy.TenantID` 为零表示全局策略，仅负数视为无效。
 
 本模块不负责具体数据库表、Repository 和策略配置；具体数据库适配与规则管理由业务模块实现，代码生成由 `cmd/protoc-gen-go-redact` 完成。
 

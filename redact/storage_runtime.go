@@ -79,7 +79,8 @@ func (s *RedactStorage) PrepareString(ctx context.Context, policy StorageFieldPo
 	if s == nil || value == "" {
 		return value, nil, nil
 	}
-	if policy.ID <= 0 || policy.TenantID <= 0 || policy.TableName == "" || policy.ColumnName == "" {
+	// 租户ID为零表示全局策略，仅负数视为无效。
+	if policy.ID <= 0 || policy.TenantID < 0 || policy.TableName == "" || policy.ColumnName == "" {
 		return "", nil, errors.New("敏感字段入库策略无效")
 	}
 	if policy.Rule.Mode != PolicyModeApplyRule || policy.Rule.Transform == nil {
@@ -113,8 +114,9 @@ func (s *RedactStorage) PrepareEntity(ctx context.Context, tenantID int64, table
 	if s == nil || s.policyResolver == nil || entity == nil {
 		return nil, nil
 	}
-	if tenantID <= 0 {
-		return nil, errors.New("存储脱敏租户ID不能为空")
+	// 租户ID为零表示按全局策略处理。
+	if tenantID < 0 {
+		return nil, errors.New("存储脱敏租户ID不能为负数")
 	}
 	policies := s.policyResolver.ListStoragePolicies(ctx, tenantID, tableName)
 	return s.PrepareEntityWithPolicies(ctx, entity, policies)
@@ -192,8 +194,9 @@ func (s *RedactStorage) DeletePrepared(ctx context.Context, tenantID, storagePol
 	if s == nil || s.valueStore == nil {
 		return errors.New("敏感字段旁表存储未初始化")
 	}
-	if tenantID <= 0 {
-		return errors.New("敏感字段旁表租户ID不能为空")
+	// 租户ID为零表示全局策略旁表记录。
+	if tenantID < 0 {
+		return errors.New("敏感字段旁表租户ID不能为负数")
 	}
 	value, err := s.valueStore.Find(ctx, tenantID, storagePolicyID, recordID)
 	if errors.Is(err, ErrStorageValueNotFound) {
@@ -207,7 +210,8 @@ func (s *RedactStorage) DeletePrepared(ctx context.Context, tenantID, storagePol
 
 // RestoreString 根据入库策略恢复字段原文；无法恢复时返回主表值并标记未恢复。
 func (s *RedactStorage) RestoreString(ctx context.Context, policy StorageFieldPolicy, recordID int64, stored string) (string, bool, error) {
-	if s == nil || s.valueStore == nil || s.protector == nil || policy.TenantID <= 0 || recordID <= 0 {
+	// 租户ID为零表示全局策略。
+	if s == nil || s.valueStore == nil || s.protector == nil || policy.TenantID < 0 || recordID <= 0 {
 		return stored, false, nil
 	}
 	value, err := s.valueStore.Find(ctx, policy.TenantID, policy.ID, recordID)
@@ -238,8 +242,9 @@ func (s *RedactStorage) RestoreEntities(ctx context.Context, policies []StorageF
 	}
 	var err error
 	for _, policy := range policies {
-		if policy.TenantID <= 0 {
-			return errors.New("敏感字段入库策略租户ID不能为空")
+		// 租户ID为零表示全局策略，仅负数视为无效。
+		if policy.TenantID < 0 {
+			return errors.New("敏感字段入库策略租户ID不能为负数")
 		}
 		recordIDs := make([]int64, 0, len(entities))
 		for _, entity := range entities {
@@ -282,8 +287,9 @@ func (s *RedactStorage) FindRecordIDsByDigest(ctx context.Context, policy Storag
 	if s == nil || s.valueStore == nil || s.protector == nil {
 		return nil, errors.New("敏感字段查询保护器未初始化")
 	}
-	if policy.TenantID <= 0 {
-		return nil, errors.New("敏感字段入库策略租户ID不能为空")
+	// 租户ID为零表示全局策略。
+	if policy.TenantID < 0 {
+		return nil, errors.New("敏感字段入库策略租户ID不能为负数")
 	}
 	digest, err := s.protector.Digest(plainValue, storageDigestData(policy.TenantID, policy.ID))
 	if err != nil {
