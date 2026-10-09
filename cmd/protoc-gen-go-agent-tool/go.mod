@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/liujitcn/kratos-kit/cmd/internal/utils v0.0.6
-	github.com/liujitcn/kratos-kit/utils v0.0.26
+	github.com/liujitcn/kratos-kit/utils v0.0.27
 	google.golang.org/protobuf v1.36.12
 )
 
@@ -15,5 +15,5 @@ require (
 	github.com/redis/go-redis/v9 v9.22.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 )
