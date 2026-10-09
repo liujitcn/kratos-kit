@@ -11,5 +11,5 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
 	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 )
