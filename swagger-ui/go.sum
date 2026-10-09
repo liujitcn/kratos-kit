@@ -2,8 +2,8 @@ github.com/andybalholm/brotli v1.2.6 h1:ftYnfj6usCp+UGV5kSJ3+chpMQgU+gJf/AxsUQ52
 github.com/andybalholm/brotli v1.2.6/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/bool64/dev v0.2.45 h1:3nLKhAS/6Oklk3Mt2lHYSN/Cb4tdAD77KLwzeP+6eYE=
 github.com/bool64/dev v0.2.45/go.mod h1:iJbh1y/HkunEPhgebWRNcs8wfGq7sjvJ6W5iabL8ACg=
-github.com/klauspost/compress v1.19.1 h1:VsB4HPswih7mmZ8WleSFQ75c/Ui1M4trX5oAsJnhSlk=
-github.com/klauspost/compress v1.19.1/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
+github.com/klauspost/compress v1.19.2 h1:hMRETovs/pu/dVWN7zIT1PGG8t509MwT6bO7XSi26R8=
+github.com/klauspost/compress v1.19.2/go.mod h1:cwPg85FWrGar70rWktvGQj8/hthj3wpl0PGDogxkrSQ=
 github.com/mvrilo/go-redoc v0.1.5 h1:07yjAjUNXXEkC/pd2Yl6DAVjmhMussJsNeOuAAR/8TA=
 github.com/mvrilo/go-redoc v0.1.5/go.mod h1:Yn92/dqIpYGSl8g2xz1Xq36AO9ENjIsPLbVtz9nVhz8=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=

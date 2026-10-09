@@ -10,6 +10,6 @@ require (
 
 require (
 	github.com/andybalholm/brotli v1.2.6 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
 )
