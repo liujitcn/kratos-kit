@@ -9,10 +9,8 @@ require (
 )
 
 require (
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
-	github.com/klauspost/compress v1.18.6 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/stretchr/objx v0.5.3 // indirect
+	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/stretchr/testify v1.12.1 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
