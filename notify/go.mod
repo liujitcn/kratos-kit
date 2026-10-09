@@ -8,7 +8,7 @@ require (
 	github.com/alibabacloud-go/tea v1.5.1
 	github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.216
 	github.com/liujitcn/go-utils/http v0.0.8
-	github.com/liujitcn/kratos-kit/cache v0.0.27
+	github.com/liujitcn/kratos-kit/cache v0.0.28
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.172
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.172
 )
@@ -32,7 +32,7 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/liujitcn/go-utils v0.0.41 // indirect
 	github.com/liujitcn/kratos-kit/api v0.0.41 // indirect
-	github.com/liujitcn/kratos-kit/utils v0.0.26 // indirect
+	github.com/liujitcn/kratos-kit/utils v0.0.27 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -48,7 +48,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/ini.v1 v1.67.1 // indirect
