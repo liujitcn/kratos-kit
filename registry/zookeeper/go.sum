@@ -4,10 +4,6 @@ github.com/go-zookeeper/zk v1.0.4 h1:DPzxraQx7OrPyXq2phlGlNSIyWEsAox0RJmjTseMV6I
 github.com/go-zookeeper/zk v1.0.4/go.mod h1:nOB03cncLtlp4t+UAkGSV+9beXP/akpekBwL+UX1Qcw=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/liujitcn/kratos-kit/api v0.0.41 h1:CDt/IfeJBPnTweIwlMvwQSvWMcNXzhi/q0NxVTSD6XE=
-github.com/liujitcn/kratos-kit/api v0.0.41/go.mod h1:DVRd76dXC0xH2h1qxgY3WqWlxefwIPvE69wiNM8PQnk=
-github.com/liujitcn/kratos-kit/registry v0.0.25 h1:dJzxhPKtefIqrfY64tADNL6Novmb7vvXe8FggvEKQIc=
-github.com/liujitcn/kratos-kit/registry v0.0.25/go.mod h1:D9mSyOHJ1kap4+OXXQkwFv0DnU6J8ySX4uOI/GgZ13g=
 golang.org/x/sync v0.22.0 h1:SZjpbeLmrCk4xhRSZFNZW5gFUeCeFgjekvI/+gfScek=
 golang.org/x/sync v0.22.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
 google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=
