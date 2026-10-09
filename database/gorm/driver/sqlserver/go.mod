@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/database/gorm/driver/sqlserver
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.22
+	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.23
 	gorm.io/driver/sqlserver v1.6.3
 )
 
@@ -20,6 +20,7 @@ require (
 	github.com/stretchr/testify v1.12.1 // indirect
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	gorm.io/gorm v1.31.2 // indirect
 )
