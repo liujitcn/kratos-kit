@@ -7,7 +7,7 @@ require (
 	github.com/go-zookeeper/zk v1.0.4
 	github.com/liujitcn/kratos-kit/api v0.0.41
 	github.com/liujitcn/kratos-kit/registry v0.0.26
-	golang.org/x/sync v0.22.0
+	golang.org/x/sync v0.23.0
 )
 
 require google.golang.org/protobuf v1.36.12 // indirect
