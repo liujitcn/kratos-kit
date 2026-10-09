@@ -10,7 +10,7 @@ require (
 
 require (
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
