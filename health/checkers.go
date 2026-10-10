@@ -52,7 +52,7 @@ func HTTP(url string, timeout time.Duration) *HTTPChecker {
 }
 
 // Check 执行 HTTP 检查，2xx 和 3xx 响应视为可用。
-func (h *HTTPChecker) Check(ctx context.Context) Result {
+func (h *HTTPChecker) Check(ctx context.Context) (result Result) {
 	timeout := h.timeout
 	if timeout <= 0 {
 		timeout = 3 * time.Second
@@ -74,7 +74,15 @@ func (h *HTTPChecker) Check(ctx context.Context) Result {
 			Message: fmt.Sprintf("HTTP request %s: %v", h.url, err),
 		}
 	}
-	defer response.Body.Close()
+	defer func() {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			if result.Message == "" {
+				result = Result{Status: StatusDown, Message: fmt.Sprintf("close HTTP response: %v", closeErr)}
+				return
+			}
+			result.Message += fmt.Sprintf("; close HTTP response: %v", closeErr)
+		}
+	}()
 	if response.StatusCode >= http.StatusOK && response.StatusCode < http.StatusBadRequest {
 		return Result{Status: StatusUp}
 	}
