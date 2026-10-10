@@ -46,7 +46,7 @@ func ParseLegacyEntry(keyvals ...any) (Entry, error) {
 		return entry, nil
 	}
 	if keylen%2 != 0 {
-		return entry, fmt.Errorf("Keyvalues must appear in pairs: %v", keyvals)
+		return entry, fmt.Errorf("key values must appear in pairs: %v", keyvals)
 	}
 
 	entry.Fields = make([]Field, 0, keylen/2)
