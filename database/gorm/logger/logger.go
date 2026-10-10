@@ -3,13 +3,11 @@ package logger
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-kratos/kratos/v3/log"
@@ -19,7 +17,6 @@ import (
 
 var gormSourceDir string
 var loggerSourceDir string
-var moduleRootCache sync.Map
 
 var skipCallerFragments = []string{
 	"/gorm-kit/repository/",
@@ -268,156 +265,6 @@ func normalizeFunctionPath(function string) string {
 	function = strings.ReplaceAll(function, "\\", "/")
 	function = strings.ReplaceAll(function, ".", "/")
 	return function
-}
-
-// trimmedPath 压缩 GORM 调用点路径，保持与旧版 NcapLog 一致的显示风格。
-func trimmedPath(filePath string) string {
-	if formattedPath, ok := formatModulePath(filePath); ok {
-		return formattedPath
-	}
-
-	idx0 := strings.LastIndexByte(filePath, '/')
-	if idx0 == -1 {
-		return filePath
-	}
-	idx1 := strings.LastIndexByte(filePath[:idx0], '/')
-	if idx1 == -1 {
-		return filePath
-	}
-
-	idx2 := strings.LastIndex(filePath, ".git@")
-	if idx2 == -1 {
-		return filePath[idx0+1:]
-	}
-
-	idx3 := strings.LastIndexByte(filePath[:idx2], '/')
-	if idx3 == -1 {
-		return filePath[idx0+1:]
-	}
-
-	var bd strings.Builder
-	bd.Grow(idx2 - idx3)
-	bd.WriteByte('[')
-
-	var cg = false
-	for i := idx3 + 1; i < idx2; i++ {
-		c := filePath[i]
-		if c == '!' {
-			cg = true
-			continue
-		}
-		if cg {
-			if c >= 'a' && c <= 'z' {
-				c = c + 'A' - 'a'
-			}
-			cg = false
-		}
-		bd.WriteByte(c)
-	}
-
-	bd.WriteByte(']')
-	var prefix = bd.String()
-	if idx3 == idx1 {
-		return prefix + filePath[idx0+1:]
-	}
-
-	return prefix + filePath[idx1+1:]
-}
-
-// formatModulePath 将本地项目绝对路径格式化为“项目目录名/相对路径:行号”。
-func formatModulePath(filePath string) (string, bool) {
-	var pathWithoutLine, line, ok = splitFileAndLine(filePath)
-	if !ok {
-		return "", false
-	}
-	if pathWithoutLine == "" || pathWithoutLine[0] != '/' {
-		return "", false
-	}
-	if strings.Contains(pathWithoutLine, "/pkg/mod/") || strings.Contains(pathWithoutLine, ".git@") {
-		return "", false
-	}
-
-	var moduleRoot, found = findModuleRoot(filepath.Dir(pathWithoutLine))
-	if !found {
-		return "", false
-	}
-
-	var relativePath, err = filepath.Rel(moduleRoot, pathWithoutLine)
-	if err != nil {
-		return "", false
-	}
-
-	relativePath = filepath.ToSlash(relativePath)
-	if strings.HasPrefix(relativePath, "../") {
-		return "", false
-	}
-
-	return filepath.Base(moduleRoot) + "/" + relativePath + ":" + line, true
-}
-
-// splitFileAndLine 将 "文件路径:行号" 拆分为路径和行号。
-func splitFileAndLine(filePath string) (string, string, bool) {
-	var idx = strings.LastIndexByte(filePath, ':')
-	if idx <= 0 || idx >= len(filePath)-1 {
-		return "", "", false
-	}
-
-	return filePath[:idx], filePath[idx+1:], true
-}
-
-// findModuleRoot 从当前目录向上查找最近的 go.mod 所在目录。
-func findModuleRoot(dir string) (string, bool) {
-	dir = filepath.Clean(dir)
-	if value, ok := moduleRootCache.Load(dir); ok {
-		root, _ := value.(string)
-		if root == "" {
-			return "", false
-		}
-		return root, true
-	}
-
-	var visited []string
-	var current = dir
-	for {
-		visited = append(visited, current)
-		if _, err := os.Stat(filepath.Join(current, "go.mod")); err == nil {
-			for _, item := range visited {
-				moduleRootCache.Store(item, current)
-			}
-			return current, true
-		}
-
-		var parent = filepath.Dir(current)
-		if parent == current {
-			break
-		}
-		current = parent
-	}
-
-	for _, item := range visited {
-		moduleRootCache.Store(item, "")
-	}
-	return "", false
-}
-
-type traceRecorder struct {
-	logger.Interface
-	BeginAt      time.Time
-	SQL          string
-	RowsAffected int64
-	Err          error
-}
-
-// New 创建一条新的 GORM Trace 记录器。
-func (l *traceRecorder) New() *traceRecorder {
-	return &traceRecorder{Interface: l.Interface, BeginAt: time.Now()}
-}
-
-// Trace 记录 GORM Trace 明细。
-func (l *traceRecorder) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
-	l.BeginAt = begin
-	l.SQL, l.RowsAffected = fc()
-	l.Err = err
 }
 
 // New 创建 GORM 日志器。

@@ -68,7 +68,7 @@ func rejectUnsafeRawStatement(db *gorm.DB) bool {
 	if denyRawSingleRowQuery(db) {
 		return true
 	}
-	db.AddError(ErrRawDataIsolationUnsupported)
+	db.Error = db.AddError(ErrRawDataIsolationUnsupported)
 	return true
 }
 
@@ -77,7 +77,7 @@ func rejectRawDataIsolation(db *gorm.DB) {
 	if shouldSkipDataIsolation(db) || db == nil || db.Error != nil {
 		return
 	}
-	db.AddError(ErrRawDataIsolationUnsupported)
+	db.Error = db.AddError(ErrRawDataIsolationUnsupported)
 }
 
 // addDataIsolationError 为支持错误返回的调用保留原错误，Row 查询则改为恒不命中。
@@ -85,7 +85,7 @@ func addDataIsolationError(db *gorm.DB, err error) {
 	if db == nil || err == nil || denySingleRowQuery(db) {
 		return
 	}
-	db.AddError(err)
+	db.Error = db.AddError(err)
 }
 
 // denySingleRowQuery 为 Row 查询追加恒不命中的条件，避免 GORM 因回调错误返回 nil。
@@ -110,7 +110,7 @@ func denyRawSingleRowQuery(db *gorm.DB) bool {
 		return true
 	}
 	db.Statement.SQL.Reset()
-	if db.Dialector != nil && db.Dialector.Name() == "oracle" {
+	if db.Dialector != nil && db.Name() == "oracle" {
 		db.Statement.SQL.WriteString(deniedOracleSingleRowSQL)
 	} else {
 		db.Statement.SQL.WriteString(deniedSingleRowSQL)

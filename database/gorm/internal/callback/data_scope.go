@@ -50,7 +50,7 @@ func addDataScopeWhere(db *gorm.DB) {
 	}
 	scopedTables, err := dataScopeTables(db)
 	if err != nil {
-		db.AddError(err)
+		db.Error = db.AddError(err)
 		return
 	}
 	hasMainScope := isDataScopeDeptTable(db) || isDataScopeUserTable(db) || hasDataScopeCreatedByField(db, scopedTables)

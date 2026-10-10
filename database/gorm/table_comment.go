@@ -112,7 +112,7 @@ func buildTableCommentSQL(db *gorm.DB, table interface{}, comment string) (strin
 	stmt := &gorm.Statement{DB: tx}
 
 	var err error
-	if db.Dialector.Name() == "postgres" {
+	if db.Name() == "postgres" {
 		// postgres 只支持 COMMENT ON TABLE 语法，且 COMMENT 语句不接受绑定参数，
 		// IS 子句只能用字符串字面量；单引号翻倍转义，避免注释内容破坏字面量。
 		_, err = stmt.WriteString("COMMENT ON TABLE ")
@@ -134,7 +134,7 @@ func buildTableCommentSQL(db *gorm.DB, table interface{}, comment string) (strin
 		stmt.WriteQuoted(table)
 
 		commentClause := " COMMENT = "
-		if db.Dialector.Name() == "doris" {
+		if db.Name() == "doris" {
 			commentClause = " MODIFY COMMENT "
 		}
 		_, err = stmt.WriteString(commentClause)
@@ -145,9 +145,9 @@ func buildTableCommentSQL(db *gorm.DB, table interface{}, comment string) (strin
 		stmt.AddVar(&stmt.SQL, comment)
 	}
 
-	if stmt.DB.Error != nil {
-		return "", stmt.DB.Error
+	if stmt.Error != nil {
+		return "", stmt.Error
 	}
 
-	return stmt.DB.Dialector.Explain(stmt.SQL.String(), stmt.Vars...), nil
+	return stmt.Explain(stmt.SQL.String(), stmt.Vars...), nil
 }

@@ -81,7 +81,7 @@ func setAuditColumn(db *gorm.DB, fieldName string, value interface{}, onlyZero b
 	if db.Statement.Schema == nil {
 		metadata, fieldExists, err := getRegisteredAuditField(db, fieldName)
 		if err != nil {
-			db.AddError(err)
+			db.Error = db.AddError(err)
 			return
 		}
 		if fieldExists {
@@ -157,7 +157,7 @@ func setStructColumn(db *gorm.DB, current reflect.Value, field *schema.Field, va
 	case reflect.Struct:
 		_, zero := field.ValueOf(db.Statement.Context, current)
 		if !onlyZero || zero {
-			db.AddError(field.Set(db.Statement.Context, current, value))
+			db.Error = db.AddError(field.Set(db.Statement.Context, current, value))
 		}
 	case reflect.Slice, reflect.Array:
 		for index := 0; index < current.Len(); index++ {

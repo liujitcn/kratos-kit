@@ -19,7 +19,7 @@ const binarySizeConstraintPrefix = "gormsize_"
 // 该约束既让两库获得一致的长度校验，也让生成器能从约束定义找回 size 标签，
 // 保证两个源库生成的模型一致、两库可由同一份模型互相创建。
 func applyDialectBinarySizes(db *gorm.DB, models []interface{}) error {
-	if db == nil || db.Dialector == nil || db.Dialector.Name() != "postgres" || len(models) == 0 {
+	if db == nil || db.Dialector == nil || db.Name() != "postgres" || len(models) == 0 {
 		return nil
 	}
 	for _, model := range models {

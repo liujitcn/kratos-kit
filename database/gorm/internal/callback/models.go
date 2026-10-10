@@ -62,12 +62,6 @@ func RegisterMigrateModels(models ...interface{}) {
 	registeredMigrateModelsVersion++
 }
 
-// getRegisteredMigrateModels 返回已注册的包级模型副本（线程安全）。
-func getRegisteredMigrateModels() []interface{} {
-	models, _ := getRegisteredMigrateModelsSnapshot()
-	return models
-}
-
 // BindModels 将模型范围绑定到可复用的独立会话，供迁移与回调共享同一份元数据。
 func BindModels(db *gorm.DB, models []interface{}, explicit bool) *gorm.DB {
 	registry := &migrateRegistry{models: slices.Clone(models), explicit: explicit, version: 1}
@@ -103,13 +97,6 @@ func getRegisteredMigrateModelsSnapshot() ([]interface{}, uint64) {
 	dup := make([]interface{}, len(registeredMigrateModels))
 	copy(dup, registeredMigrateModels)
 	return dup, registeredMigrateModelsVersion
-}
-
-// getRegisteredMigrateModelsVersion 返回当前注册模型版本。
-func getRegisteredMigrateModelsVersion() uint64 {
-	registeredMigrateModelsMu.RLock()
-	defer registeredMigrateModelsMu.RUnlock()
-	return registeredMigrateModelsVersion
 }
 
 // getMigrateRegistryIdentity 返回缓存需要区分的模型注册范围标识。

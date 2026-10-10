@@ -21,7 +21,7 @@ func applyDialectJSONTypes(db *gorm.DB, models []interface{}) error {
 	if db == nil || db.Dialector == nil || len(models) == 0 {
 		return nil
 	}
-	jsonType := driver.JSONColumnType(db.Dialector.Name())
+	jsonType := driver.JSONColumnType(db.Name())
 	for _, model := range models {
 		stmt := &gorm.Statement{DB: db}
 		if err := stmt.Parse(model); err != nil {

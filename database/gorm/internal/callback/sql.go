@@ -26,22 +26,6 @@ type rawJoinInjection struct {
 	placeholder    string
 }
 
-// rawJoinReferences 从原生 JOIN 片段中解析表名和别名，并返回片段是否可安全识别。
-func rawJoinReferences(db *gorm.DB, query string) ([]sqlTableReference, bool) {
-	segments := rawJoinSegments(db, query)
-	if len(segments) == 0 {
-		return nil, false
-	}
-	references := make([]sqlTableReference, 0, len(segments))
-	for _, segment := range segments {
-		if segment.reference.name == "" {
-			return nil, false
-		}
-		references = append(references, segment.reference)
-	}
-	return references, true
-}
-
 // rawJoinSegments 解析原生 SQL 中每个顶层 JOIN 的表引用和 ON 条件范围。
 func rawJoinSegments(db *gorm.DB, query string) []rawJoinSegment {
 	tokens := rawSQLTokens(query)
@@ -282,7 +266,7 @@ func normalizeSQLIdentifier(value string) string {
 // normalizeRawSQLIdentifier 按数据库规则规范化原生 SQL 中未引用的标识符。
 func normalizeRawSQLIdentifier(db *gorm.DB, value string) string {
 	name := normalizeSQLIdentifier(value)
-	if db == nil || db.Dialector == nil || db.Dialector.Name() != "postgres" || isQuotedSQLIdentifier(value) {
+	if db == nil || db.Dialector == nil || db.Name() != "postgres" || isQuotedSQLIdentifier(value) {
 		return name
 	}
 	return strings.ToLower(name)

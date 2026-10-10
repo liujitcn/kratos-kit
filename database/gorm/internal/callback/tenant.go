@@ -32,7 +32,7 @@ func addTenantWhere(db *gorm.DB) {
 	}
 	tables, err := tenantTables(db)
 	if err != nil {
-		db.AddError(err)
+		db.Error = db.AddError(err)
 		return
 	}
 	hasMainTenant := hasTenantField(db, tables)
@@ -73,7 +73,7 @@ func fillTenantID(db *gorm.DB) {
 	}
 	tables, err := tenantTables(db)
 	if err != nil {
-		db.AddError(err)
+		db.Error = db.AddError(err)
 		return
 	}
 	if !hasTenantField(db, tables) {
@@ -83,7 +83,7 @@ func fillTenantID(db *gorm.DB) {
 	var hasTenantScope bool
 	tenantID, hasTenantScope, err = tenantIDForStatement(db)
 	if err != nil {
-		db.AddError(err)
+		db.Error = db.AddError(err)
 		return
 	}
 	if !hasTenantScope {
@@ -97,7 +97,7 @@ func fillTenantID(db *gorm.DB) {
 		return
 	}
 	if tenantField == nil {
-		db.AddError(fmt.Errorf("tenant field metadata missing for table %s", db.Statement.Table))
+		db.Error = db.AddError(fmt.Errorf("tenant field metadata missing for table %s", db.Statement.Table))
 		return
 	}
 	setTenantField(db, db.Statement.ReflectValue, tenantField, tenantID)
@@ -211,7 +211,7 @@ func setTenantMapItem(db *gorm.DB, item map[string]interface{}, tenantField *sch
 		if tenantField != nil {
 			fieldName = tenantField.Name
 		}
-		db.AddError(fmt.Errorf("tenant field %s has unsupported value %#v", fieldName, value))
+		db.Error = db.AddError(fmt.Errorf("tenant field %s has unsupported value %#v", fieldName, value))
 		return
 	}
 	if zero {
@@ -219,7 +219,7 @@ func setTenantMapItem(db *gorm.DB, item map[string]interface{}, tenantField *sch
 		return
 	}
 	if currentTenantID != tenantID {
-		db.AddError(fmt.Errorf("%w: current tenant %d, record tenant %d", errTenantMismatch, tenantID, currentTenantID))
+		db.Error = db.AddError(fmt.Errorf("%w: current tenant %d, record tenant %d", errTenantMismatch, tenantID, currentTenantID))
 	}
 }
 
@@ -252,16 +252,16 @@ func setTenantField(db *gorm.DB, value reflect.Value, tenantField *schema.Field,
 	case reflect.Struct:
 		currentValue, zero := tenantField.ValueOf(db.Statement.Context, value)
 		if zero {
-			db.AddError(tenantField.Set(db.Statement.Context, value, tenantID))
+			db.Error = db.AddError(tenantField.Set(db.Statement.Context, value, tenantID))
 			return
 		}
 		currentTenantID, _, valid := tenantIDFromValue(currentValue)
 		if !valid {
-			db.AddError(fmt.Errorf("tenant field %s has unsupported value %#v", tenantField.Name, currentValue))
+			db.Error = db.AddError(fmt.Errorf("tenant field %s has unsupported value %#v", tenantField.Name, currentValue))
 			return
 		}
 		if currentTenantID != tenantID {
-			db.AddError(fmt.Errorf("%w: current tenant %d, record tenant %d", errTenantMismatch, tenantID, currentTenantID))
+			db.Error = db.AddError(fmt.Errorf("%w: current tenant %d, record tenant %d", errTenantMismatch, tenantID, currentTenantID))
 		}
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < value.Len(); i++ {

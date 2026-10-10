@@ -97,7 +97,7 @@ func (p *projectIsolation) update(db *gorm.DB) {
 		case map[string]interface{}:
 			for _, key := range protected {
 				if _, exists := value[key]; exists {
-					db.AddError(ErrProjectScopeDenied)
+					db.Error = db.AddError(ErrProjectScopeDenied)
 					return
 				}
 			}
@@ -105,7 +105,7 @@ func (p *projectIsolation) update(db *gorm.DB) {
 			if db.Statement.Schema != nil {
 				value := reflect.Indirect(reflect.ValueOf(db.Statement.Dest))
 				if !value.IsValid() || value.Kind() != reflect.Struct || value.Type() != db.Statement.Schema.ModelType {
-					db.AddError(ErrProjectScopeDenied)
+					db.Error = db.AddError(ErrProjectScopeDenied)
 					return
 				}
 				selected, restricted := db.Statement.SelectAndOmitColumns(false, true)
@@ -119,7 +119,7 @@ func (p *projectIsolation) update(db *gorm.DB) {
 					}
 					_, zero := field.ValueOf(db.Statement.Context, reflect.Indirect(reflect.ValueOf(db.Statement.Dest)))
 					if !zero || selected[key] {
-						db.AddError(ErrProjectScopeDenied)
+						db.Error = db.AddError(ErrProjectScopeDenied)
 						return
 					}
 				}
@@ -136,7 +136,7 @@ func (p *projectIsolation) create(db *gorm.DB) {
 	}
 	scope, err := p.scope(db)
 	if err != nil {
-		db.AddError(err)
+		db.Error = db.AddError(err)
 		return
 	}
 	if scope.System {
@@ -187,7 +187,7 @@ func (p *projectIsolation) create(db *gorm.DB) {
 		return tenantOK && projectOK && tenantID > 0 && projectID > 0 && (slices.Equal(ids, []int64{0}) || slices.Contains(ids, projectID))
 	}
 	if !check(reflect.ValueOf(db.Statement.Dest)) {
-		db.AddError(ErrProjectScopeDenied)
+		db.Error = db.AddError(ErrProjectScopeDenied)
 	}
 }
 
