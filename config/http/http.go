@@ -142,8 +142,9 @@ func (s *source) Watch() (config.Watcher, error) {
 }
 
 // fetch 发起 HTTP 条件请求。
-func (s *source) fetch(ctx context.Context, etag string) ([]byte, string, bool, error) {
-	req, err := http.NewRequestWithContext(ctx, s.options.method, s.options.url, nil)
+func (s *source) fetch(ctx context.Context, etag string) (body []byte, responseETag string, notModified bool, err error) {
+	var req *http.Request
+	req, err = http.NewRequestWithContext(ctx, s.options.method, s.options.url, nil)
 	if err != nil {
 		return nil, "", false, fmt.Errorf("config/http: create request: %w", err)
 	}
@@ -152,13 +153,18 @@ func (s *source) fetch(ctx context.Context, etag string) ([]byte, string, bool, 
 		req.Header.Set("If-None-Match", etag)
 	}
 
-	response, err := s.options.client.Do(req)
+	var response *http.Response
+	response, err = s.options.client.Do(req)
 	if err != nil {
 		return nil, "", false, fmt.Errorf("config/http: request %s: %w", s.options.url, err)
 	}
-	defer response.Body.Close()
+	defer func() {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("config/http: close response: %w", closeErr))
+		}
+	}()
 
-	responseETag := response.Header.Get("ETag")
+	responseETag = response.Header.Get("ETag")
 	if response.StatusCode == http.StatusNotModified {
 		if responseETag == "" {
 			responseETag = etag
@@ -169,7 +175,7 @@ func (s *source) fetch(ctx context.Context, etag string) ([]byte, string, bool, 
 		return nil, responseETag, false, fmt.Errorf("config/http: request %s: %s", s.options.url, response.Status)
 	}
 
-	body, err := io.ReadAll(response.Body)
+	body, err = io.ReadAll(response.Body)
 	if err != nil {
 		return nil, responseETag, false, fmt.Errorf("config/http: read response: %w", err)
 	}
