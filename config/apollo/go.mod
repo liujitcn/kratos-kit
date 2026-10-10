@@ -6,7 +6,7 @@ require (
 	github.com/apolloconfig/agollo/v4 v4.4.0
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/liujitcn/kratos-kit/api v0.0.41
-	github.com/liujitcn/kratos-kit/config v0.0.41
+	github.com/liujitcn/kratos-kit/config v0.0.42
 )
 
 require (
@@ -114,7 +114,7 @@ require (
 	github.com/liujitcn/go-utils v0.0.43 // indirect
 	github.com/liujitcn/go-utils/crypto v0.0.18 // indirect
 	github.com/liujitcn/go-utils/translator v0.0.6 // indirect
-	github.com/liujitcn/kratos-kit v0.0.94 // indirect
+	github.com/liujitcn/kratos-kit v0.0.95 // indirect
 	github.com/liujitcn/kratos-kit/auth v0.0.34 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.27 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.24 // indirect
