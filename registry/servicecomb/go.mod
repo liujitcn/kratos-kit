@@ -7,12 +7,12 @@ require (
 	github.com/go-chassis/sc-client v0.7.0
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/liujitcn/kratos-kit/api v0.0.41
-	github.com/liujitcn/kratos-kit/registry v0.0.26
+	github.com/liujitcn/kratos-kit/registry v0.0.27
 )
 
 require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
-	github.com/deckarep/golang-set v1.7.1 // indirect
+	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/go-chassis/foundation v0.4.0 // indirect
 	github.com/go-chassis/openlog v1.1.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -20,6 +20,6 @@ require (
 	github.com/karlseguin/ccache/v2 v2.0.8 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
-	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/net v0.61.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
