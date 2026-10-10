@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -95,6 +96,7 @@ func (wc *WorkflowClient) newRequest(ctx context.Context, method, path string, b
 	return req, nil
 }
 
+// doRequest 发送 Argo 请求并解析 HTTP 响应。
 func (wc *WorkflowClient) doRequest(req *http.Request, result interface{}) error {
 	var resp *http.Response
 	var err error
@@ -102,12 +104,14 @@ func (wc *WorkflowClient) doRequest(req *http.Request, result interface{}) error
 	if err != nil {
 		return fmt.Errorf("HTTP request error: %w", err)
 	}
-	defer resp.Body.Close()
-
 	var data []byte
 	data, err = io.ReadAll(resp.Body)
+	closeErr := resp.Body.Close()
 	if err != nil {
-		return fmt.Errorf("read response error: %w", err)
+		return errors.Join(fmt.Errorf("read response error: %w", err), closeErr)
+	}
+	if closeErr != nil {
+		return fmt.Errorf("close HTTP response: %w", closeErr)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -426,12 +430,14 @@ func (wc *WorkflowClient) GetWorkflowLogs(ctx context.Context, name string, opts
 	if err != nil {
 		return "", fmt.Errorf("get workflow logs error: %w", err)
 	}
-	defer resp.Body.Close()
-
 	var data []byte
 	data, err = io.ReadAll(resp.Body)
+	closeErr := resp.Body.Close()
 	if err != nil {
-		return "", fmt.Errorf("read logs error: %w", err)
+		return "", errors.Join(fmt.Errorf("read logs error: %w", err), closeErr)
+	}
+	if closeErr != nil {
+		return "", fmt.Errorf("close workflow log response: %w", closeErr)
 	}
 	// Argo 会把错误详情写入响应体，非 2xx 时必须按调用失败处理。
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
