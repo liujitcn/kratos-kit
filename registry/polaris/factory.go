@@ -31,8 +31,7 @@ func NewRegistry(c *configv1.Registry) (*Registry, error) {
 		return nil, fmt.Errorf("fail to create consumerAPI: %w", err)
 	}
 
-	var provider api.ProviderAPI
-	provider = api.NewProviderAPIByContext(consumer.SDKContext())
+	provider := api.NewProviderAPIByContext(consumer.SDKContext())
 
 	log.Info(fmt.Sprintf("start to register instances, count %d", c.Polaris.InstanceCount))
 

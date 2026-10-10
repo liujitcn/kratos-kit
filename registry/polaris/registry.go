@@ -247,7 +247,9 @@ type Watcher struct {
 	ServiceInstances []*registry.ServiceInstance
 }
 
+// newWatcher 创建 Polaris 服务实例监听器。
 func newWatcher(ctx context.Context, namespace string, serviceName string, consumer api.ConsumerAPI) (*Watcher, error) {
+	//nolint:staticcheck // WatchService 保留公开 Channel 事件契约，回调 API 无法无损替换。
 	watchServiceResponse, err := consumer.WatchService(&api.WatchServiceRequest{
 		WatchServiceRequest: model.WatchServiceRequest{
 			Key: model.ServiceKey{
