@@ -1,6 +1,8 @@
 package swaggerUI
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -14,15 +16,21 @@ func (h *openApiFileHandler) ServeHTTP(writer http.ResponseWriter, _ *http.Reque
 	_, _ = writer.Write(h.Content)
 }
 
+// loadOpenApiFile 读取 OpenAPI 文件内容。
 func (h *openApiFileHandler) loadOpenApiFile(filePath string) ([]byte, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
-
 	content, err := io.ReadAll(file)
-	return content, err
+	closeErr := file.Close()
+	if err != nil {
+		return nil, errors.Join(err, closeErr)
+	}
+	if closeErr != nil {
+		return nil, fmt.Errorf("close OpenAPI file: %w", closeErr)
+	}
+	return content, nil
 }
 
 func (h *openApiFileHandler) LoadFile(filePath string) error {
