@@ -8,6 +8,6 @@ require (
 )
 
 require (
-	github.com/golang/snappy v0.0.4 // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
 )
