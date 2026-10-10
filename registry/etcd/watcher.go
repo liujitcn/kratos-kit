@@ -87,8 +87,11 @@ func (w *watcher) getInstance() ([]*registry.ServiceInstance, error) {
 	return items, nil
 }
 
+// reWatch 重新建立 etcd 监听并请求最新进度。
 func (w *watcher) reWatch() error {
-	w.watcher.Close()
+	if err := w.watcher.Close(); err != nil {
+		return err
+	}
 	w.watcher = clientv3.NewWatcher(w.client)
 	w.watchChan = w.watcher.Watch(w.ctx, w.key, clientv3.WithPrefix(), clientv3.WithRev(0), clientv3.WithKeysOnly())
 	return w.watcher.RequestProgress(w.ctx)
