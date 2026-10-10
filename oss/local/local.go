@@ -3,17 +3,19 @@ package local
 import (
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/go-kratos/kratos/v3/log"
 )
 
+// Local 提供基于本地文件系统的对象存储实现。
 type Local struct {
+	// RootDirectory 是对象文件的根目录。
 	RootDirectory string
 	perm          os.FileMode
 }
 
+// NewOSS 创建本地文件系统对象存储。
 func NewOSS(rootDirectory string) *Local {
 	return &Local{
 		RootDirectory: rootDirectory,
@@ -21,110 +23,76 @@ func NewOSS(rootDirectory string) *Local {
 	}
 }
 
-func (o *Local) Upload(fileName string, filePath string, localFile string) (string, error) {
-	_, err := os.Stat(o.RootDirectory)
-	if err != nil {
-		if !os.IsExist(err) {
-			err = os.MkdirAll(o.RootDirectory, o.perm)
-			if err != nil {
-				return "", err
-			}
-		}
+// Upload 将本地文件上传到对象存储目录。
+func (o *Local) Upload(fileName string, filePath string, localFile string) (result string, err error) {
+	if err = os.MkdirAll(o.RootDirectory, o.perm); err != nil {
+		return "", err
 	}
 
-	var file, dstFile *os.File
-	defer func() {
-		err = file.Close()
-		if err != nil {
-			return
-		}
-		err = dstFile.Close()
-		if err != nil {
-			return
-		}
-	}()
-
-	//判断localFile是否存在
+	var file *os.File
 	file, err = os.Open(localFile)
 	if err != nil {
 		log.Error("Error:", err)
 		return "", err
 	}
-
-	// 创建savePath
-	savePath := path.Join(o.RootDirectory, filePath)
-	_, err = os.Stat(savePath)
-	if err != nil {
-		if !os.IsExist(err) {
-			err = os.MkdirAll(savePath, o.perm)
-			if err != nil {
-				return "", err
-			}
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
+	}()
+
+	savePath := filepath.Join(o.RootDirectory, filePath)
+	if err = os.MkdirAll(savePath, o.perm); err != nil {
+		return "", err
 	}
 
 	dstName := filepath.Base(fileName)
-	dstPath := path.Join(savePath, dstName)
+	dstPath := filepath.Join(savePath, dstName)
+	var dstFile *os.File
 	dstFile, err = os.Create(dstPath)
 	if err != nil {
 		return "", err
 	}
-
-	_, err = io.Copy(dstFile, file)
-	if err != nil {
-		return "", err
-	}
-	res := path.Join(filePath, dstName)
-	return res, nil
-}
-
-func (o *Local) UploadByByte(fileName string, filePath string, fileByte []byte) (string, error) {
-	_, err := os.Stat(o.RootDirectory)
-	if err != nil {
-		if !os.IsExist(err) {
-			err = os.MkdirAll(o.RootDirectory, o.perm)
-			if err != nil {
-				return "", err
-			}
-		}
-	}
-
-	var dstFile *os.File
 	defer func() {
-		err = dstFile.Close()
-		if err != nil {
-			return
+		if closeErr := dstFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
 	}()
 
-	// 创建savePath
-	savePath := path.Join(o.RootDirectory, filePath)
-	_, err = os.Stat(savePath)
-	if err != nil {
-		if !os.IsExist(err) {
-			err = os.MkdirAll(savePath, o.perm)
-			if err != nil {
-				return "", err
-			}
-		}
+	if _, err = io.Copy(dstFile, file); err != nil {
+		return "", err
+	}
+	return filepath.Join(filePath, dstName), nil
+}
+
+// UploadByByte 将字节数据写入对象存储目录。
+func (o *Local) UploadByByte(fileName string, filePath string, fileByte []byte) (string, error) {
+	var err error
+	if err = os.MkdirAll(o.RootDirectory, o.perm); err != nil {
+		return "", err
+	}
+
+	savePath := filepath.Join(o.RootDirectory, filePath)
+	if err = os.MkdirAll(savePath, o.perm); err != nil {
+		return "", err
 	}
 
 	dstName := filepath.Base(fileName)
-	dstPath := path.Join(savePath, dstName)
-	err = os.WriteFile(dstPath, fileByte, o.perm)
-	if err != nil {
+	dstPath := filepath.Join(savePath, dstName)
+	if err = os.WriteFile(dstPath, fileByte, o.perm); err != nil {
 		return "", err
 	}
-	res := path.Join(filePath, dstName)
-	return res, nil
+	return filepath.Join(filePath, dstName), nil
 }
 
+// GetFileByte 读取本地对象文件。
 func (o *Local) GetFileByte(filePath string) ([]byte, error) {
-	filePath = path.Join(o.RootDirectory, filePath)
+	filePath = filepath.Join(o.RootDirectory, filePath)
 	return os.ReadFile(filePath)
 }
 
+// DeleteFile 删除本地对象文件。
 func (o *Local) DeleteFile(filePath string) error {
-	filePath = path.Join(o.RootDirectory, filePath)
+	filePath = filepath.Join(o.RootDirectory, filePath)
 	return os.Remove(filePath)
 }
