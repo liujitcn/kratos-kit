@@ -172,12 +172,12 @@ func (s *State) IsAuthorized(ctx context.Context, subject engine.Subject, action
 
 	tenant := tenantFromContext(ctx)
 
-	var err error
-	var allowed bool
-	if allowed, err = s.enforcer.Enforce(string(tenant), string(subject), string(resource), string(action), string(project)); err != nil {
+	allowed, err := s.enforcer.Enforce(string(tenant), string(subject), string(resource), string(action), string(project))
+	if err != nil {
 		log.Error("casbin.authz.engine: failed to enforce policy", "error", err)
 		return false, err
-	} else if allowed {
+	}
+	if allowed {
 		return true, nil
 	}
 	return false, nil
@@ -190,9 +190,7 @@ func (s *State) SetPolicies(_ context.Context, policyMap engine.PolicyMap, _ eng
 
 	s.policy.SetPolicies(policyMap)
 
-	var err error
-	err = s.enforcer.LoadPolicy()
-	if err != nil {
+	if err := s.enforcer.LoadPolicy(); err != nil {
 		log.Error("casbin.authz.engine: failed to load policy", "error", err)
 		return err
 	}
