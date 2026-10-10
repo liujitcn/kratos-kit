@@ -118,7 +118,7 @@ func addConfigLocked(c proto.Message) {
 		return
 	}
 	v := reflect.ValueOf(c)
-	if !v.IsValid() || v.Kind() != reflect.Ptr || v.IsNil() {
+	if !v.IsValid() || v.Kind() != reflect.Pointer || v.IsNil() {
 		// 只接受非 nil 的指针类型
 		return
 	}
