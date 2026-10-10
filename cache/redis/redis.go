@@ -57,18 +57,18 @@ func NewRedis(cfg *configv1.Data_Redis) (*Redis, func(), error) {
 		return nil, nil, fmt.Errorf("failed ping redis: %w", err)
 	}
 	return &Redis{
-			client: client,
-			meta:   make(map[string]entryMeta),
-		}, func() {
-			log.Info("cache redis cleanup...")
-			if client != nil {
-				err = client.Close()
-				if err != nil {
-					log.Error("failed close redis", "error", err)
-					return
-				}
+		client: client,
+		meta:   make(map[string]entryMeta),
+	}, func() {
+		log.Info("cache redis cleanup...")
+		if client != nil {
+			err = client.Close()
+			if err != nil {
+				log.Error("failed close redis", "error", err)
+				return
 			}
-		}, nil
+		}
+	}, nil
 }
 
 // List 返回 Redis 中支持的缓存条目及其运行时元数据。
@@ -83,15 +83,15 @@ func (s *Redis) List() ([]store.Entry, error) {
 		if err != nil || (kind != "string" && kind != "hash") {
 			continue
 		}
-		ttlSeconds, err := s.client.TTL(context.TODO(), key).Result()
+		ttl, err := s.client.TTL(context.TODO(), key).Result()
 		if err != nil {
 			continue
 		}
 		now := time.Now()
 		meta := s.getMeta(key, now)
-		entry := store.Entry{Key: key, Type: kind, TTL: redisTTL(ttlSeconds), CreatedAt: meta.createdAt, UpdatedAt: meta.updatedAt}
-		if ttlSeconds >= 0 {
-			entry.ExpiresAt = now.Add(ttlSeconds)
+		entry := store.Entry{Key: key, Type: kind, TTL: redisTTL(ttl), CreatedAt: meta.createdAt, UpdatedAt: meta.updatedAt}
+		if ttl >= 0 {
+			entry.ExpiresAt = now.Add(ttl)
 		}
 		if kind == "string" {
 			entry.Value, err = s.client.Get(context.TODO(), key).Result()
