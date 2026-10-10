@@ -87,9 +87,7 @@ func loadAppliedMigrations(
 		Order(clause.OrderBy{Columns: []clause.OrderByColumn{
 			{Column: clause.Column{Name: "version"}},
 		}})
-	var err error
-	err = query.Find(&histories).Error
-	if err != nil {
+	if err := query.Find(&histories).Error; err != nil {
 		return nil, fmt.Errorf("读取迁移版本记录失败: %w", err)
 	}
 	applied := make(map[string]struct{}, len(histories))

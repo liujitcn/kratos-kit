@@ -19,9 +19,7 @@ func NewRegistry(contributors AdditionalMigrations) (*Registry, error) {
 		migrations: make(map[ModuleName][]Migration),
 		order:      make([]ModuleName, 0, len(contributors)),
 	}
-	var err error
-	err = registry.Register(contributors...)
-	if err != nil {
+	if err := registry.Register(contributors...); err != nil {
 		return nil, err
 	}
 	return registry, nil
