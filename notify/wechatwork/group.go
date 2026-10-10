@@ -43,7 +43,7 @@ func NewGroupSender(config GroupConfig) (*GroupSender, error) {
 	if err != nil || parsedURL.Hostname() == "" || parsedURL.User != nil || parsedURL.Fragment != "" {
 		return nil, errors.New("notify wechatwork group: valid webhook URL is required")
 	}
-	if parsedURL.Scheme != "https" && !(config.AllowHTTP && parsedURL.Scheme == "http") {
+	if parsedURL.Scheme != "https" && (!config.AllowHTTP || parsedURL.Scheme != "http") {
 		return nil, errors.New("notify wechatwork group: HTTPS is required unless AllowHTTP is explicitly enabled")
 	}
 	return &GroupSender{

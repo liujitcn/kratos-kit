@@ -56,7 +56,7 @@ func BaseURL(value, fallback string, allowHTTP bool) (string, error) {
 	if err != nil || parsedURL.Hostname() == "" || parsedURL.User != nil || parsedURL.RawQuery != "" || parsedURL.Fragment != "" {
 		return "", errors.New("notify platform: invalid base URL")
 	}
-	if parsedURL.Scheme != "https" && !(allowHTTP && parsedURL.Scheme == "http") {
+	if parsedURL.Scheme != "https" && (!allowHTTP || parsedURL.Scheme != "http") {
 		return "", errors.New("notify platform: HTTPS is required unless explicitly overridden")
 	}
 	return strings.TrimRight(parsedURL.String(), "/"), nil

@@ -102,8 +102,8 @@ func (s *Sender) Name() string { return s.name }
 func (s *Sender) Type() notify.Type { return notify.Email }
 
 // Send 使用 SMTP 将消息发送给全部收件人。
-func (s *Sender) Send(ctx context.Context, message notify.Message) (*notify.Receipt, error) {
-	if err := ctx.Err(); err != nil {
+func (s *Sender) Send(ctx context.Context, message notify.Message) (receipt *notify.Receipt, err error) {
+	if err = ctx.Err(); err != nil {
 		return nil, err
 	}
 	if len(message.Recipients) == 0 {
@@ -121,14 +121,16 @@ func (s *Sender) Send(ctx context.Context, message notify.Message) (*notify.Rece
 		if strings.ContainsAny(value, "\r\n") {
 			return nil, errors.New("notify email: invalid recipient address")
 		}
-		address, err := mail.ParseAddress(value)
+		var address *mail.Address
+		address, err = mail.ParseAddress(value)
 		if err != nil || address.Address == "" || strings.ContainsAny(address.Address, "\r\n") {
 			return nil, errors.New("notify email: invalid recipient address")
 		}
 		recipients = append(recipients, address)
 	}
 
-	conn, err := (&net.Dialer{Timeout: s.timeout}).DialContext(ctx, "tcp", s.address)
+	var conn net.Conn
+	conn, err = (&net.Dialer{Timeout: s.timeout}).DialContext(ctx, "tcp", s.address)
 	if err != nil {
 		return nil, fmt.Errorf("notify email: connect SMTP: %w", err)
 	}
@@ -148,11 +150,17 @@ func (s *Sender) Send(ctx context.Context, message notify.Message) (*notify.Rece
 		}
 		conn = tlsConn
 	}
-	client, err := smtp.NewClient(conn, s.host)
+	var client *smtp.Client
+	client, err = smtp.NewClient(conn, s.host)
 	if err != nil {
 		return nil, fmt.Errorf("notify email: initialize SMTP client: %w", err)
 	}
-	defer client.Close()
+	defer func() {
+		if closeErr := client.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("notify email: close SMTP client: %w", closeErr))
+			receipt = nil
+		}
+	}()
 	if s.tlsMode == TLSStartTLS {
 		if supported, _ := client.Extension("STARTTLS"); !supported {
 			return nil, errors.New("notify email: SMTP server does not support STARTTLS")
@@ -174,13 +182,15 @@ func (s *Sender) Send(ctx context.Context, message notify.Message) (*notify.Rece
 			return nil, fmt.Errorf("notify email: set recipient: %w", err)
 		}
 	}
-	data, err := client.Data()
+	var data io.WriteCloser
+	data, err = client.Data()
 	if err != nil {
 		return nil, fmt.Errorf("notify email: start message data: %w", err)
 	}
-	messageID, err := writeMessage(data, s.from, recipients, message, s.host)
+	var messageID string
+	messageID, err = writeMessage(data, s.from, recipients, message, s.host)
 	if err != nil {
-		_ = data.Close()
+		err = errors.Join(err, data.Close())
 		return nil, fmt.Errorf("notify email: write message: %w", err)
 	}
 	if err = data.Close(); err != nil {

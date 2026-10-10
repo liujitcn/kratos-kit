@@ -67,7 +67,7 @@ func New(config Config) (*Sender, error) {
 	if err != nil || parsedURL.Hostname() == "" || parsedURL.User != nil || parsedURL.Fragment != "" {
 		return nil, errors.New("notify webhook: valid URL without user info or fragment is required")
 	}
-	if parsedURL.Scheme != "https" && !(config.AllowHTTP && parsedURL.Scheme == "http") {
+	if parsedURL.Scheme != "https" && (!config.AllowHTTP || parsedURL.Scheme != "http") {
 		return nil, errors.New("notify webhook: HTTPS is required unless AllowHTTP is explicitly enabled")
 	}
 	timeout := config.Timeout
