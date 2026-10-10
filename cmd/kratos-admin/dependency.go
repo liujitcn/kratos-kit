@@ -57,7 +57,7 @@ func resolveBackendDependencyWithQuery(query func(string, ...string) ([]byte, er
 			if err == nil {
 				version = metadata.Version
 				if !isStableBackendVersion(version) {
-					err = fmt.Errorf("Go 代理返回无效的 Backend 稳定版本: %q", version)
+					err = fmt.Errorf("go 代理返回无效的 Backend 稳定版本: %q", version)
 				}
 			}
 		}

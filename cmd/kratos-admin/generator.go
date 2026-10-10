@@ -66,20 +66,6 @@ type projectOptions struct {
 	frontendModule string
 }
 
-// createProject 在当前目录下创建完整的前后端项目。
-func createProject(projectName, cwd string) (string, error) {
-	return createProjectWithOptions(projectOptions{projectName: projectName}, cwd, initializeProject)
-}
-
-// createProjectWithInitializer 渲染完整项目骨架并执行指定初始化流程。
-func createProjectWithInitializer(
-	projectName string,
-	cwd string,
-	initializer projectInitializer,
-) (target string, err error) {
-	return createProjectWithOptions(projectOptions{projectName: projectName}, cwd, initializer)
-}
-
 // createProjectWithOptions 推导项目模块名称，输出模板阶段进度并创建完整项目。
 func createProjectWithOptions(options projectOptions, cwd string, initializer projectInitializer) (target string, err error) {
 	projectName := path.Base(filepath.Clean(options.projectName))

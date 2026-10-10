@@ -28,11 +28,6 @@ func (output *commandOutput) Write(content []byte) (int, error) {
 	return output.writer.Write(content)
 }
 
-// runProjectCommand 实时执行项目命令，并保留工作目录与失败上下文。
-func runProjectCommand(target, name string, args ...string) error {
-	return runProjectCommandInDirectory(target, ".", name, args...)
-}
-
 // runProjectCommandInDirectory 显示当前命令、实时输出与每十秒一次的执行状态。
 func runProjectCommandInDirectory(target, directory, name string, args ...string) error {
 	return runProjectCommandWithOutput(target, directory, os.Stdout, 10*time.Second, name, args...)

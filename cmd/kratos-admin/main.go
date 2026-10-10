@@ -1,4 +1,3 @@
-// Command kratos-admin 创建包含前后端的完整项目。
 package main
 
 import (
@@ -12,8 +11,7 @@ const commandName = "kratos-admin"
 
 // main 解析命令行并执行后端项目生成。
 func main() {
-	var err error
-	err = run(os.Args[1:], os.Stdout)
+	err := run(os.Args[1:], os.Stdout)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -39,8 +37,7 @@ func run(args []string, output io.Writer) error {
 
 	flags := flag.NewFlagSet(commandName+" create", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
-	var projectName string
-	projectName = args[1]
+	projectName := args[1]
 	var modulePath string
 	flags.StringVar(&modulePath, "module", "", "后端 Go module，默认使用仓库路径/backend 或 github.com/example/<project>/backend")
 	var frontendModule string
@@ -53,8 +50,7 @@ func run(args []string, output io.Writer) error {
 	}
 	flags.Func("frontend-module", "业务模块名，默认 system；支持逗号分隔或重复指定", addModules)
 	flags.Func("modules", "业务模块名，默认 system；支持逗号分隔或重复指定", addModules)
-	var err error
-	err = flags.Parse(args[2:])
+	err := flags.Parse(args[2:])
 	if err != nil {
 		return err
 	}
