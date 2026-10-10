@@ -61,7 +61,7 @@ func (l *Logger) parseKeyvals(keyvals []any) (string, []zapcore.Field, zapcore.E
 		return "", nil, zapcore.EntryCaller{}, nil
 	}
 	if keylen%2 != 0 {
-		return "", nil, zapcore.EntryCaller{}, fmt.Errorf("Keyvalues must appear in pairs: %v", keyvals)
+		return "", nil, zapcore.EntryCaller{}, fmt.Errorf("key values must appear in pairs: %v", keyvals)
 	}
 
 	var msg string
