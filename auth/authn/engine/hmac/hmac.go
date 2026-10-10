@@ -143,13 +143,6 @@ func WithReplayStore(store ReplayStore) Option {
 	}
 }
 
-// withNow 为测试配置当前时间函数。
-func withNow(now func() time.Time) Option {
-	return func(options *options) {
-		options.now = now
-	}
-}
-
 // Authenticator 校验绑定 Kratos 请求的 HMAC Bearer 令牌。
 type Authenticator struct {
 	options *options
