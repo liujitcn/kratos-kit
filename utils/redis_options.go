@@ -10,10 +10,10 @@ import (
 // GetRedisOptions 构造单机 Redis 连接配置。
 func GetRedisOptions(cfg *configv1.Data_Redis) (*redis.Options, error) {
 	if cfg == nil {
-		return nil, errors.New("Redis 配置不能为空")
+		return nil, errors.New("redis 配置不能为空")
 	}
 	if len(cfg.GetAddr()) == 0 || cfg.GetAddr()[0] == "" {
-		return nil, errors.New("Redis 地址不能为空")
+		return nil, errors.New("redis 地址不能为空")
 	}
 	redisOptions := &redis.Options{
 		Addr:         cfg.GetAddr()[0],
