@@ -245,12 +245,14 @@ func callMcpHTTPTool(ctx context.Context, toolCfg *configv1.Server_Mcp_HttpTool,
 	if err != nil {
 		return nil, err
 	}
-	defer httpResp.Body.Close()
-
 	var body []byte
 	body, err = io.ReadAll(httpResp.Body)
+	closeErr := httpResp.Body.Close()
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(fmt.Errorf("read HTTP tool response: %w", err), closeErr)
+	}
+	if closeErr != nil {
+		return nil, fmt.Errorf("close HTTP tool response: %w", closeErr)
 	}
 
 	result := &mcpsdk.CallToolResult{
