@@ -42,23 +42,20 @@ func New(cfg *configv1.Data_Redis) (*Redis, error) {
 		return nil, fmt.Errorf("redis options failed: %w", err)
 	}
 	client := redis.NewUniversalClient(redisOptions)
-	if client == nil {
-		return nil, errors.New("failed opening connection to redis")
-	}
 	if cfg.GetEnableTracing() {
 		if err = redisotel.InstrumentTracing(client); err != nil {
-			client.Close()
+			err = errors.Join(err, client.Close())
 			return nil, fmt.Errorf("failed open tracing: %w", err)
 		}
 	}
 	if cfg.GetEnableMetrics() {
 		if err = redisotel.InstrumentMetrics(client); err != nil {
-			client.Close()
+			err = errors.Join(err, client.Close())
 			return nil, fmt.Errorf("failed open metrics: %w", err)
 		}
 	}
 	if _, err = client.Ping(context.Background()).Result(); err != nil {
-		client.Close()
+		err = errors.Join(err, client.Close())
 		return nil, fmt.Errorf("failed ping redis: %w", err)
 	}
 	return &Redis{client: client, mutex: redislock.New(client)}, nil
