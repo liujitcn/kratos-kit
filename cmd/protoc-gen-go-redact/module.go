@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -85,7 +86,7 @@ func (m *Module) Execute(targets map[string]pgs.File, _ map[string]pgs.Package) 
 	return m.Artifacts()
 }
 
-// loadTemplateFromFile loads a template from an external file
+// loadTemplateFromFile 从外部文件加载模板。
 func (m *Module) loadTemplateFromFile(tpl *template.Template, templatePath string) (*template.Template, error) {
 	// Validate the file path
 	if templatePath == "" {
@@ -107,7 +108,7 @@ func (m *Module) loadTemplateFromFile(tpl *template.Template, templatePath strin
 	// Check if file exists
 	fileInfo, err := os.Stat(absPath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return nil, ErrorContext{
 				Location: "template_file: " + absPath,
 				Reason:   "file does not exist",

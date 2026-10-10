@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-// Package redact provides interfaces and methods to help implement redaction.
 package redact;
 
 import "google/protobuf/descriptor.proto";
