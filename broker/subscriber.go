@@ -186,7 +186,7 @@ func (sm *SubscriberSyncMap) ClearWithTimeout(timeout time.Duration) []string {
 			done := make(chan error, 1)
 			go func() { done <- s.Unsubscribe(false) }()
 			select {
-			case _ = <-done:
+			case <-done:
 			case <-time.After(timeout):
 				mu.Lock()
 				failed = append(failed, t)

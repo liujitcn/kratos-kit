@@ -215,7 +215,7 @@ func (m *Message) ExtractToContext(baseCtx context.Context, keyMapping map[strin
 	return ctx
 }
 
-// formatKey formats the key into a string representation
+// formatKey 将上下文键转换为字符串。
 func formatKey(key any) string {
 	if key == nil {
 		return ""
@@ -230,7 +230,7 @@ func formatKey(key any) string {
 	}
 
 	t := reflect.TypeOf(key)
-	if t.Kind() == reflect.Struct || t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Struct || t.Kind() == reflect.Pointer {
 		return t.String()
 	}
 
