@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/liujitcn/kratos-kit/api v0.0.41
-	github.com/liujitcn/kratos-kit/config v0.0.40
+	github.com/liujitcn/kratos-kit/config v0.0.41
 	github.com/nacos-group/nacos-sdk-go/v2 v2.3.5
 )
 
@@ -140,7 +140,7 @@ require (
 	github.com/liujitcn/go-utils v0.0.43 // indirect
 	github.com/liujitcn/go-utils/crypto v0.0.18 // indirect
 	github.com/liujitcn/go-utils/translator v0.0.6 // indirect
-	github.com/liujitcn/kratos-kit v0.0.93 // indirect
+	github.com/liujitcn/kratos-kit v0.0.94 // indirect
 	github.com/liujitcn/kratos-kit/auth v0.0.34 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.27 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.24 // indirect
