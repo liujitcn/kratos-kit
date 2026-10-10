@@ -3149,10 +3149,12 @@ github.com/liujitcn/kratos-kit v0.0.83/go.mod h1:4ufLgUUHoo4xWXNOjwLvHFVJkQorzlf
 github.com/liujitcn/kratos-kit v0.0.91/go.mod h1:ItpftZJ76OXT3XQdR1BhbbB/sPULTWyDZTOU1Y8Kxvg=
 github.com/liujitcn/kratos-kit v0.0.93/go.mod h1:i5hw4Ww3uKgBrDFW4wjRVP765d87+y/YMnpAZq3TbsQ=
 github.com/liujitcn/kratos-kit v0.0.94/go.mod h1:i5hw4Ww3uKgBrDFW4wjRVP765d87+y/YMnpAZq3TbsQ=
+github.com/liujitcn/kratos-kit v0.0.95/go.mod h1:i5hw4Ww3uKgBrDFW4wjRVP765d87+y/YMnpAZq3TbsQ=
 github.com/liujitcn/kratos-kit/ai/model v0.0.8/go.mod h1:TDGsZK0J1PDjWhpwvYJtpnCOJ34iLqO2vFyGec1yKh0=
 github.com/liujitcn/kratos-kit/api v0.0.16/go.mod h1:sz7G4l7CQuW+RiLHp2xvM8v1TyrpWVj4tf0wtrZhaPE=
 github.com/liujitcn/kratos-kit/api v0.0.32/go.mod h1:DVRd76dXC0xH2h1qxgY3WqWlxefwIPvE69wiNM8PQnk=
 github.com/liujitcn/kratos-kit/api v0.0.34/go.mod h1:DVRd76dXC0xH2h1qxgY3WqWlxefwIPvE69wiNM8PQnk=
+github.com/liujitcn/kratos-kit/api v0.0.41/go.mod h1:DVRd76dXC0xH2h1qxgY3WqWlxefwIPvE69wiNM8PQnk=
 github.com/liujitcn/kratos-kit/auth v0.0.14/go.mod h1:VflpPXKm02n0ypfFQ+Q0bmiQgR9HWCFk8In/ibqNJdA=
 github.com/liujitcn/kratos-kit/auth v0.0.25/go.mod h1:lrHwfdwo4PGtDRXyazRpb4u+80fOrrSZ5HzNsrvXfv4=
 github.com/liujitcn/kratos-kit/auth v0.0.32/go.mod h1:Ajqp+Y1QqJfrr0yanDpUUB1bGvOX3xnN87d+Bhl3/+Q=
@@ -3187,6 +3189,7 @@ github.com/liujitcn/kratos-kit/config v0.0.31/go.mod h1:BZVaprSB8XoHbJbPsk219DjT
 github.com/liujitcn/kratos-kit/config v0.0.38/go.mod h1:sqhZ75bh6ggLdo3r4Szt+d5QOTJim8TnkLtTwzznhGA=
 github.com/liujitcn/kratos-kit/config v0.0.40/go.mod h1:i9p0VC/SoSuN2sZrj65rKCHxM7la3pyNj7qcjknIaAM=
 github.com/liujitcn/kratos-kit/config v0.0.41/go.mod h1:PYvsHgZVoBrARFlWDzsYmaHm4iMUdRVOchk+Pg06Nsc=
+github.com/liujitcn/kratos-kit/config v0.0.42/go.mod h1:njntlCwpLWQv4bk7t+54/m92gdZSM2smNBA61I7JuSw=
 github.com/liujitcn/kratos-kit/database/ent/driver v0.0.6/go.mod h1:9fA0ibKmCzeWXR3gi/a3QABvzcbnezTuj31ebGJrh4s=
 github.com/liujitcn/kratos-kit/database/gorm v0.0.24/go.mod h1:Zewb9BEqhVLNQAnT8Fk5i/SHkI906c/BYFHrhboBBPY=
 github.com/liujitcn/kratos-kit/database/gorm v0.0.33/go.mod h1:oVl384601SUdWOYM+G8DjT/Batc8VYsXYbdmHhVCGE4=
@@ -3204,6 +3207,7 @@ github.com/liujitcn/kratos-kit/locker v0.0.25/go.mod h1:z3Rm00Anp9EytVnnk9HctN32
 github.com/liujitcn/kratos-kit/logger v0.0.21/go.mod h1:iNg7U22TxKkJVwEEVGJuS+nw1w6kRg2bFV7aN1yZdxI=
 github.com/liujitcn/kratos-kit/logger v0.0.23/go.mod h1:iNg7U22TxKkJVwEEVGJuS+nw1w6kRg2bFV7aN1yZdxI=
 github.com/liujitcn/kratos-kit/logger v0.0.37/go.mod h1:SgEQWseLcXspMvem+oZGJzkCz6Zy9Ls7hmePOrJtRU4=
+github.com/liujitcn/kratos-kit/metrics v0.0.3/go.mod h1:lGm0MBSXLSZ1avuJ2aoHq7F7bDMT/HWuJ43iAEr2f3g=
 github.com/liujitcn/kratos-kit/oss v0.0.10/go.mod h1:Z1mFZ2jCnqyObUsI3wKEtWYB99QR8V9y4VoucHDCcjg=
 github.com/liujitcn/kratos-kit/oss v0.0.17/go.mod h1:rqCOKzA2NZjGHW6AvAuMbs+dtsObhtVMEBM/y91OSyM=
 github.com/liujitcn/kratos-kit/oss v0.0.23/go.mod h1:T3deqP2HHS6wD6We/DSEYCiINBMpCKZX3ay17cs0QbI=
@@ -3231,8 +3235,10 @@ github.com/liujitcn/kratos-kit/transport/keepalive v0.0.15/go.mod h1:+cJGLHXYyBN
 github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17/go.mod h1:RuOLdfzI1Rk0K8d2td29I6aMHw250MuUH9Tij4BZ9dk=
 github.com/liujitcn/kratos-kit/transport/mcp v0.0.8/go.mod h1:W63Mt5wsQmauQYafM83BIADDXO8KYmoL46o3qkx4v8o=
 github.com/liujitcn/kratos-kit/transport/mcp v0.0.17/go.mod h1:vfLnnhmSwAkjFzKOTM8Znfb4GgX1Rl22K7MlbmF0m0w=
+github.com/liujitcn/kratos-kit/transport/mcp v0.0.19/go.mod h1:qE5Uonh2qMYDMpS3kn/F4ZZNz97nFME3B2sPKtaz4ko=
 github.com/liujitcn/kratos-kit/transport/sse v0.0.5/go.mod h1:JZa25PvVewUZd+3oi21mRgc4jocXV4DExyzSkSjrHlE=
 github.com/liujitcn/kratos-kit/transport/sse v0.0.16/go.mod h1:imiao85Z+fGw0oNXgFaQut6uzuJnRCejj8f7GyhhhP8=
+github.com/liujitcn/kratos-kit/transport/sse v0.0.18/go.mod h1:nLabgi3Q95OzA1AqBLNAcqRz3WVJqr0zDcVx5djQWWk=
 github.com/liujitcn/kratos-kit/utils v0.0.13/go.mod h1:p1J4hqE50vciwv/SMWJ1ponR9aRI7ZmKGYYZyE7bRG0=
 github.com/liujitcn/kratos-kit/utils v0.0.21/go.mod h1:60C5OyAsS8mzWih7NtB7KG8eM5xYhgcCJqAYcjnpq7M=
 github.com/liujitcn/kratos-kit/utils v0.0.25/go.mod h1:5Zx7XiM/MGbbQC9LZ4lG9wqqsks3UPyP7KQL5k34R6U=
