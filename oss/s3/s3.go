@@ -16,8 +16,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 var (
@@ -69,7 +70,7 @@ type Client interface {
 
 // uploader 定义非 seekable 输入使用的分片上传能力。
 type uploader interface {
-	Upload(context.Context, *s3.PutObjectInput, ...func(*manager.Uploader)) (*manager.UploadOutput, error)
+	UploadObject(context.Context, *transfermanager.UploadObjectInput, ...func(*transfermanager.Options)) (*transfermanager.UploadObjectOutput, error)
 }
 
 // NewClient 根据配置创建 AWS S3 SDK 客户端。
@@ -127,7 +128,7 @@ func NewStorage(ctx context.Context, cfg *Config) (*Storage, error) {
 	}
 	return &Storage{
 		client:        client,
-		uploader:      manager.NewUploader(client),
+		uploader:      transfermanager.New(client),
 		bucket:        cfg.Bucket,
 		rootDirectory: cfg.RootDirectory,
 	}, nil
@@ -187,13 +188,18 @@ func (s *Storage) PutObject(ctx context.Context, key string, body io.Reader, con
 func (s *Storage) putObjectStream(ctx context.Context, key string, input *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
 	objectUploader := s.uploader
 	if objectUploader == nil {
-		uploadClient, ok := s.client.(manager.UploadAPIClient)
+		uploadClient, ok := s.client.(transfermanager.S3APIClient)
 		if !ok {
 			return nil, ErrStreamingUploadUnsupported
 		}
-		objectUploader = manager.NewUploader(uploadClient)
+		objectUploader = transfermanager.New(uploadClient)
 	}
-	output, err := objectUploader.Upload(ctx, input)
+	output, err := objectUploader.UploadObject(ctx, &transfermanager.UploadObjectInput{
+		Bucket:      input.Bucket,
+		Key:         input.Key,
+		Body:        input.Body,
+		ContentType: input.ContentType,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("s3: put s3://%s/%s: %w", s.bucket, key, err)
 	}
@@ -378,23 +384,23 @@ func readerSize(reader io.ReadSeeker) (int64, error) {
 }
 
 // uploadOutput 将分片 uploader 输出映射为现有 PutObject 返回类型。
-func uploadOutput(output *manager.UploadOutput) *s3.PutObjectOutput {
+func uploadOutput(output *transfermanager.UploadObjectOutput) *s3.PutObjectOutput {
 	result := &s3.PutObjectOutput{
-		ChecksumCRC32:        output.ChecksumCRC32,
-		ChecksumCRC32C:       output.ChecksumCRC32C,
-		ChecksumCRC64NVME:    output.ChecksumCRC64NVME,
-		ChecksumSHA1:         output.ChecksumSHA1,
-		ChecksumSHA256:       output.ChecksumSHA256,
-		ChecksumType:         output.ChecksumType,
-		ETag:                 output.ETag,
-		Expiration:           output.Expiration,
-		RequestCharged:       output.RequestCharged,
-		SSEKMSKeyId:          output.SSEKMSKeyId,
-		ServerSideEncryption: output.ServerSideEncryption,
-		VersionId:            output.VersionID,
-	}
-	if output.BucketKeyEnabled {
-		result.BucketKeyEnabled = aws.Bool(true)
+		ChecksumCRC32:           output.ChecksumCRC32,
+		ChecksumCRC32C:          output.ChecksumCRC32C,
+		ChecksumCRC64NVME:       output.ChecksumCRC64NVME,
+		ChecksumSHA1:            output.ChecksumSHA1,
+		ChecksumSHA256:          output.ChecksumSHA256,
+		ChecksumSHA512:          output.ChecksumSHA512,
+		ChecksumType:            s3types.ChecksumType(output.ChecksumType),
+		ETag:                    output.ETag,
+		Expiration:              output.Expiration,
+		RequestCharged:          s3types.RequestCharged(output.RequestCharged),
+		SSEKMSEncryptionContext: output.SSEKMSEncryptionContext,
+		SSEKMSKeyId:             output.SSEKMSKeyID,
+		ServerSideEncryption:    s3types.ServerSideEncryption(output.ServerSideEncryption),
+		VersionId:               output.VersionID,
+		BucketKeyEnabled:        output.BucketKeyEnabled,
 	}
 	return result
 }
