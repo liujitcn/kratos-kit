@@ -41,7 +41,7 @@ func NewClient(opts ...func(*ClientOptions)) (*WorkflowClient, error) {
 		o(&options)
 	}
 
-	c, err := client.NewClient(client.Options{
+	c, err := client.Dial(client.Options{
 		HostPort:  options.HostPort,
 		Namespace: options.Namespace,
 	})
