@@ -1,4 +1,3 @@
-// Command normalize-go-imports normalizes explicit Go import aliases.
 package main
 
 import (
