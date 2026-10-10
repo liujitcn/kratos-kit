@@ -624,13 +624,18 @@ func (b *natsBroker) Request(ctx context.Context, topic string, message *broker.
 }
 
 // requestWithReplyTopic 从调用方指定的 reply 前缀派生唯一 subject 完成一次请求。
-func requestWithReplyTopic(ctx context.Context, connection *nats.Conn, message *nats.Msg, replyTopic string) (*nats.Msg, error) {
+func requestWithReplyTopic(ctx context.Context, connection *nats.Conn, message *nats.Msg, replyTopic string) (response *nats.Msg, err error) {
 	replySubject := replyTopic + "." + nats.NewInbox()
-	subscription, err := connection.SubscribeSync(replySubject)
+	var subscription *nats.Subscription
+	subscription, err = connection.SubscribeSync(replySubject)
 	if err != nil {
 		return nil, err
 	}
-	defer subscription.Unsubscribe()
+	defer func() {
+		if closeErr := subscription.Unsubscribe(); closeErr != nil && err == nil {
+			err = fmt.Errorf("unsubscribe NATS reply subject %q: %w", replySubject, closeErr)
+		}
+	}()
 
 	message.Reply = replySubject
 	if err = connection.PublishMsg(message); err != nil {
