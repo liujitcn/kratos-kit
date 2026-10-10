@@ -243,9 +243,18 @@ func (s *Server) HTTPHandler(opts ...*mcp.StreamableHTTPOptions) (http.Handler, 
 		options = mergeStreamableHTTPOptions(options, opt)
 	}
 
-	return mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
+	var protection *http.CrossOriginProtection
+	if options != nil {
+		protection = options.CrossOriginProtection //nolint:staticcheck // 兼容旧版配置入口并迁移到标准库中间件。
+		options.CrossOriginProtection = nil        //nolint:staticcheck // 防止 SDK 重复执行旧保护选项。
+	}
+	handler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
 		return s.mcpServer
-	}, options), nil
+	}, options)
+	if protection != nil {
+		return protection.Handler(handler), nil
+	}
+	return handler, nil
 }
 
 func (s *Server) init(opts ...ServerOption) {

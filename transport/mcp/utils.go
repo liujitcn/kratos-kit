@@ -92,8 +92,8 @@ func mergeStreamableHTTPOptions(base, override *mcp.StreamableHTTPOptions) *mcp.
 	if override.DisableLocalhostProtection {
 		merged.DisableLocalhostProtection = true
 	}
-	if override.CrossOriginProtection != nil {
-		merged.CrossOriginProtection = override.CrossOriginProtection
+	if override.CrossOriginProtection != nil { //nolint:staticcheck // 兼容旧选项；HTTPHandler 在外层应用保护中间件。
+		merged.CrossOriginProtection = override.CrossOriginProtection //nolint:staticcheck // 保留旧版配置的跨域保护能力。
 	}
 	return &merged
 }
