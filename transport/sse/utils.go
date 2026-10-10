@@ -22,9 +22,10 @@ func containsDoubleNewline(data []byte) (int, int) {
 	crLfCrLf := bytes.Index(data, []byte("\r\n\r\n"))
 	minPos := minPosInt(crCr, minPosInt(lfLf, minPosInt(crLfLf, minPosInt(lfCrLf, crLfCrLf))))
 	nLen := 2
-	if minPos == crLfCrLf {
+	switch minPos {
+	case crLfCrLf:
 		nLen = 4
-	} else if minPos == crLfLf || minPos == lfCrLf {
+	case crLfLf, lfCrLf:
 		nLen = 3
 	}
 	return minPos, nLen

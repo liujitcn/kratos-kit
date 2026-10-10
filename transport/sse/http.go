@@ -2,6 +2,7 @@ package sse
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -39,7 +40,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if streamID == "" {
-		writeError(w, "Please specify a stream!", http.StatusInternalServerError)
+		writeError(w, "please specify a stream", http.StatusInternalServerError)
 		return
 	}
 
@@ -60,11 +61,11 @@ func (s *Server) ServeStreamHTTP(w http.ResponseWriter, r *http.Request, streamI
 func (s *Server) serveStreamHTTP(w http.ResponseWriter, r *http.Request, streamID StreamID) (int, error) {
 	flusher, exist := w.(http.Flusher)
 	if !exist {
-		return http.StatusInternalServerError, fmt.Errorf("Streaming unsupported!")
+		return http.StatusInternalServerError, errors.New("streaming unsupported")
 	}
 
 	if streamID == "" {
-		return http.StatusInternalServerError, fmt.Errorf("Please specify a stream!")
+		return http.StatusInternalServerError, errors.New("please specify a stream")
 	}
 	var err error
 	if s.authorizeFunc != nil {
@@ -86,7 +87,7 @@ func (s *Server) serveStreamHTTP(w http.ResponseWriter, r *http.Request, streamI
 	stream := s.streamMgr.Get(streamID)
 	if stream == nil {
 		if !s.autoStream {
-			return http.StatusInternalServerError, fmt.Errorf("Stream not found!")
+			return http.StatusInternalServerError, errors.New("stream not found")
 		}
 
 		stream = s.CreateStream(streamID)
@@ -96,7 +97,7 @@ func (s *Server) serveStreamHTTP(w http.ResponseWriter, r *http.Request, streamI
 
 	sub, registered := stream.addSubscriber(eventId, r)
 	if !registered {
-		return http.StatusGone, fmt.Errorf("Stream closed!")
+		return http.StatusGone, errors.New("stream closed")
 	}
 
 	go func() {

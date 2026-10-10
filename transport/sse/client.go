@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -35,9 +34,6 @@ type ConnCallback func(c *Client)
 type ResponseValidator func(c *Client, resp *http.Response) error
 
 type Client struct {
-	url      string
-	endpoint *url.URL
-
 	Retry             time.Time
 	ReconnectStrategy backoff.BackOff
 	disconnectcb      ConnCallback
@@ -75,22 +71,27 @@ func (c *Client) Subscribe(stream string, handler func(msg *Event)) error {
 	return c.SubscribeWithContext(context.Background(), stream, handler)
 }
 
+// SubscribeWithContext 在指定 context 下订阅 SSE 事件流。
 func (c *Client) SubscribeWithContext(ctx context.Context, stream string, handler func(msg *Event)) error {
-	operation := func() error {
-		resp, err := c.request(ctx, stream)
+	operation := func() (err error) {
+		var resp *http.Response
+		resp, err = c.request(ctx, stream)
 		if err != nil {
 			return err
 		}
 		if validator := c.ResponseValidator; validator != nil {
 			err = validator(c, resp)
 			if err != nil {
-				return err
+				return errors.Join(err, resp.Body.Close())
 			}
 		} else if resp.StatusCode != 200 {
-			_ = resp.Body.Close()
-			return fmt.Errorf("could not connect to stream: %s", http.StatusText(resp.StatusCode))
+			return errors.Join(fmt.Errorf("could not connect to stream: %s", http.StatusText(resp.StatusCode)), resp.Body.Close())
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				err = errors.Join(err, fmt.Errorf("close SSE response: %w", closeErr))
+			}
+		}()
 
 		reader := NewEventStreamReader(resp.Body, c.maxBufferSize)
 		eventChan, errorChan := c.startReadLoop(reader)
@@ -118,6 +119,7 @@ func (c *Client) SubscribeChan(stream string, ch chan *Event) error {
 	return c.SubscribeChanWithContext(context.Background(), stream, ch)
 }
 
+// SubscribeChanWithContext 在指定 context 下向 channel 推送 SSE 事件。
 func (c *Client) SubscribeChanWithContext(ctx context.Context, stream string, ch chan *Event) error {
 	var connected bool
 	errCh := make(chan error)
@@ -125,21 +127,25 @@ func (c *Client) SubscribeChanWithContext(ctx context.Context, stream string, ch
 	c.subscribed[ch] = make(chan struct{})
 	c.mu.Unlock()
 
-	operation := func() error {
-		resp, err := c.request(ctx, stream)
+	operation := func() (err error) {
+		var resp *http.Response
+		resp, err = c.request(ctx, stream)
 		if err != nil {
 			return err
 		}
 		if validator := c.ResponseValidator; validator != nil {
 			err = validator(c, resp)
 			if err != nil {
-				return err
+				return errors.Join(err, resp.Body.Close())
 			}
 		} else if resp.StatusCode != 200 {
-			_ = resp.Body.Close()
-			return fmt.Errorf("could not connect to stream: %s", http.StatusText(resp.StatusCode))
+			return errors.Join(fmt.Errorf("could not connect to stream: %s", http.StatusText(resp.StatusCode)), resp.Body.Close())
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if closeErr := resp.Body.Close(); closeErr != nil {
+				err = errors.Join(err, fmt.Errorf("close SSE response: %w", closeErr))
+			}
+		}()
 
 		if !connected {
 			errCh <- nil
@@ -323,11 +329,11 @@ func (c *Client) processEvent(msg []byte) (event *Event, err error) {
 
 		n, err := base64.StdEncoding.Decode(buf, e.Data)
 		if err != nil {
-			err = fmt.Errorf("failed to decode event message: %s", err)
+			return nil, fmt.Errorf("failed to decode event message: %w", err)
 		}
 		e.Data = buf[:n]
 	}
-	return &e, err
+	return &e, nil
 }
 
 func (c *Client) cleanup(ch chan *Event) {
