@@ -165,17 +165,6 @@ func (c *Context) GetAppInfo() *configv1.AppInfo {
 	return nil
 }
 
-// setAppInfo 用受控方式替换整个 appInfo（可选）
-func (c *Context) setAppInfo(src *configv1.AppInfo) {
-	if c == nil || src == nil {
-		return
-	}
-	if clone, ok := proto.Clone(src).(*configv1.AppInfo); ok {
-		c.appInfoConfig = clone
-	}
-	c.InitAppInfo("", "", "", "", "")
-}
-
 // copyAppInfo 复制应用信息
 func (c *Context) copyAppInfo(ai *configv1.AppInfo) {
 	if ai == nil {
