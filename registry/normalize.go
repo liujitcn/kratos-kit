@@ -129,8 +129,8 @@ func normalizeKubernetes(s string) string {
 	// 确保首尾为字母或数字（DNS-1123 label 要求）
 	first := rune(res[0])
 	last := rune(res[len(res)-1])
-	if !((first >= 'a' && first <= 'z') || unicode.IsDigit(first)) ||
-		!((last >= 'a' && last <= 'z') || unicode.IsDigit(last)) {
+	if (first < 'a' || first > 'z') && !unicode.IsDigit(first) ||
+		(last < 'a' || last > 'z') && !unicode.IsDigit(last) {
 		return defaultPlaceholder
 	}
 
