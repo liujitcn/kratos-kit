@@ -6,9 +6,9 @@ require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/google/subcommands v1.2.0
 	github.com/liujitcn/go-utils v0.0.43
-	github.com/liujitcn/kratos-kit v0.0.94
+	github.com/liujitcn/kratos-kit v0.0.95
 	github.com/liujitcn/kratos-kit/api v0.0.41
-	github.com/liujitcn/kratos-kit/config v0.0.41
+	github.com/liujitcn/kratos-kit/config v0.0.42
 	github.com/liujitcn/kratos-kit/key v0.0.11
 	github.com/liujitcn/kratos-kit/logger v0.0.37
 	github.com/liujitcn/kratos-kit/registry v0.0.27
