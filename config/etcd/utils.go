@@ -2,11 +2,10 @@ package etcd
 
 import "strings"
 
-// getConfigKey 获取合法的配置名
+// getConfigKey 按配置选择器规则转换配置键。
 func getConfigKey(configKey string, useBackslash bool) string {
 	if useBackslash {
-		return strings.Replace(configKey, `.`, `/`, -1)
+		return strings.ReplaceAll(configKey, `.`, `/`)
 	}
-
 	return configKey
 }
