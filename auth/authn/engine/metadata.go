@@ -72,8 +72,6 @@ func formatToken(expectedScheme string, tokenStr string) string {
 func injectTokenToKratosContext(ctx context.Context, expectedScheme string, tokenStr string) context.Context {
 	if header, ok := transport.FromClientContext(ctx); ok {
 		header.RequestHeader().Set(HeaderAuthorize, formatToken(expectedScheme, tokenStr))
-	} else {
-		//log.Error("authn token injection failure in kratos context")
 	}
 	return ctx
 }
