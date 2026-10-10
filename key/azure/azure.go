@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/key/internal"
 )

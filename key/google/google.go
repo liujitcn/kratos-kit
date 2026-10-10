@@ -50,10 +50,6 @@ func NewFromConfig(ctx context.Context, cfg *configv1.Key) (internal.Provider, e
 	return NewWithProject(ctx, cfg.GetGoogle().GetProject())
 }
 
-func newProvider(client clientAPI) *Provider {
-	return &Provider{client: client}
-}
-
 // Get 读取 Google Secret Manager 中最新版本的密钥值。
 // Name 可以是 projects/{project}/secrets/{secret}。
 func (p *Provider) Get(ctx context.Context, name string) (internal.Secret, error) {

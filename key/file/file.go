@@ -55,7 +55,7 @@ func (p *Provider) Get(_ context.Context, name string) (internal.Secret, error) 
 
 	value, err := os.ReadFile(p.path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return internal.Secret{}, fmt.Errorf("key/file: secret not found: %s", p.path)
 		}
 		return internal.Secret{}, fmt.Errorf("key/file: read %q: %w", p.path, err)
@@ -69,7 +69,7 @@ func ensureRootKeyFile(path string) error {
 	if err == nil {
 		return nil
 	}
-	if !os.IsNotExist(err) {
+	if !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("key/file: stat %q: %w", path, err)
 	}
 
@@ -81,7 +81,7 @@ func ensureRootKeyFile(path string) error {
 
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
-		if os.IsExist(err) {
+		if errors.Is(err, os.ErrExist) {
 			return nil
 		}
 		return fmt.Errorf("key/file: create %q: %w", path, err)
@@ -105,7 +105,7 @@ func ensureRootKeyFile(path string) error {
 func cleanupRootKeyFile(path string, file *os.File, cause error) error {
 	closeErr := file.Close()
 	removeErr := os.Remove(path)
-	if closeErr != nil || (removeErr != nil && !os.IsNotExist(removeErr)) {
+	if closeErr != nil || (removeErr != nil && !errors.Is(removeErr, os.ErrNotExist)) {
 		return errors.Join(cause, closeErr, removeErr)
 	}
 	return cause
