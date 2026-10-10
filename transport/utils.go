@@ -88,14 +88,16 @@ func isValidBindableIPv4(ip net.IP) bool {
 	return true
 }
 
+// GetPublicIP 查询本机对外路由使用的 IPv4 地址。
 func GetPublicIP() (string, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		return "", err
 	}
-	defer conn.Close()
-
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	if err = conn.Close(); err != nil {
+		return "", err
+	}
 	return localAddr.IP.String(), nil
 }
 
