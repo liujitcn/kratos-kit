@@ -89,7 +89,7 @@ func (m dorisMigrator) createTable(value interface{}) error {
 			keyFields = firstMigratableFields(stmt.Schema)
 		}
 		if len(keyFields) == 0 {
-			return errors.New("Doris 迁移模型至少需要一个可迁移字段")
+			return errors.New("doris 迁移模型至少需要一个可迁移字段")
 		}
 
 		createSQL += " UNIQUE KEY ("
