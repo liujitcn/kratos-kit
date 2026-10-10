@@ -57,9 +57,9 @@ func (s *Memory) Append(stream string, message data.Message) error {
 	}
 
 	var q queueChan
-	switch v.(type) {
+	switch queue := v.(type) {
 	case queueChan:
-		q = v.(queueChan)
+		q = queue
 	default:
 		q = s.makeQueue()
 		s.queue.Store(stream, q)
@@ -132,9 +132,9 @@ func (s *Memory) Register(name string, fn data.ConsumerFunc) {
 		s.queue.Store(name, v)
 	}
 	var q queueChan
-	switch v.(type) {
+	switch queue := v.(type) {
 	case queueChan:
-		q = v.(queueChan)
+		q = queue
 	default:
 		q = s.makeQueue()
 		s.queue.Store(name, q)
