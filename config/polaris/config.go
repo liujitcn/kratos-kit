@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/polarismesh/polaris-go"
+	"github.com/polarismesh/polaris-go/pkg/model"
 
 	"github.com/go-kratos/kratos/v3/config"
 )
@@ -41,9 +42,15 @@ func New(client polaris.ConfigAPI, opts ...Option) (config.Source, error) {
 	}, nil
 }
 
-// Load return the config values
+// Load 读取 Polaris 配置文件。
 func (s *source) Load() ([]*config.KeyValue, error) {
-	configFile, err := s.client.GetConfigFile(s.options.namespace, s.options.fileGroup, s.options.fileName)
+	configFile, err := s.client.FetchConfigFile(&polaris.GetConfigFileRequest{
+		GetConfigFileRequest: &model.GetConfigFileRequest{
+			Namespace: s.options.namespace,
+			FileGroup: s.options.fileGroup,
+			FileName:  s.options.fileName,
+		},
+	})
 	if err != nil {
 		fmt.Println("fail to get config.", err)
 		return nil, err
@@ -63,7 +70,7 @@ func (s *source) Load() ([]*config.KeyValue, error) {
 	}, nil
 }
 
-// Watch return the watcher
+// Watch 返回配置变更监听器。
 func (s *source) Watch() (config.Watcher, error) {
 	return newWatcher(s.options.configFile), nil
 }
