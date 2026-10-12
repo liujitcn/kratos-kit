@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-kratos/kratos/v3/encoding"
-	kratosJSON "github.com/go-kratos/kratos/v3/encoding/json"
+	"github.com/go-kratos/kratos/v3/encoding/json"
 	kratosHttp "github.com/go-kratos/kratos/v3/transport/http"
 	"google.golang.org/protobuf/proto"
 )
@@ -37,7 +37,7 @@ func ProtoJSONEncoder(w http.ResponseWriter, r *http.Request, v interface{}) err
 // marshal 根据协商后的 codec 编码响应。
 // JSON 与 protobuf 组合场景使用自定义编码器，其余场景回退到 Kratos codec，保证兼容性。
 func marshal(codec encoding.Codec, v interface{}) ([]byte, error) {
-	if codec.Name() == kratosJSON.Name {
+	if codec.Name() == json.Name {
 		if message, ok := v.(proto.Message); ok {
 			// 保留 encoding/json v1 的兼容语义，同时使用 Go 1.27 的 json/v2 实现。
 			return MarshalJSSafe(message)

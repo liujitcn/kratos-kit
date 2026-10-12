@@ -54,18 +54,18 @@ func NewClusterRedis(cfg *configv1.Data_Redis) (*ClusterRedis, func(), error) {
 		return nil, nil, fmt.Errorf("failed ping redis: %w", err)
 	}
 	return &ClusterRedis{
-		client: client,
-		meta:   make(map[string]entryMeta),
-	}, func() {
-		log.Info("cache cluster-redis cleanup...")
-		if client != nil {
-			err = client.Close()
-			if err != nil {
-				log.Error("failed close redis", "error", err)
-				return
+			client: client,
+			meta:   make(map[string]entryMeta),
+		}, func() {
+			log.Info("cache cluster-redis cleanup...")
+			if client != nil {
+				err = client.Close()
+				if err != nil {
+					log.Error("failed close redis", "error", err)
+					return
+				}
 			}
-		}
-	}, nil
+		}, nil
 }
 
 // List 返回 Redis 集群中支持的缓存条目及其运行时元数据。

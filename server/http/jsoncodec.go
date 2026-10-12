@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/go-kratos/kratos/v3/encoding"
-	kratosJSON "github.com/go-kratos/kratos/v3/encoding/json"
+	"github.com/go-kratos/kratos/v3/encoding/json"
 	"github.com/liujitcn/kratos-kit/server/http/internal/response"
 )
 
@@ -28,5 +28,5 @@ func (jsSafeJSONCodec) Unmarshal(data []byte, v any) error {
 
 // Name 返回编解码器名称，固定为 json 以替换 Kratos 默认实现。
 func (jsSafeJSONCodec) Name() string {
-	return kratosJSON.Name
+	return json.Name
 }

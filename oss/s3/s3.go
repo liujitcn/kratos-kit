@@ -18,7 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 var (
@@ -392,13 +392,13 @@ func uploadOutput(output *transfermanager.UploadObjectOutput) *s3.PutObjectOutpu
 		ChecksumSHA1:            output.ChecksumSHA1,
 		ChecksumSHA256:          output.ChecksumSHA256,
 		ChecksumSHA512:          output.ChecksumSHA512,
-		ChecksumType:            s3types.ChecksumType(output.ChecksumType),
+		ChecksumType:            types.ChecksumType(output.ChecksumType),
 		ETag:                    output.ETag,
 		Expiration:              output.Expiration,
-		RequestCharged:          s3types.RequestCharged(output.RequestCharged),
+		RequestCharged:          types.RequestCharged(output.RequestCharged),
 		SSEKMSEncryptionContext: output.SSEKMSEncryptionContext,
 		SSEKMSKeyId:             output.SSEKMSKeyID,
-		ServerSideEncryption:    s3types.ServerSideEncryption(output.ServerSideEncryption),
+		ServerSideEncryption:    types.ServerSideEncryption(output.ServerSideEncryption),
 		VersionId:               output.VersionID,
 		BucketKeyEnabled:        output.BucketKeyEnabled,
 	}
