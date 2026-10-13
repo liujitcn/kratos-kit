@@ -191,9 +191,9 @@ func (p *projectIsolation) create(db *gorm.DB) {
 	}
 }
 
-// raw 拒绝普通请求通过原生 SQL 绕过项目过滤，内部任务必须显式声明身份。
+// raw 放行事务保存点，拒绝普通请求通过原生业务 SQL 绕过项目过滤。
 func (p *projectIsolation) raw(db *gorm.DB) {
-	if db.Error != nil || hasDataIsolationBypass(db) {
+	if db.Error != nil || hasDataIsolationBypass(db) || isGormSavepointStatement(db) {
 		return
 	}
 	scope, err := p.scope(db)

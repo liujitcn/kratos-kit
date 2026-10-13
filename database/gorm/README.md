@@ -39,7 +39,7 @@
 
 回调实现集中在 `internal/callback`，不反向依赖根包，避免与 `NewGormClient` 形成循环引用。客户端通过内部模型绑定入口共享迁移与回调元数据；外部项目仍使用原有 `gormkit.RegisterCallback*`、`gormkit.RegisterProjectIsolation`、`gormkit.SkipDataIsolation` 和模型注册函数，无需调整导入路径。
 
-注册器和项目隔离单元测试与实现同目录；根目录的 `client_callbacks_test.go`、`client_joins_test.go` 从公开客户端入口验证自动迁移及多类回调的组合行为。
+回调回归验证覆盖注册器、项目隔离与保存点，并通过公开客户端入口检查多类回调的组合行为；按仓库发布约定，测试通过后在提交前移除测试文件。
 
 `NewGormClient` 显式安装内置回调，再安装包级自定义回调的快照，不依赖各文件的 `init()` 顺序。原生 `gorm.Open()` 不安装这些内置能力。项目隔离由宿主在客户端创建后、处理请求前调用 `RegisterProjectIsolation` 安装，也可以单独安装在原生 GORM 数据库上。
 
@@ -419,6 +419,7 @@ err := gormkit.RegisterProjectIsolation(db, map[string]string{
 - 携带 token 时，`Rows`、`Scan` 使用独立 Row 回调，同样执行隔离；拒绝时返回对应错误。
 - 携带 token 时，GORM `Row()` 没有 error 返回值，隔离拒绝时会执行恒不命中的查询，随后 `Scan` 返回 `sql.ErrNoRows`。
 - 携带 token 时，`Raw(...)` 查询和 `Exec(...)` 无法可靠自动改写，默认返回 `ErrRawDataIsolationUnsupported`。
+- 当前事务中，GORM 自动生成的 `SAVEPOINT sp数字` 和 `ROLLBACK TO SAVEPOINT sp数字` 会被原生 SQL 与项目隔离回调放行，保证嵌套事务和多批次写入正常执行。仅允许无绑定参数且整条 SQL 严格匹配的保存点语句，不会为业务 SQL 开启隔离豁免。
 - 未携带 token 时，上述查询、写入与 Raw SQL 回调全部跳过隔离处理。
 
 ## 可信系统任务
@@ -479,7 +480,7 @@ Doris 自动迁移使用专用 OLAP 建表语法：模型主键作为 `UNIQUE KE
 
 ## 回归验证
 
-在本模块目录执行 `go test ./...` 和 `go vet ./...`。集成测试通过真实 `NewGormClient` 创建 SQLite 内存数据库，覆盖迁移后的隔离、独立会话豁免及事务回滚、审计填充、角色范围、租户项目叠加、Query/Row/Raw、JOIN 与全部公开扩展回调入口。数据库方言特有行为仍需在对应驱动和数据库环境中验证。
+在本模块目录执行 `go test ./...` 和 `go vet ./...`。保存点发布回归使用真实 SQLite 内存数据库，验证 124、125、300、10001 条数据跨批次完整写入、后续批次失败时局部回滚，以及预编译、租户、角色、项目和原生 SQL 隔离；使用实际 Casbin 权限重建与生成仓储调用链验证同样的数据量。数据库方言特有行为仍需在对应驱动和数据库环境中验证。
 
 ## 索引建议
 

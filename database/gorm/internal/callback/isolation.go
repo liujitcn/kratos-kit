@@ -2,6 +2,7 @@ package callback
 
 import (
 	"errors"
+	"regexp"
 
 	"github.com/liujitcn/kratos-kit/auth"
 	"gorm.io/gorm"
@@ -16,6 +17,8 @@ const (
 )
 
 var (
+	// gormSavepointPattern 仅匹配 GORM 自动生成的保存点控制语句。
+	gormSavepointPattern = regexp.MustCompile(`^(SAVEPOINT|ROLLBACK TO SAVEPOINT) sp[0-9]+$`)
 	// ErrTenantContextMissing 表示租户表操作缺少有效的租户身份。
 	ErrTenantContextMissing = errors.New("tenant context missing")
 	// ErrDataScopeContextMissing 表示数据权限表操作缺少有效的用户身份。
@@ -72,9 +75,12 @@ func rejectUnsafeRawStatement(db *gorm.DB) bool {
 	return true
 }
 
-// rejectRawDataIsolation 拒绝未显式跳过数据隔离的原生 SQL。
+// rejectRawDataIsolation 放行事务保存点，拒绝未经豁免的原生业务 SQL。
 func rejectRawDataIsolation(db *gorm.DB) {
 	if shouldSkipDataIsolation(db) || db == nil || db.Error != nil {
+		return
+	}
+	if isGormSavepointStatement(db) {
 		return
 	}
 	db.Error = db.AddError(ErrRawDataIsolationUnsupported)
@@ -133,4 +139,10 @@ func isSingleRowQuery(db *gorm.DB) bool {
 	var isBool bool
 	isRows, isBool = value.(bool)
 	return isBool && !isRows
+}
+
+// isGormSavepointStatement 仅识别当前事务中无参数的 GORM 保存点，避免误放行原生业务 SQL。
+func isGormSavepointStatement(db *gorm.DB) bool {
+	committer, inTransaction := db.Statement.ConnPool.(gorm.TxCommitter)
+	return inTransaction && committer != nil && len(db.Statement.Vars) == 0 && gormSavepointPattern.MatchString(db.Statement.SQL.String())
 }
