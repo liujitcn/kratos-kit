@@ -30,11 +30,26 @@ func CreateHttpServer(cfg *configv1.Bootstrap, mds ...middleware.Middleware) (*h
 
 	srv := http.NewServer(options...)
 
-	if cfg != nil && cfg.Server != nil && cfg.Server.Http != nil && cfg.Server.Http.GetEnablePprof() {
+	enablePprof := cfg != nil && cfg.Server != nil && cfg.Server.Http != nil && cfg.Server.Http.GetEnablePprof()
+	if enablePprof {
 		registerHttpPprof(srv)
+	} else {
+		blockDebugRoutes(srv)
 	}
 
 	return srv, nil
+}
+
+// blockDebugRoutes 在未启用 pprof 时阻断默认 mux 暴露的调试路由。
+func blockDebugRoutes(srv *http.Server) {
+	handler := srv.Handler
+	srv.Handler = stdhttp.HandlerFunc(func(writer stdhttp.ResponseWriter, request *stdhttp.Request) {
+		if request.URL.Path == "/debug" || strings.HasPrefix(request.URL.Path, "/debug/") {
+			stdhttp.NotFound(writer, request)
+			return
+		}
+		handler.ServeHTTP(writer, request)
+	})
 }
 
 // initHttpServerConfig 初始化 HTTP 服务配置。
