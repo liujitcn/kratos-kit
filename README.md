@@ -1,177 +1,99 @@
 # kratos-kit
 
-`kratos-kit` 是一个基于 Kratos 的工具库集合，提供应用引导、配置加载、日志、注册发现、链路追踪，以及缓存/队列/鉴权/OSS/数据库等通用能力。
+`kratos-kit` 是面向 Kratos v3 应用的 Go 多模块工具库。仓库内的模块围绕启动、配置、传输、数据访问、安全、消息、观测、AI 和工作流提供可复用能力；每个模块都可以按自己的 module path 单独引入。
 
-## 仓库说明
+## 模块地图
 
-该仓库是多模块（multi-module）结构，根目录与子目录都包含 `go.mod`。常用模块包括：
+### 启动与基础设施
 
-当前依赖基线为 `github.com/go-kratos/kratos/v3 v3.0.0`，日志接口已迁移到 Kratos v3 的 `log/slog` 体系。
+| 模块 | 能力 |
+| --- | --- |
+| [`api`](api/README.md) | Buf 管理的 protobuf 配置契约和生成代码。 |
+| [`bootstrap`](bootstrap/README.md) | 应用信息、配置解密、配置加载、日志、注册、追踪和 Kratos App 启动。 |
+| [`config`](config/README.md) | 本地文件、HTTP、Redis、Vault、ZooKeeper、对象存储以及配置中心 Source。 |
+| [`key`](key/README.md) | 根密钥读取、派生和 File、Vault、AWS、Google、Azure、Kubernetes Provider。 |
+| [`logger`](logger/README.md) | 标准日志、Zap、Logrus、Fluent、云日志和 Zerolog 工厂。 |
+| [`registry`](registry/README.md) | 注册与发现工厂，以及 Consul、Etcd、Eureka、Kubernetes、Nacos、Polaris、ServiceComb、ZooKeeper 实现。 |
+| [`tracer`](tracer/README.md) | OpenTelemetry TracerProvider 和 Zipkin、OTLP、stdout exporter。 |
+| [`tracing`](tracing/README.md) | Kratos HTTP、gRPC、broker 的 OpenTelemetry 中间件和传播工具。 |
+| [`runtime`](runtime/README.md) | 进程内共享数据库、缓存、队列、对象存储、锁、翻译器和密钥实例。 |
+| [`sdk`](sdk/README.md) | 以 `sdk.Runtime` 暴露共享运行时。 |
+| [`utils`](utils/README.md) | TLS、Redis 连接选项和 RPC Tool 名称转换等工具。 |
 
-- `api`：protobuf 定义与代码生成（`buf generate`）
-- `bootstrap`：应用启动入口（配置加载 + 日志 + 注册中心 + tracer + `kratos.App`）
-- `config`：本地/远程配置加载与工厂注册；额外提供直接实现 Kratos `config.Source` 的文件、HTTP、Redis、Vault、ZooKeeper 和 S3 配置源
-- `key`：统一密钥接口、根密钥派生和 Secret Manager 适配；提供 File、Vault、AWS、Google、Azure 和 Kubernetes Secret
-- `logger`：日志工厂（`std`/`zap`/`logrus`/`fluent`/`aliyun`/`tencent`/`zerolog`）
-- `registry`：注册发现工厂（`consul`/`etcd`/`eureka`/`kubernetes`/`nacos`/`polaris`/`servicecomb`/`zookeeper`）
-- `tracer`：OpenTelemetry TracerProvider 与 exporter 工厂（`std`/`zipkin`/`otlp-http`/`otlp-grpc`）
-- `tracing`：OpenTelemetry 追踪适配层
-- `ai`：AI 客户端与编排封装（含 `model`、`eino`、`langchaingo` 子模块）
-- `auth`：认证与鉴权封装；支持按会话签发、轮换及撤销令牌，不同设备使用独立令牌和有效期；认证支持 API Key、Basic、HMAC、JWT、mTLS、OAuth2、OIDC、Session，鉴权支持 Casbin、OPA、Cerbos 和 Zanzibar 适配端口
-- `oauth`：第三方 OAuth SDK 封装（直接使用 `api` 下 OAuth 配置，支持 GitHub、Gitee、Google、微信开放平台、微信公众号、微信小程序、企业微信、钉钉、飞书；闭环支持 state、PKCE、授权地址、code 换 token、用户信息，不包含业务登录态）
-- `notify`：通知发送渠道 SDK，提供可替换的 Sender 管理器，支持 SMTP、Webhook、钉钉、飞书、微信公众号、企业微信和独立短信服务商适配
-- `cache`：内存/Redis 缓存封装，提供 Redis Cluster 同槽位原子执行的多算法限流状态存储
-- `queue`：内存/Redis 队列封装
-- `locker`：统一的进程内锁与 Redis 分布式锁，未配置 Redis 时使用进程内实现
-- `oss`：本地/FTP/MinIO/阿里云 OSS/AWS S3 及兼容对象存储封装
-- `translator`：基于配置的统一机器翻译封装，内置 Google/百度/阿里云/火山引擎
-- [`database/gorm`](database/gorm/README.md)：GORM 客户端封装，提供多数据库 driver、连接池、迁移与可观测性；回调实现集中在 `internal/callback`，根包保留公开入口，支持具名审计、租户、角色范围、项目隔离及自定义前后置回调，系统任务豁免限定在独立会话，事务保存点支持跨批次写入和局部回滚；版本化迁移仅在脚本全部成功后记录，失败会记录错误并阻止应用启动
-- `database/ent`：Ent 底层数据库 driver 封装（含 `mysql`/`postgres`/`sqlite` driver 子模块，支持连接池配置、debug SQL 日志、迁移回调、表/字段注释与审计字段 mixin）
-- `broker`：消息发布订阅与 typed handler 封装，通用 `TransportServer` 可把任意 broker 接入 Kratos 应用生命周期；`broker/nats` 通过共享实现支持 Core NATS、JetStream、队列订阅、请求响应和消息追踪
-- `workflow`：工作流引擎封装（含 `argo`、`conductor`、`goworkflows`、`temporal` 子模块），公共包只定义跨引擎一致的 `Client`/`Worker` 生命周期接口
-- `transport`：通用传输辅助（含 `keepalive`、`mcp`、`sse` 子模块）
-- `server/http`、`server/grpc`、`server/mcp`、`server/sse`：HTTP、gRPC、MCP、SSE 服务端配置封装，详细说明见 [server/README.md](server/README.md)
-- `encoding`：直接适配 Kratos 的额外 codec（`avro`/`bson`/`cbor`/`flatbuffers`/`gob`/`thrift`/`toml`）；`msgpack`/`xml`/`yaml` 使用 Kratos v3 自带实现
-- `health`：应用级 readiness 检查聚合与 HTTP handler
-- `metrics`：Prometheus、OpenTelemetry OTLP、Datadog 指标适配
-- `retry`：支持 context、退避和抖动的通用重试
-- `ratelimit`：可注入 Kratos 服务端中间件的 Sentinel 和令牌桶限流器
-- `swagger-ui`：Swagger UI 嵌入与路由注册封装（支持 `net/http` 与 Kratos）
-- `pprof`：性能采样封装（当前支持 `pyroscope`）
-- `captcha`：验证码生成与存储封装
-- `sdk`：共享运行时入口，统一保存数据库、缓存、队列、OSS、锁和翻译器实例
-- `runtime`：运行时应用信息模型
-- `utils`：通用工具（TLS、Redis 配置辅助）
-- `cmd/project-docs`：收集当前项目约定 README 和根 docs 的 Go 命令
-- `cmd/normalize-go-imports`：通用 Go import 别名规范化命令，可安装后在任意项目目录执行
-- `cmd/kratos-admin`：生成包含前后端和项目脚本的完整项目
-- `cmd/protoc-gen-go-redact`：按 Proto 字段规则生成服务端响应脱敏代码，并维护可发布到 Buf 的 `redact/v1` 契约
-- `redact`：运行时脱敏接口、自定义规则注册和 gRPC 流式响应包装；`Truncate` 按 Unicode 字符数量截断，避免破坏多字节文本；策略解析器通过构造参数或请求上下文注入，不保存进程级默认策略实例，由 `cmd/protoc-gen-go-redact` 生成代码依赖
+### 服务、传输与消息
 
-`database/gorm` 的 `Data` 配置支持 `database` 与 `databases` 两种形式。多个固定数据源应按名称分别创建客户端和 `data.Data`，每个客户端启动时主动校验连接；跨数据源事务、Join 与请求级动态切库不在该封装的职责范围内。
+| 模块 | 能力 |
+| --- | --- |
+| [`server`](server/README.md) | HTTP、gRPC、MCP、SSE 服务端构造和配置。 |
+| [`transport`](transport/README.md) | Kratos transport 辅助、SSE、MCP、队列、Cron、高精度定时器和保活服务。 |
+| [`broker`](broker/README.md) | Broker 接口、发布订阅、请求响应、typed handler 和 Kratos 生命周期适配。 |
+| [`broker/nats`](broker/nats/README.md) | Core NATS、JetStream、队列订阅、请求响应和消息追踪。 |
+| [`queue`](queue/README.md) | 内存队列、Redis Stream 队列和延迟消息。 |
+| [`cache`](cache/README.md) | 内存、Redis、Redis Cluster 缓存和原子限流状态存储。 |
+| [`locker`](locker/README.md) | 进程内锁和 Redis 分布式锁。 |
+| [`health`](health/README.md) | 并发健康检查聚合和 liveness/readiness HTTP handler。 |
+| [`metrics`](metrics/README.md) | Prometheus、OpenTelemetry OTLP、Datadog 指标接口和 Provider。 |
+| [`retry`](retry/README.md) | context 感知的重试、退避和抖动。 |
+| [`ratelimit`](ratelimit/README.md) | Sentinel 和令牌桶限流器接口，供 Kratos middleware 组合使用。 |
+| [`encoding/*`](encoding/README.md) | Avro、BSON、CBOR、FlatBuffers、Gob、Thrift、TOML codec。 |
+| [`swagger-ui`](swagger-ui/README.md) | 嵌入式 Swagger UI、ReDoc 和受保护的 OpenAPI 文档路由。 |
+| [`pprof`](pprof/README.md) | Pyroscope 性能采样生命周期封装。 |
 
-其中 `queue` 模块内的 Redis Stream 实现默认会为生产者开启基于 `MAXLEN` 的长度裁剪；消费者在消费成功后会执行 `XACK` 并立即 `XDEL` 删除消息实体，保持“消费即删除”的队列语义。消费者执行 `Shutdown` 时会停止继续拉取新消息，并尽量处理完本地已拉取但尚未确认的消息后再退出。生产者和消费者同时提供 `EnqueueContext`、`RunContext`、`RegisterWithLastIDContext`，便于调用方按业务请求或后台任务生命周期控制 Redis 操作。
+### 数据、安全与外部服务
 
-`captcha` 模块提供普通图形验证码和行为验证码两类能力：普通图形验证码支持数字、字符串、中文、算术；行为验证码支持滑动拼图、点击文字、旋转图片。所有验证码统一通过 `Generate(ctx)` 生成并自动写入 `cache.Cache`，通过 `Verify(ctx, id, input)` 校验并在成功后删除缓存。验证码图片只以 base64 或 JSON(base64) 返回给前端，不落盘、不对外返回答案。
+| 模块 | 能力 |
+| --- | --- |
+| [`database/gorm`](database/gorm/README.md) | GORM 多驱动客户端、迁移、审计、租户/数据范围/项目隔离和可观测性。 |
+| [`database/ent`](database/ent/README.md) | Ent driver、连接池、迁移回调、表注释和审计 mixin。 |
+| [`auth`](auth/README.md) | 认证、JWT/Session/API Key/Basic/HMAC/mTLS/OAuth2/OIDC 以及 Casbin/OPA/Cerbos/Zanzibar 鉴权适配。 |
+| [`oauth`](oauth/README.md) | GitHub、Gitee、Google、微信、企业微信、钉钉、飞书 OAuth 流程。 |
+| [`notify`](notify/README.md) | SMTP、Webhook、钉钉、飞书、微信、企业微信和短信 Sender。 |
+| [`oss`](oss/README.md) | 本地、FTP、MinIO、阿里云 OSS、AWS S3 及兼容对象存储。 |
+| [`captcha`](captcha/README.md) | 数字、字符串、中文、算术验证码，以及滑动、点击、旋转行为验证码。 |
+| [`redact`](redact/README.md) | Proto 字段运行时脱敏、流式响应包装和存储策略。 |
+| [`secretcrypto`](secretcrypto/README.md) | 一次性 RSA 公钥、AES-GCM 字段加密和请求中间件。 |
+| [`translator`](translator/README.md) | Google、百度、阿里云、火山引擎机器翻译统一接口。 |
 
-`workflow` 模块按工作流引擎拆分为独立 Go 模块：`workflow/argo` 通过 Argo Server REST API 操作 Kubernetes Workflow；`workflow/conductor` 封装 Conductor SDK 和任务 Worker；`workflow/goworkflows` 提供进程内持久工作流客户端与 Worker；`workflow/temporal` 封装 Temporal 客户端、Worker、Signal、Query 和默认消息工作流。
+### AI 与工作流
+
+| 模块 | 能力 |
+| --- | --- |
+| [`ai/model`](ai/model/README.md) | OpenAI 兼容模型客户端。 |
+| [`ai/eino`](ai/eino/README.md) | Eino Chat/Responses 模型、Chain、Graph、Workflow、Tool Node。 |
+| [`ai/langchaingo`](ai/langchaingo/README.md) | LangChainGo LLM、Embedding、VectorStore 和 Agent。 |
+| [`workflow`](workflow/README.md) | Argo、Conductor、go-workflows、Temporal 的公共 Client/Worker 接口。 |
+| [`workflow/argo`](workflow/argo/README.md) | Argo Server Workflow 提交、查询、日志和生命周期操作。 |
+| [`workflow/conductor`](workflow/conductor/README.md) | Conductor 工作流执行和 Task Worker。 |
+| [`workflow/goworkflows`](workflow/goworkflows/README.md) | 进程内持久工作流 Client 和 Worker。 |
+| [`workflow/temporal`](workflow/temporal/README.md) | Temporal 工作流、Activity、Signal、Query 和 Worker。 |
+
+### 命令行工具
+
+| 命令 | 用途 |
+| --- | --- |
+| [`cmd/normalize-go-imports`](cmd/normalize-go-imports/README.md) | 按目录名统一 Go import 别名，支持预览和写回。 |
+| [`cmd/protoc-gen-go-agent-tool`](cmd/protoc-gen-go-agent-tool/README.md) | 从 protobuf service 生成 Eino Agent Tool。 |
+| [`cmd/protoc-gen-go-mcp-tool`](cmd/protoc-gen-go-mcp-tool/README.md) | 从 protobuf service 生成 MCP Tool 注册代码。 |
+| [`cmd/protoc-gen-go-redact`](cmd/protoc-gen-go-redact/README.md) | 从 protobuf 字段规则生成脱敏代码和规则契约。 |
+| [`cmd/kratos-admin`](cmd/kratos-admin/README.md) | 按项目名生成后端模板、目录结构和三端前端初始化结果。 |
 
 ## 安装
 
-请按模块路径安装，而不是安装根模块。例如：
+根目录是多模块工作区，使用具体模块路径安装。例如：
 
 ```bash
 go get github.com/liujitcn/kratos-kit/bootstrap@latest
 go get github.com/liujitcn/kratos-kit/config@latest
-go get github.com/liujitcn/kratos-kit/key@latest
-go get github.com/liujitcn/kratos-kit/logger@latest
-go get github.com/liujitcn/kratos-kit/registry@latest
-go get github.com/liujitcn/kratos-kit/tracer@latest
-go get github.com/liujitcn/kratos-kit/transport/mcp@latest
-go get github.com/liujitcn/kratos-kit/transport/sse@latest
 go get github.com/liujitcn/kratos-kit/server/http@latest
-go get github.com/liujitcn/kratos-kit/server/grpc@latest
-go get github.com/liujitcn/kratos-kit/server/mcp@latest
-go get github.com/liujitcn/kratos-kit/server/sse@latest
-go get github.com/liujitcn/kratos-kit/config/redis@latest
-go get github.com/liujitcn/kratos-kit/config/vault@latest
-go get github.com/liujitcn/kratos-kit/config/zookeeper@latest
-go get github.com/liujitcn/kratos-kit/config/oss@latest
-go get github.com/liujitcn/kratos-kit/encoding/avro@latest
-go get github.com/liujitcn/kratos-kit/encoding/bson@latest
-go get github.com/liujitcn/kratos-kit/encoding/cbor@latest
-go get github.com/liujitcn/kratos-kit/encoding/flatbuffers@latest
-go get github.com/liujitcn/kratos-kit/encoding/thrift@latest
-go get github.com/liujitcn/kratos-kit/health@latest
-go get github.com/liujitcn/kratos-kit/metrics/prometheus@latest
-go get github.com/liujitcn/kratos-kit/retry@latest
-go get github.com/liujitcn/kratos-kit/ratelimit/sentinel@latest
-go get github.com/liujitcn/kratos-kit/ratelimit/tokenbucket@latest
-go get github.com/liujitcn/kratos-kit/oss/s3@latest
-go get github.com/liujitcn/kratos-kit/auth/authn/engine/apikey@latest
-go get github.com/liujitcn/kratos-kit/auth/authn/engine/oidc@latest
-go get github.com/liujitcn/kratos-kit/auth/authz/engine/opa@latest
-go get github.com/liujitcn/kratos-kit/auth/authz/engine/cerbos@latest
-go get github.com/liujitcn/kratos-kit/broker/nats@latest
-go get github.com/liujitcn/kratos-kit/swagger-ui@latest
-go get github.com/liujitcn/kratos-kit/pprof@latest
-go get github.com/liujitcn/kratos-kit/oauth@latest
-go get github.com/liujitcn/kratos-kit/notify@latest
-go get github.com/liujitcn/kratos-kit/translator@latest
-go get github.com/liujitcn/kratos-kit/ai/model@latest
-go get github.com/liujitcn/kratos-kit/ai/eino@latest
-go get github.com/liujitcn/kratos-kit/ai/langchaingo@latest
 go get github.com/liujitcn/kratos-kit/database/gorm@latest
-go get github.com/liujitcn/kratos-kit/database/gorm/driver/mysql@latest
-go get github.com/liujitcn/kratos-kit/database/ent@latest
-go get github.com/liujitcn/kratos-kit/database/ent/driver/mysql@latest
-go get github.com/liujitcn/kratos-kit/workflow@latest
-go get github.com/liujitcn/kratos-kit/workflow/argo@latest
-go get github.com/liujitcn/kratos-kit/workflow/conductor@latest
-go get github.com/liujitcn/kratos-kit/workflow/goworkflows@latest
-go get github.com/liujitcn/kratos-kit/workflow/temporal@latest
+go get github.com/liujitcn/kratos-kit/auth@latest
 ```
 
-项目文档收集命令使用 `go install` 安装：
+按需追加实现模块，例如 `config/etcd`、`logger/zap`、`registry/nacos`、`database/gorm/driver/mysql`、`metrics/prometheus`、`workflow/temporal`。
 
-```bash
-go install github.com/liujitcn/kratos-kit/cmd/project-docs@latest
-go install github.com/liujitcn/kratos-kit/cmd/protoc-gen-go-redact@latest
-go get github.com/liujitcn/kratos-kit/redact@latest
-```
+## 最小启动示例
 
-命令从项目根目录扫描相对路径不超过三段的文件，只收集精确命名的
-`README.md`，以及任意 `docs` 目录中的 Markdown。普通项目默认输出到
-`internal/projectdocs`；包含 `backend` 的仓库默认输出到 `backend/internal/docs`。
-生成器只把无语言后缀的 Markdown 写入 `assets/docs.json`，不执行自动翻译，也不在
-文档节点中写入 `locale`。下游翻译工具可据此生成 `docs.<locale>.json`；生成的
-`docs.go` 通过 `DocsFS` 嵌入构建时存在的全部 `docs*.json`。
-也可以通过 `--output` 或 `-o` 指定生成目录：
-
-```bash
-project-docs
-project-docs --output ./backend/internal/docs
-```
-
-Go import 别名规范化命令可安装到 `GOBIN`，从任意项目目录预览或写回规范化结果：
-
-```bash
-go install github.com/liujitcn/kratos-kit/cmd/normalize-go-imports@latest
-normalize-go-imports -root /path/to/project
-normalize-go-imports -root /path/to/project -write
-```
-
-生成物不包含项目身份。服务加载后使用 `AppInfo.Project` 和 `AppInfo.Name`
-生成稳定文档 ID，并与 OpenAPI/Swagger 保持一致。
-
-项目生成命令按项目名创建携带 Admin 能力的完整前后端目录，后端组合
-`kratos-core` 与 `kratos-admin/backend` 业务宿主，前端通过管理端、uni-app 和 Taro CLI 生成：
-
-```bash
-go install github.com/liujitcn/kratos-kit/cmd/kratos-admin@latest
-kratos-admin create shop-admin
-```
-
-前端全部由三端 npm CLI 生成，Go 仅传参调用，不补写前端文件。生成时临时使用 npm 官方源解析 `@liujitcn` 包，按精确版本复用 dlx 缓存，
-无需手动清理缓存或配置环境变量，也不会修改全局及项目 pnpm 配置。
-
-生成时使用 `backend@latest` 及其 `go.mod` 声明的 API 依赖解析最新 Admin Backend/API，并生成
-MySQL、Redis 及本地 Docker Compose 配置。扩展业务时在生成项目中增加自己的 Proto、Biz、
-Data、Service、Module、Migration 和前端 CLI 模块，不复制 Admin 的 `internal` 代码。
-
-## 快速开始
-
-### 1. 引入需要的实现包（通过 `init` 自动注册）
-
-```go
-import (
-	_ "github.com/liujitcn/kratos-kit/config/etcd"
-	_ "github.com/liujitcn/kratos-kit/logger/zap"
-	_ "github.com/liujitcn/kratos-kit/registry/etcd"
-)
-```
-
-### 2. 启动应用
+实现包通过空白导入注册工厂，应用使用 `bootstrap.RunApp` 统一启动：
 
 ```go
 package main
@@ -179,11 +101,14 @@ package main
 import (
 	"github.com/go-kratos/kratos/v3"
 	"github.com/liujitcn/kratos-kit/bootstrap"
+
+	_ "github.com/liujitcn/kratos-kit/config/etcd"
+	_ "github.com/liujitcn/kratos-kit/logger/zap"
+	_ "github.com/liujitcn/kratos-kit/registry/etcd"
 )
 
 func initApp(ctx *bootstrap.Context) (*kratos.App, func(), error) {
-	app := bootstrap.NewApp(ctx)
-	return app, func() {}, nil
+	return bootstrap.NewApp(ctx), func() {}, nil
 }
 
 func main() {
@@ -194,200 +119,53 @@ func main() {
 }
 ```
 
-### 3. 创建 Ent 数据库客户端
+`bootstrap` 支持本地配置、远程配置、密钥派生、日志、注册发现、链路追踪和应用信息初始化。根密钥配置使用独立的 `key.yaml`，敏感值可使用 `ENC[...]` 标记加密。
 
-`database/ent` 返回通用 `entgo.io/ent/dialect.Driver` 包装，业务项目需要用自己生成的 Ent client 接入：
+## 配置与边界
 
-```go
-package data
+- `api/proto/config/v1` 是配置契约唯一来源，`api/gen/go` 只能由 `buf generate` 生成。
+- `database/gorm` 支持 `database` 和 `databases` 两种固定数据源配置；跨数据源事务、Join 和请求级动态切库不属于该模块职责。
+- Redis Stream 队列生产者默认按 `MAXLEN` 裁剪；消息消费成功后执行确认并删除，关闭时会停止拉取并等待已拉取消息处理。
+- 验证码统一由 `Generate` 生成并写入缓存，由 `Verify` 校验，成功后删除缓存；图片只以 base64 或 JSON base64 返回。
+- `oauth` 只负责授权地址、state/PKCE、换取 Token 和用户信息，不负责业务用户、登录态或权限。
+- `secretcrypto` 的临时私钥只在缓存中短期保存；同一请求的多个密文应复用同一 `key_id`。
 
-import (
-	"context"
-
-	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
-	entkit "github.com/liujitcn/kratos-kit/database/ent"
-	_ "github.com/liujitcn/kratos-kit/database/ent/driver/mysql"
-
-	"your-app/ent"
-)
-
-func NewEntClient(cfg *configv1.Data_Database) (*ent.Client, func(), error) {
-	drv, cleanup, err := entkit.NewEntClient(cfg)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	client := ent.NewClient(ent.Driver(drv))
-	if cfg.GetEnableMigrate() {
-		if err = client.Schema.Create(context.Background()); err != nil {
-			cleanup()
-			return nil, nil, err
-		}
-		if err = drv.RunRegisteredTableComments(context.Background()); err != nil {
-			cleanup()
-			return nil, nil, err
-		}
-	}
-	return client, cleanup, nil
-}
-```
-
-Ent 审计字段可在 schema 中复用 `entkit.AuditMixin{}`；字段注释通过 `entsql.WithComments(true)` 落库，表注释可用 `entkit.RegisterTableComment("users", "用户表")` 在迁移后回填。Doris 可通过 MySQL 协议访问，导入 `database/ent/driver/mysql` 后配置 `driver: doris` 即可；Doris 建表、分区、分桶等能力建议使用专用 SQL 管理，不建议依赖 Ent 自动迁移。
-
-默认命令行参数（`bootstrap/flag.go`）：
-
-- `-c, --conf`：配置目录，默认 `../../configs`
-- `-e, --env`：运行环境，默认 `dev`
-- `-s, --chost`：配置中心地址，默认 `127.0.0.1:8500`
-- `-t, --ctype`：配置中心类型，默认 `consul`
-- `-d, --daemon`：以守护进程方式运行（非 Windows）
-- `-p, --project`：覆盖 app-info 的项目标识
-- `-a, --app-id`：覆盖 app-info 的应用标识
-- `-i, --instance-id`：覆盖 app-info 的实例标识
-- `-n, --name`：覆盖 app-info 的应用名称
-- `-v, --version`：覆盖 app-info 的应用版本
-
-app-info 字段的优先级为：启动参数 → 传入的 `*configv1.AppInfo` → 默认值。
-
-## 密钥与配置加解密
-
-`bootstrap.RunApp` 默认启用配置密钥流程。启动顺序如下：
-
-```text
-key.yaml / key.<env>.yaml（仅本地、未加密）
-        ↓
-读取 sdk.Runtime 中已设置的 Key 实例
-        ↓（没有时按 key.type 创建；没有 key 配置时默认 file）
-读取根密钥并派生 `kratos-kit:config` 的配置密钥
-        ↓
-使用 ENC[payload] 解密本地和远程配置
-        ↓
-初始化 logger、registry、tracer 和应用
-```
-
-独立 `key.yaml` 的内容直接对应 `configv1.Key`，不再嵌套在 `Bootstrap`：
-
-```yaml
-type: vault
-scope: prod/order-service
-root_name: secret/data/kratos/prod/root
-vault:
-  address: http://127.0.0.1:8200
-  value_key: value
-```
-
-如果没有 `key.yaml`，bootstrap 默认读取 `${conf}/root.key`（默认即 `configs/root.key`），使用 `file` provider。
-如果本地根密钥文件不存在，file provider 初始化时会生成一次 32 字节随机根密钥并以 `0600` 权限保存；文件已存在时直接复用，
-不会覆盖已有根密钥。业务也可以在调用 `RunApp` 前自行创建 `key.Key` 并保存到 `sdk.Runtime.SetKey`，bootstrap 会优先复用该接口实例。
-
-配置密文只需要在值上使用 `ENC[...]` 标记；标记可以占据整个值，也可以只嵌入需要保护的字符串片段。
-配置密钥由根密钥按 `scope` 和 `kratos-kit:config` 用途派生，该标识不写入密文。
-同一根密钥、范围和用途会得到相同的派生密钥，不同服务或用途应使用不同的 scope/purpose。
-已经按旧版本规则生成的 `ENC[...]` 密文不能直接使用新规则解密，需要先用旧规则解密后重新加密。
-
-## 配置加载行为
-
-`config.LoadBootstrapConfig(configPath, env, keyValue)` 的行为：
-
-1. 优先使用调用方传入的 `keyValue`；传入 `nil` 时复用 `sdk.Runtime.GetKey()`。
-2. 按 `kratos-kit:config` 派生配置密钥并解密敏感字段。
-3. 按 `env` 加载本地基础配置和环境覆盖配置。
-4. 若存在 `${configPath}/config.yaml`，先读取其中 `config.type`，再创建对应远程配置源并合并加载。
-5. 扫描 `configv1.Bootstrap` 及已注册的自定义配置结构。
-
-引导配置工厂支持的远程配置源类型由 `config.type` 决定，可选值见
-`config/types.go`：`apollo`/`consul`/`etcd`/`kubernetes`/`nacos`/`polaris`。
-独立模块 `config/fs`、`config/http`、`config/redis`、`config/vault`、
-`config/zookeeper`、`config/oss` 可直接作为 Kratos `config.Source` 使用。
-
-## AI 客户端
-
-AI 模型客户端通过 `github.com/liujitcn/kratos-kit/ai/model.ModelConfig` 接收运行时参数；
-模型密钥和 endpoint 不属于 `Bootstrap`，由业务系统按自身安全边界维护。
-
-## API 代码生成
+## 生成与开发
 
 ```bash
-make api
+make plugin  # 安装 protobuf、Kratos、脱敏、Agent Tool 和 MCP Tool 插件
+make api     # 在 api 目录执行 buf generate
+make gen     # 生成 API 并整理 Go import
+make fmt     # 规范化 import 别名并运行 goimports
 ```
 
-`buf` 模块根目录为 `api/proto`，同模块 proto 引用使用模块内路径，例如：
-
-```proto
-import "config/v1/tls.proto";
-```
-
-### Agent 与 MCP Tool 生成
-
-`protoc-gen-go-agent-tool` 用于从 proto service 生成 Eino Agent Tool 封装，生成文件后缀为 `_agent_tool.go`。生成后的构造函数返回 `tool.InvokableTool`，接收 `XxxServiceServer`，直接调用本进程内的服务端方法，不经过 gRPC client 或本地网络转换。
-
-`protoc-gen-go-mcp-tool` 用于从 proto service 生成 MCP Tool 注册代码，生成文件后缀为 `_mcp_tool.go`。Agent 与 MCP 生成器都基于标准 gRPC 方法路径生成 Tool 名称，例如 `/admin.v1.AuthService/GetUserInfo` 会生成 `admin_v1_auth_service_get_user_info`。外部如需复用同一转换规则，可调用 `utils.ToolNameFromRPCPath`。
-
-当请求或响应消息存在递归字段引用时，Agent 与 MCP 生成器会将 Tool 的 schema 泛型降级为 `any`，再在执行时转换为真实 proto 请求，避免 JSON Schema 生成阶段出现递归循环错误。
+直接安装仓库内命令：
 
 ```bash
-protoc --go-agent-tool_out=. path/to/service.proto
-protoc --go-mcp-tool_out=. path/to/service.proto
-protoc --go-redact_out=. path/to/service.proto
+go install ./cmd/normalize-go-imports
+go install ./cmd/protoc-gen-go-agent-tool
+go install ./cmd/protoc-gen-go-mcp-tool
+go install ./cmd/protoc-gen-go-redact
+go install ./cmd/kratos-admin
 ```
 
-## 开发命令
+`kratos-admin create <name>` 拒绝覆盖已有目录，默认生成 `system` 业务模块；可通过 `--modules` 传入以逗号分隔的模块名，通过 `--module` 指定后端 Go module 路径。生成过程会创建目录、渲染模板、初始化三端前端并执行后端验证。
+
+## 验证
+
+修改 Go 代码后，在受影响的 module 目录执行：
 
 ```bash
-make plugin   # 安装 protoc 相关插件
-make cli      # 安装 kratos/buf、normalize-go-imports 等命令行工具
-make fmt # 运行 normalize-go-imports，再使用 goimports 格式化
-make api      # 生成 api 代码
-make gen      # 一键生成并整理 api 代码
-make tag      # 默认从仓库根目录递归检查 go.mod 并自动打/推送 tag（含根模块）
-make tag MODULE=auth       # 从 auth 目录开始递归检查 go.mod 并打 tag
-make tag MODULE=auth/authn # 从 auth/authn 目录开始递归检查 go.mod 并打 tag
+go test ./...
+go vet ./...
 ```
 
-依赖版本基线更新时，需要同步整理各子模块的 `go.mod`/`go.sum`，并逐模块执行 `go test -mod=readonly ./...`。`api` 子模块承载公共 proto 契约和生成代码，配置契约或依赖基线同步发布时，需要确认新的 `api/v*` tag 跟随发布，避免下游引用到旧生成代码。
+修改 protobuf 时，在 `api` 目录执行 `buf lint`、`buf build`、`buf generate` 和 `go test ./...`。修改文档不需要生成代码，但新增或移动文档后应检查相对链接和代码示例。
 
-## 子模块文档
+## 文档索引
 
-- [api/README.md](api/README.md)
-- [ai/model/README.md](ai/model/README.md)
-- [ai/eino/README.md](ai/eino/README.md)
-- [ai/langchaingo/README.md](ai/langchaingo/README.md)
-- [bootstrap/README.md](bootstrap/README.md)
-- [captcha/README.md](captcha/README.md)
-- [config/README.md](config/README.md)
-- [database/gorm/README.md](database/gorm/README.md)
-- [database/ent/README.md](database/ent/README.md)
-- [logger/README.md](logger/README.md)
-- [registry/README.md](registry/README.md)
-- [tracer/README.md](tracer/README.md)
-- [server/README.md](server/README.md)
-- [swagger-ui/README.md](swagger-ui/README.md)
-- [workflow/README.md](workflow/README.md)
-- [workflow/argo/README.md](workflow/argo/README.md)
-- [workflow/conductor/README.md](workflow/conductor/README.md)
-- [workflow/goworkflows/README.md](workflow/goworkflows/README.md)
-- [workflow/temporal/README.md](workflow/temporal/README.md)
-- [oauth/README.md](oauth/README.md)
-- [notify/README.md](notify/README.md)
-- [auth/authn/README.md](auth/authn/README.md)
-- [auth/authz/README.md](auth/authz/README.md)
-- [auth/authn/engine/jwt/README.md](auth/authn/engine/jwt/README.md)
-- [auth/authz/engine/casbin/README.md](auth/authz/engine/casbin/README.md)
-- [transport/keepalive/README.md](transport/keepalive/README.md)
-- [transport/mcp/README.md](transport/mcp/README.md)
-- [transport/sse/README.md](transport/sse/README.md)
+各模块 README 是对应 API 和行为的详细说明。命令模板文档位于 `cmd/kratos-admin/templates`；`cmd/protoc-gen-go-redact` 另提供中文、英文和日文说明。
 
-## 来源与版权说明
+## 许可证
 
-本仓库大部分代码参考或来源于以下开源项目，并在此基础上结合当前业务需求进行了整理与调整：
-
-- [tx7do/kratos-bootstrap](https://github.com/tx7do/kratos-bootstrap)
-- [tx7do/kratos-transport](https://github.com/tx7do/kratos-transport)
-- [tx7do/kratos-authn](https://github.com/tx7do/kratos-authn)
-- [tx7do/kratos-authz](https://github.com/tx7do/kratos-authz)
-
-若涉及版权或授权边界问题，请优先以上游项目许可证与仓库声明为准，并联系维护者处理。
-
-### 迁移记录文件引用
-
-`database/gorm/migration` 的迁移记录使用 `up_files`、`down_files`、`description_files` 三个 JSON 字段保存有序文件路径及 SHA-256，不保存 SQL 或 Markdown 正文。执行时读取 SQL，全部成功后写入引用；文件路径相对注册文件系统，包含版本、数据库类型及可选数据源目录。宿主模型须同步字段定义；旧正文列及历史记录需在备份后显式转换，迁移器不会自动重放已执行版本。历史资源应随应用保留，Core 提供按引用读取和校验能力。
+代码许可证见 [LICENSE](LICENSE)。依赖库的许可证和版权声明以各自发行版本为准。

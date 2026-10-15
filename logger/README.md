@@ -10,7 +10,7 @@
 - `bootstrap` 在启动阶段会调用 `log.SetDefault(ctx.logger)`，因此通过 Kratos v3 `log` 包输出的结构化日志会统一进入当前应用日志链路。
 - `zap`、`logrus`、`zerolog` 的文本格式统一为 `时间 LEVEL caller 消息 结构化字段`。
 - 控制台输出保留绝对路径 `caller`，便于在 IDE 或终端中直接点击源码。
-- 文件输出根据 caller 源码附近最近的 `go.mod` 生成 `module/相对路径:行号`，例如 `github.com/liujitcn/kratos-core/data/base_log.go:25`。
+- 文件输出根据 caller 源码附近最近的 `go.mod` 生成 `module/相对路径:行号`，例如 `github.com/liujitcn/kratos-kit/logger/logger.go:25`。
 - GORM/SQL 日志优先使用业务层传入的 caller；同时兼容从旧日志消息首段推断 caller，SQL 正文保持不变。
 - `fluent`、`aliyun`、`tencent` 按 `level`、`msg`、`caller`、业务字段上传结构化日志，caller 使用 module 路径。
 - 空 `trace_id`、`span_id` 以及重复的 `service.*` 标准字段会被过滤。

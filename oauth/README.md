@@ -12,7 +12,7 @@
 - 使用授权码或客户端凭证获取 Token。
 - 使用 Token 获取第三方用户信息。
 - 使用 `kratos-kit/cache.Cache` 保存并消费一次性 `state`。
-- 使用 `go-utils/id` 生成 `state` 与 PKCE verifier。
+- 使用仓库内的 ID 工具生成 `state` 与 PKCE verifier。
 
 不包含：
 

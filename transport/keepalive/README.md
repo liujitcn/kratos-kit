@@ -1,22 +1,29 @@
-# 保活服务
+# transport/keepalive
 
-保活服务是采用了 [gRPC的健康检查服务](https://grpc.io/docs/guides/health-checking/) 封装的一个服务。
+`transport/keepalive` 把 gRPC health check 注册为 Kratos `transport.Server`，用于为注册发现或消息服务提供独立的存活端点。它只负责保活连接和生命周期，不承载业务 RPC。
 
-## 为什么需要保活服务？
+## 创建
 
-因为Broker实际上只同MQ进行通讯，而并不与MQ以外的外界交互，所以，注册服务无法知晓其生存状态。所以，我们需要额外的起一个保活服务与注册服务通讯，以期让注册服务得知Broker服务的死活。
+```go
+srv := keepalive.NewServer(
+	keepalive.WithNetwork("tcp"),
+	keepalive.WithAddress(":9000"),
+	keepalive.WithServiceKind("broker"),
+)
+app := kratos.New(kratos.Server(srv))
+```
 
-## 如何打开或者关闭保活服务？
+默认网络为 `tcp`。未设置地址时会生成本机地址和临时端口；通过 `WithEndpoint` 可以直接指定注册发现使用的完整 endpoint，通过 `WithTLSConfig` 启用 TLS。
 
+`Start` 创建监听器、注册 gRPC health server 并阻塞服务；`Stop` 暂停健康检查并优雅停止 gRPC server。`Endpoint` 返回可用于注册发现的 `keepalive://...` URL，并实现 `transport.Endpointer`。
 
+## 地址选择
 
-## 遇到错误 panic: RegisterInstance err retry3times request failed,err=request return error code 400
+当监听地址只包含端口时，模块会根据实际 listener 调整 endpoint。多网卡或容器环境无法自动选择可达地址时，可以设置：
 
-产生这个错误的原因，主要是网络不通。
+```bash
+export KRATOS_TRANSPORT_KEEPALIVE_INTERFACE=eth0
+export KRATOS_TRANSPORT_KEEPALIVE_HOST=192.0.2.10
+```
 
-很多时候，是因为服务器具有多张网卡（包括Docker的虚拟网卡），导致程序自动选择的网卡是到达不了注册服务器的。所以，网络不通。
-
-要解决这个问题，我们提供了一个简单的解决方案:
-
-- 设置环境变量`KRATOS_TRANSPORT_KEEPALIVE_INTERFACE`，绑定一个正确的网卡。
-- 设置环境变量`KRATOS_TRANSPORT_KEEPALIVE_HOST`，绑定一个正确的IP地址。
+设置接口名时优先使用接口地址；否则使用显式 Host，最后才自动探测本机地址。环境变量只影响 endpoint 地址推导，不会改变 gRPC 监听端口。调用方仍应确认该地址能被注册中心或探活方访问。

@@ -17,7 +17,7 @@
 | 审计字段 | 创建时填充 `created_by`、`updated_by`、`created_at`、`updated_at`；更新时刷新 `updated_by`、`updated_at` |
 | 租户隔离 | 自动填充 `tenant_id`，并为查询、更新、删除和关联查询追加租户条件 |
 | 数据范围 | 根据登录 token 中的数据范围过滤本人、本部门、本部门及下级部门数据 |
-| 项目隔离 | 宿主显式提供表与项目字段映射；查询按租户项目配对过滤，新增校验归属，更新禁止修改归属 |
+| 项目隔离 | 调用方显式提供表与项目字段映射；查询按租户项目配对过滤，新增校验归属，更新禁止修改归属 |
 | 安全边界 | 租户、角色范围和通用 Raw 防护保留无身份系统调用豁免；项目隔离默认拒绝缺少身份的受保护访问；普通认证请求的不可安全改写 SQL 默认拒绝 |
 | 扩展回调 | 支持 Query、Row、Raw、Create、Update、Delete 及查询、写入后置回调 |
 
@@ -37,11 +37,11 @@
 | `internal/callback/join.go` / `internal/callback/sql.go` | 各类隔离共用的模型关联、JOIN 条件改写与 SQL 片段解析 |
 | `internal/callback/models.go` | 客户端模型范围及隔离、审计字段元数据缓存 |
 
-回调实现集中在 `internal/callback`，不反向依赖根包，避免与 `NewGormClient` 形成循环引用。客户端通过内部模型绑定入口共享迁移与回调元数据；外部项目仍使用原有 `gormkit.RegisterCallback*`、`gormkit.RegisterProjectIsolation`、`gormkit.SkipDataIsolation` 和模型注册函数，无需调整导入路径。
+回调实现集中在 `internal/callback`，不反向依赖根包，避免与 `NewGormClient` 形成循环引用。客户端通过内部模型绑定入口共享迁移与回调元数据；调用方使用根包公开的 `RegisterCallback*`、`RegisterProjectIsolation`、`SkipDataIsolation` 和模型注册函数。
 
-回调回归验证覆盖注册器、项目隔离与保存点，并通过公开客户端入口检查多类回调的组合行为；按仓库发布约定，测试通过后在提交前移除测试文件。
+回调回归验证覆盖注册器、项目隔离与保存点，并通过公开客户端入口检查多类回调的组合行为。
 
-`NewGormClient` 显式安装内置回调，再安装包级自定义回调的快照，不依赖各文件的 `init()` 顺序。原生 `gorm.Open()` 不安装这些内置能力。项目隔离由宿主在客户端创建后、处理请求前调用 `RegisterProjectIsolation` 安装，也可以单独安装在原生 GORM 数据库上。
+`NewGormClient` 显式安装内置回调，再安装包级自定义回调的快照，不依赖各文件的 `init()` 顺序。原生 `gorm.Open()` 不安装这些内置能力。项目隔离由调用方在客户端创建后、处理请求前调用 `RegisterProjectIsolation` 安装，也可以单独安装在原生 GORM 数据库上。
 
 内置名称使用 `kratos:<能力>:<操作>`，例如 `kratos:tenant:query`、`kratos:data_scope:update`、`kratos:audit:create`、`kratos:isolation:raw`；项目回调保留 `kratos:project:<操作>`。自定义回调名称为 `kratos:custom:<操作>:<序号>`，不再使用 `before_query_0` 等旧的匿名序号名称。公开 `RegisterCallback*` 函数全部保留，依赖旧内部名称的直接 GORM 操作应改用具名回调。
 
@@ -78,7 +78,7 @@ import (
 )
 ```
 
-业务项目只需导入实际使用的 driver，不要同时导入全部实现。
+调用方只需导入实际使用的 driver，不要同时导入全部实现。
 
 ## 快速接入
 
@@ -184,7 +184,7 @@ client, cleanup, err := gormkit.NewGormClient(
 
 ## 版本化迁移
 
-`database/gorm/migration` 提供与 admin 无关的版本化迁移能力。业务模块通过
+`database/gorm/migration` 提供与应用业务无关的版本化迁移能力。业务模块通过
 `embed.FS` 提供按版本目录组织的迁移资源，通过 `Contributor.Name()`（类型为
 `migration.ModuleName`）标识模块，
 并可通过 `Dependencies` 声明执行顺序。
@@ -223,7 +223,7 @@ assets/v0.0.1/
 脚本按文件名排序，在同一个数据库事务中执行，任一脚本失败时回滚该版本的脚本并直接返回错误，
 阻止应用启动。目录可以只有描述、只有脚本或完全为空；版本记录仅在该版本脚本全部执行成功后写入。
 
-`base_migration` 对应的 `BaseMigration` 模型位于 `database/gorm/migration`。宿主项目
+`base_migration` 对应的 `BaseMigration` 模型位于 `database/gorm/migration`。应用
 应在默认客户端的 GORM 模型中注册该模型；默认客户端在 `enable_migrate: true` 时通过
 `AutoMigrate` 创建或更新表。版本化 SQL 迁移不读取 `enable_migrate`，默认中心数据库
 默认中心数据库客户端必须在执行脚本前注入；目录声明的数据源客户端未注入时回退到默认客户端。默认库必须在执行脚本前已有
@@ -257,7 +257,7 @@ registry, err := migration.NewRegistry(
     migration.AdditionalMigrations{contributor{}},
 )
 runner, err := migration.NewRunner(registry)
-// defaultClient 和 shopClient 为宿主创建的命名 *gorm.Client。
+// defaultClient 和 shopClient 为调用方创建的命名 *gorm.Client。
 err = runner.SetClient(defaultClient)
 err = runner.SetClient(shopClient)
 err = runner.Run(ctx, moduleName)
@@ -266,7 +266,7 @@ err = runner.Run(ctx, moduleName)
 迁移核心按版本目录中的数据源名称查找已注入客户端，未找到时使用 `default` 客户端。
 `Run(ctx, moduleName)` 执行模块的全部数据源资源；传入一个客户端时可只执行该数据源，例如
 `Run(ctx, moduleName, shopClient)`。依赖模块继承当前数据源，依赖模块如果也需要执行到
-`shop`，应在对应版本目录下提供 `shop` 子目录。不要求接入项目依赖 kratos-admin 或 Wire。
+`shop`，应在对应版本目录下提供 `shop` 子目录。迁移模块不要求依赖特定的应用框架或注入工具。
 
 ## 自动填充的数据
 
@@ -376,7 +376,7 @@ err = runner.Run(ctx, moduleName)
 
 ## 项目隔离
 
-宿主为每个数据库显式注册业务表及项目列，不会仅因模型声明 `project_id` 就自动启用：
+调用方为每个数据库显式注册业务表及项目列，不会仅因模型声明 `project_id` 就自动启用：
 
 ```go
 err := gormkit.RegisterProjectIsolation(db, map[string]string{

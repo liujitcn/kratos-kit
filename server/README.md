@@ -23,7 +23,7 @@ serverhttp "github.com/liujitcn/kratos-kit/server/http"
 func CreateHttpServer(cfg *configv1.Bootstrap, mds ...middleware.Middleware) (*kratosHttp.Server, error)
 ```
 
-`CreateHttpServer` 从 `cfg.server.http` 读取监听地址、普通请求超时、请求体上限、CORS、TLS 以及 recovery、tracing、ratelimit、metadata 等官方 Kratos 中间件开关。普通请求使用 `timeout`，`/events`、`/mcp` 和 AI 消息流自动跳过该超时；`max_body_bytes` 对所有 HTTP 请求仍然生效。传输层中间件固定在调用方传入的 `mds` 之前；参数校验由 `kratos-core` 按 `middleware.enable_validate` 挂载。
+`CreateHttpServer` 从 `cfg.server.http` 读取监听地址、普通请求超时、请求体上限、CORS、TLS 以及 recovery、tracing、ratelimit、metadata 等官方 Kratos 中间件开关。普通请求使用 `timeout`，`/events`、`/mcp` 和 AI 消息流自动跳过该超时；`max_body_bytes` 对所有 HTTP 请求仍然生效。传输层中间件固定在调用方传入的 `mds` 之前；参数校验由调用方通过 `mds` 显式挂载。
 
 HTTP 服务端专属中间件位于 `server/http/middleware`：
 
@@ -68,7 +68,7 @@ servergrpc "github.com/liujitcn/kratos-kit/server/grpc"
 func CreateGrpcServer(cfg *configv1.Bootstrap, mds ...middleware.Middleware) (*kratosGrpc.Server, error)
 ```
 
-`CreateGrpcServer` 从 `cfg.server.grpc` 读取 network、addr、timeout、TLS、健康检查以及 recovery、tracing、ratelimit、metadata 等官方 Kratos 中间件开关。传输层中间件固定在调用方传入的 `mds` 之前；参数校验由 `kratos-core` 按 `middleware.enable_validate` 挂载。
+`CreateGrpcServer` 从 `cfg.server.grpc` 读取 network、addr、timeout、TLS、健康检查以及 recovery、tracing、ratelimit、metadata 等官方 Kratos 中间件开关。传输层中间件固定在调用方传入的 `mds` 之前；参数校验由调用方通过 `mds` 显式挂载。
 
 gRPC 服务端专属拦截器位于 `server/grpc/middleware`：
 
@@ -93,7 +93,7 @@ server:
         name: bbr
 ```
 
-`enable_validate` 控制 `kratos-core` 的业务校验；独立使用 `server/http` 或 `server/grpc` 时，请通过 `mds` 显式传入校验中间件。
+`enable_validate` 只属于调用方的配置约定；独立使用 `server/http` 或 `server/grpc` 时，请通过 `mds` 显式传入校验中间件。
 
 ## MCP
 
@@ -114,7 +114,7 @@ func CreateMcpSSEHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption
 func WithMcpServerOptions(opts ...func(*mcp.ServerOptions)) mcpServer.ServerOption
 ```
 
-`CreateMcpServer` 创建独立 Streamable HTTP MCP 服务，`CreateMcpSSEServer` 创建 Legacy SSE MCP 服务；`CreateMcpHandler` 创建进程内服务，可通过两个 Handler 方法挂载到 HTTP 宿主。MCP 客户端不在本模块提供。
+`CreateMcpServer` 创建独立 Streamable HTTP MCP 服务，`CreateMcpSSEServer` 创建 Legacy SSE MCP 服务；`CreateMcpHandler` 创建进程内服务，可通过两个 Handler 方法挂载到已有 HTTP 服务。MCP 客户端不在本模块提供。
 
 ## SSE
 
@@ -136,9 +136,9 @@ func CreateSseHTTPHandler(cfg *configv1.Bootstrap, opts ...sseServer.ServerOptio
 
 ## 中间件归属
 
-官方 Kratos 中间件直接使用，不在 `server` 中复制：`recovery`、`metadata`、`ratelimit`、`logging` 和 `circuitbreaker`。参数校验属于 `kratos-core` 的业务中间件，`server/*` 不自动挂载；`circuitbreaker` 是客户端能力，不应装配到服务端。
+官方 Kratos 中间件直接使用，不在 `server` 中复制：`recovery`、`metadata`、`ratelimit`、`logging` 和 `circuitbreaker`。参数校验由调用方通过 `mds` 注入，`server/*` 不自动挂载；`circuitbreaker` 是客户端能力，不应装配到服务端。
 
-`kratos-core/server/middleware` 负责认证、鉴权、业务日志、国际化和业务校验等应用策略；它依赖 `server/http`、`server/grpc` 和官方 Kratos，但 `server/*` 不反向依赖 core。
+认证、鉴权、业务日志、国际化和业务校验等应用策略由调用方自行组合；`server/*` 只负责服务端 transport、TLS、超时和官方中间件配置。
 
 推荐的服务端链路顺序为：
 
@@ -146,4 +146,4 @@ func CreateSseHTTPHandler(cfg *configv1.Bootstrap, opts ...sseServer.ServerOptio
 request-id -> timeout -> recovery -> tracing -> metadata -> rate-limit -> i18n -> logging -> authn/authz -> validate -> handler
 ```
 
-`server` 是服务端传输适配的 seam，`core` 负责业务中间件组合；同一能力只允许一个层级拥有实现，避免官方中间件、kit 中间件和 core 中间件重复执行。
+`server` 只负责服务端传输适配；业务中间件由调用方组合。同一能力只允许一个层级拥有实现，避免官方中间件和调用方中间件重复执行。

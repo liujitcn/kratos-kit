@@ -21,9 +21,9 @@
 ```bash
 go run . \
   -p shop \
-  -a admin-service \
-  -i shop-admin-service@host \
-  -n "Shop Admin Service" \
+  -a order-service \
+  -i order-service@host \
+  -n "Order Service" \
   -v v1.2.3
 ```
 
@@ -50,7 +50,7 @@ go run . -c configs -e prod
 ## 密钥 Provider
 
 独立的 `key.yaml` 用于描述密钥 Provider。密钥配置只应包含类型、范围、根密钥引用
-和 Provider 的非敏感连接参数；根密钥与 Provider 认证信息必须由外部 Secret Manager 或工作负载身份提供。
+和 Provider 的非敏感连接参数；根密钥与 Provider 认证信息必须由 Secret Manager、环境变量或工作负载身份提供。
 
 ```yaml
 type: vault
@@ -64,7 +64,7 @@ vault:
 启动时 bootstrap 先读取 `key.yaml`；如果 `sdk.Runtime` 已设置 Key 实例就直接复用，否则按 key 配置创建 Key，
 没有 key 配置时默认使用 `configs/root.key` 的 file provider，随后使用派生的 config 密钥加载业务配置。
 本地 file provider 初始化时，根密钥文件不存在会使用系统随机源生成 32 字节根密钥并以 `0600` 权限排他创建；
-文件已存在时直接复用，永远不会覆盖已有根密钥。外部 Secret Manager Provider 不会创建本地文件。
+文件已存在时直接复用，永远不会覆盖已有根密钥。远程 Secret Provider 不会创建本地文件。
 
 ## 使用示例
 
@@ -118,6 +118,6 @@ func newApp(
 }
 
 func main() {
-	bootstrap.Bootstrap(initApp, trans.Ptr(service.AdminService), trans.Ptr(version))
+	bootstrap.Bootstrap(initApp, trans.Ptr(service.OrderService), trans.Ptr(version))
 }
 ```

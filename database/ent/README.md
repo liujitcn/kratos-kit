@@ -15,7 +15,7 @@ go get github.com/liujitcn/kratos-kit/database/ent/driver/sqlite@latest
 
 ## 使用
 
-Ent 的 `*ent.Client` 是业务项目按 schema 生成的类型，本模块只返回通用 driver：
+Ent 的 `*ent.Client` 是调用方按 schema 生成的类型，本模块只返回通用 driver：
 
 ```go
 import (

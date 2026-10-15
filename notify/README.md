@@ -16,11 +16,11 @@
 | `wechat_work_group` | `notify/wechatwork` | 企业微信群机器人文本及 Markdown 消息。 |
 | `sms` | `notify/sms` | 阿里云、腾讯云、华为云短信适配；同属 `notify` 模块。 |
 
-平台应用、群机器人和通用 Webhook 的 HTTP 请求统一通过 `go-utils/http` 发送，底层 transport 可注入；Webhook 与群机器人额外限制重定向和目标 IP。短信发送使用服务商官方 SDK，由 SDK 管理鉴权签名和请求协议。
+平台应用、群机器人和通用 Webhook 的 HTTP 请求统一使用模块内的安全请求封装，底层 transport 可注入；Webhook 与群机器人额外限制重定向和目标 IP。短信发送使用服务商 SDK，由 SDK 管理鉴权签名和请求协议。
 
 ## 注册与发送
 
-渠道配置实例名称用于区分同类渠道的不同账号或目标，例如 `smtp-default`、`ops-feishu-webhook`。应用消息 Sender 需要传入宿主统一管理的 `cache.Cache`，用于共享平台 access token；业务管理模块可以从数据库读取配置后创建 Sender，并在配置更新时整体替换快照。
+渠道配置实例名称用于区分同类渠道的不同账号或目标，例如 `smtp-default`、`ops-feishu-webhook`。应用消息 Sender 需要传入调用方统一管理的 `cache.Cache`，用于共享平台 access token；调用方可以从数据库读取配置后创建 Sender，并在配置更新时整体替换快照。
 
 ```go
 mailSender, err := email.New(email.Config{
@@ -61,7 +61,7 @@ receipt, err := manager.Send(ctx, "ops-webhook", notify.Message{
 
 ## OAuth 与用户绑定
 
-`oauth` 继续只负责授权登录、Token 和用户标识获取；通知渠道负责消息发送。Admin 可将 `base_oauth_provider` 的应用凭据交给后续平台应用消息 Sender，并从 `base_third_account` 解析接收人的第三方标识。两个模块共享第三方应用身份，但职责和凭据用途保持分开。
+`oauth` 只负责授权登录、Token 和用户标识获取；通知渠道负责消息发送。调用方可以把 OAuth Provider 的应用凭据交给平台消息 Sender，并自行解析接收人的第三方标识。两个模块可以共享第三方应用身份，但职责和凭据用途保持分开。
 
 ## 并发与配置替换
 

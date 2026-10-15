@@ -1,7 +1,6 @@
 # Translator
 
-`translator` 提供基于配置的统一机器翻译接口，底层复用
-`github.com/liujitcn/go-utils/translator/*` 的厂商实现，内置 Google、百度、阿里云
+`translator` 提供基于配置的统一机器翻译接口，内置 Google、百度、阿里云
 和火山引擎 Provider。各 Provider 适配器分别位于
 `translator/google`、`translator/baidu`、`translator/alibaba` 和 `translator/volc`
 子目录。

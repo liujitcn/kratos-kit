@@ -123,7 +123,7 @@ if err := worker.Start(ctx); err != nil {
 | `ActivityQueues` | Worker 监听的 Activity 任务队列 |
 | `SingleWorkerMode` | 是否启用单 Worker 场景优化 |
 
-未设置的 `WorkerOptions` 字段会沿用 go-workflows 上游默认值。
+未设置的 `WorkerOptions` 字段会沿用底层工作流库的默认值。
 
 ## Worker 方法
 

@@ -17,7 +17,7 @@
 
 ## 依赖注入
 
-宿主通过构造参数注入 `PolicyResolver`，在 HTTP、gRPC（含流式）和 MCP 请求入口将其写入请求上下文。
+调用方通过构造参数注入 `PolicyResolver`，在 HTTP、gRPC（含流式）和 MCP 请求入口将其写入请求上下文。
 生成的服务包装器会保留此上下文，因此无需设置全局策略或修改生成产物；流式包装器也可直接设置自身的 `Resolver` 字段。
 显式 `ApplyWith(ctx, resolver, message)` 优先于请求上下文；两者都未提供解析器时执行消息默认规则。
 不同应用与请求不会互相覆盖解析器，`WithPolicyResolver(ctx, nil)` 可清除继承的请求解析器。

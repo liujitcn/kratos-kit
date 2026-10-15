@@ -1,7 +1,34 @@
-# Casbin
+# auth/authz/engine/casbin
 
-Casbin（<https://github.com/casbin/casbin>）是一套访问控制开源库，致力于帮助复杂系统解决权限管理的难题。同时也是一个国产开源项目。Casbin采用了元模型的设计思想，既支持ACL（访问控制列表），RBAC（基于角色访问控制），ABAC（基于属性访问控制）等经典的访问控制模型，也支持用户按照自身需求灵活定义权限。Casbin已经被Intel、IBM、腾讯云、VMware、RedHat、T-Mobile等公司开源使用，被Cisco、Verizon等公司闭源使用。具体详见Casbin主页（<https://casbin.org/>）。
+该模块把 Casbin 接入 `auth/authz/engine.Authorizer`，提供租户、主体、资源、动作和项目维度的权限判断，以及按权限过滤项目和资源动作对。
 
-Casbin由北京大学罗杨博士在2017年4月发起，罗杨博士的研究方向为云计算访问控制，目前已发表数十篇相关学术论文，曾经在ICWS、IEEE CLOUD、ICICS等多个顶级学术会议进行论文宣讲。Casbin项目则是其研究成果的落地。
+## 创建引擎
 
-Casbin最初是一个用Go语言打造的开源轻量级的统一访问控制框架。目前已逐渐发展，扩展到Go、Java、Node.js、Javascript(React)、Python、PHP、.NET、Delphi、Rust等多种语言，在GitHub开源（<https://github.com/casbin/casbin>），主项目在GitHub上已有1.3w+ stars。该项目目前已经有一个上百人稳定的团队进行维护，并在持续不断发展中。
+```go
+state, err := casbin.NewEngine(ctx,
+	casbin.WithDefaultModel("restfull_with_role"),
+	casbin.WithProjects(engine.Projects{"project-a", "project-b"}),
+)
+if err != nil {
+	return err
+}
+```
+
+支持的内置模型名称：`acl`、`rbac`、`rbac_with_domains`、`abac`、`restfull` 和 `restfull_with_role`。也可以使用 `WithModel`、`WithStringModel` 或 `WithFileModel` 提供自定义模型。
+
+未指定项目时使用通配项目值；`WithWildcardItem` 可以覆盖该值。项目授权列表使用 `WithAuthorizedProjectsMatcher` 指定匹配表达式。
+
+## 策略
+
+`WithPolices`（兼容现有拼写）或 `WithPolicyAdapter` 设置策略快照。`PolicyRule` 支持 `p_type` 和最多六个策略值，适配器在创建 Enforcer 时加载快照。
+
+引擎实现 `PolicyWriter`，调用 `SetPolicies` 会替换下一次决策使用的策略快照。适配器不支持 Casbin 的增量写回方法，`SavePolicy`、`AddPolicy`、`RemovePolicy` 和过滤删除会返回未实现错误。
+
+## 决策接口
+
+- `IsAuthorized`：判断单个主体对资源、动作和项目是否有权限；
+- `ProjectsAuthorized`：从项目集合中过滤允许项；
+- `FilterAuthorizedPairs`：过滤资源动作对；
+- `FilterAuthorizedProjects`：从初始化的项目快照中返回允许项。
+
+引擎通过 `auth/authz/engine` 工厂以 `casbin` 名称注册，创建时匿名导入该包即可启用。

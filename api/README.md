@@ -202,11 +202,10 @@ OAuth Provider 参数由 `kratos-kit/oauth/provider.Config`
 
 ## 依赖与工具
 
-在仓库根目录执行以下命令可安装生成器和 CLI：
+在仓库根目录执行以下命令可安装 protobuf 生成器：
 
 ```bash
 make plugin
-make cli
 ```
 
 运行生成需确保 `buf` 在 `PATH` 中；`buf.gen.yaml` 当前使用以下本地插件：
@@ -267,7 +266,7 @@ go test ./...
 
 当前 proto 保留部分历史枚举值名称（`HTTP`、`SSE`、`STDIO`、`IN_PROCESS`、
 `CLOUD_MODEL`、`LOCAL_MODEL`），因此 `buf lint` 会报告枚举前缀命名问题。除非同步
-规划 API 变更，不要直接重命名这些值；重命名会影响生成的 Go 常量和下游配置。
+规划 API 变更，不要直接重命名这些值；重命名会影响生成的 Go 常量和已有配置。
 
 ## Proto 引用约定
 
@@ -277,7 +276,7 @@ Buf 模块根目录是 `api/proto`。同一模块内使用模块相对路径引�
 import "config/v1/tls.proto";
 ```
 
-外部项目使用生成包：
+仓库内其他 Go module 使用生成包：
 
 ```go
 import configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
@@ -289,8 +288,7 @@ import configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 根密钥及 Provider 认证信息必须通过 Secret Manager、Kubernetes Secret、环境变量或工作负载
 身份提供，不应直接写入 Proto 配置或提交到仓库。
 
-## 发布引用
+## 版本一致性
 
-`api` 子模块承载公共 proto 契约和生成代码。配置契约或下游依赖基线同步发布时，外部项目
-应优先锁定最新 `api/v*` tag，确保 `config/v1` 包路径以及 HTTP、gRPC、MCP、SSE 配置
-字段与生成代码保持一致。
+`api` 子模块承载公共 proto 契约和生成代码。修改配置契约后，应先执行 `buf generate` 和
+模块测试，再与仓库内引用 `config/v1` 的模块一起检查字段和生成代码是否一致。
