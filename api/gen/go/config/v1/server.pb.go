@@ -270,7 +270,9 @@ type Server struct {
 	// mcp 为 MCP 服务端配置。
 	Mcp *Server_Mcp `protobuf:"bytes,3,opt,name=mcp,proto3,oneof" json:"mcp,omitempty"`
 	// sse 为 SSE 服务端配置。
-	Sse           *Server_Sse `protobuf:"bytes,4,opt,name=sse,proto3,oneof" json:"sse,omitempty"`
+	Sse *Server_Sse `protobuf:"bytes,4,opt,name=sse,proto3,oneof" json:"sse,omitempty"`
+	// mqtt 为 MQTT 订阅服务配置。
+	Mqtt          *Server_Mqtt `protobuf:"bytes,5,opt,name=mqtt,proto3,oneof" json:"mqtt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -329,6 +331,13 @@ func (x *Server) GetMcp() *Server_Mcp {
 func (x *Server) GetSse() *Server_Sse {
 	if x != nil {
 		return x.Sse
+	}
+	return nil
+}
+
+func (x *Server) GetMqtt() *Server_Mqtt {
+	if x != nil {
+		return x.Mqtt
 	}
 	return nil
 }
@@ -923,6 +932,169 @@ func (x *Server_Mcp) GetHttpTools() []*Server_Mcp_HttpTool {
 	return nil
 }
 
+// Mqtt 描述 MQTT 客户端订阅服务配置。
+type Server_Mqtt struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// endpoint 为 MQTT Broker 地址，例如 tcp://emqx:1883。
+	Endpoint string `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	// client_id 为 MQTT 客户端 ID。
+	ClientId string `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	// username 为 MQTT 连接用户名。
+	Username string `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	// password 为 MQTT 连接密码。
+	Password string `protobuf:"bytes,4,opt,name=password,proto3" json:"password,omitempty"`
+	// clean_session 表示是否使用 MQTT clean session。
+	CleanSession *bool `protobuf:"varint,5,opt,name=clean_session,json=cleanSession,proto3,oneof" json:"clean_session,omitempty"`
+	// codec 为 MQTT 消息编解码器名称。
+	Codec string `protobuf:"bytes,6,opt,name=codec,proto3" json:"codec,omitempty"`
+	// keep_alive 为 MQTT 心跳周期。
+	KeepAlive *durationpb.Duration `protobuf:"bytes,7,opt,name=keep_alive,json=keepAlive,proto3" json:"keep_alive,omitempty"`
+	// auto_reconnect 表示是否自动重连。
+	AutoReconnect *bool `protobuf:"varint,8,opt,name=auto_reconnect,json=autoReconnect,proto3,oneof" json:"auto_reconnect,omitempty"`
+	// resume_subs 表示重连后是否恢复订阅。
+	ResumeSubs *bool `protobuf:"varint,9,opt,name=resume_subs,json=resumeSubs,proto3,oneof" json:"resume_subs,omitempty"`
+	// order_matters 表示是否保持 Paho 消息顺序。
+	OrderMatters *bool `protobuf:"varint,10,opt,name=order_matters,json=orderMatters,proto3,oneof" json:"order_matters,omitempty"`
+	// write_timeout 为 MQTT 写操作超时时间。
+	WriteTimeout *durationpb.Duration `protobuf:"bytes,11,opt,name=write_timeout,json=writeTimeout,proto3" json:"write_timeout,omitempty"`
+	// connect_retry_interval 为连接重试间隔。
+	ConnectRetryInterval *durationpb.Duration `protobuf:"bytes,12,opt,name=connect_retry_interval,json=connectRetryInterval,proto3" json:"connect_retry_interval,omitempty"`
+	// max_reconnect_interval 为最大重连间隔。
+	MaxReconnectInterval *durationpb.Duration `protobuf:"bytes,13,opt,name=max_reconnect_interval,json=maxReconnectInterval,proto3" json:"max_reconnect_interval,omitempty"`
+	// tls 为 MQTT TLS 配置。
+	Tls           *Tls `protobuf:"bytes,14,opt,name=tls,proto3" json:"tls,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Server_Mqtt) Reset() {
+	*x = Server_Mqtt{}
+	mi := &file_config_v1_server_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Server_Mqtt) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Server_Mqtt) ProtoMessage() {}
+
+func (x *Server_Mqtt) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_server_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Server_Mqtt.ProtoReflect.Descriptor instead.
+func (*Server_Mqtt) Descriptor() ([]byte, []int) {
+	return file_config_v1_server_proto_rawDescGZIP(), []int{0, 5}
+}
+
+func (x *Server_Mqtt) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *Server_Mqtt) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *Server_Mqtt) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *Server_Mqtt) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+func (x *Server_Mqtt) GetCleanSession() bool {
+	if x != nil && x.CleanSession != nil {
+		return *x.CleanSession
+	}
+	return false
+}
+
+func (x *Server_Mqtt) GetCodec() string {
+	if x != nil {
+		return x.Codec
+	}
+	return ""
+}
+
+func (x *Server_Mqtt) GetKeepAlive() *durationpb.Duration {
+	if x != nil {
+		return x.KeepAlive
+	}
+	return nil
+}
+
+func (x *Server_Mqtt) GetAutoReconnect() bool {
+	if x != nil && x.AutoReconnect != nil {
+		return *x.AutoReconnect
+	}
+	return false
+}
+
+func (x *Server_Mqtt) GetResumeSubs() bool {
+	if x != nil && x.ResumeSubs != nil {
+		return *x.ResumeSubs
+	}
+	return false
+}
+
+func (x *Server_Mqtt) GetOrderMatters() bool {
+	if x != nil && x.OrderMatters != nil {
+		return *x.OrderMatters
+	}
+	return false
+}
+
+func (x *Server_Mqtt) GetWriteTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.WriteTimeout
+	}
+	return nil
+}
+
+func (x *Server_Mqtt) GetConnectRetryInterval() *durationpb.Duration {
+	if x != nil {
+		return x.ConnectRetryInterval
+	}
+	return nil
+}
+
+func (x *Server_Mqtt) GetMaxReconnectInterval() *durationpb.Duration {
+	if x != nil {
+		return x.MaxReconnectInterval
+	}
+	return nil
+}
+
+func (x *Server_Mqtt) GetTls() *Tls {
+	if x != nil {
+		return x.Tls
+	}
+	return nil
+}
+
 // RateLimiter 描述限流器配置。
 type Server_Middleware_RateLimiter struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -934,7 +1106,7 @@ type Server_Middleware_RateLimiter struct {
 
 func (x *Server_Middleware_RateLimiter) Reset() {
 	*x = Server_Middleware_RateLimiter{}
-	mi := &file_config_v1_server_proto_msgTypes[6]
+	mi := &file_config_v1_server_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -946,7 +1118,7 @@ func (x *Server_Middleware_RateLimiter) String() string {
 func (*Server_Middleware_RateLimiter) ProtoMessage() {}
 
 func (x *Server_Middleware_RateLimiter) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_server_proto_msgTypes[6]
+	mi := &file_config_v1_server_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -986,7 +1158,7 @@ type Server_Middleware_Metrics struct {
 
 func (x *Server_Middleware_Metrics) Reset() {
 	*x = Server_Middleware_Metrics{}
-	mi := &file_config_v1_server_proto_msgTypes[7]
+	mi := &file_config_v1_server_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -998,7 +1170,7 @@ func (x *Server_Middleware_Metrics) String() string {
 func (*Server_Middleware_Metrics) ProtoMessage() {}
 
 func (x *Server_Middleware_Metrics) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_server_proto_msgTypes[7]
+	mi := &file_config_v1_server_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1063,7 +1235,7 @@ type Server_Http_Cors struct {
 
 func (x *Server_Http_Cors) Reset() {
 	*x = Server_Http_Cors{}
-	mi := &file_config_v1_server_proto_msgTypes[8]
+	mi := &file_config_v1_server_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1075,7 +1247,7 @@ func (x *Server_Http_Cors) String() string {
 func (*Server_Http_Cors) ProtoMessage() {}
 
 func (x *Server_Http_Cors) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_server_proto_msgTypes[8]
+	mi := &file_config_v1_server_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1150,7 +1322,7 @@ type Server_Mcp_StreamableHttp struct {
 
 func (x *Server_Mcp_StreamableHttp) Reset() {
 	*x = Server_Mcp_StreamableHttp{}
-	mi := &file_config_v1_server_proto_msgTypes[9]
+	mi := &file_config_v1_server_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1162,7 +1334,7 @@ func (x *Server_Mcp_StreamableHttp) String() string {
 func (*Server_Mcp_StreamableHttp) ProtoMessage() {}
 
 func (x *Server_Mcp_StreamableHttp) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_server_proto_msgTypes[9]
+	mi := &file_config_v1_server_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1217,7 +1389,7 @@ type Server_Mcp_LegacySse struct {
 
 func (x *Server_Mcp_LegacySse) Reset() {
 	*x = Server_Mcp_LegacySse{}
-	mi := &file_config_v1_server_proto_msgTypes[10]
+	mi := &file_config_v1_server_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1229,7 +1401,7 @@ func (x *Server_Mcp_LegacySse) String() string {
 func (*Server_Mcp_LegacySse) ProtoMessage() {}
 
 func (x *Server_Mcp_LegacySse) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_server_proto_msgTypes[10]
+	mi := &file_config_v1_server_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1283,7 +1455,7 @@ type Server_Mcp_HttpTool struct {
 
 func (x *Server_Mcp_HttpTool) Reset() {
 	*x = Server_Mcp_HttpTool{}
-	mi := &file_config_v1_server_proto_msgTypes[11]
+	mi := &file_config_v1_server_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1295,7 +1467,7 @@ func (x *Server_Mcp_HttpTool) String() string {
 func (*Server_Mcp_HttpTool) ProtoMessage() {}
 
 func (x *Server_Mcp_HttpTool) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_server_proto_msgTypes[11]
+	mi := &file_config_v1_server_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1411,7 +1583,7 @@ type Server_Mcp_HttpTool_Parameter struct {
 
 func (x *Server_Mcp_HttpTool_Parameter) Reset() {
 	*x = Server_Mcp_HttpTool_Parameter{}
-	mi := &file_config_v1_server_proto_msgTypes[12]
+	mi := &file_config_v1_server_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1423,7 +1595,7 @@ func (x *Server_Mcp_HttpTool_Parameter) String() string {
 func (*Server_Mcp_HttpTool_Parameter) ProtoMessage() {}
 
 func (x *Server_Mcp_HttpTool_Parameter) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_server_proto_msgTypes[12]
+	mi := &file_config_v1_server_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1492,12 +1664,13 @@ var File_config_v1_server_proto protoreflect.FileDescriptor
 
 const file_config_v1_server_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x92 \n" +
+	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x87&\n" +
 	"\x06Server\x12/\n" +
 	"\x04http\x18\x01 \x01(\v2\x16.config.v1.Server.HttpH\x00R\x04http\x88\x01\x01\x12/\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x16.config.v1.Server.GrpcH\x01R\x04grpc\x88\x01\x01\x12,\n" +
 	"\x03mcp\x18\x03 \x01(\v2\x15.config.v1.Server.McpH\x02R\x03mcp\x88\x01\x01\x12,\n" +
-	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Server.SseH\x03R\x03sse\x88\x01\x01\x1a\xef\x03\n" +
+	"\x03sse\x18\x04 \x01(\v2\x15.config.v1.Server.SseH\x03R\x03sse\x88\x01\x01\x12/\n" +
+	"\x04mqtt\x18\x05 \x01(\v2\x16.config.v1.Server.MqttH\x04R\x04mqtt\x88\x01\x01\x1a\xef\x03\n" +
 	"\n" +
 	"Middleware\x12%\n" +
 	"\x0eenable_logging\x18\x01 \x01(\bR\renableLogging\x12'\n" +
@@ -1633,11 +1806,34 @@ const file_config_v1_server_proto_rawDesc = "" +
 	"\x13HTTP_BODY_MODE_JSON\x10\x02\x12\x17\n" +
 	"\x13HTTP_BODY_MODE_FORM\x10\x03\x12\x16\n" +
 	"\x12HTTP_BODY_MODE_RAW\x10\x04B\x13\n" +
-	"\x11_enable_keepaliveB\a\n" +
+	"\x11_enable_keepalive\x1a\xb8\x05\n" +
+	"\x04Mqtt\x12\x1a\n" +
+	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12\x1a\n" +
+	"\busername\x18\x03 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x04 \x01(\tR\bpassword\x12(\n" +
+	"\rclean_session\x18\x05 \x01(\bH\x00R\fcleanSession\x88\x01\x01\x12\x14\n" +
+	"\x05codec\x18\x06 \x01(\tR\x05codec\x128\n" +
+	"\n" +
+	"keep_alive\x18\a \x01(\v2\x19.google.protobuf.DurationR\tkeepAlive\x12*\n" +
+	"\x0eauto_reconnect\x18\b \x01(\bH\x01R\rautoReconnect\x88\x01\x01\x12$\n" +
+	"\vresume_subs\x18\t \x01(\bH\x02R\n" +
+	"resumeSubs\x88\x01\x01\x12(\n" +
+	"\rorder_matters\x18\n" +
+	" \x01(\bH\x03R\forderMatters\x88\x01\x01\x12>\n" +
+	"\rwrite_timeout\x18\v \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x12O\n" +
+	"\x16connect_retry_interval\x18\f \x01(\v2\x19.google.protobuf.DurationR\x14connectRetryInterval\x12O\n" +
+	"\x16max_reconnect_interval\x18\r \x01(\v2\x19.google.protobuf.DurationR\x14maxReconnectInterval\x12 \n" +
+	"\x03tls\x18\x0e \x01(\v2\x0e.config.v1.TlsR\x03tlsB\x10\n" +
+	"\x0e_clean_sessionB\x11\n" +
+	"\x0f_auto_reconnectB\x0e\n" +
+	"\f_resume_subsB\x10\n" +
+	"\x0e_order_mattersB\a\n" +
 	"\x05_httpB\a\n" +
 	"\x05_grpcB\x06\n" +
 	"\x04_mcpB\x06\n" +
-	"\x04_sseB\x9f\x01\n" +
+	"\x04_sseB\a\n" +
+	"\x05_mqttB\x9f\x01\n" +
 	"\rcom.config.v1B\vServerProtoP\x01Z<github.com/liujitcn/kratos-kit/api/gen/go/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\x06proto3"
 
@@ -1654,7 +1850,7 @@ func file_config_v1_server_proto_rawDescGZIP() []byte {
 }
 
 var file_config_v1_server_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_config_v1_server_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_config_v1_server_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_config_v1_server_proto_goTypes = []any{
 	(Server_Sse_Transport)(0),             // 0: config.v1.Server.Sse.Transport
 	(Server_Mcp_Transport)(0),             // 1: config.v1.Server.Mcp.Transport
@@ -1666,54 +1862,61 @@ var file_config_v1_server_proto_goTypes = []any{
 	(*Server_Grpc)(nil),                   // 7: config.v1.Server.Grpc
 	(*Server_Sse)(nil),                    // 8: config.v1.Server.Sse
 	(*Server_Mcp)(nil),                    // 9: config.v1.Server.Mcp
-	(*Server_Middleware_RateLimiter)(nil), // 10: config.v1.Server.Middleware.RateLimiter
-	(*Server_Middleware_Metrics)(nil),     // 11: config.v1.Server.Middleware.Metrics
-	(*Server_Http_Cors)(nil),              // 12: config.v1.Server.Http.Cors
-	(*Server_Mcp_StreamableHttp)(nil),     // 13: config.v1.Server.Mcp.StreamableHttp
-	(*Server_Mcp_LegacySse)(nil),          // 14: config.v1.Server.Mcp.LegacySse
-	(*Server_Mcp_HttpTool)(nil),           // 15: config.v1.Server.Mcp.HttpTool
-	(*Server_Mcp_HttpTool_Parameter)(nil), // 16: config.v1.Server.Mcp.HttpTool.Parameter
-	nil,                                   // 17: config.v1.Server.Mcp.HttpTool.HeadersEntry
-	(*durationpb.Duration)(nil),           // 18: google.protobuf.Duration
-	(*Tls)(nil),                           // 19: config.v1.Tls
-	(*structpb.Struct)(nil),               // 20: google.protobuf.Struct
+	(*Server_Mqtt)(nil),                   // 10: config.v1.Server.Mqtt
+	(*Server_Middleware_RateLimiter)(nil), // 11: config.v1.Server.Middleware.RateLimiter
+	(*Server_Middleware_Metrics)(nil),     // 12: config.v1.Server.Middleware.Metrics
+	(*Server_Http_Cors)(nil),              // 13: config.v1.Server.Http.Cors
+	(*Server_Mcp_StreamableHttp)(nil),     // 14: config.v1.Server.Mcp.StreamableHttp
+	(*Server_Mcp_LegacySse)(nil),          // 15: config.v1.Server.Mcp.LegacySse
+	(*Server_Mcp_HttpTool)(nil),           // 16: config.v1.Server.Mcp.HttpTool
+	(*Server_Mcp_HttpTool_Parameter)(nil), // 17: config.v1.Server.Mcp.HttpTool.Parameter
+	nil,                                   // 18: config.v1.Server.Mcp.HttpTool.HeadersEntry
+	(*durationpb.Duration)(nil),           // 19: google.protobuf.Duration
+	(*Tls)(nil),                           // 20: config.v1.Tls
+	(*structpb.Struct)(nil),               // 21: google.protobuf.Struct
 }
 var file_config_v1_server_proto_depIdxs = []int32{
 	6,  // 0: config.v1.Server.http:type_name -> config.v1.Server.Http
 	7,  // 1: config.v1.Server.grpc:type_name -> config.v1.Server.Grpc
 	9,  // 2: config.v1.Server.mcp:type_name -> config.v1.Server.Mcp
 	8,  // 3: config.v1.Server.sse:type_name -> config.v1.Server.Sse
-	10, // 4: config.v1.Server.Middleware.limiter:type_name -> config.v1.Server.Middleware.RateLimiter
-	11, // 5: config.v1.Server.Middleware.metrics:type_name -> config.v1.Server.Middleware.Metrics
-	18, // 6: config.v1.Server.Http.timeout:type_name -> google.protobuf.Duration
-	12, // 7: config.v1.Server.Http.cors:type_name -> config.v1.Server.Http.Cors
-	5,  // 8: config.v1.Server.Http.middleware:type_name -> config.v1.Server.Middleware
-	19, // 9: config.v1.Server.Http.tls:type_name -> config.v1.Tls
-	18, // 10: config.v1.Server.Grpc.timeout:type_name -> google.protobuf.Duration
-	5,  // 11: config.v1.Server.Grpc.middleware:type_name -> config.v1.Server.Middleware
-	19, // 12: config.v1.Server.Grpc.tls:type_name -> config.v1.Tls
-	0,  // 13: config.v1.Server.Sse.transport:type_name -> config.v1.Server.Sse.Transport
-	19, // 14: config.v1.Server.Sse.tls:type_name -> config.v1.Tls
-	18, // 15: config.v1.Server.Sse.timeout:type_name -> google.protobuf.Duration
-	18, // 16: config.v1.Server.Sse.event_ttl:type_name -> google.protobuf.Duration
-	1,  // 17: config.v1.Server.Mcp.transport:type_name -> config.v1.Server.Mcp.Transport
-	19, // 18: config.v1.Server.Mcp.tls:type_name -> config.v1.Tls
-	18, // 19: config.v1.Server.Mcp.shutdown_timeout:type_name -> google.protobuf.Duration
-	13, // 20: config.v1.Server.Mcp.streamable_http:type_name -> config.v1.Server.Mcp.StreamableHttp
-	14, // 21: config.v1.Server.Mcp.legacy_sse:type_name -> config.v1.Server.Mcp.LegacySse
-	15, // 22: config.v1.Server.Mcp.http_tools:type_name -> config.v1.Server.Mcp.HttpTool
-	18, // 23: config.v1.Server.Mcp.StreamableHttp.session_timeout:type_name -> google.protobuf.Duration
-	17, // 24: config.v1.Server.Mcp.HttpTool.headers:type_name -> config.v1.Server.Mcp.HttpTool.HeadersEntry
-	16, // 25: config.v1.Server.Mcp.HttpTool.parameters:type_name -> config.v1.Server.Mcp.HttpTool.Parameter
-	3,  // 26: config.v1.Server.Mcp.HttpTool.body_mode:type_name -> config.v1.Server.Mcp.HttpBodyMode
-	20, // 27: config.v1.Server.Mcp.HttpTool.input_schema:type_name -> google.protobuf.Struct
-	18, // 28: config.v1.Server.Mcp.HttpTool.timeout:type_name -> google.protobuf.Duration
-	2,  // 29: config.v1.Server.Mcp.HttpTool.Parameter.location:type_name -> config.v1.Server.Mcp.HttpParamLocation
-	30, // [30:30] is the sub-list for method output_type
-	30, // [30:30] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	10, // 4: config.v1.Server.mqtt:type_name -> config.v1.Server.Mqtt
+	11, // 5: config.v1.Server.Middleware.limiter:type_name -> config.v1.Server.Middleware.RateLimiter
+	12, // 6: config.v1.Server.Middleware.metrics:type_name -> config.v1.Server.Middleware.Metrics
+	19, // 7: config.v1.Server.Http.timeout:type_name -> google.protobuf.Duration
+	13, // 8: config.v1.Server.Http.cors:type_name -> config.v1.Server.Http.Cors
+	5,  // 9: config.v1.Server.Http.middleware:type_name -> config.v1.Server.Middleware
+	20, // 10: config.v1.Server.Http.tls:type_name -> config.v1.Tls
+	19, // 11: config.v1.Server.Grpc.timeout:type_name -> google.protobuf.Duration
+	5,  // 12: config.v1.Server.Grpc.middleware:type_name -> config.v1.Server.Middleware
+	20, // 13: config.v1.Server.Grpc.tls:type_name -> config.v1.Tls
+	0,  // 14: config.v1.Server.Sse.transport:type_name -> config.v1.Server.Sse.Transport
+	20, // 15: config.v1.Server.Sse.tls:type_name -> config.v1.Tls
+	19, // 16: config.v1.Server.Sse.timeout:type_name -> google.protobuf.Duration
+	19, // 17: config.v1.Server.Sse.event_ttl:type_name -> google.protobuf.Duration
+	1,  // 18: config.v1.Server.Mcp.transport:type_name -> config.v1.Server.Mcp.Transport
+	20, // 19: config.v1.Server.Mcp.tls:type_name -> config.v1.Tls
+	19, // 20: config.v1.Server.Mcp.shutdown_timeout:type_name -> google.protobuf.Duration
+	14, // 21: config.v1.Server.Mcp.streamable_http:type_name -> config.v1.Server.Mcp.StreamableHttp
+	15, // 22: config.v1.Server.Mcp.legacy_sse:type_name -> config.v1.Server.Mcp.LegacySse
+	16, // 23: config.v1.Server.Mcp.http_tools:type_name -> config.v1.Server.Mcp.HttpTool
+	19, // 24: config.v1.Server.Mqtt.keep_alive:type_name -> google.protobuf.Duration
+	19, // 25: config.v1.Server.Mqtt.write_timeout:type_name -> google.protobuf.Duration
+	19, // 26: config.v1.Server.Mqtt.connect_retry_interval:type_name -> google.protobuf.Duration
+	19, // 27: config.v1.Server.Mqtt.max_reconnect_interval:type_name -> google.protobuf.Duration
+	20, // 28: config.v1.Server.Mqtt.tls:type_name -> config.v1.Tls
+	19, // 29: config.v1.Server.Mcp.StreamableHttp.session_timeout:type_name -> google.protobuf.Duration
+	18, // 30: config.v1.Server.Mcp.HttpTool.headers:type_name -> config.v1.Server.Mcp.HttpTool.HeadersEntry
+	17, // 31: config.v1.Server.Mcp.HttpTool.parameters:type_name -> config.v1.Server.Mcp.HttpTool.Parameter
+	3,  // 32: config.v1.Server.Mcp.HttpTool.body_mode:type_name -> config.v1.Server.Mcp.HttpBodyMode
+	21, // 33: config.v1.Server.Mcp.HttpTool.input_schema:type_name -> google.protobuf.Struct
+	19, // 34: config.v1.Server.Mcp.HttpTool.timeout:type_name -> google.protobuf.Duration
+	2,  // 35: config.v1.Server.Mcp.HttpTool.Parameter.location:type_name -> config.v1.Server.Mcp.HttpParamLocation
+	36, // [36:36] is the sub-list for method output_type
+	36, // [36:36] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_server_proto_init() }
@@ -1724,13 +1927,14 @@ func file_config_v1_server_proto_init() {
 	file_config_v1_tls_proto_init()
 	file_config_v1_server_proto_msgTypes[0].OneofWrappers = []any{}
 	file_config_v1_server_proto_msgTypes[5].OneofWrappers = []any{}
+	file_config_v1_server_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_server_proto_rawDesc), len(file_config_v1_server_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   14,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

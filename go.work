@@ -25,6 +25,7 @@ use (
 	./auth/authz/middleware
 	./bootstrap
 	./broker
+	./broker/mqtt
 	./broker/nats
 	./cache
 	./captcha
@@ -117,6 +118,7 @@ use (
 	./transport/hptimer
 	./transport/keepalive
 	./transport/mcp
+	./transport/mqtt
 	./transport/queue
 	./transport/sse
 	./utils

@@ -271,6 +271,38 @@ message Server {
     repeated HttpTool http_tools = 10;
   }
 
+  // Mqtt 描述 MQTT 客户端订阅服务配置。
+  message Mqtt {
+    // endpoint 为 MQTT Broker 地址，例如 tcp://emqx:1883。
+    string endpoint = 1;
+    // client_id 为 MQTT 客户端 ID。
+    string client_id = 2;
+    // username 为 MQTT 连接用户名。
+    string username = 3;
+    // password 为 MQTT 连接密码。
+    string password = 4;
+    // clean_session 表示是否使用 MQTT clean session。
+    optional bool clean_session = 5;
+    // codec 为 MQTT 消息编解码器名称。
+    string codec = 6;
+    // keep_alive 为 MQTT 心跳周期。
+    google.protobuf.Duration keep_alive = 7;
+    // auto_reconnect 表示是否自动重连。
+    optional bool auto_reconnect = 8;
+    // resume_subs 表示重连后是否恢复订阅。
+    optional bool resume_subs = 9;
+    // order_matters 表示是否保持 Paho 消息顺序。
+    optional bool order_matters = 10;
+    // write_timeout 为 MQTT 写操作超时时间。
+    google.protobuf.Duration write_timeout = 11;
+    // connect_retry_interval 为连接重试间隔。
+    google.protobuf.Duration connect_retry_interval = 12;
+    // max_reconnect_interval 为最大重连间隔。
+    google.protobuf.Duration max_reconnect_interval = 13;
+    // tls 为 MQTT TLS 配置。
+    Tls tls = 14;
+  }
+
   // http 为 HTTP 服务端配置。
   optional Http http = 1;
   // grpc 为 gRPC 服务端配置。
@@ -279,4 +311,6 @@ message Server {
   optional Mcp mcp = 3;
   // sse 为 SSE 服务端配置。
   optional Sse sse = 4;
+  // mqtt 为 MQTT 订阅服务配置。
+  optional Mqtt mqtt = 5;
 }
