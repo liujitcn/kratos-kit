@@ -4,15 +4,15 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.42
+	github.com/liujitcn/kratos-kit/api v0.0.43
 	github.com/liujitcn/kratos-kit/broker v0.0.15
-	github.com/liujitcn/kratos-kit/broker/mqtt v0.0.1
+	github.com/liujitcn/kratos-kit/broker/mqtt v0.0.2
 )
 
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/eclipse/paho.mqtt.golang v1.5.1 // indirect
+	github.com/eclipse/paho.golang v0.10.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/form/v4 v4.5.0 // indirect

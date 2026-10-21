@@ -37,6 +37,12 @@ type Server struct {
 // Stats 是 MQTT 服务运行统计快照。
 type Stats = mqtt.Stats
 
+// MessageRecord 是 MQTT 消息事件记录。
+type MessageRecord = mqtt.MessageRecord
+
+// Recorder 接收 MQTT 消息事件，具体持久化由宿主实现。
+type Recorder = mqtt.Recorder
+
 var _ transport.Server = (*Server)(nil)
 
 // ServerOption 配置 MQTT 订阅服务。
@@ -107,6 +113,16 @@ func WithConnectRetryInterval(interval time.Duration) ServerOption {
 // WithMaxReconnectInterval 设置 MQTT 最大重连间隔。
 func WithMaxReconnectInterval(interval time.Duration) ServerOption {
 	return WithBrokerOptions(mqtt.WithMaxReconnectInterval(interval))
+}
+
+// WithNoLocal 设置 MQTT 订阅是否忽略当前客户端发布的消息。
+func WithNoLocal(noLocal bool) broker.SubscribeOption {
+	return mqtt.WithNoLocal(noLocal)
+}
+
+// WithQoS 设置 MQTT 订阅服务使用的最大 QoS。
+func WithQoS(qos byte) broker.SubscribeOption {
+	return mqtt.WithQoS(qos)
 }
 
 // NewServer 创建 MQTT 订阅服务。
@@ -261,6 +277,19 @@ func (s *Server) Stats() Stats {
 	stats.RegisteredSubscriptions = registered
 	stats.ActiveSubscriptions = active
 	return stats
+}
+
+// SetRecorder 设置 MQTT 消息事件记录器。
+func (s *Server) SetRecorder(recorder Recorder) {
+	if s == nil {
+		return
+	}
+	s.mu.Lock()
+	instance := s.broker
+	s.mu.Unlock()
+	if provider, ok := instance.(interface{ SetRecorder(mqtt.Recorder) }); ok {
+		provider.SetRecorder(recorder)
+	}
 }
 
 // unsubscribeAll 取消当前服务维护的全部订阅并清空运行时订阅快照。
