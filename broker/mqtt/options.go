@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/liujitcn/kratos-kit/broker"
 )
 
@@ -20,6 +19,7 @@ type writeTimeoutKey struct{}
 type connectRetryIntervalKey struct{}
 type maxReconnectIntervalKey struct{}
 type qosKey struct{}
+type noLocalKey struct{}
 
 type authOptions struct {
 	username string
@@ -84,6 +84,11 @@ func WithMaxReconnectInterval(interval time.Duration) broker.Option {
 // WithQoS 设置 MQTT 发布或订阅的默认 QoS。
 func WithQoS(qos byte) broker.SubscribeOption {
 	return broker.SubscribeContextWithValue(qosKey{}, qos)
+}
+
+// WithNoLocal 设置 MQTT 订阅是否忽略当前客户端发布的消息。
+func WithNoLocal(noLocal bool) broker.SubscribeOption {
+	return broker.SubscribeContextWithValue(noLocalKey{}, noLocal)
 }
 
 // WithPublishQoS 设置 MQTT 发布消息的 QoS。
@@ -153,56 +158,14 @@ func qosFromSubscribeOptions(options broker.SubscribeOptions) byte {
 	return 0
 }
 
+func noLocalFromSubscribeOptions(options broker.SubscribeOptions) bool {
+	value, _ := options.Context.Value(noLocalKey{}).(bool)
+	return value
+}
+
 func qosFromPublishOptions(options broker.PublishOptions) byte {
 	if value, ok := options.Context.Value(qosKey{}).(byte); ok && value <= 2 {
 		return value
 	}
 	return 0
-}
-
-func applyClientOptions(options broker.Options, clientOptions *mqtt.ClientOptions) {
-	addresses := options.Addrs
-	if len(addresses) == 0 {
-		addresses = []string{"tcp://127.0.0.1:1883"}
-	}
-	for _, address := range addresses {
-		clientOptions.AddBroker(address)
-	}
-	if auth, ok := authFromContext(options.Context); ok {
-		clientOptions.SetUsername(auth.username)
-		clientOptions.SetPassword(auth.password)
-	}
-	if clientID, ok := clientIDFromContext(options.Context); ok {
-		clientOptions.SetClientID(clientID)
-	}
-	if cleanSession, ok := cleanSessionFromContext(options.Context); ok {
-		clientOptions.SetCleanSession(cleanSession)
-	}
-	if keepAlive, ok := keepAliveFromContext(options.Context); ok && keepAlive > 0 {
-		clientOptions.SetKeepAlive(keepAlive)
-	}
-	if connectTimeout, ok := connectTimeoutFromContext(options.Context); ok && connectTimeout > 0 {
-		clientOptions.SetConnectTimeout(connectTimeout)
-	}
-	if autoReconnect, ok := autoReconnectFromContext(options.Context); ok {
-		clientOptions.SetAutoReconnect(autoReconnect)
-	}
-	if resumeSubs, ok := resumeSubsFromContext(options.Context); ok {
-		clientOptions.SetResumeSubs(resumeSubs)
-	}
-	if orderMatters, ok := orderMattersFromContext(options.Context); ok {
-		clientOptions.SetOrderMatters(orderMatters)
-	}
-	if writeTimeout, ok := writeTimeoutFromContext(options.Context); ok && writeTimeout > 0 {
-		clientOptions.SetWriteTimeout(writeTimeout)
-	}
-	if connectRetryInterval, ok := connectRetryIntervalFromContext(options.Context); ok && connectRetryInterval > 0 {
-		clientOptions.SetConnectRetryInterval(connectRetryInterval)
-	}
-	if maxReconnectInterval, ok := maxReconnectIntervalFromContext(options.Context); ok && maxReconnectInterval > 0 {
-		clientOptions.SetMaxReconnectInterval(maxReconnectInterval)
-	}
-	if options.TLSConfig != nil {
-		clientOptions.SetTLSConfig(options.TLSConfig)
-	}
 }

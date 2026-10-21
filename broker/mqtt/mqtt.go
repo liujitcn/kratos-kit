@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/eclipse/paho.golang/autopaho"
+	paho "github.com/eclipse/paho.golang/paho"
 	"github.com/liujitcn/kratos-kit/broker"
 )
 
@@ -23,7 +25,8 @@ var (
 type mqttBroker struct {
 	mu                 sync.RWMutex
 	options            broker.Options
-	client             mqtt.Client
+	client             *autopaho.ConnectionManager
+	router             *paho.StandardRouter
 	connected          bool
 	subscribers        *broker.SubscriberSyncMap
 	subscriberID       atomic.Uint64
@@ -41,44 +44,15 @@ type mqttBroker struct {
 	maxReceiveInFlight atomic.Uint64
 	receiveErrors      atomic.Uint64
 	subscribeErrors    atomic.Uint64
-}
-
-// Stats 描述 MQTT 客户端连接、订阅和消息处理快照。
-type Stats struct {
-	Connected               bool
-	Address                 string
-	ClientID                string
-	ConnectedAt             time.Time
-	DisconnectedAt          time.Time
-	RegisteredSubscriptions uint64
-	ActiveSubscriptions     uint64
-	Published               uint64
-	PublishPending          uint64
-	MaxPublishPending       uint64
-	PublishErrors           uint64
-	Received                uint64
-	Handled                 uint64
-	ReceiveInFlight         uint64
-	MaxReceiveInFlight      uint64
-	ReceiveErrors           uint64
-	SubscribeErrors         uint64
-	LastError               string
-}
-
-// StatsProvider 提供 MQTT 客户端运行统计快照。
-type StatsProvider interface {
-	Stats() Stats
+	recorderMu         sync.RWMutex
+	recorder           Recorder
 }
 
 var _ broker.Broker = (*mqttBroker)(nil)
-var _ StatsProvider = (*mqttBroker)(nil)
 
-// NewBroker 创建基于 Paho 的 MQTT 客户端 Broker。
+// NewBroker 创建基于 MQTT 5 Paho 的 MQTT 客户端 Broker。
 func NewBroker(options ...broker.Option) broker.Broker {
-	return &mqttBroker{
-		options:     broker.NewOptionsAndApply(options...),
-		subscribers: broker.NewSubscriberSyncMap(),
-	}
+	return &mqttBroker{options: broker.NewOptionsAndApply(options...), subscribers: broker.NewSubscriberSyncMap()}
 }
 
 // Name 返回 Broker 类型名称。
@@ -106,38 +80,6 @@ func (b *mqttBroker) Address() string {
 	return b.options.Addrs[0]
 }
 
-// Stats 返回 MQTT 客户端运行统计快照。
-func (b *mqttBroker) Stats() Stats {
-	options := b.Options()
-	b.mu.RLock()
-	connected := b.connected
-	b.mu.RUnlock()
-	b.statsMu.RLock()
-	lastError := b.lastError
-	connectedAt := b.connectedAt
-	disconnectedAt := b.disconnectedAt
-	b.statsMu.RUnlock()
-	clientID, _ := clientIDFromContext(options.Context)
-	return Stats{
-		Connected:          connected,
-		Address:            b.Address(),
-		ClientID:           clientID,
-		ConnectedAt:        connectedAt,
-		DisconnectedAt:     disconnectedAt,
-		Published:          b.published.Load(),
-		PublishPending:     b.publishPending.Load(),
-		MaxPublishPending:  b.maxPublishPending.Load(),
-		PublishErrors:      b.publishErrors.Load(),
-		Received:           b.received.Load(),
-		Handled:            b.handled.Load(),
-		ReceiveInFlight:    b.receiveInFlight.Load(),
-		MaxReceiveInFlight: b.maxReceiveInFlight.Load(),
-		ReceiveErrors:      b.receiveErrors.Load(),
-		SubscribeErrors:    b.subscribeErrors.Load(),
-		LastError:          lastError,
-	}
-}
-
 // Init 初始化 MQTT 客户端配置。
 func (b *mqttBroker) Init(options ...broker.Option) error {
 	b.mu.Lock()
@@ -149,68 +91,106 @@ func (b *mqttBroker) Init(options ...broker.Option) error {
 	return nil
 }
 
-// Connect 连接 MQTT Broker。
+// Connect 连接 MQTT 5 Broker。
 func (b *mqttBroker) Connect() error {
-	b.mu.Lock()
+	b.mu.RLock()
 	if b.connected {
-		b.mu.Unlock()
+		b.mu.RUnlock()
 		return nil
 	}
 	options := b.options
-	clientOptions := mqtt.NewClientOptions()
-	applyClientOptions(options, clientOptions)
-	clientOptions.SetConnectionLostHandler(func(_ mqtt.Client, err error) {
-		b.mu.Lock()
-		b.connected = false
-		b.mu.Unlock()
-		b.statsMu.Lock()
-		b.disconnectedAt = time.Now()
-		b.statsMu.Unlock()
-		b.recordError(err)
-		if options.ErrorHandler != nil {
-			_ = options.ErrorHandler(context.Background(), &connectionEvent{err: err})
-		}
-	})
-	clientOptions.SetOnConnectHandler(func(client mqtt.Client) {
-		b.mu.Lock()
-		b.connected = true
-		b.client = client
-		subscribers := b.subscribers.GetAll()
-		resumeSubs := true
-		if value, ok := resumeSubsFromContext(options.Context); ok {
-			resumeSubs = value
-		}
-		b.mu.Unlock()
-		b.statsMu.Lock()
-		b.connectedAt = time.Now()
-		b.statsMu.Unlock()
-		if !resumeSubs {
-			return
-		}
-		for _, item := range subscribers {
-			if sub, ok := item.(*mqttSubscriber); ok {
-				_ = sub.subscribe(client)
-			}
-		}
-	})
-	b.mu.Unlock()
-
-	client := mqtt.NewClient(clientOptions)
-	token := client.Connect()
-	if !token.WaitTimeout(30 * time.Second) {
-		err := errors.New("mqtt broker: connect timeout")
-		b.recordError(err)
-		return err
+	b.mu.RUnlock()
+	connectTimeout := 30 * time.Second
+	if value, ok := connectTimeoutFromContext(options.Context); ok && value > 0 {
+		connectTimeout = value
 	}
-	if err := token.Error(); err != nil {
-		wrappedErr := fmt.Errorf("mqtt broker: connect: %w", err)
-		b.recordError(wrappedErr)
-		return wrappedErr
+	router := paho.NewStandardRouter()
+	addresses := options.Addrs
+	if len(addresses) == 0 {
+		addresses = []string{"tcp://127.0.0.1:1883"}
+	}
+	brokers := make([]*url.URL, 0, len(addresses))
+	for _, address := range addresses {
+		parsed, err := url.Parse(address)
+		if err != nil {
+			b.recordError(err)
+			return fmt.Errorf("mqtt broker: parse endpoint: %w", err)
+		}
+		brokers = append(brokers, parsed)
+	}
+	clientConfig := autopaho.ClientConfig{
+		BrokerUrls:        brokers,
+		TlsCfg:            options.TLSConfig,
+		KeepAlive:         keepAliveSeconds(options),
+		ConnectRetryDelay: connectRetryDelay(options),
+		ConnectTimeout:    connectTimeout,
+		ClientConfig: paho.ClientConfig{
+			ClientID: optionsClientID(options),
+			Router:   router,
+			OnServerDisconnect: func(disconnect *paho.Disconnect) {
+				b.markDisconnected()
+				b.recordError(fmt.Errorf("mqtt server disconnect: %d", disconnect.ReasonCode))
+				if options.ErrorHandler != nil {
+					_ = options.ErrorHandler(context.Background(), &connectionEvent{err: fmt.Errorf("mqtt server disconnect: %d", disconnect.ReasonCode)})
+				}
+			},
+			OnClientError: func(clientErr error) {
+				b.markDisconnected()
+				b.recordError(clientErr)
+				if options.ErrorHandler != nil {
+					_ = options.ErrorHandler(context.Background(), &connectionEvent{err: clientErr})
+				}
+			},
+		},
+		OnConnectionUp: func(manager *autopaho.ConnectionManager, _ *paho.Connack) {
+			b.mu.Lock()
+			b.client = manager
+			b.connected = true
+			subscribers := b.subscribers.GetAll()
+			b.mu.Unlock()
+			resume := true
+			if value, ok := resumeSubsFromContext(options.Context); ok {
+				resume = value
+			}
+			if resume {
+				for _, item := range subscribers {
+					if subscriber, ok := item.(*mqttSubscriber); ok {
+						_ = subscriber.subscribe(manager)
+					}
+				}
+			}
+		},
+		OnConnectError: func(connectErr error) {
+			b.recordError(connectErr)
+		},
+	}
+	if auth, ok := authFromContext(options.Context); ok {
+		clientConfig.SetUsernamePassword(auth.username, []byte(auth.password))
+	}
+	manager, err := autopaho.NewConnection(context.Background(), clientConfig)
+	if err != nil {
+		b.recordError(err)
+		return fmt.Errorf("mqtt broker: connect: %w", err)
+	}
+	connectContext, cancel := context.WithTimeout(context.Background(), connectTimeout)
+	defer cancel()
+	if err = manager.AwaitConnection(connectContext); err != nil {
+		b.statsMu.RLock()
+		lastError := b.lastError
+		b.statsMu.RUnlock()
+		if lastError == "" {
+			lastError = err.Error()
+		}
+		return fmt.Errorf("mqtt broker: connect: %w (last attempt: %s)", err, lastError)
 	}
 	b.mu.Lock()
-	b.client = client
+	b.client = manager
+	b.router = router
 	b.connected = true
 	b.mu.Unlock()
+	b.statsMu.Lock()
+	b.connectedAt = time.Now()
+	b.statsMu.Unlock()
 	return nil
 }
 
@@ -224,28 +204,32 @@ func (b *mqttBroker) Disconnect() error {
 	b.statsMu.Lock()
 	b.disconnectedAt = time.Now()
 	b.statsMu.Unlock()
-	if client != nil && client.IsConnected() {
-		client.Disconnect(1000)
+	if client != nil {
+		return client.Disconnect(context.Background())
 	}
 	return nil
 }
 
 // Publish 发布 MQTT 消息。
 func (b *mqttBroker) Publish(ctx context.Context, topic string, message *broker.Message, opts ...broker.PublishOption) error {
+	startedAt := time.Now()
 	if message == nil {
 		err := errors.New("mqtt broker: message is nil")
 		b.recordPublishError(err)
+		b.recordPublishMessage(ctx, topic, nil, 0, StatusFailed, err, startedAt)
 		return err
 	}
 	b.mu.RLock()
 	client := b.client
+	connected := b.connected
 	codec := b.options.Codec
 	b.mu.RUnlock()
-	if client == nil || !client.IsConnected() {
-		b.recordPublishError(ErrNotConnected)
+	if client == nil || !connected {
+		err := ErrNotConnected
+		b.recordPublishError(err)
+		b.recordPublishMessage(ctx, topic, nil, 0, StatusFailed, err, startedAt)
 		return ErrNotConnected
 	}
-	b.beginPublish()
 	publishOptions := broker.NewPublishOptions(opts...)
 	var payload []byte
 	var err error
@@ -254,56 +238,33 @@ func (b *mqttBroker) Publish(ctx context.Context, topic string, message *broker.
 	} else if codec != nil {
 		payload, err = codec.Marshal(message.Body)
 		if err != nil {
-			b.finishPublish()
 			b.recordPublishError(err)
+			b.recordPublishMessage(ctx, topic, nil, qosFromPublishOptions(publishOptions), StatusFailed, err, startedAt)
 			return err
 		}
 	} else {
-		err := errors.New("mqtt broker: codec is nil")
-		b.finishPublish()
+		err = errors.New("mqtt broker: codec is nil")
 		b.recordPublishError(err)
+		b.recordPublishMessage(ctx, topic, nil, qosFromPublishOptions(publishOptions), StatusFailed, err, startedAt)
 		return err
 	}
-	token := client.Publish(topic, qosFromPublishOptions(publishOptions), false, payload)
-	if publishOptions.Async {
-		go func() {
-			err := token.Error()
-			b.finishPublish()
-			if err != nil {
-				b.recordPublishError(err)
-			} else {
-				b.published.Add(1)
-			}
-			if publishOptions.Callback != nil {
-				publishOptions.Callback(err)
-			}
-		}()
-		return nil
-	}
+	b.beginPublish()
 	defer b.finishPublish()
-	if publishOptions.Timeout > 0 && !token.WaitTimeout(publishOptions.Timeout) {
-		err := context.DeadlineExceeded
+	response, err := client.Publish(ctx, &paho.Publish{Topic: topic, QoS: qosFromPublishOptions(publishOptions), Payload: payload})
+	if err != nil {
 		b.recordPublishError(err)
+		b.recordPublishMessage(ctx, topic, payload, qosFromPublishOptions(publishOptions), StatusFailed, err, startedAt)
 		return err
 	}
-	if publishOptions.Timeout <= 0 && !token.Wait() {
-		err := context.Canceled
+	if response != nil && response.ReasonCode >= 0x80 {
+		err = fmt.Errorf("mqtt broker: publish refused: reason_code=%d", response.ReasonCode)
 		b.recordPublishError(err)
+		b.recordPublishMessage(ctx, topic, payload, qosFromPublishOptions(publishOptions), StatusFailed, err, startedAt)
 		return err
 	}
-	if err = token.Error(); err != nil {
-		b.recordPublishError(err)
-		return err
-	}
-	select {
-	case <-ctx.Done():
-		err := ctx.Err()
-		b.recordPublishError(err)
-		return err
-	default:
-		b.published.Add(1)
-		return nil
-	}
+	b.published.Add(1)
+	b.recordPublishMessage(ctx, topic, payload, qosFromPublishOptions(publishOptions), StatusSent, nil, startedAt)
+	return nil
 }
 
 // Subscribe 订阅 MQTT 主题。
@@ -316,8 +277,10 @@ func (b *mqttBroker) Subscribe(topic string, handler broker.Handler, binder brok
 	}
 	b.mu.RLock()
 	client := b.client
+	router := b.router
+	connected := b.connected
 	b.mu.RUnlock()
-	if client == nil || !client.IsConnected() {
+	if client == nil || router == nil || !connected {
 		b.subscribeErrors.Add(1)
 		b.recordError(ErrNotConnected)
 		return nil, ErrNotConnected
@@ -331,9 +294,11 @@ func (b *mqttBroker) Subscribe(topic string, handler broker.Handler, binder brok
 		options: options,
 		id:      b.subscriberID.Add(1),
 	}
+	router.RegisterHandler(topic, subscriber.handle)
 	if err := subscriber.subscribe(client); err != nil {
 		b.subscribeErrors.Add(1)
 		b.recordError(err)
+		router.UnregisterHandler(topic)
 		return nil, err
 	}
 	b.subscribers.Add(topic, subscriber)
@@ -357,42 +322,51 @@ type mqttSubscriber struct {
 func (s *mqttSubscriber) Options() broker.SubscribeOptions { return s.options }
 func (s *mqttSubscriber) Topic() string                    { return s.topic }
 
-func (s *mqttSubscriber) subscribe(client mqtt.Client) error {
-	token := client.Subscribe(s.topic, qosFromSubscribeOptions(s.options), func(_ mqtt.Client, message mqtt.Message) {
-		s.owner.received.Add(1)
-		inFlight := s.owner.receiveInFlight.Add(1)
-		s.owner.updateMax(&s.owner.maxReceiveInFlight, inFlight)
-		defer s.owner.receiveInFlight.Add(^uint64(0))
-		event := newMessageEvent(s.topic, message, s.binder, s.owner.Options().Codec)
-		ctx := s.options.Context
-		if ctx == nil {
-			ctx = context.Background()
-		}
-		if event.err == nil {
-			event.err = s.handler(ctx, event)
-		}
-		if event.err != nil {
-			s.owner.receiveErrors.Add(1)
-			s.owner.recordError(event.err)
-			options := s.owner.Options()
-			if options.ErrorHandler != nil {
-				_ = options.ErrorHandler(ctx, event)
-			}
-		} else {
-			s.owner.handled.Add(1)
-		}
-	})
-	if !token.WaitTimeout(30 * time.Second) {
-		err := errors.New("mqtt broker: subscribe timeout")
-		s.owner.recordError(err)
-		return err
+func (s *mqttSubscriber) subscribe(client *autopaho.ConnectionManager) error {
+	result, err := client.Subscribe(context.Background(), &paho.Subscribe{Subscriptions: map[string]paho.SubscribeOptions{
+		s.topic: {
+			QoS:     qosFromSubscribeOptions(s.options),
+			NoLocal: noLocalFromSubscribeOptions(s.options),
+		},
+	}})
+	if err != nil {
+		return fmt.Errorf("mqtt broker: subscribe %q: %w", s.topic, err)
 	}
-	if err := token.Error(); err != nil {
-		wrappedErr := fmt.Errorf("mqtt broker: subscribe %q: %w", s.topic, err)
-		s.owner.recordError(wrappedErr)
-		return wrappedErr
+	if result == nil || len(result.Reasons) == 0 || result.Reasons[0] >= 0x80 {
+		return fmt.Errorf("mqtt broker: subscribe %q refused", s.topic)
 	}
 	return nil
+}
+
+func (s *mqttSubscriber) handle(raw *paho.Publish) {
+	startedAt := time.Now()
+	s.owner.received.Add(1)
+	inFlight := s.owner.receiveInFlight.Add(1)
+	s.owner.updateMax(&s.owner.maxReceiveInFlight, inFlight)
+	defer s.owner.receiveInFlight.Add(^uint64(0))
+	event := newMessageEvent(raw.Topic, raw, s.binder, s.owner.Options().Codec)
+	ctx := s.options.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if event.err == nil {
+		event.err = s.handler(ctx, event)
+	}
+	status := StatusHandled
+	if event.err != nil {
+		status = StatusFailed
+	}
+	s.owner.recordSubscribeMessage(ctx, raw, status, event.err, startedAt)
+	if event.err != nil {
+		s.owner.receiveErrors.Add(1)
+		s.owner.recordError(event.err)
+		options := s.owner.Options()
+		if options.ErrorHandler != nil {
+			_ = options.ErrorHandler(ctx, event)
+		}
+	} else {
+		s.owner.handled.Add(1)
+	}
 }
 
 // Unsubscribe 取消 MQTT 主题订阅。
@@ -402,60 +376,21 @@ func (s *mqttSubscriber) Unsubscribe(removeFromManager bool) error {
 	}
 	s.owner.mu.RLock()
 	client := s.owner.client
+	router := s.owner.router
 	s.owner.mu.RUnlock()
-	if client != nil && client.IsConnected() {
-		token := client.Unsubscribe(s.topic)
-		if !token.WaitTimeout(30 * time.Second) {
-			return errors.New("mqtt broker: unsubscribe timeout")
-		}
-		if err := token.Error(); err != nil {
+	if client != nil {
+		_, err := client.Unsubscribe(context.Background(), &paho.Unsubscribe{Topics: []string{s.topic}})
+		if err != nil {
 			return err
 		}
+	}
+	if router != nil {
+		router.UnregisterHandler(s.topic)
 	}
 	if removeFromManager {
 		s.owner.subscribers.RemoveOnly(s.topic)
 	}
 	return nil
-}
-
-// beginPublish 记录一个等待 Broker 确认的发布消息。
-func (b *mqttBroker) beginPublish() {
-	pending := b.publishPending.Add(1)
-	b.updateMax(&b.maxPublishPending, pending)
-}
-
-// finishPublish 记录一个已结束等待的发布消息。
-func (b *mqttBroker) finishPublish() {
-	b.publishPending.Add(^uint64(0))
-}
-
-// recordPublishError 记录发布失败和最近错误。
-func (b *mqttBroker) recordPublishError(err error) {
-	if err == nil {
-		return
-	}
-	b.publishErrors.Add(1)
-	b.recordError(err)
-}
-
-// recordError 更新最近一次 MQTT 错误。
-func (b *mqttBroker) recordError(err error) {
-	if err == nil {
-		return
-	}
-	b.statsMu.Lock()
-	b.lastError = err.Error()
-	b.statsMu.Unlock()
-}
-
-// updateMax 更新原子峰值计数。
-func (b *mqttBroker) updateMax(target *atomic.Uint64, value uint64) {
-	for current := target.Load(); value > current; {
-		if target.CompareAndSwap(current, value) {
-			return
-		}
-		current = target.Load()
-	}
 }
 
 type messageEvent struct {
@@ -464,24 +399,23 @@ type messageEvent struct {
 	err     error
 }
 
-func newMessageEvent(topic string, raw mqtt.Message, binder broker.Binder, codec interface {
+func newMessageEvent(topic string, raw *paho.Publish, binder broker.Binder, codec interface {
 	Unmarshal([]byte, any) error
 }) *messageEvent {
 	message := broker.NewMessage(nil)
-	message.ID = fmt.Sprintf("%d", raw.MessageID())
-	message.Metadata["mqtt.qos"] = raw.Qos()
-	message.Metadata["mqtt.duplicate"] = raw.Duplicate()
-	message.Metadata["mqtt.retained"] = raw.Retained()
+	message.ID = fmt.Sprintf("%d", raw.PacketID)
+	message.Metadata["mqtt.qos"] = raw.QoS
+	message.Metadata["mqtt.retained"] = raw.Retain
 	message.Msg = raw
 	if binder == nil {
-		message.Body = append([]byte(nil), raw.Payload()...)
+		message.Body = append([]byte(nil), raw.Payload...)
 		return &messageEvent{topic: topic, message: message}
 	}
 	body := binder()
 	if codec == nil {
 		return &messageEvent{topic: topic, message: message, err: errors.New("mqtt broker: codec is nil")}
 	}
-	if err := codec.Unmarshal(raw.Payload(), body); err != nil {
+	if err := codec.Unmarshal(raw.Payload, body); err != nil {
 		return &messageEvent{topic: topic, message: message, err: err}
 	}
 	message.Body = body
@@ -501,3 +435,40 @@ func (e *connectionEvent) Message() *broker.Message { return broker.NewMessage(n
 func (e *connectionEvent) RawMessage() any          { return nil }
 func (e *connectionEvent) Ack() error               { return nil }
 func (e *connectionEvent) Error() error             { return e.err }
+
+func optionsClientID(options broker.Options) string {
+	if value, ok := clientIDFromContext(options.Context); ok && value != "" {
+		return value
+	}
+	return fmt.Sprintf("kratos-mqtt-%d", time.Now().UnixNano())
+}
+
+func keepAliveSeconds(options broker.Options) uint16 {
+	if value, ok := keepAliveFromContext(options.Context); ok && value > 0 {
+		return uint16(value / time.Second)
+	}
+	return 30
+}
+
+func cleanSession(options broker.Options) bool {
+	if value, ok := cleanSessionFromContext(options.Context); ok {
+		return value
+	}
+	return true
+}
+
+func connectRetryDelay(options broker.Options) time.Duration {
+	if value, ok := connectRetryIntervalFromContext(options.Context); ok && value > 0 {
+		return value
+	}
+	return 5 * time.Second
+}
+
+func (b *mqttBroker) markDisconnected() {
+	b.mu.Lock()
+	b.connected = false
+	b.mu.Unlock()
+	b.statsMu.Lock()
+	b.disconnectedAt = time.Now()
+	b.statsMu.Unlock()
+}
