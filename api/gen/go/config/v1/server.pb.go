@@ -7,14 +7,13 @@
 package configv1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -962,7 +961,9 @@ type Server_Mqtt struct {
 	// max_reconnect_interval 为最大重连间隔。
 	MaxReconnectInterval *durationpb.Duration `protobuf:"bytes,13,opt,name=max_reconnect_interval,json=maxReconnectInterval,proto3" json:"max_reconnect_interval,omitempty"`
 	// tls 为 MQTT TLS 配置。
-	Tls           *Tls `protobuf:"bytes,14,opt,name=tls,proto3" json:"tls,omitempty"`
+	Tls *Tls `protobuf:"bytes,14,opt,name=tls,proto3" json:"tls,omitempty"`
+	// record_all 表示是否额外订阅全部 MQTT 主题并记录收到的消息。
+	RecordAll     bool `protobuf:"varint,15,opt,name=record_all,json=recordAll,proto3" json:"record_all,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1093,6 +1094,13 @@ func (x *Server_Mqtt) GetTls() *Tls {
 		return x.Tls
 	}
 	return nil
+}
+
+func (x *Server_Mqtt) GetRecordAll() bool {
+	if x != nil {
+		return x.RecordAll
+	}
+	return false
 }
 
 // RateLimiter 描述限流器配置。
@@ -1664,7 +1672,7 @@ var File_config_v1_server_proto protoreflect.FileDescriptor
 
 const file_config_v1_server_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x87&\n" +
+	"\x16config/v1/server.proto\x12\tconfig.v1\x1a\x13config/v1/tls.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xa6&\n" +
 	"\x06Server\x12/\n" +
 	"\x04http\x18\x01 \x01(\v2\x16.config.v1.Server.HttpH\x00R\x04http\x88\x01\x01\x12/\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x16.config.v1.Server.GrpcH\x01R\x04grpc\x88\x01\x01\x12,\n" +
@@ -1806,7 +1814,7 @@ const file_config_v1_server_proto_rawDesc = "" +
 	"\x13HTTP_BODY_MODE_JSON\x10\x02\x12\x17\n" +
 	"\x13HTTP_BODY_MODE_FORM\x10\x03\x12\x16\n" +
 	"\x12HTTP_BODY_MODE_RAW\x10\x04B\x13\n" +
-	"\x11_enable_keepalive\x1a\xb8\x05\n" +
+	"\x11_enable_keepalive\x1a\xd7\x05\n" +
 	"\x04Mqtt\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x12\x1b\n" +
 	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12\x1a\n" +
@@ -1824,7 +1832,9 @@ const file_config_v1_server_proto_rawDesc = "" +
 	"\rwrite_timeout\x18\v \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x12O\n" +
 	"\x16connect_retry_interval\x18\f \x01(\v2\x19.google.protobuf.DurationR\x14connectRetryInterval\x12O\n" +
 	"\x16max_reconnect_interval\x18\r \x01(\v2\x19.google.protobuf.DurationR\x14maxReconnectInterval\x12 \n" +
-	"\x03tls\x18\x0e \x01(\v2\x0e.config.v1.TlsR\x03tlsB\x10\n" +
+	"\x03tls\x18\x0e \x01(\v2\x0e.config.v1.TlsR\x03tls\x12\x1d\n" +
+	"\n" +
+	"record_all\x18\x0f \x01(\bR\trecordAllB\x10\n" +
 	"\x0e_clean_sessionB\x11\n" +
 	"\x0f_auto_reconnectB\x0e\n" +
 	"\f_resume_subsB\x10\n" +

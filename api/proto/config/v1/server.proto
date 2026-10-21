@@ -301,6 +301,8 @@ message Server {
     google.protobuf.Duration max_reconnect_interval = 13;
     // tls 为 MQTT TLS 配置。
     Tls tls = 14;
+    // record_all 表示是否额外订阅全部 MQTT 主题并记录收到的消息。
+    bool record_all = 15;
   }
 
   // http 为 HTTP 服务端配置。
