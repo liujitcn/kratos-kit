@@ -98,7 +98,7 @@ func (x *Data) GetQueue() *Data_Queue {
 // Database 描述数据库连接与观测配置。
 type Data_Database struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// driver 为驱动名，例如 mysql、postgres、sqlite。
+	// driver 为驱动名，例如 mysql、tidb、postgres、sqlite。
 	Driver string `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
 	// source 为数据源 DSN 字符串。
 	Source string `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`

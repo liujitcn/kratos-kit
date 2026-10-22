@@ -9,7 +9,7 @@ import "google/protobuf/duration.proto";
 message Data {
   // Database 描述数据库连接与观测配置。
   message Database {
-    // driver 为驱动名，例如 mysql、postgres、sqlite。
+    // driver 为驱动名，例如 mysql、tidb、postgres、sqlite。
     string driver = 1;
     // source 为数据源 DSN 字符串。
     string source = 2;
