@@ -68,7 +68,7 @@ func NewGormClient(cfg *configv1.Data_Database, options ...ClientOption) (*Clien
 	}
 
 	source := cfg.Source
-	if cfg.Driver == "mysql" || cfg.Driver == "doris" {
+	if cfg.Driver == "mysql" || cfg.Driver == "doris" || cfg.Driver == "tidb" {
 		source = ensureMySQLMultiStatements(source)
 	}
 	db, err := gorm.Open(gormDriver(source), &gorm.Config{

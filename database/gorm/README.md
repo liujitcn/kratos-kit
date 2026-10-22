@@ -6,12 +6,12 @@
 
 | 能力 | 当前行为 |
 | --- | --- |
-| 数据库驱动 | 支持 `mysql`、`doris`、`postgres`、`sqlite`、`sqlserver`、`oracle`、`bigquery`，使用前需要导入对应 driver 子模块 |
+| 数据库驱动 | 支持 `mysql`、`tidb`、`doris`、`postgres`、`sqlite`、`sqlserver`、`oracle`、`bigquery`，使用前需要导入对应 driver 子模块 |
 | 连接管理 | 支持最大空闲连接数、最大打开连接数和连接最大生命周期 |
 | SQL 日志 | `debug: true` 时输出 GORM Info 级别 SQL 日志，慢 SQL 阈值为 1 秒 |
 | 链路追踪 | `enable_trace: true` 时启用 GORM OpenTelemetry tracing 插件 |
 | Prometheus | `enable_metrics: true` 时启用 GORM Prometheus 插件 |
-| 自动迁移 | `enable_migrate: true` 时对已注册模型执行 `AutoMigrate`；Doris 支持建表和新增字段 |
+| 自动迁移 | `enable_migrate: true` 时对已注册模型执行 `AutoMigrate`；TiDB 复用 MySQL 方言，Doris 支持建表和新增字段 |
 | 版本化迁移 | 已注册的 `migration/assets` SQL 默认执行，不受 `enable_migrate` 影响 |
 | 表注释 | 自动迁移后为实现 `TableCommenter` 的已注册模型回填表注释 |
 | 审计字段 | 创建时填充 `created_by`、`updated_by`、`created_at`、`updated_at`；更新时刷新 `updated_by`、`updated_at` |
@@ -70,7 +70,7 @@ go get github.com/liujitcn/kratos-kit/database/gorm/migration@latest
 ```go
 import (
 	_ "github.com/liujitcn/kratos-kit/database/gorm/driver/bigquery"
-	_ "github.com/liujitcn/kratos-kit/database/gorm/driver/mysql" // 同时注册 mysql、doris
+	_ "github.com/liujitcn/kratos-kit/database/gorm/driver/mysql" // 同时注册 mysql、tidb、doris
 	_ "github.com/liujitcn/kratos-kit/database/gorm/driver/oracle"
 	_ "github.com/liujitcn/kratos-kit/database/gorm/driver/postgres"
 	_ "github.com/liujitcn/kratos-kit/database/gorm/driver/sqlite"
@@ -151,6 +151,16 @@ connection_max_lifetime: 1h
 
 `NewGormClient` 返回的 `cleanup` 用于关闭底层 `sql.DB`。
 
+TiDB 使用 MySQL 协议，配置驱动名为 `tidb`，默认端口为 `4000`：
+
+```yaml
+driver: tidb
+source: "root:password@tcp(127.0.0.1:4000)/test?charset=utf8mb4&parseTime=true&loc=Local"
+enable_migrate: true
+```
+
+客户端会为 `tidb` 自动补充 `multiStatements=true`，因此版本化迁移中的多条 SQL 可以在同一迁移文件中执行。TiDB 的迁移资源直接使用 `assets/<version>/mysql` 目录，不需要复制一套 `tidb` SQL。
+
 ## 多数据源
 
 `Data` 同时支持旧的单数据库配置和按名称区分的多个数据库配置：
@@ -196,7 +206,8 @@ kit 只定义 `migration.ModuleName` 类型，不内置具体业务模块枚举�
 `module` 区分迁移模块，使用 `data_source` 区分目标数据源，并保存 `description` 描述。
 资源目录最外层只放版本目录，支持兼容的纯数字格式（如 `000001`）以及
 `v0.0.1`、`v0.0.1-20260511170946`、`v0.0.1.20260511170946` 三种版本格式。
-每个版本目录下按真实数据库类型建立 `mysql` 或 `doris` 目录。数据库类型目录下的直系文件
+每个版本目录下按真实数据库类型建立 `mysql`、`doris` 或 `postgres` 目录；TiDB 驱动复用
+`mysql` 目录的迁移资源。数据库类型目录下的直系文件
 属于 `default` 数据源，一级子目录名表示数据源名称，例如：
 
 ```text
@@ -213,8 +224,8 @@ assets/v0.0.1/
 ```
 
 迁移执行器读取客户端配置声明的真实驱动，而不是只读取 GORM Dialector 名称，因此 Doris
-复用 MySQL Dialector 时仍只会执行 `doris` 目录中的脚本。目标客户端必须使用 `mysql` 或
-`doris` 驱动；目录名匹配已注入客户端时使用对应数据源，找不到匹配客户端时回退到 `default`，
+复用 MySQL Dialector 时仍只会执行 `doris` 目录中的脚本，TiDB 会执行 `mysql` 目录中的脚本。
+目标客户端必须使用 `mysql`、`tidb`、`doris` 或 `postgres` 驱动；目录名匹配已注入客户端时使用对应数据源，找不到匹配客户端时回退到 `default`，
 若默认客户端的驱动与脚本类型不匹配仍会直接返回错误。
 
 每个数据源资源都会产生独立的 `module + data_source + version` 迁移记录。数据库类型目录中的
@@ -228,7 +239,7 @@ assets/v0.0.1/
 `AutoMigrate` 创建或更新表。版本化 SQL 迁移不读取 `enable_migrate`，默认中心数据库
 默认中心数据库客户端必须在执行脚本前注入；目录声明的数据源客户端未注入时回退到默认客户端。默认库必须在执行脚本前已有
 `base_migration` 表。MySQL 和 Doris 客户端默认启用多语句执行，以支持一个迁移文件包含
-多条 SQL。
+多条 SQL；TiDB 也使用同一多语句连接参数。
 `BaseMigration.DataSource` 映射数据库中的 `data_source` 列；迁移记录不保存成功失败状态，
 只有脚本全部成功后才会写入版本记录。
 `base_migration.up_sql` 保存本次版本实际执行的全部升级脚本，`down_sql` 预留给后续回退能力，
