@@ -61,4 +61,5 @@ func openDoris(dsn string) gorm.Dialector {
 func init() {
 	driver.Opens["mysql"] = mysql.Open
 	driver.Opens["doris"] = openDoris
+	driver.Opens["tidb"] = openTiDB
 }
