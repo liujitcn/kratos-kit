@@ -39,7 +39,7 @@ func withMigrationLock(
 	if len(lockName) > 64 {
 		lockName = lockName[:64]
 	}
-	switch client.Driver() {
+	switch migrationDatabaseType(client.Driver()) {
 	case databaseTypePostgres:
 		err = lockWithPostgres(ctx, conn, lockName)
 	case databaseTypeMySQL, databaseTypeDoris:
@@ -51,7 +51,7 @@ func withMigrationLock(
 		return err
 	}
 	defer func() {
-		unlockMigration(client.Driver(), conn, lockName)
+		unlockMigration(migrationDatabaseType(client.Driver()), conn, lockName)
 	}()
 	return fn()
 }

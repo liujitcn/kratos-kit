@@ -129,13 +129,14 @@ func (r *Runner) Run(ctx context.Context, name ModuleName, targetClients ...*gor
 	for _, targetName := range targetNames {
 		targetClient := targets[targetName]
 		targetDriver := targetClient.Driver()
-		if targetDriver != databaseTypeMySQL && targetDriver != databaseTypePostgres && targetDriver != databaseTypeDoris {
+		targetDatabaseType := migrationDatabaseType(targetDriver)
+		if targetDatabaseType != databaseTypeMySQL && targetDatabaseType != databaseTypePostgres && targetDatabaseType != databaseTypeDoris {
 			return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", name, targetDriver)
 		}
 		hasMatchingAsset := false
 		for _, assets := range assetsByModule {
 			for _, asset := range assets {
-				if asset.dataSource == targetName && asset.databaseType == targetDriver {
+				if asset.dataSource == targetName && asset.databaseType == targetDatabaseType {
 					hasMatchingAsset = true
 					break
 				}
@@ -243,7 +244,7 @@ func (r *Runner) runModule(
 		}
 	}
 	for _, asset := range assetsByModule[name] {
-		if asset.dataSource != dataSource || asset.databaseType != targetClient.Driver() {
+		if asset.dataSource != dataSource || asset.databaseType != migrationDatabaseType(targetClient.Driver()) {
 			continue
 		}
 		err = r.runMigration(ctx, centralClient, targetClient, name, asset)
@@ -266,15 +267,16 @@ func (r *Runner) runMigration(
 	if targetClient == nil || targetClient.DB == nil {
 		return fmt.Errorf("迁移模块 %s 数据库客户端不能为空", moduleName)
 	}
-	centralDriver := centralClient.Driver()
-	if centralDriver != databaseTypeMySQL && centralDriver != databaseTypePostgres {
-		return fmt.Errorf("迁移记录数据源暂不支持数据库驱动 %s", centralDriver)
+	centralDatabaseType := migrationDatabaseType(centralClient.Driver())
+	if centralDatabaseType != databaseTypeMySQL && centralDatabaseType != databaseTypePostgres {
+		return fmt.Errorf("迁移记录数据源暂不支持数据库驱动 %s", centralClient.Driver())
 	}
 	targetDriver := targetClient.Driver()
-	if targetDriver != databaseTypeMySQL && targetDriver != databaseTypePostgres && targetDriver != databaseTypeDoris {
+	targetDatabaseType := migrationDatabaseType(targetDriver)
+	if targetDatabaseType != databaseTypeMySQL && targetDatabaseType != databaseTypePostgres && targetDatabaseType != databaseTypeDoris {
 		return fmt.Errorf("迁移模块 %s 暂不支持数据库驱动 %s", moduleName, targetDriver)
 	}
-	if asset.databaseType != targetDriver {
+	if asset.databaseType != targetDatabaseType {
 		return fmt.Errorf(
 			"迁移模块 %s 数据源 %s 的数据库类型为 %s，不能执行 %s 脚本",
 			moduleName,

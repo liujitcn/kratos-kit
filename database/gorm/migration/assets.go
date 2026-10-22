@@ -17,9 +17,19 @@ const (
 	databaseTypeMySQL          = "mysql"
 	databaseTypePostgres       = "postgres"
 	databaseTypeDoris          = "doris"
+	databaseTypeTiDB           = "tidb"
 )
 
 var migrationVersionPattern = regexp.MustCompile(`^v([0-9]+)\.([0-9]+)\.([0-9]+)(?:[-.]([0-9]{14}))?$`)
+
+// migrationDatabaseType 返回驱动对应的迁移资产数据库类型。
+// TiDB 兼容 MySQL 方言，直接复用 mysql 目录的迁移资源，宿主项目无需复制种子。
+func migrationDatabaseType(driver string) string {
+	if driver == databaseTypeTiDB {
+		return databaseTypeMySQL
+	}
+	return driver
+}
 
 // migrationVersion 表示迁移目录的可排序版本。
 type migrationVersion struct {
