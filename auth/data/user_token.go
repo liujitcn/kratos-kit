@@ -28,6 +28,9 @@ type UserToken struct {
 	refreshTokenExpires time.Duration
 }
 
+// accessTokenGracePeriod 访问令牌轮换后旧令牌的宽限期，覆盖刷新并发期间在途请求的重放窗口。
+const accessTokenGracePeriod = time.Minute
+
 // TokenSession 描述同一用户的一组访问令牌和刷新令牌。
 type TokenSession struct {
 	SessionID        string `json:"session_id"`
@@ -35,6 +38,9 @@ type TokenSession struct {
 	RefreshToken     string `json:"refresh_token"`
 	AccessExpiresAt  int64  `json:"access_expires_at"`  // 访问令牌到期时间，Unix 纳秒。
 	RefreshExpiresAt int64  `json:"refresh_expires_at"` // 刷新令牌到期时间，Unix 纳秒。
+	// PreviousAccessToken 记录轮换前的旧访问令牌，仅在宽限期内通过校验，会话撤销后随之失效。
+	PreviousAccessToken     string `json:"previous_access_token,omitempty"`
+	PreviousAccessExpiresAt int64  `json:"previous_access_expires_at,omitempty"`
 }
 
 // NewUserToken 创建使用指定缓存和签发器的令牌管理器。
@@ -105,8 +111,14 @@ func (r *UserToken) GenerateAccessTokenForSession(userToken *UserTokenPayload, s
 	if sessionID == "" {
 		return accessToken, r.setAccessTokenToRedis(userToken.UserId, accessToken, r.accessTokenExpires)
 	}
+	now := time.Now()
+	// 轮换后旧访问令牌保留宽限期，避免刷新并发期间的在途请求立即失效。
+	if session.AccessToken != "" && session.AccessToken != accessToken {
+		session.PreviousAccessToken = session.AccessToken
+		session.PreviousAccessExpiresAt = min(session.AccessExpiresAt, now.Add(accessTokenGracePeriod).UnixNano())
+	}
 	session.AccessToken = accessToken
-	session.AccessExpiresAt = time.Now().Add(r.accessTokenExpires).UnixNano()
+	session.AccessExpiresAt = now.Add(r.accessTokenExpires).UnixNano()
 	if err = r.saveTokenSession(userToken.UserId, session); err != nil {
 		return "", err
 	}
@@ -182,7 +194,7 @@ func (r *UserToken) GetTokenSessions(userId int64) ([]TokenSession, error) {
 	return r.getTokenSessions(userId)
 }
 
-// IsAccessTokenValid 校验访问令牌是否属于用户的有效会话。
+// IsAccessTokenValid 校验访问令牌是否属于用户的有效会话，轮换后的旧令牌在宽限期内仍然有效。
 func (r *UserToken) IsAccessTokenValid(userId int64, accessToken string) bool {
 	if accessToken == "" {
 		return false
@@ -190,12 +202,17 @@ func (r *UserToken) IsAccessTokenValid(userId int64, accessToken string) bool {
 	if r.GetAccessToken(userId) == accessToken {
 		return r.IsExistAccessToken(userId)
 	}
+	now := time.Now().UnixNano()
 	sessions, err := r.getTokenSessions(userId)
 	if err != nil {
 		return false
 	}
 	for _, session := range sessions {
-		if session.AccessToken == accessToken && time.Now().UnixNano() < session.AccessExpiresAt {
+		if session.AccessToken == accessToken && now < session.AccessExpiresAt {
+			return true
+		}
+		// 旧访问令牌按宽限期放行，撤销会话时随会话键一起失效。
+		if session.PreviousAccessToken == accessToken && now < session.PreviousAccessExpiresAt {
 			return true
 		}
 	}
