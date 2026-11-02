@@ -3,8 +3,8 @@ module github.com/liujitcn/kratos-kit/ai/eino
 go 1.27.0
 
 require (
-	github.com/cloudwego/eino v0.9.21
-	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.4
+	github.com/cloudwego/eino v0.9.22
+	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.5-0.20261019121619-eee37f63ff95
 	github.com/eino-contrib/jsonschema v1.0.3
 	github.com/liujitcn/kratos-kit/ai/model v0.0.8
 )
