@@ -9,7 +9,7 @@ require (
 	github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.218
 	github.com/liujitcn/go-utils/http v0.0.10
 	github.com/liujitcn/kratos-kit/cache v0.0.29
-	github.com/liujitcn/kratos-kit/transport v0.0.29
+	github.com/liujitcn/kratos-kit/transport v0.0.30
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.192
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.3.172
 )
