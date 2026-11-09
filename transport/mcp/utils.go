@@ -7,16 +7,17 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // LoadToolFromJsonString 从 JSON 字符串加载 MCP Tool。
 func LoadToolFromJsonString(jsonStr string) (*mcp.Tool, error) {
 	var tool mcp.Tool
-	if err := json.Unmarshal([]byte(jsonStr), &tool); err != nil {
+	err := json.Unmarshal([]byte(jsonStr), &tool)
+	if err != nil {
 		return nil, fmt.Errorf("JSON 反序列化失败：%w", err)
 	}
-	if err := ValidateToolInputSchema(tool.InputSchema); err != nil {
+	if err = ValidateToolInputSchema(tool.InputSchema); err != nil {
 		return nil, err
 	}
 	return &tool, nil
@@ -46,79 +47,6 @@ func ValidateToolInputSchema(schema any) error {
 	}
 
 	return nil
-}
-
-func cloneServerOptions(opts *mcp.ServerOptions) *mcp.ServerOptions {
-	if opts == nil {
-		return nil
-	}
-	cloned := *opts
-	return &cloned
-}
-
-func cloneStreamableHTTPOptions(opts *mcp.StreamableHTTPOptions) *mcp.StreamableHTTPOptions {
-	if opts == nil {
-		return nil
-	}
-	cloned := *opts
-	return &cloned
-}
-
-func mergeStreamableHTTPOptions(base, override *mcp.StreamableHTTPOptions) *mcp.StreamableHTTPOptions {
-	if override == nil {
-		return cloneStreamableHTTPOptions(base)
-	}
-	if base == nil {
-		merged := *override
-		return &merged
-	}
-
-	merged := *base
-	if override.Stateless {
-		merged.Stateless = true
-	}
-	if override.JSONResponse {
-		merged.JSONResponse = true
-	}
-	if override.Logger != nil {
-		merged.Logger = override.Logger
-	}
-	if override.EventStore != nil {
-		merged.EventStore = override.EventStore
-	}
-	if override.SessionTimeout != 0 {
-		merged.SessionTimeout = override.SessionTimeout
-	}
-	if override.DisableLocalhostProtection {
-		merged.DisableLocalhostProtection = true
-	}
-	if override.CrossOriginProtection != nil { //nolint:staticcheck // 兼容旧选项；HTTPHandler 在外层应用保护中间件。
-		merged.CrossOriginProtection = override.CrossOriginProtection //nolint:staticcheck // 保留旧版配置的跨域保护能力。
-	}
-	return &merged
-}
-
-func cloneSSEOptions(opts *mcp.SSEOptions) *mcp.SSEOptions {
-	if opts == nil {
-		return nil
-	}
-	cloned := *opts
-	return &cloned
-}
-
-func mergeSSEOptions(base, override *mcp.SSEOptions) *mcp.SSEOptions {
-	if override == nil {
-		return cloneSSEOptions(base)
-	}
-	if base == nil {
-		merged := *override
-		return &merged
-	}
-	merged := *base
-	if override.DisableLocalhostProtection {
-		merged.DisableLocalhostProtection = true
-	}
-	return &merged
 }
 
 func normalizeHandlerPath(path string) string {

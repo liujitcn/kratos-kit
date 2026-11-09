@@ -2,6 +2,8 @@
 
 `kratos-kit` 是面向 Kratos v3 应用的 Go 多模块工具库。仓库内的模块围绕启动、配置、传输、数据访问、安全、消息、观测、AI 和工作流提供可复用能力；每个模块都可以按自己的 module path 单独引入。
 
+MCP 服务端与工具生成器统一基于 `mark3labs/mcp-go`，支持 Streamable HTTP、Legacy SSE、STDIO 和进程内挂载。
+
 ## 模块地图
 
 ### 启动与基础设施
@@ -73,7 +75,7 @@
 | --- | --- |
 | [`cmd/normalize-go-imports`](cmd/normalize-go-imports/README.md) | 按目录名统一 Go import 别名，支持预览和写回。 |
 | [`cmd/protoc-gen-go-agent-tool`](cmd/protoc-gen-go-agent-tool/README.md) | 从 protobuf service 生成 Eino Agent Tool。 |
-| [`cmd/protoc-gen-go-mcp-tool`](cmd/protoc-gen-go-mcp-tool/README.md) | 从 protobuf service 生成 MCP Tool 注册代码。 |
+| [`cmd/protoc-gen-go-mcp-tool`](cmd/protoc-gen-go-mcp-tool/README.md) | 从 protobuf service 生成基于 mark3labs/mcp-go 的 MCP Tool 注册代码。 |
 | [`cmd/protoc-gen-go-redact`](cmd/protoc-gen-go-redact/README.md) | 从 protobuf 字段规则生成脱敏代码和规则契约。 |
 | [`cmd/kratos-admin`](cmd/kratos-admin/README.md) | 按项目名生成后端模板、目录结构和三端前端初始化结果。 |
 
@@ -131,6 +133,8 @@ func main() {
 - `secretcrypto` 的临时私钥只在缓存中短期保存；同一请求的多个密文应复用同一 `key_id`。
 
 ## 生成与开发
+
+Go 文件按真实调用链组织：构造函数和对外入口在前，被调用的内部方法紧随其后；包级辅助函数统一放在文件末尾。
 
 ```bash
 make plugin  # 安装 protobuf、Kratos、脱敏、Agent Tool 和 MCP Tool 插件

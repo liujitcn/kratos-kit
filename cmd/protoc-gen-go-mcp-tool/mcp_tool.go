@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	jsonPackage    = protogen.GoImportPath("encoding/json")
-	contextPackage = protogen.GoImportPath("context")
-	mcpPackage     = protogen.GoImportPath("github.com/modelcontextprotocol/go-sdk/mcp")
+	contextPackage   = protogen.GoImportPath("context")
+	mcpPackage       = protogen.GoImportPath("github.com/mark3labs/mcp-go/mcp")
+	mcpServerPackage = protogen.GoImportPath("github.com/mark3labs/mcp-go/server")
 )
 
 const deprecationComment = "// Deprecated: Do not use."
@@ -27,15 +27,17 @@ var mcpToolTemplates embed.FS
 var mcpToolTemplate = template.Must(template.ParseFS(mcpToolTemplates, "templates/mcp_tool.go.tmpl"))
 
 type mcpToolTemplateData struct {
-	ContextPackage  string
-	JSONMarshal     string
-	JSONUnmarshal   string
-	MCPServer       string
-	AddTool         string
-	Tool            string
-	CallToolRequest string
-	CallToolResult  string
-	Services        []mcpServiceTemplateData
+	ContextPackage     string
+	MCPServer          string
+	NewTool            string
+	WithDescription    string
+	WithInputSchema    string
+	WithOutputSchema   string
+	NewToolResultJSON  string
+	NewToolResultError string
+	CallToolRequest    string
+	CallToolResult     string
+	Services           []mcpServiceTemplateData
 }
 
 type mcpServiceTemplateData struct {
@@ -54,9 +56,9 @@ type mcpMethodTemplateData struct {
 	ServerName        string
 	RegisterName      string
 	RequestType       string
-	InputType         string
-	OutputType        string
-	RequestValue      string
+	ResponseType      string
+	RecursiveInput    bool
+	RecursiveOutput   bool
 	ToolName          string
 	Description       string
 }
@@ -106,18 +108,26 @@ func generateMCPToolFile(gen *protogen.Plugin, file *protogen.File) *protogen.Ge
 // renderMCPToolTemplate 使用模板生成 MCP Tool 文件主体，并提前登记所需导入。
 func renderMCPToolTemplate(g *protogen.GeneratedFile, file *protogen.File) (string, error) {
 	data := mcpToolTemplateData{
-		ContextPackage:  g.QualifiedGoIdent(contextPackage.Ident("Context")),
-		JSONMarshal:     g.QualifiedGoIdent(jsonPackage.Ident("Marshal")),
-		JSONUnmarshal:   g.QualifiedGoIdent(jsonPackage.Ident("Unmarshal")),
-		MCPServer:       g.QualifiedGoIdent(mcpPackage.Ident("Server")),
-		AddTool:         g.QualifiedGoIdent(mcpPackage.Ident("AddTool")),
-		Tool:            g.QualifiedGoIdent(mcpPackage.Ident("Tool")),
-		CallToolRequest: g.QualifiedGoIdent(mcpPackage.Ident("CallToolRequest")),
-		CallToolResult:  g.QualifiedGoIdent(mcpPackage.Ident("CallToolResult")),
-		Services:        make([]mcpServiceTemplateData, 0, len(file.Services)),
+		MCPServer: g.QualifiedGoIdent(mcpServerPackage.Ident("MCPServer")),
+		Services:  make([]mcpServiceTemplateData, 0, len(file.Services)),
 	}
 	for _, service := range file.Services {
 		data.Services = append(data.Services, newMCPServiceTemplateData(g, service))
+	}
+	for _, service := range data.Services {
+		if len(service.Methods) == 0 {
+			continue
+		}
+		data.ContextPackage = g.QualifiedGoIdent(contextPackage.Ident("Context"))
+		data.NewTool = g.QualifiedGoIdent(mcpPackage.Ident("NewTool"))
+		data.WithDescription = g.QualifiedGoIdent(mcpPackage.Ident("WithDescription"))
+		data.WithInputSchema = g.QualifiedGoIdent(mcpPackage.Ident("WithInputSchema"))
+		data.WithOutputSchema = g.QualifiedGoIdent(mcpPackage.Ident("WithOutputSchema"))
+		data.NewToolResultJSON = g.QualifiedGoIdent(mcpPackage.Ident("NewToolResultJSON"))
+		data.NewToolResultError = g.QualifiedGoIdent(mcpPackage.Ident("NewToolResultError"))
+		data.CallToolRequest = g.QualifiedGoIdent(mcpPackage.Ident("CallToolRequest"))
+		data.CallToolResult = g.QualifiedGoIdent(mcpPackage.Ident("CallToolResult"))
+		break
 	}
 	var output bytes.Buffer
 	err := mcpToolTemplate.Execute(&output, data)
@@ -152,28 +162,18 @@ func newMCPServiceTemplateData(g *protogen.GeneratedFile, service *protogen.Serv
 func newMCPMethodTemplateData(g *protogen.GeneratedFile, service *protogen.Service, method *protogen.Method) mcpMethodTemplateData {
 	requestType := g.QualifiedGoIdent(method.Input.GoIdent)
 	responseType := g.QualifiedGoIdent(method.Output.GoIdent)
-	inputType := "*" + requestType
-	outputType := "*" + responseType
-	requestValue := "input"
-	if messageHasRecursiveReference(method.Input) {
-		inputType = "any"
-		requestValue = "req"
-	}
-	if messageHasRecursiveReference(method.Output) {
-		outputType = "any"
-	}
 	data := mcpMethodTemplateData{
-		Comment:      formatMethodComment("Register"+service.GoName+method.GoName+"MCPTool", utils.NormalizeCommentText(method.Comments.Leading)),
-		Name:         method.GoName,
-		ServiceName:  service.GoName,
-		ServerName:   utils.Unexport(service.GoName) + "Server",
-		RegisterName: "Register" + service.GoName + method.GoName + "MCPTool",
-		RequestType:  requestType,
-		InputType:    inputType,
-		OutputType:   outputType,
-		RequestValue: requestValue,
-		ToolName:     strconv.Quote(kitutils.ToolNameFromRPCPath("/" + string(service.Desc.FullName()) + "/" + string(method.Desc.Name()))),
-		Description:  strconv.Quote(utils.ToolDescription(service, method)),
+		Comment:         formatMethodComment("Register"+service.GoName+method.GoName+"MCPTool", utils.NormalizeCommentText(method.Comments.Leading)),
+		Name:            method.GoName,
+		ServiceName:     service.GoName,
+		ServerName:      utils.Unexport(service.GoName) + "Server",
+		RegisterName:    "Register" + service.GoName + method.GoName + "MCPTool",
+		RequestType:     requestType,
+		ResponseType:    responseType,
+		RecursiveInput:  messageHasRecursiveReference(method.Input),
+		RecursiveOutput: messageHasRecursiveReference(method.Output),
+		ToolName:        strconv.Quote(kitutils.ToolNameFromRPCPath("/" + string(service.Desc.FullName()) + "/" + string(method.Desc.Name()))),
+		Description:     strconv.Quote(utils.ToolDescription(service, method)),
 	}
 	if method.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
 		data.DeprecatedComment = deprecationComment
@@ -222,7 +222,7 @@ func messageHasRecursiveReferenceInStack(message *protogen.Message, visiting, vi
 // formatTypeComment 生成类型或构造函数注释，统一采用“名称 描述”格式。
 func formatTypeComment(name, comment string) string {
 	if comment == "" {
-		return "// " + name
+		return "// " + name + " 注册服务的 MCP 工具。"
 	}
 	return utils.FormatToolActionComment(name, comment, "注册", "MCP Tool")
 }
@@ -230,7 +230,7 @@ func formatTypeComment(name, comment string) string {
 // formatMethodComment 生成方法注释，保持“// 方法名 描述”的输出样式。
 func formatMethodComment(name, comment string) string {
 	if comment == "" {
-		return "// " + name
+		return "// " + name + " 注册 MCP 工具。"
 	}
 	return utils.FormatToolActionComment(name, comment, "注册", "MCP Tool")
 }

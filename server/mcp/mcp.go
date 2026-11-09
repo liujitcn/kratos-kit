@@ -16,7 +16,8 @@ import (
 	configv1 "github.com/liujitcn/kratos-kit/api/gen/go/config/v1"
 	"github.com/liujitcn/kratos-kit/transport/mcp"
 	"github.com/liujitcn/kratos-kit/utils"
-	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
+	mcpsdk "github.com/mark3labs/mcp-go/mcp"
+	mcpserver "github.com/mark3labs/mcp-go/server"
 )
 
 // CreateMcpServer 创建独立监听的 MCP 服务端。
@@ -68,15 +69,41 @@ func CreateMcpSSEHandler(cfg *configv1.Bootstrap, opts ...mcp.ServerOption) (htt
 	return srv.SSEHandler()
 }
 
-// WithMcpServerOptions 转发底层官方 MCP SDK 服务端选项。
-func WithMcpServerOptions(opts ...func(*mcpsdk.ServerOptions)) mcp.ServerOption {
-	serverOptions := &mcpsdk.ServerOptions{}
-	for _, opt := range opts {
-		if opt != nil {
-			opt(serverOptions)
-		}
+// WithMcpServerOptions 转发底层 mcp-go 服务端选项。
+func WithMcpServerOptions(opts ...mcpserver.ServerOption) mcp.ServerOption {
+	return mcp.WithServerOptions(opts...)
+}
+
+// RegisterMcpHTTPTools 注册通过 server.mcp.http_tools 配置声明的 HTTP MCP Tool。
+func RegisterMcpHTTPTools(srv *mcp.Server, tools []*configv1.Server_Mcp_HttpTool) error {
+	if len(tools) == 0 {
+		return nil
 	}
-	return mcp.WithServerOptions(serverOptions)
+	if srv == nil || srv.MCPServer() == nil {
+		return errors.New("mcp server is nil")
+	}
+	for _, toolCfg := range tools {
+		if toolCfg == nil {
+			continue
+		}
+		toolName := strings.TrimSpace(toolCfg.GetName())
+		if toolName == "" {
+			return errors.New("mcp http tool name is empty")
+		}
+		schema, err := json.Marshal(mcpHTTPToolInputSchema(toolCfg))
+		if err != nil {
+			return fmt.Errorf("encode mcp http tool %q schema: %w", toolName, err)
+		}
+		if err = mcp.ValidateToolInputSchema(json.RawMessage(schema)); err != nil {
+			return fmt.Errorf("invalid mcp http tool %q schema: %w", toolName, err)
+		}
+		registeredTool := mcpsdk.NewToolWithRawSchema(toolName, toolCfg.GetDescription(), schema)
+		currentToolCfg := toolCfg
+		srv.MCPServer().AddTool(registeredTool, func(ctx context.Context, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+			return callMcpHTTPTool(ctx, currentToolCfg, req)
+		})
+	}
+	return nil
 }
 
 // initMcpServerConfig 根据 server.mcp 配置构建 MCP 服务端选项。
@@ -111,10 +138,13 @@ func initMcpServerConfig(cfg *configv1.Bootstrap, options []mcp.ServerOption, op
 		serverOptions = append(serverOptions, mcp.WithEnableKeepAlive(mcpCfg.GetEnableKeepalive()))
 	}
 	if mcpCfg.GetStreamableHttp() != nil {
-		serverOptions = append(serverOptions, mcp.WithStreamableHTTPOptions(streamableHTTPOptionsFromConfig(mcpCfg.GetStreamableHttp())))
+		serverOptions = append(serverOptions,
+			mcp.WithJSONResponse(mcpCfg.GetStreamableHttp().GetJsonResponse()),
+			mcp.WithStreamableHTTPOptions(streamableHTTPOptionsFromConfig(mcpCfg.GetStreamableHttp())...),
+		)
 	}
 	if mcpCfg.GetLegacySse() != nil {
-		serverOptions = append(serverOptions, mcp.WithSSEOptions(sseOptionsFromConfig(mcpCfg.GetLegacySse())))
+		serverOptions = append(serverOptions, mcp.WithSSEOptions(sseOptionsFromConfig(mcpCfg.GetLegacySse())...))
 	}
 	if mcpCfg.GetTls() != nil {
 		var tlsCfg *tls.Config
@@ -143,35 +173,6 @@ func newConfiguredMcpServer(cfg *configv1.Bootstrap, opts ...mcp.ServerOption) (
 	return srv, nil
 }
 
-// RegisterMcpHTTPTools 注册通过 server.mcp.http_tools 配置声明的 HTTP MCP Tool。
-func RegisterMcpHTTPTools(srv *mcp.Server, tools []*configv1.Server_Mcp_HttpTool) error {
-	if len(tools) == 0 {
-		return nil
-	}
-	if srv == nil || srv.MCPServer() == nil {
-		return errors.New("mcp server is nil")
-	}
-	for _, toolCfg := range tools {
-		if toolCfg == nil {
-			continue
-		}
-		toolName := strings.TrimSpace(toolCfg.GetName())
-		if toolName == "" {
-			return errors.New("mcp http tool name is empty")
-		}
-		registeredTool := &mcpsdk.Tool{
-			Name:        toolName,
-			Description: toolCfg.GetDescription(),
-			InputSchema: mcpHTTPToolInputSchema(toolCfg),
-		}
-		currentToolCfg := toolCfg
-		srv.MCPServer().AddTool(registeredTool, func(ctx context.Context, req *mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
-			return callMcpHTTPTool(ctx, currentToolCfg, req)
-		})
-	}
-	return nil
-}
-
 // mcpServerTypeFromConfig 将配置枚举转换为 transport/mcp 的服务类型。
 func mcpServerTypeFromConfig(transport configv1.Server_Mcp_Transport) (mcp.ServerType, error) {
 	switch transport {
@@ -190,34 +191,32 @@ func mcpServerTypeFromConfig(transport configv1.Server_Mcp_Transport) (mcp.Serve
 	}
 }
 
-// streamableHTTPOptionsFromConfig 将配置转换为官方 SDK Streamable HTTP 选项。
-func streamableHTTPOptionsFromConfig(cfg *configv1.Server_Mcp_StreamableHttp) *mcpsdk.StreamableHTTPOptions {
+// streamableHTTPOptionsFromConfig 将配置转换为 mcp-go Streamable HTTP 选项。
+func streamableHTTPOptionsFromConfig(cfg *configv1.Server_Mcp_StreamableHttp) []mcpserver.StreamableHTTPOption {
 	if cfg == nil {
 		return nil
 	}
-	options := &mcpsdk.StreamableHTTPOptions{
-		Stateless:                  cfg.GetStateless(),
-		JSONResponse:               cfg.GetJsonResponse(),
-		DisableLocalhostProtection: cfg.GetDisableLocalhostProtection(),
+	options := []mcpserver.StreamableHTTPOption{
+		mcpserver.WithStateLess(cfg.GetStateless()),
+		mcpserver.WithDisableStreaming(cfg.GetStateless()),
+		mcpserver.WithDisableLocalhostProtection(cfg.GetDisableLocalhostProtection()),
 	}
 	if cfg.GetSessionTimeout() != nil {
-		options.SessionTimeout = cfg.GetSessionTimeout().AsDuration()
+		options = append(options, mcpserver.WithSessionIdleTTL(cfg.GetSessionTimeout().AsDuration()))
 	}
 	return options
 }
 
-// sseOptionsFromConfig 将配置转换为官方 SDK Legacy SSE 选项。
-func sseOptionsFromConfig(cfg *configv1.Server_Mcp_LegacySse) *mcpsdk.SSEOptions {
+// sseOptionsFromConfig 将配置转换为 mcp-go Legacy SSE 选项。
+func sseOptionsFromConfig(cfg *configv1.Server_Mcp_LegacySse) []mcpserver.SSEOption {
 	if cfg == nil {
 		return nil
 	}
-	return &mcpsdk.SSEOptions{
-		DisableLocalhostProtection: cfg.GetDisableLocalhostProtection(),
-	}
+	return []mcpserver.SSEOption{mcpserver.WithSSEDisableLocalhostProtection(cfg.GetDisableLocalhostProtection())}
 }
 
 // callMcpHTTPTool 执行一个配置化 HTTP Tool。
-func callMcpHTTPTool(ctx context.Context, toolCfg *configv1.Server_Mcp_HttpTool, req *mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
+func callMcpHTTPTool(ctx context.Context, toolCfg *configv1.Server_Mcp_HttpTool, req mcpsdk.CallToolRequest) (*mcpsdk.CallToolResult, error) {
 	if toolCfg == nil {
 		return nil, errors.New("mcp http tool config is nil")
 	}
@@ -255,14 +254,12 @@ func callMcpHTTPTool(ctx context.Context, toolCfg *configv1.Server_Mcp_HttpTool,
 		return nil, fmt.Errorf("close HTTP tool response: %w", closeErr)
 	}
 
-	result := &mcpsdk.CallToolResult{
-		Content: []mcpsdk.Content{&mcpsdk.TextContent{Text: string(body)}},
-	}
+	result := mcpsdk.NewToolResultText(string(body))
 	if httpResp.StatusCode < http.StatusOK || httpResp.StatusCode >= http.StatusMultipleChoices {
-		result.IsError = true
 		if len(body) == 0 {
-			result.Content = []mcpsdk.Content{&mcpsdk.TextContent{Text: httpResp.Status}}
+			result = mcpsdk.NewToolResultText(httpResp.Status)
 		}
+		result.IsError = true
 		return result, nil
 	}
 
@@ -274,12 +271,12 @@ func callMcpHTTPTool(ctx context.Context, toolCfg *configv1.Server_Mcp_HttpTool,
 }
 
 // mcpHTTPToolArguments 解析 MCP Tool 调用参数。
-func mcpHTTPToolArguments(req *mcpsdk.CallToolRequest) (map[string]any, error) {
+func mcpHTTPToolArguments(req mcpsdk.CallToolRequest) (map[string]any, error) {
 	args := make(map[string]any)
-	if req == nil || req.Params == nil || len(req.Params.Arguments) == 0 {
+	if req.GetRawArguments() == nil {
 		return args, nil
 	}
-	err := json.Unmarshal(req.Params.Arguments, &args)
+	err := req.BindArguments(&args)
 	if err != nil {
 		return nil, fmt.Errorf("decode mcp http tool arguments: %w", err)
 	}

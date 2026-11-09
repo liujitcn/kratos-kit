@@ -111,10 +111,12 @@ func CreateMcpSSEServer(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption)
 func CreateMcpHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (*mcpServer.Server, error)
 func CreateMcpHTTPHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (http.Handler, error)
 func CreateMcpSSEHandler(cfg *configv1.Bootstrap, opts ...mcpServer.ServerOption) (http.Handler, error)
-func WithMcpServerOptions(opts ...func(*mcp.ServerOptions)) mcpServer.ServerOption
+func WithMcpServerOptions(opts ...server.ServerOption) mcpServer.ServerOption
 ```
 
 `CreateMcpServer` 创建独立 Streamable HTTP MCP 服务，`CreateMcpSSEServer` 创建 Legacy SSE MCP 服务；`CreateMcpHandler` 创建进程内服务，可通过两个 Handler 方法挂载到已有 HTTP 服务。MCP 客户端不在本模块提供。
+
+MCP 基于 `github.com/mark3labs/mcp-go`，上述 `server.ServerOption` 来自该组件的 `server` 包；`WithMcpServerOptions` 直接转发原生选项。配置化 HTTP Tool 保留参数映射、文本与结构化响应以及 HTTP 错误标记。`streamable_http` 和 `legacy_sse` 的 localhost 保护配置继续生效。
 
 ## SSE
 

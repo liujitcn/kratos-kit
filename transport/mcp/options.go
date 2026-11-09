@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/liujitcn/kratos-kit/transport/keepalive"
-	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/mark3labs/mcp-go/server"
 )
 
 // ServerType 表示 MCP 服务的运行形态。
@@ -40,16 +40,16 @@ func WithServerVersion(version string) ServerOption {
 	}
 }
 
-// WithServerOptions 设置官方 MCP SDK 服务选项。
-func WithServerOptions(opts *mcp.ServerOptions) ServerOption {
+// WithServerOptions 追加 mcp-go 服务选项。
+func WithServerOptions(opts ...server.ServerOption) ServerOption {
 	return func(s *Server) {
-		s.serverOptions = cloneServerOptions(opts)
+		s.serverOptions = append(s.serverOptions, opts...)
 	}
 }
 
-// WithMCPServerOptions 设置官方 MCP SDK 服务选项。
-func WithMCPServerOptions(opts *mcp.ServerOptions) ServerOption {
-	return WithServerOptions(opts)
+// WithMCPServerOptions 追加 mcp-go 服务选项。
+func WithMCPServerOptions(opts ...server.ServerOption) ServerOption {
+	return WithServerOptions(opts...)
 }
 
 // WithServerType 设置 MCP 服务运行形态。
@@ -126,15 +126,22 @@ func WithShutdownTimeout(timeout time.Duration) ServerOption {
 }
 
 // WithStreamableHTTPOptions 设置 Streamable HTTP Handler 选项。
-func WithStreamableHTTPOptions(opts *mcp.StreamableHTTPOptions) ServerOption {
+func WithStreamableHTTPOptions(opts ...server.StreamableHTTPOption) ServerOption {
 	return func(s *Server) {
-		s.streamableHTTPOptions = mergeStreamableHTTPOptions(s.streamableHTTPOptions, opts)
+		s.streamableHTTPOptions = append(s.streamableHTTPOptions, opts...)
+	}
+}
+
+// WithJSONResponse 强制 Streamable HTTP 的 POST 使用 JSON 响应，并保留 GET 事件流。
+func WithJSONResponse(enable bool) ServerOption {
+	return func(s *Server) {
+		s.jsonResponse = enable
 	}
 }
 
 // WithSSEOptions 设置 Legacy SSE Handler 选项。
-func WithSSEOptions(opts *mcp.SSEOptions) ServerOption {
+func WithSSEOptions(opts ...server.SSEOption) ServerOption {
 	return func(s *Server) {
-		s.sseOptions = cloneSSEOptions(opts)
+		s.sseOptions = append(s.sseOptions, opts...)
 	}
 }

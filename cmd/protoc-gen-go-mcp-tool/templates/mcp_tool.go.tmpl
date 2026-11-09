@@ -9,31 +9,24 @@ func Register{{.Name}}MCPTools(mcpServer *{{$.MCPServer}}, {{.ServerName}} {{.Na
 {{if .DeprecatedComment}}{{.DeprecatedComment}}
 {{end}}{{.Comment}}
 func {{.RegisterName}}(mcpServer *{{$.MCPServer}}, {{.ServerName}} {{.ServiceName}}Server) {
-	{{$.AddTool}}[{{.InputType}}, {{.OutputType}}](
-		mcpServer,
-		&{{$.Tool}}{
-			Name: {{.ToolName}},
-			Description: {{.Description}},
-		},
-		func(ctx {{$.ContextPackage}}, request *{{$.CallToolRequest}}, input {{.InputType}}) (*{{$.CallToolResult}}, {{.OutputType}}, error) {
-{{if eq .InputType "any"}}			req := &{{.RequestType}}{}
-			if input != nil {
-				inputBytes, err := {{$.JSONMarshal}}(input)
-				if err != nil {
-					return nil, nil, err
-				}
-				if err = {{$.JSONUnmarshal}}(inputBytes, req); err != nil {
-					return nil, nil, err
-				}
-			}
-{{else}}			if input == nil {
-				input = &{{.RequestType}}{}
-			}
-{{end}}			reply, err := {{.ServerName}}.{{.Name}}(ctx, {{.RequestValue}})
+	mcpServer.AddTool(
+		{{$.NewTool}}({{.ToolName}},
+			{{$.WithDescription}}({{.Description}}),
+{{if not .RecursiveInput}}			{{$.WithInputSchema}}[*{{.RequestType}}](),
+{{end}}{{if not .RecursiveOutput}}			{{$.WithOutputSchema}}[*{{.ResponseType}}](),
+{{end}}		),
+		func(ctx {{$.ContextPackage}}, request {{$.CallToolRequest}}) (*{{$.CallToolResult}}, error) {
+			req := &{{.RequestType}}{}
+			err := request.BindArguments(req)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			return nil, reply, nil
+			var reply *{{.ResponseType}}
+			reply, err = {{.ServerName}}.{{.Name}}(ctx, req)
+			if err != nil {
+				return {{$.NewToolResultError}}(err.Error()), nil
+			}
+			return {{$.NewToolResultJSON}}(reply)
 		},
 	)
 }
