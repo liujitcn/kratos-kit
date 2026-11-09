@@ -4,6 +4,8 @@
 
 MCP 服务端与工具生成器统一基于 `mark3labs/mcp-go`，支持 Streamable HTTP、Legacy SSE、STDIO 和进程内挂载。
 
+升级至 `transport/mcp v0.0.20` 时，请同步升级 `server/mcp` 和 `protoc-gen-go-mcp-tool`，并重新生成工具注册代码。
+
 ## 模块地图
 
 ### 启动与基础设施

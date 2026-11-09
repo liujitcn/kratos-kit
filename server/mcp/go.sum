@@ -49,6 +49,8 @@ github.com/liujitcn/kratos-kit/transport v0.0.28 h1:jaP+WYzWVPU7/bdoq3KNqa89Dby1
 github.com/liujitcn/kratos-kit/transport v0.0.28/go.mod h1:gncaq9hFjOeRmyhMJd6NSXUYp+21IaqQi6OvzEU3eM8=
 github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17 h1:wc1KZa5gHvPdHluZpL/mT2PUWtta0Q6R8gujE86cWAw=
 github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17/go.mod h1:RuOLdfzI1Rk0K8d2td29I6aMHw250MuUH9Tij4BZ9dk=
+github.com/liujitcn/kratos-kit/transport/mcp v0.0.20 h1:8OveU73RcFKZ8avTk0tanyiwnzOQbeTkIQdA9vqVkmI=
+github.com/liujitcn/kratos-kit/transport/mcp v0.0.20/go.mod h1:5ta6wk0THKfXNdfZdOtn3h0is6Se6qONexUfnFjtjdc=
 github.com/liujitcn/kratos-kit/utils v0.0.28 h1:5pyLl0UZdr5FCOuIVv04kt3wfQsySPBr40alp8DvqPA=
 github.com/liujitcn/kratos-kit/utils v0.0.28/go.mod h1:BD5/q10xg4pS8jH27QewShAl98ucR7bjPvr+UakLq9I=
 github.com/mark3labs/mcp-go v1.5.0 h1:XMfliGOAan2zHQJHVQb9Y6KZDr/73nLfsxlsByTwHjk=
