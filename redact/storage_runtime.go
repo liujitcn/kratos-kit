@@ -75,7 +75,7 @@ func NewRedactStorage(
 }
 
 // PrepareString 根据入库策略生成主表脱敏值和待写入的旁表记录。
-func (s *RedactStorage) PrepareString(ctx context.Context, policy StorageFieldPolicy, value string) (string, *StorageValue, error) {
+func (s *RedactStorage) PrepareString(ctx context.Context, policy StorageFieldPolicy, recordID int64, value string) (string, *StorageValue, error) {
 	if s == nil || value == "" {
 		return value, nil, nil
 	}
@@ -93,11 +93,20 @@ func (s *RedactStorage) PrepareString(ctx context.Context, policy StorageFieldPo
 	if !ok {
 		return "", nil, fmt.Errorf("敏感字段 %s.%s 入库规则未返回字符串", policy.TableName, policy.ColumnName)
 	}
-	// 更新接口可能把当前掩码原样提交回来，此时保留已有旁表原文。
-	if masked == value {
-		return value, nil, nil
+	var err error
+	// 只有已存在且可验证的原文才能证明提交值是占位掩码，不能把短字符串或掩码外观当作已加密。
+	if masked == value && recordID > 0 {
+		var original string
+		original, err = s.ReadValue(ctx, policy, recordID)
+		if err == nil && policy.Rule.Apply(original) == value {
+			return value, nil, nil
+		}
+		if err != nil && !errors.Is(err, ErrStorageValueNotFound) {
+			return "", nil, err
+		}
 	}
-	ciphertext, err := s.protector.Encrypt(value, storageAssociatedData(policy.TenantID, policy.ID))
+	var ciphertext string
+	ciphertext, err = s.protector.Encrypt(value, storageAssociatedData(policy.TenantID, policy.ID))
 	if err != nil {
 		return "", nil, err
 	}
@@ -109,8 +118,20 @@ func (s *RedactStorage) PrepareString(ctx context.Context, policy StorageFieldPo
 	return masked, &StorageValue{TenantID: policy.TenantID, StoragePolicyID: policy.ID, Ciphertext: []byte(ciphertext), Digest: digest}, nil
 }
 
+// ReadValue 读取并校验指定记录的旁表原文，损坏密文不得按普通明文透传。
+func (s *RedactStorage) ReadValue(ctx context.Context, policy StorageFieldPolicy, recordID int64) (string, error) {
+	if s.valueStore == nil || s.protector == nil {
+		return "", errors.New("敏感值读取能力未初始化")
+	}
+	value, err := s.valueStore.Find(ctx, policy.TenantID, policy.ID, recordID)
+	if err != nil {
+		return "", err
+	}
+	return s.protector.Decrypt(string(value.Ciphertext), storageAssociatedData(policy.TenantID, policy.ID))
+}
+
 // PrepareEntity 根据物理表入库策略批量处理模型中的敏感字符串字段。
-func (s *RedactStorage) PrepareEntity(ctx context.Context, tenantID int64, tableName string, entity any) (map[int64]*StorageValue, error) {
+func (s *RedactStorage) PrepareEntity(ctx context.Context, tenantID, recordID int64, tableName string, entity any) (map[int64]*StorageValue, error) {
 	if s == nil || s.policyResolver == nil || entity == nil {
 		return nil, nil
 	}
@@ -119,11 +140,11 @@ func (s *RedactStorage) PrepareEntity(ctx context.Context, tenantID int64, table
 		return nil, errors.New("存储脱敏租户ID不能为负数")
 	}
 	policies := s.policyResolver.ListStoragePolicies(ctx, tenantID, tableName)
-	return s.PrepareEntityWithPolicies(ctx, entity, policies)
+	return s.PrepareEntityWithPolicies(ctx, recordID, entity, policies)
 }
 
 // PrepareEntityWithPolicies 按指定入库策略批量处理模型中的敏感字符串字段。
-func (s *RedactStorage) PrepareEntityWithPolicies(ctx context.Context, entity any, policies []StorageFieldPolicy) (map[int64]*StorageValue, error) {
+func (s *RedactStorage) PrepareEntityWithPolicies(ctx context.Context, recordID int64, entity any, policies []StorageFieldPolicy) (map[int64]*StorageValue, error) {
 	if s == nil || entity == nil || len(policies) == 0 {
 		return nil, nil
 	}
@@ -148,7 +169,7 @@ func (s *RedactStorage) PrepareEntityWithPolicies(ctx context.Context, entity an
 		}
 		var stored string
 		var protected *StorageValue
-		stored, protected, err = s.PrepareString(ctx, policy, text)
+		stored, protected, err = s.PrepareString(ctx, policy, recordID, text)
 		if err != nil {
 			return nil, err
 		}

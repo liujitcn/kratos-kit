@@ -29,3 +29,7 @@ go get github.com/liujitcn/kratos-kit/redact@latest
 ```
 
 生成后的 `*.pb.redact.go` 会自动导入本模块。
+
+## 原文与占位值
+
+`PrepareString`、`PrepareEntity` 和 `PrepareEntityWithPolicies` 接收业务 `recordID`，新增记录使用 0；更新时传入真实主键。只有可校验的已有旁表原文与提交掩码一致时，才将其认定为未修改占位值；单字姓名等脱敏前后相同的值仍须加密保存。`ReadValue` 用于受控读取，密文完整性失败返回错误。数据库适配器须使主旁表读写共用事务，并先验证主记录权限。

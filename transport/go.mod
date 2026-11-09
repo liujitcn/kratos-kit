@@ -2,7 +2,10 @@ module github.com/liujitcn/kratos-kit/transport
 
 go 1.27.0
 
-require github.com/liujitcn/kratos-kit/broker v0.0.15
+require (
+	github.com/liujitcn/kratos-kit/broker v0.0.15
+	golang.org/x/net v0.61.0
+)
 
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
@@ -27,7 +30,6 @@ require (
 	go.opentelemetry.io/otel/sdk v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.1 // indirect
-	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect

@@ -7,6 +7,8 @@
 
 `safehttp.FromEnvironment(scope, allowPublic)` 合并公共 `SECURITY_OUTBOUND_ALLOWED_HOSTS`、`SECURITY_OUTBOUND_ALLOWED_CIDRS` 与场景专属的 `SECURITY_<scope>_ALLOWED_HOSTS`、`SECURITY_<scope>_ALLOWED_CIDRS`，各项使用逗号分隔。域名白名单不能替代私网 CIDR 授权；`Client` 保留同源重定向，拒绝跨源跳转。
 
+`DialProxy` 同时校验代理和最终目标，通过 HTTP(S) CONNECT 或 SOCKS5 连接固定 IP，避免代理再次解析域名；业务传输继续使用原始 Host、TLS SNI 和证书。代理认证保留，HTTP(S) 代理需允许目标端口的 CONNECT。调用方提供请求 deadline 和需要的代理 TLS 信任配置。
+
 生命周期服务按子模块拆分：
 
 | 子模块 | 能力 |

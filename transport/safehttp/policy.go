@@ -87,6 +87,22 @@ func (p *Policy) ValidateURL(ctx context.Context, target *url.URL) error {
 	return err
 }
 
+// ValidateProxy 保留 HTTP(S) 和 SOCKS5 代理认证，同时校验实际代理目标。
+func (p *Policy) ValidateProxy(ctx context.Context, target *url.URL) error {
+	if target == nil {
+		return fmt.Errorf("代理地址不能为空")
+	}
+	checked := *target
+	checked.User = nil
+	if checked.Scheme == "socks5" || checked.Scheme == "socks5h" {
+		checked.Scheme = "http"
+		if checked.Port() == "" {
+			checked.Host = net.JoinHostPort(checked.Hostname(), "1080")
+		}
+	}
+	return p.ValidateURL(ctx, &checked)
+}
+
 // DialContext 重新校验 DNS 并固定连接到已通过检查的 IP，不将主机名交给拨号器再次解析。
 func (p *Policy) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	if network != "tcp" && network != "tcp4" && network != "tcp6" {
