@@ -433,8 +433,6 @@ github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.19 h1:XIbSbBY+BX+iH1NOM4d3h
 github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.19/go.mod h1:4GOGP3aVUX72J7yHlxbB+Cp/mVfrQ32u3Erg6G+gmfI=
 github.com/liujitcn/kratos-kit/tracing v0.0.15 h1:QowZSl9GTx2808UNbOyKYF6VcNm2ovPB5TQ72xkEjHU=
 github.com/liujitcn/kratos-kit/tracing v0.0.15/go.mod h1:G9KWUMaT6CPWrprr00wuxEAZqVE/e6O+3ujA63aXXgs=
-github.com/liujitcn/kratos-kit/transport v0.0.29 h1:yZEe0TFo1hcw71/9xPXiamCP4FYvDq3rHGwoUPTarwQ=
-github.com/liujitcn/kratos-kit/transport v0.0.29/go.mod h1:gncaq9hFjOeRmyhMJd6NSXUYp+21IaqQi6OvzEU3eM8=
 github.com/liujitcn/kratos-kit/transport/hptimer v0.0.10 h1:OCTqDbx3hH/hIkieb7CKeq4+3qYR+NLcjwwMVpRk4AE=
 github.com/liujitcn/kratos-kit/transport/hptimer v0.0.10/go.mod h1:ndM/wv5Inp54JnMXLxvp/5nlEVEik4Id2D+rO4jBjQU=
 github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17 h1:wc1KZa5gHvPdHluZpL/mT2PUWtta0Q6R8gujE86cWAw=

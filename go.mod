@@ -125,7 +125,7 @@ require (
 	github.com/liujitcn/kratos-kit/oss/s3 v0.0.5 // indirect
 	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.19 // indirect
 	github.com/liujitcn/kratos-kit/tracing v0.0.15 // indirect
-	github.com/liujitcn/kratos-kit/transport v0.0.29 // indirect
+	github.com/liujitcn/kratos-kit/transport v0.0.30 // indirect
 	github.com/liujitcn/kratos-kit/transport/hptimer v0.0.10 // indirect
 	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.28 // indirect

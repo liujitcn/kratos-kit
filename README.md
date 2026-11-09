@@ -1,5 +1,7 @@
 # kratos-kit
 
+安全回归覆盖受信代理链、安全出站 DNS 固定和敏感字段旁表完整性。存储保护 API 的记录主键及占位值语义见 [redact](redact/README.md)。
+
 `kratos-kit` 是面向 Kratos v3 应用的 Go 多模块工具库。仓库内的模块围绕启动、配置、传输、数据访问、安全、消息、观测、AI 和工作流提供可复用能力；每个模块都可以按自己的 module path 单独引入。
 
 MCP 服务端与工具生成器统一基于 `mark3labs/mcp-go`，支持 Streamable HTTP、Legacy SSE、STDIO 和进程内挂载。
