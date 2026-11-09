@@ -3,8 +3,8 @@ module github.com/liujitcn/kratos-kit/utils
 go 1.27.0
 
 require (
-	github.com/liujitcn/go-utils v0.0.43
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/go-utils v0.0.44
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	github.com/redis/go-redis/v9 v9.23.0
 )
 

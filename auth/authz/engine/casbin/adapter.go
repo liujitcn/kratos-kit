@@ -12,13 +12,13 @@ import (
 // Adapter 从项目策略映射向 Casbin 模型加载只读策略。
 type Adapter struct {
 	mu       sync.RWMutex
-	policies map[string]interface{}
+	policies map[string]any
 }
 
 // newAdapter 创建空策略适配器。
 func newAdapter() *Adapter {
 	return &Adapter{
-		policies: map[string]interface{}{},
+		policies: map[string]any{},
 	}
 }
 
@@ -65,8 +65,8 @@ func (sa *Adapter) RemoveFilteredPolicy(_ string, _ string, _ int, _ ...string) 
 }
 
 // SetPolicies 替换下一次加载使用的策略映射。
-func (sa *Adapter) SetPolicies(policies map[string]interface{}) {
-	policySnapshot := make(map[string]interface{}, len(policies))
+func (sa *Adapter) SetPolicies(policies map[string]any) {
+	policySnapshot := make(map[string]any, len(policies))
 	for key, value := range policies {
 		if rules, ok := value.([]PolicyRule); ok {
 			policySnapshot[key] = slices.Clone(rules)

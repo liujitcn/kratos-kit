@@ -49,6 +49,8 @@ shop-admin
 
 模板会为每个业务模块展开 Proto、Biz、Service、Server、Task 和前端模块目录；空目录通过 `.gitkeep` 保留。后端保持一个 Go module，服务入口、生成代码和业务代码共享同一 module。
 
+各业务模块的管理端和应用端均包含 `Services` 注册骨架，由项目模块统一接入 HTTP、gRPC 和 MCP。管理端代码生成器可直接追加单表服务，内部 Wire 从 Core 宿主接收共享的 BaseCase 和数据库客户端。
+
 ## 生成阶段
 
 命令按四个阶段执行：

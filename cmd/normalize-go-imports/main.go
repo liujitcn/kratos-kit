@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"cmp"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,7 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -337,6 +338,7 @@ func normalizeFile(filename string, packages map[string]string, write bool) ([]C
 	return changes, nil
 }
 
+// discoverModules 发现并按目录排序根目录下的 Go 模块。
 func discoverModules(root string) ([]string, error) {
 	modules := make([]string, 0)
 	var err error
@@ -370,10 +372,11 @@ func discoverModules(root string) ([]string, error) {
 	if len(modules) == 0 {
 		return nil, fmt.Errorf("no go.mod found below %s; pass -module explicitly", root)
 	}
-	sort.Strings(modules)
+	slices.Sort(modules)
 	return modules, nil
 }
 
+// collectGoFiles 收集并按路径排序待处理的 Go 文件。
 func collectGoFiles(root string) ([]string, error) {
 	files := make([]string, 0)
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
@@ -394,10 +397,11 @@ func collectGoFiles(root string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("collect Go files: %w", err)
 	}
-	sort.Strings(files)
+	slices.Sort(files)
 	return files, nil
 }
 
+// resolveFiles 将指定文件解析为排序后的绝对路径。
 func resolveFiles(root string, files []string) []string {
 	resolved := make([]string, 0, len(files))
 	for _, filename := range files {
@@ -406,7 +410,7 @@ func resolveFiles(root string, files []string) []string {
 		}
 		resolved = append(resolved, filepath.Clean(filename))
 	}
-	sort.Strings(resolved)
+	slices.Sort(resolved)
 	return resolved
 }
 
@@ -564,12 +568,13 @@ var goPredeclaredNames = map[string]struct{}{
 	"uint32": {}, "uint64": {}, "uintptr": {},
 }
 
+// applyEdits 稳定地按位置倒序应用编辑，并拒绝重叠或越界范围。
 func applyEdits(source []byte, edits []edit) ([]byte, error) {
-	sort.SliceStable(edits, func(i, j int) bool {
-		if edits[i].start == edits[j].start {
-			return edits[i].end > edits[j].end
+	slices.SortStableFunc(edits, func(a, b edit) int {
+		if a.start == b.start {
+			return cmp.Compare(b.end, a.end)
 		}
-		return edits[i].start > edits[j].start
+		return cmp.Compare(b.start, a.start)
 	})
 	updated := append([]byte(nil), source...)
 	previousStart := len(source) + 1

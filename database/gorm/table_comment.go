@@ -15,7 +15,7 @@ type TableCommenter interface {
 }
 
 // applyRegisteredTableComments 为已注册模型补充表注释。
-func applyRegisteredTableComments(db *gorm.DB, models ...interface{}) error {
+func applyRegisteredTableComments(db *gorm.DB, models ...any) error {
 	var err error
 	for _, model := range models {
 		err = applyTableComment(db, model)
@@ -27,11 +27,11 @@ func applyRegisteredTableComments(db *gorm.DB, models ...interface{}) error {
 }
 
 // applyTableComment 为单个模型补充表注释。
-func applyTableComment(db *gorm.DB, model interface{}) error {
+func applyTableComment(db *gorm.DB, model any) error {
 	var (
 		comment string
 		ok      bool
-		table   interface{}
+		table   any
 		err     error
 	)
 
@@ -57,7 +57,7 @@ func applyTableComment(db *gorm.DB, model interface{}) error {
 }
 
 // resolveTableComment 解析模型声明的表注释。
-func resolveTableComment(model interface{}) (string, bool) {
+func resolveTableComment(model any) (string, bool) {
 	commenter, ok := model.(TableCommenter)
 	if ok {
 		return commenter.TableComment(), true
@@ -82,7 +82,7 @@ func resolveTableComment(model interface{}) (string, bool) {
 }
 
 // resolveModelTable 解析模型最终映射的表名表达式。
-func resolveModelTable(db *gorm.DB, model interface{}) (interface{}, error) {
+func resolveModelTable(db *gorm.DB, model any) (any, error) {
 	stmt := &gorm.Statement{DB: db}
 	if err := stmt.Parse(model); err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func resolveModelTable(db *gorm.DB, model interface{}) (interface{}, error) {
 }
 
 // execTableCommentSQL 执行表注释更新。
-func execTableCommentSQL(db *gorm.DB, table interface{}, comment string) error {
+func execTableCommentSQL(db *gorm.DB, table any, comment string) error {
 	sql, err := buildTableCommentSQL(db, table, comment)
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func execTableCommentSQL(db *gorm.DB, table interface{}, comment string) error {
 }
 
 // buildTableCommentSQL 使用 GORM 官方 Statement 能力构造表注释 SQL。
-func buildTableCommentSQL(db *gorm.DB, table interface{}, comment string) (string, error) {
+func buildTableCommentSQL(db *gorm.DB, table any, comment string) (string, error) {
 	// 使用 GORM 的引用和参数展开能力，避免手写标识符与字符串转义。
 	tx := db.Session(&gorm.Session{NewDB: true, DryRun: true})
 	stmt := &gorm.Statement{DB: tx}

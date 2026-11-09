@@ -2,6 +2,7 @@ package memory
 
 import (
 	"errors"
+	"maps"
 	"strconv"
 	"sync"
 	"time"
@@ -37,12 +38,12 @@ type Memory struct {
 // NewMemory memory模式
 func NewMemory() (*Memory, func(), error) {
 	return &Memory{
-			strItems:       make(map[string]*strItem),
-			mapItems:       make(map[string]*mapItem),
-			rateLimitItems: make(map[string]rateLimitState),
-		}, func() {
-			log.Info("cache memory cleanup...")
-		}, nil
+		strItems:       make(map[string]*strItem),
+		mapItems:       make(map[string]*mapItem),
+		rateLimitItems: make(map[string]rateLimitState),
+	}, func() {
+		log.Info("cache memory cleanup...")
+	}, nil
 }
 
 // List 返回内存缓存中的字符串和 Hash 条目及其元数据。
@@ -65,9 +66,7 @@ func (s *Memory) List() ([]store.Entry, error) {
 			continue
 		}
 		fields := make(map[string]string, len(item.Value))
-		for field, value := range item.Value {
-			fields[field] = value
-		}
+		maps.Copy(fields, item.Value)
 		entries = append(entries, store.Entry{Key: key, Type: "hash", Fields: fields, TTL: ttl(item.Expired), ExpiresAt: item.Expired, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt})
 	}
 	s.mapMutex.Unlock()

@@ -12,7 +12,7 @@ import (
 
 var (
 	registeredMigrateModelsMu      sync.RWMutex
-	registeredMigrateModels        []interface{}
+	registeredMigrateModels        []any
 	registeredMigrateModelsVersion uint64
 	isolationTableCache            sync.Map
 )
@@ -22,7 +22,7 @@ const migrateRegistryKey = "kratos-kit:gorm:migrate-registry"
 var globalMigrateRegistryMarker = new(struct{})
 
 type migrateRegistry struct {
-	models   []interface{}
+	models   []any
 	explicit bool
 	version  uint64
 }
@@ -41,7 +41,7 @@ type auditFieldMetadata struct {
 }
 
 // RegisterMigrateModel 注册用于数据库迁移的数据库模型。
-func RegisterMigrateModel(model interface{}) {
+func RegisterMigrateModel(model any) {
 	if model == nil {
 		return
 	}
@@ -52,7 +52,7 @@ func RegisterMigrateModel(model interface{}) {
 }
 
 // RegisterMigrateModels 注册用于数据库迁移的数据库模型。
-func RegisterMigrateModels(models ...interface{}) {
+func RegisterMigrateModels(models ...any) {
 	if len(models) == 0 {
 		return
 	}
@@ -63,19 +63,19 @@ func RegisterMigrateModels(models ...interface{}) {
 }
 
 // BindModels 将模型范围绑定到可复用的独立会话，供迁移与回调共享同一份元数据。
-func BindModels(db *gorm.DB, models []interface{}, explicit bool) *gorm.DB {
+func BindModels(db *gorm.DB, models []any, explicit bool) *gorm.DB {
 	registry := &migrateRegistry{models: slices.Clone(models), explicit: explicit, version: 1}
 	return db.Session(&gorm.Session{}).Set(migrateRegistryKey, registry).Session(&gorm.Session{})
 }
 
 // MigrateModels 返回当前客户端对应的模型副本。
-func MigrateModels(db *gorm.DB) []interface{} {
+func MigrateModels(db *gorm.DB) []any {
 	models, _ := getMigrateModelsSnapshot(db)
 	return models
 }
 
 // getMigrateModelsSnapshot 返回当前客户端模型副本及版本。
-func getMigrateModelsSnapshot(db *gorm.DB) ([]interface{}, uint64) {
+func getMigrateModelsSnapshot(db *gorm.DB) ([]any, uint64) {
 	if db != nil && db.Statement != nil {
 		if value, ok := db.Get(migrateRegistryKey); ok {
 			registry, registryOK := value.(*migrateRegistry)
@@ -88,19 +88,19 @@ func getMigrateModelsSnapshot(db *gorm.DB) ([]interface{}, uint64) {
 }
 
 // getRegisteredMigrateModelsSnapshot 返回注册模型副本及其版本。
-func getRegisteredMigrateModelsSnapshot() ([]interface{}, uint64) {
+func getRegisteredMigrateModelsSnapshot() ([]any, uint64) {
 	registeredMigrateModelsMu.RLock()
 	defer registeredMigrateModelsMu.RUnlock()
 	if len(registeredMigrateModels) == 0 {
 		return nil, registeredMigrateModelsVersion
 	}
-	dup := make([]interface{}, len(registeredMigrateModels))
+	dup := make([]any, len(registeredMigrateModels))
 	copy(dup, registeredMigrateModels)
 	return dup, registeredMigrateModelsVersion
 }
 
 // getMigrateRegistryIdentity 返回缓存需要区分的模型注册范围标识。
-func getMigrateRegistryIdentity(db *gorm.DB) interface{} {
+func getMigrateRegistryIdentity(db *gorm.DB) any {
 	if db != nil && db.Statement != nil {
 		if value, ok := db.Get(migrateRegistryKey); ok {
 			registry, registryOK := value.(*migrateRegistry)

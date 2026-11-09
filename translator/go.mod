@@ -3,12 +3,12 @@ module github.com/liujitcn/kratos-kit/translator
 go 1.27.0
 
 require (
-	github.com/liujitcn/go-utils/translator v0.0.6
-	github.com/liujitcn/go-utils/translator/alibaba v0.0.6
-	github.com/liujitcn/go-utils/translator/baidu v0.0.6
-	github.com/liujitcn/go-utils/translator/google v0.0.6
-	github.com/liujitcn/go-utils/translator/volc v0.0.5
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/go-utils/translator v0.0.7
+	github.com/liujitcn/go-utils/translator/alibaba v0.0.7
+	github.com/liujitcn/go-utils/translator/baidu v0.0.7
+	github.com/liujitcn/go-utils/translator/google v0.0.7
+	github.com/liujitcn/go-utils/translator/volc v0.0.6
+	github.com/liujitcn/kratos-kit/api v0.0.44
 )
 
 require (
@@ -41,7 +41,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.26.2 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/json-iterator/go v1.1.13-0.20220915233716-71ac16282d12 // indirect
-	github.com/liujitcn/go-utils/http v0.0.9 // indirect
+	github.com/liujitcn/go-utils/http v0.0.10 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect

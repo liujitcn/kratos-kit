@@ -21,13 +21,13 @@ const (
 	ClaimFieldScope = "scope" // 代表 JWT 的权限范围。它是一个字符串或者字符串数组，用于标识 JWT 的权限范围。在一个 API 访问场景中，scope的值可能是["read:users", "write:posts"]。这意味着拥有此 JWT 的用户被授权读取用户信息和写入文章相关内容。通过这种方式，scope清晰地界定了用户凭借该令牌可以进行的操作范围。
 )
 
-// AuthClaims contains claims that are included in OIDC standard claims.
-// See https://openid.net/specs/openid-connect-core-1_0.html#IDToken
+// AuthClaims 保存 OIDC 标准声明和业务扩展声明。
+// 标准声明见 https://openid.net/specs/openid-connect-core-1_0.html#IDToken。
 //
 //	type AuthClaims struct {
 //		jwtV5.MapClaims
 //	}
-type AuthClaims map[string]interface{}
+type AuthClaims map[string]any
 
 func (c *AuthClaims) GetJwtID() (string, error) {
 	return c.parseString(ClaimFieldJwtID)
@@ -168,10 +168,11 @@ func (c *AuthClaims) GetFloat64(key string) (float64, error) {
 	return parseNumber[float64](raw)
 }
 
+// parseString 读取字符串声明，缺失时返回空字符串。
 func (c *AuthClaims) parseString(key string) (string, error) {
 	var (
 		ok  bool
-		raw interface{}
+		raw any
 		iss string
 	)
 	raw, ok = (*c)[key]
@@ -187,6 +188,7 @@ func (c *AuthClaims) parseString(key string) (string, error) {
 	return iss, nil
 }
 
+// parseStrings 将字符串或数组形式的声明解析为字符串切片。
 func (c *AuthClaims) parseStrings(key string) ([]string, error) {
 	var cs []string
 	switch v := (*c)[key].(type) {
@@ -196,7 +198,7 @@ func (c *AuthClaims) parseStrings(key string) ([]string, error) {
 	case []string:
 		cs = v
 
-	case []interface{}:
+	case []any:
 		for _, a := range v {
 			vs, ok := a.(string)
 			if !ok {
@@ -234,8 +236,7 @@ func (c *AuthClaims) parseNumericDate(key string) (*jwt.NumericDate, error) {
 	return nil, ErrorInvalidType
 }
 
-// parseClaimsString tries to parse a key in the map claims type as a
-// [ClaimsStrings] type, which can either be a string or an array of string.
+// parseClaimsString 将字符串或数组形式的声明解析为 JWT 字符串集合。
 func (c *AuthClaims) parseClaimsString(key string) (jwt.ClaimStrings, error) {
 	var cs []string
 	switch v := (*c)[key].(type) {
@@ -243,7 +244,7 @@ func (c *AuthClaims) parseClaimsString(key string) (jwt.ClaimStrings, error) {
 		cs = append(cs, v)
 	case []string:
 		cs = v
-	case []interface{}:
+	case []any:
 		for _, a := range v {
 			vs, ok := a.(string)
 			if !ok {
@@ -261,7 +262,8 @@ func newNumericDateFromSeconds(f float64) *jwt.NumericDate {
 	return jwt.NewNumericDate(time.Unix(int64(round), int64(frac*1e9)))
 }
 
-func parseNumber[R float32 | float64 | int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64](value interface{}) (R, error) {
+// parseNumber 将数字声明转换为指定数值类型，空值按零处理。
+func parseNumber[R float32 | float64 | int | int8 | int16 | int32 | int64 | uint | uint8 | uint16 | uint32 | uint64](value any) (R, error) {
 	if value == nil {
 		return 0, nil
 	}

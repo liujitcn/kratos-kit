@@ -14,7 +14,7 @@ type clientOptions struct {
 	// modelsExplicit 表示是否显式指定了当前客户端的模型集合。
 	modelsExplicit bool
 	// migrateModels 是当前客户端参与自动建表和字段审计的模型集合。
-	migrateModels []interface{}
+	migrateModels []any
 }
 
 // WithName 设置 GORM 客户端名称，用于日志、错误和指标标签。
@@ -25,7 +25,7 @@ func WithName(name string) ClientOption {
 }
 
 // WithMigrateModels 设置当前客户端专属的迁移和隔离模型。
-func WithMigrateModels(models ...interface{}) ClientOption {
+func WithMigrateModels(models ...any) ClientOption {
 	return func(opts *clientOptions) {
 		opts.modelsExplicit = true
 		opts.migrateModels = slices.Clone(models)

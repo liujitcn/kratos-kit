@@ -65,7 +65,7 @@ func WithPolicyAdapter(policy *Adapter) OptFunc {
 }
 
 // WithPolices 设置初始策略集合。
-func WithPolices(policies map[string]interface{}) OptFunc {
+func WithPolices(policies map[string]any) OptFunc {
 	return func(s *State) {
 		if s.policy == nil {
 			s.policy = newAdapter()

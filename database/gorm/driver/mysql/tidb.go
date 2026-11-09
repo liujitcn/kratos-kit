@@ -63,7 +63,7 @@ func (d tidbDialector) DefaultValueOf(field *schema.Field) clause.Expression {
 }
 
 // BindVarTo 写入 MySQL 协议绑定变量。
-func (d tidbDialector) BindVarTo(writer clause.Writer, stmt *gorm.Statement, value interface{}) {
+func (d tidbDialector) BindVarTo(writer clause.Writer, stmt *gorm.Statement, value any) {
 	d.base.BindVarTo(writer, stmt, value)
 }
 
@@ -73,7 +73,7 @@ func (d tidbDialector) QuoteTo(writer clause.Writer, value string) {
 }
 
 // Explain 展开 SQL 绑定变量。
-func (d tidbDialector) Explain(sql string, vars ...interface{}) string {
+func (d tidbDialector) Explain(sql string, vars ...any) string {
 	return d.base.Explain(sql, vars...)
 }
 

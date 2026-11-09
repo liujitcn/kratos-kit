@@ -18,7 +18,7 @@ var Action = authzEngine.Action("ANY")
 // Server 衔接认证和权鉴
 func Server(userToken *data.UserToken) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			tr, ok := transport.FromServerContext(ctx)
 			if !ok {
 				return nil, ErrWrongContext

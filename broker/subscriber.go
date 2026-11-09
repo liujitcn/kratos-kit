@@ -2,6 +2,7 @@ package broker
 
 import (
 	"fmt"
+	"maps"
 	"sync"
 	"time"
 )
@@ -60,13 +61,11 @@ func (sm *SubscriberSyncMap) Get(topic string) Subscriber {
 	return sm.m[topic]
 }
 
-// GetAll returns a copy of the entire SubscriberMap
+// GetAll 返回独立的订阅者映射，空映射仍可写入。
 func (sm *SubscriberSyncMap) GetAll() SubscriberMap {
 	sm.RLock()
 	cp := make(SubscriberMap, len(sm.m))
-	for k, v := range sm.m {
-		cp[k] = v
-	}
+	maps.Copy(cp, sm.m)
 	sm.RUnlock()
 	return cp
 }
@@ -165,13 +164,11 @@ func (sm *SubscriberSyncMap) RemoveWithTimeout(topic string, timeout time.Durati
 	}
 }
 
-// ClearWithTimeout clears all Subscribers with a timeout for each unsubscribe operation
+// ClearWithTimeout 清空订阅者，并发退订并返回超时的主题。
 func (sm *SubscriberSyncMap) ClearWithTimeout(timeout time.Duration) []string {
 	sm.Lock()
 	subs := make(map[string]Subscriber, len(sm.m))
-	for k, sub := range sm.m {
-		subs[k] = sub
-	}
+	maps.Copy(subs, sm.m)
 	sm.m = make(SubscriberMap)
 	sm.Unlock()
 
@@ -180,19 +177,17 @@ func (sm *SubscriberSyncMap) ClearWithTimeout(timeout time.Duration) []string {
 	var mu sync.Mutex
 
 	for topic, sub := range subs {
-		wg.Add(1)
-		go func(t string, s Subscriber) {
-			defer wg.Done()
+		wg.Go(func() {
 			done := make(chan error, 1)
-			go func() { done <- s.Unsubscribe(false) }()
+			go func() { done <- sub.Unsubscribe(false) }()
 			select {
 			case <-done:
 			case <-time.After(timeout):
 				mu.Lock()
-				failed = append(failed, t)
+				failed = append(failed, topic)
 				mu.Unlock()
 			}
-		}(topic, sub)
+		})
 	}
 	wg.Wait()
 	return failed

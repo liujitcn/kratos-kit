@@ -74,7 +74,7 @@ func getUserIDFromContext(ctx context.Context) (int64, bool) {
 }
 
 // setAuditColumn 根据填充策略写入当前创建或更新参数中的审计字段。
-func setAuditColumn(db *gorm.DB, fieldName string, value interface{}, onlyZero bool) {
+func setAuditColumn(db *gorm.DB, fieldName string, value any, onlyZero bool) {
 	if db == nil || db.Statement == nil || db.Error != nil {
 		return
 	}
@@ -100,19 +100,19 @@ func setAuditColumn(db *gorm.DB, fieldName string, value interface{}, onlyZero b
 }
 
 // setMapColumn 按填充策略写入 map 审计字段。
-func setMapColumn(dest interface{}, fieldName, columnName string, value interface{}, onlyZero bool) bool {
+func setMapColumn(dest any, fieldName, columnName string, value any, onlyZero bool) bool {
 	switch items := dest.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		setMapItem(items, fieldName, columnName, value, onlyZero)
-	case *map[string]interface{}:
+	case *map[string]any:
 		if items != nil {
 			setMapItem(*items, fieldName, columnName, value, onlyZero)
 		}
-	case []map[string]interface{}:
+	case []map[string]any:
 		for _, item := range items {
 			setMapItem(item, fieldName, columnName, value, onlyZero)
 		}
-	case *[]map[string]interface{}:
+	case *[]map[string]any:
 		if items != nil {
 			for _, item := range *items {
 				setMapItem(item, fieldName, columnName, value, onlyZero)
@@ -125,7 +125,7 @@ func setMapColumn(dest interface{}, fieldName, columnName string, value interfac
 }
 
 // setMapItem 按填充策略处理单条 map 审计字段。
-func setMapItem(item map[string]interface{}, fieldName, columnName string, value interface{}, onlyZero bool) {
+func setMapItem(item map[string]any, fieldName, columnName string, value any, onlyZero bool) {
 	if item == nil {
 		return
 	}
@@ -143,7 +143,7 @@ func setMapItem(item map[string]interface{}, fieldName, columnName string, value
 }
 
 // setStructColumn 按填充策略递归处理结构体或结构体集合中的审计字段。
-func setStructColumn(db *gorm.DB, current reflect.Value, field *schema.Field, value interface{}, onlyZero bool) {
+func setStructColumn(db *gorm.DB, current reflect.Value, field *schema.Field, value any, onlyZero bool) {
 	if !current.IsValid() || db.Error != nil {
 		return
 	}

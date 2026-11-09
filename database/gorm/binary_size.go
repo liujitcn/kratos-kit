@@ -18,7 +18,7 @@ const binarySizeConstraintPrefix = "gormsize_"
 // MySQL 的 varbinary(N) 自带长度并作为索引键长依据，PostgreSQL 的 bytea 没有长度概念；
 // 该约束既让两库获得一致的长度校验，也让生成器能从约束定义找回 size 标签，
 // 保证两个源库生成的模型一致、两库可由同一份模型互相创建。
-func applyDialectBinarySizes(db *gorm.DB, models []interface{}) error {
+func applyDialectBinarySizes(db *gorm.DB, models []any) error {
 	if db == nil || db.Dialector == nil || db.Name() != "postgres" || len(models) == 0 {
 		return nil
 	}
@@ -75,11 +75,11 @@ func ensureBinarySizeConstraint(db *gorm.DB, table, column string, size int) err
 // extractBinarySizeConstraint 从约束定义中解析长度，格式不符返回 0。
 func extractBinarySizeConstraint(definition string) int {
 	// 自建约束定义形如 CHECK (octet_length("digest") <= 32)。
-	index := strings.Index(definition, "<= ")
-	if index < 0 || !strings.Contains(definition, "octet_length") {
+	_, after, ok := strings.Cut(definition, "<= ")
+	if !ok || !strings.Contains(definition, "octet_length") {
 		return 0
 	}
-	size, err := strconv.Atoi(strings.TrimSpace(definition[index+3:]))
+	size, err := strconv.Atoi(strings.TrimSpace(after))
 	if err != nil {
 		return 0
 	}

@@ -58,5 +58,5 @@ type Runtime interface {
 	GetKey() key.Key
 
 	// GetStreamMessage 创建队列流消息。
-	GetStreamMessage(id string, value map[string]interface{}) (data.Message, error)
+	GetStreamMessage(id string, value map[string]any) (data.Message, error)
 }

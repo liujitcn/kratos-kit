@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	github.com/liujitcn/kratos-kit/registry v0.0.27
 	k8s.io/api v0.37.1
 	k8s.io/apimachinery v0.37.1

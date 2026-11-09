@@ -6,7 +6,7 @@ require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/gorilla/mux v1.8.1
 	github.com/liujitcn/kratos-kit/broker v0.0.15
-	github.com/liujitcn/kratos-kit/transport v0.0.28
+	github.com/liujitcn/kratos-kit/transport v0.0.29
 	gopkg.in/cenkalti/backoff.v1 v1.1.0
 )
 

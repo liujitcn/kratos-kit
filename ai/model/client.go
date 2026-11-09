@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/liujitcn/kratos-kit/transport/safehttp"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -34,21 +35,38 @@ func newCompatibleClient(cfg *ModelConfig, o *options) (*openai.Client, error) {
 	if cfg.Provider == ProviderOpenAICompatible && cfg.Organization != "" {
 		clientConfig.OrgID = cfg.Organization
 	}
-	applyClientConfig(cfg, o, &clientConfig)
+	err := applyClientConfig(cfg, o, &clientConfig)
+	if err != nil {
+		return nil, err
+	}
 
 	return openai.NewClientWithConfig(clientConfig), nil
 }
 
 // applyClientConfig 应用 HTTP 客户端、超时与用户自定义配置。
-func applyClientConfig(cfg *ModelConfig, o *options, clientConfig *openai.ClientConfig) {
+func applyClientConfig(cfg *ModelConfig, o *options, clientConfig *openai.ClientConfig) error {
 	if o.httpClient != nil {
 		clientConfig.HTTPClient = o.httpClient
 	} else {
-		clientConfig.HTTPClient = &http.Client{Timeout: timeout(cfg)}
+		client, err := NewHTTPClient(timeout(cfg))
+		if err != nil {
+			return err
+		}
+		clientConfig.HTTPClient = client
 	}
 	if o.configMutator != nil {
 		o.configMutator(clientConfig)
 	}
+	return nil
+}
+
+// NewHTTPClient 创建共享安全模型客户端，支持公网及部署明确授权的内网模型，保留调用方超时。
+func NewHTTPClient(timeout time.Duration) (*http.Client, error) {
+	policy, err := safehttp.FromEnvironment("AI", true)
+	if err != nil {
+		return nil, err
+	}
+	return policy.Client(timeout), nil
 }
 
 // timeout 返回 AI 请求超时时间。

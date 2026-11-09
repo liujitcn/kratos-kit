@@ -52,5 +52,8 @@ func MakePairs(pairs ...Pair) Pairs {
 	return pairs
 }
 
-type PolicyMap map[string]interface{}
-type RoleMap map[string]interface{}
+// PolicyMap 按名称保存授权策略。
+type PolicyMap map[string]any
+
+// RoleMap 按名称保存角色映射。
+type RoleMap map[string]any

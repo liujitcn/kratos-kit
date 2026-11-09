@@ -1,2 +1,4 @@
+github.com/liujitcn/kratos-kit/transport v0.0.29 h1:yZEe0TFo1hcw71/9xPXiamCP4FYvDq3rHGwoUPTarwQ=
+github.com/liujitcn/kratos-kit/transport v0.0.29/go.mod h1:gncaq9hFjOeRmyhMJd6NSXUYp+21IaqQi6OvzEU3eM8=
 github.com/sashabaranov/go-openai v1.43.0 h1:HNRpO8TAQ01ssO7aPXO/68QRlcCCYQQ5GfHbFceRZcY=
 github.com/sashabaranov/go-openai v1.43.0/go.mod h1:lj5b/K+zjTSFxVLijLSTDZuP7adOgerWeFyZLUhAKRg=

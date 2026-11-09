@@ -151,7 +151,7 @@ func queryDependencyCommand(name string, args ...string) ([]byte, error) {
 // latestBackendVersion 按语义版本选取当前无主版本后缀模块可用的最新稳定 tag。
 func latestBackendVersion(tags string) (string, error) {
 	var latest string
-	for _, line := range strings.Split(tags, "\n") {
+	for line := range strings.SplitSeq(tags, "\n") {
 		fields := strings.Fields(line)
 		if len(fields) != 2 || !strings.HasPrefix(fields[1], "refs/tags/backend/") {
 			continue

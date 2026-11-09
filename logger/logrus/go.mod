@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	github.com/liujitcn/kratos-kit/logger v0.0.37
 	github.com/sirupsen/logrus v1.10.2
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

@@ -7,11 +7,13 @@ func (h *timerHeap) Len() int           { return len(*h) }
 func (h *timerHeap) Less(i, j int) bool { return (*h)[i].At.Before((*h)[j].At) }
 func (h *timerHeap) Swap(i, j int)      { (*h)[i], (*h)[j] = (*h)[j], (*h)[i] }
 
-func (h *timerHeap) Push(x interface{}) {
+// Push 将定时任务加入堆。
+func (h *timerHeap) Push(x any) {
 	*h = append(*h, x.(*TimerTask))
 }
 
-func (h *timerHeap) Pop() interface{} {
+// Pop 弹出堆尾的定时任务，供容器堆维护最早任务顺序。
+func (h *timerHeap) Pop() any {
 	old := *h
 	n := len(old)
 	x := old[n-1]

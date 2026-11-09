@@ -16,8 +16,8 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/liujitcn/go-utils v0.0.43 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.41 // indirect
+	github.com/liujitcn/go-utils v0.0.44 // indirect
+	github.com/liujitcn/kratos-kit/api v0.0.44 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.28 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.23.0 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.23.0 // indirect

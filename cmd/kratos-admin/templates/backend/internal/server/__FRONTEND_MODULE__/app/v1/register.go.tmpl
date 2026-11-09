@@ -1,0 +1,19 @@
+package v1
+
+import (
+	"github.com/go-kratos/kratos/v3/transport/http"
+	"github.com/liujitcn/kratos-kit/transport/mcp"
+	"google.golang.org/grpc"
+)
+
+// Services 汇总当前业务应用端的服务实现。
+type Services struct{}
+
+// RegisterGRPC 注册当前业务应用端的 gRPC 服务。
+func (s Services) RegisterGRPC(srv grpc.ServiceRegistrar) {}
+
+// RegisterHTTP 注册当前业务应用端的 HTTP 服务。
+func (s Services) RegisterHTTP(srv *http.Server) {}
+
+// RegisterMCP 注册当前业务应用端的 MCP 工具。
+func (s Services) RegisterMCP(mcpSrv *mcp.Server) {}

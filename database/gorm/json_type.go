@@ -17,7 +17,7 @@ import (
 // 后续的建表与已有列比对读取的是同一份解析结果，因此两条 DDL 路径同时生效。
 // TagSettings 与 DataType 必须同时改写：mysql 等驱动的 DataTypeOf 读 TagSettings，
 // postgres 等驱动读 schema 解析时固化的 DataType，缺一会导致中性类型原样透传。
-func applyDialectJSONTypes(db *gorm.DB, models []interface{}) error {
+func applyDialectJSONTypes(db *gorm.DB, models []any) error {
 	if db == nil || db.Dialector == nil || len(models) == 0 {
 		return nil
 	}

@@ -5,9 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/liujitcn/kratos-kit/cmd/protoc-gen-go-redact/redact/v1"
 	pgs "github.com/lyft/protoc-gen-star/v2"
 	"google.golang.org/grpc/codes"
+
+	"github.com/liujitcn/kratos-kit/cmd/protoc-gen-go-redact/redact/v1"
 )
 
 // hasRedactUsage 判断文件是否需要生成服务响应脱敏包装代码。

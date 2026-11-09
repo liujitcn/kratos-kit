@@ -128,7 +128,7 @@ return {1, 0}
 `
 
 type rateLimitScriptClient interface {
-	Eval(context.Context, string, []string, ...interface{}) *redis.Cmd
+	Eval(context.Context, string, []string, ...any) *redis.Cmd
 }
 
 // TakeRateLimits 原子判断并更新 Redis 中的一组限流算法状态。
@@ -141,6 +141,7 @@ func (s *ClusterRedis) TakeRateLimits(requests []store.RateLimitRequest) (bool, 
 	return takeRateLimits(context.Background(), s.client, requests, true, s.recordMeta)
 }
 
+// takeRateLimits 校验限流请求，并通过 Lua 原子判断和更新各限流状态。
 func takeRateLimits(ctx context.Context, client rateLimitScriptClient, requests []store.RateLimitRequest, cluster bool, recordMeta func(string)) (bool, time.Duration, error) {
 	if len(requests) == 0 {
 		return true, 0, nil
@@ -149,7 +150,7 @@ func takeRateLimits(ctx context.Context, client rateLimitScriptClient, requests 
 		return false, 0, errors.New("too many rate limit requests")
 	}
 	keys := make([]string, 0, len(requests)*2)
-	args := make([]interface{}, 0, len(requests)*7)
+	args := make([]any, 0, len(requests)*7)
 	seen := make(map[string]struct{}, len(requests))
 	clusterTag := ""
 	for _, request := range requests {

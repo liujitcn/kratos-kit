@@ -35,8 +35,8 @@ github.com/liujitcn/kratos-kit/broker v0.0.15 h1:8gDmoDAZhJLdkk5n8gwBghbPJ9WZmgM
 github.com/liujitcn/kratos-kit/broker v0.0.15/go.mod h1:JmhmfdcQdSlvmexhOVyEOrzZRRrWACLFarO22ug7Gv8=
 github.com/liujitcn/kratos-kit/tracing v0.0.15 h1:QowZSl9GTx2808UNbOyKYF6VcNm2ovPB5TQ72xkEjHU=
 github.com/liujitcn/kratos-kit/tracing v0.0.15/go.mod h1:G9KWUMaT6CPWrprr00wuxEAZqVE/e6O+3ujA63aXXgs=
-github.com/liujitcn/kratos-kit/transport v0.0.28 h1:jaP+WYzWVPU7/bdoq3KNqa89Dby1qq9CqubxlVMbbIk=
-github.com/liujitcn/kratos-kit/transport v0.0.28/go.mod h1:gncaq9hFjOeRmyhMJd6NSXUYp+21IaqQi6OvzEU3eM8=
+github.com/liujitcn/kratos-kit/transport v0.0.29 h1:yZEe0TFo1hcw71/9xPXiamCP4FYvDq3rHGwoUPTarwQ=
+github.com/liujitcn/kratos-kit/transport v0.0.29/go.mod h1:gncaq9hFjOeRmyhMJd6NSXUYp+21IaqQi6OvzEU3eM8=
 github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17 h1:wc1KZa5gHvPdHluZpL/mT2PUWtta0Q6R8gujE86cWAw=
 github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17/go.mod h1:RuOLdfzI1Rk0K8d2td29I6aMHw250MuUH9Tij4BZ9dk=
 github.com/mark3labs/mcp-go v1.5.0 h1:XMfliGOAan2zHQJHVQb9Y6KZDr/73nLfsxlsByTwHjk=

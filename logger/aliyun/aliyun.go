@@ -9,7 +9,6 @@ import (
 
 	sls "github.com/aliyun/aliyun-log-go-sdk"
 	"github.com/aliyun/aliyun-log-go-sdk/producer"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/go-kratos/kratos/v3/log"
 	"github.com/liujitcn/kratos-kit/logger"
@@ -86,7 +85,7 @@ func (a *aliyunLog) Log(level log.Level, keyvals ...any) error {
 	}
 
 	var logInst = &sls.Log{
-		Time:     proto.Uint32(uint32(time.Now().Unix())),
+		Time:     new(uint32(time.Now().Unix())),
 		Contents: contents,
 	}
 	return a.producer.SendLog(a.opts.project, a.opts.logstore, "", "", logInst)

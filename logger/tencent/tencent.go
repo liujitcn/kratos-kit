@@ -8,7 +8,6 @@ import (
 	"time"
 
 	tencentcloud_cls_sdk_go "github.com/tencentcloud/tencentcloud-cls-sdk-go"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/go-kratos/kratos/v3/log"
 	"github.com/liujitcn/kratos-kit/logger"
@@ -82,7 +81,7 @@ func (t *tencentLog) Log(level log.Level, keyvals ...any) error {
 	}
 
 	var logInst = &tencentcloud_cls_sdk_go.Log{
-		Time:     proto.Int64(time.Now().Unix()),
+		Time:     new(time.Now().Unix()),
 		Contents: contents,
 	}
 	return t.producer.SendLog(t.opts.topicID, logInst, nil)

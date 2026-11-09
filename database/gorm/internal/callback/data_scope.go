@@ -267,7 +267,7 @@ func createdByInDeptExpr(identity dataScopeIdentity, table string, useDerivedCre
 		dataScopeUserIDColumnName,
 		dataScopeUserDeptIDColumnName,
 	)
-	vars := []interface{}{dataScopeColumn(table, dataScopeCreatedByColumnName), identity.deptID}
+	vars := []any{dataScopeColumn(table, dataScopeCreatedByColumnName), identity.deptID}
 	if identity.hasTenantScope() {
 		sql += fmt.Sprintf(" AND u.%s = ?", tenantColumnName)
 		vars = append(vars, identity.tenantID)
@@ -284,7 +284,7 @@ func createdByInDeptDerivedExpr(identity dataScopeIdentity, table string) clause
 		dataScopeUserTableName,
 		dataScopeUserDeptIDColumnName,
 	)
-	vars := []interface{}{identity.deptID}
+	vars := []any{identity.deptID}
 	if identity.hasTenantScope() {
 		sql += fmt.Sprintf(" AND %s = ?", tenantColumnName)
 		vars = append(vars, identity.tenantID)
@@ -309,7 +309,7 @@ func createdByInDeptAndChildrenExpr(identity dataScopeIdentity, table string, us
 		dataScopeDeptIDColumnName,
 		dataScopeDeptPathColumnName,
 	)
-	vars := []interface{}{
+	vars := []any{
 		dataScopeColumn(table, dataScopeCreatedByColumnName),
 		identity.deptID,
 		dataScopeDeptPathLikeValue(identity.deptID),
@@ -334,7 +334,7 @@ func createdByInDeptAndChildrenDerivedExpr(identity dataScopeIdentity, table str
 		dataScopeDeptIDColumnName,
 		dataScopeDeptPathColumnName,
 	)
-	vars := []interface{}{identity.deptID, dataScopeDeptPathLikeValue(identity.deptID)}
+	vars := []any{identity.deptID, dataScopeDeptPathLikeValue(identity.deptID)}
 	if identity.hasTenantScope() {
 		sql += fmt.Sprintf(" AND u.%s = ? AND d.%s = ?", tenantColumnName, tenantColumnName)
 		vars = append(vars, identity.tenantID, identity.tenantID)

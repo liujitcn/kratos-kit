@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"slices"
 )
 
 // Event defines the message event interface
@@ -27,16 +28,16 @@ type Handler func(ctx context.Context, evt Event) error
 // SubscriberMiddleware is broker subscriber middleware.
 type SubscriberMiddleware func(Handler) Handler
 
-// ChainSubscriberMiddleware chains multiple SubscriberMiddleware into a single Handler.
+// ChainSubscriberMiddleware 按声明顺序组合订阅中间件，跳过空中间件。
 func ChainSubscriberMiddleware(h Handler, mws []SubscriberMiddleware) Handler {
 	if len(mws) == 0 {
 		return h
 	}
-	for i := len(mws) - 1; i >= 0; i-- {
-		if mws[i] == nil {
+	for _, mw := range slices.Backward(mws) {
+		if mw == nil {
 			continue
 		}
-		h = mws[i](h)
+		h = mw(h)
 	}
 	return h
 }

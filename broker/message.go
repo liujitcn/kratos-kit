@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"maps"
 	"reflect"
 )
 
@@ -69,16 +70,9 @@ func (m *Message) GetHeader(key string) string {
 	return m.Headers[key]
 }
 
-// HeadersCopy returns a copy of the message headers
+// HeadersCopy 返回消息头的独立浅副本，并保留 nil 状态。
 func (m *Message) HeadersCopy() Headers {
-	if m.Headers == nil {
-		return nil
-	}
-	cp := make(Headers, len(m.Headers))
-	for k, v := range m.Headers {
-		cp[k] = v
-	}
-	return cp
+	return maps.Clone(m.Headers)
 }
 
 // MergeHeaders merges the provided headers into the message headers
@@ -156,16 +150,9 @@ func (m *Message) Clone() *Message {
 	}
 }
 
-// MetadataCopy returns a copy of the message metadata
+// MetadataCopy 返回消息元数据的独立浅副本，并保留 nil 状态。
 func (m *Message) MetadataCopy() Metadata {
-	if m.Metadata == nil {
-		return nil
-	}
-	cp := make(Metadata, len(m.Metadata))
-	for k, v := range m.Metadata {
-		cp[k] = v
-	}
-	return cp
+	return maps.Clone(m.Metadata)
 }
 
 // GetMetadata retrieves the value of a specific metadata key
@@ -284,7 +271,7 @@ func WithPartitionOffset(partition int, offset int64) MessageOption {
 	}
 }
 
-// WithHeaders will copy the provided headers into Message.Headers (no-op if nil)
+// WithHeaders 将消息头浅复制到消息中，nil 输入不改变消息。
 func WithHeaders(h Headers) MessageOption {
 	return func(m *Message) {
 		if h == nil {
@@ -293,9 +280,7 @@ func WithHeaders(h Headers) MessageOption {
 		if m.Headers == nil {
 			m.Headers = make(Headers, len(h))
 		}
-		for k, v := range h {
-			m.Headers[k] = v
-		}
+		maps.Copy(m.Headers, h)
 	}
 }
 
@@ -306,7 +291,7 @@ func WithHeader(key, value string) MessageOption {
 	}
 }
 
-// WithMetadata will copy the provided metadata into Message.Metadata (no-op if nil)
+// WithMetadata 将元数据浅复制到消息中，nil 输入不改变消息。
 func WithMetadata(md Metadata) MessageOption {
 	return func(m *Message) {
 		if md == nil {
@@ -315,9 +300,7 @@ func WithMetadata(md Metadata) MessageOption {
 		if m.Metadata == nil {
 			m.Metadata = make(Metadata, len(md))
 		}
-		for k, v := range md {
-			m.Metadata[k] = v
-		}
+		maps.Copy(m.Metadata, md)
 	}
 }
 

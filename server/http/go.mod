@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/gorilla/handlers v1.5.2
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	github.com/liujitcn/kratos-kit/metrics v0.0.3
 	github.com/liujitcn/kratos-kit/tracing v0.0.15
 	github.com/liujitcn/kratos-kit/utils v0.0.28
@@ -23,7 +23,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0 // indirect
-	github.com/liujitcn/go-utils v0.0.43 // indirect
+	github.com/liujitcn/go-utils v0.0.44 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/redis/go-redis/v9 v9.23.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

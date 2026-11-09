@@ -3,9 +3,13 @@
 
 package module
 
-import "github.com/google/wire"
+import (
+	"github.com/google/wire"
+	"github.com/liujitcn/kratos-core/biz"
+	"github.com/liujitcn/kratos-kit/database/gorm"
+)
 
 // BuildModules 通过内部 Wire 装配当前项目的协议模块。
-func BuildModules() (ProjectModules, func(), error) {
+func BuildModules(baseCase *biz.BaseCase, databases map[string]*gorm.Client) (ProjectModules, func(), error) {
 	panic(wire.Build(ProviderSet))
 }

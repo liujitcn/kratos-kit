@@ -197,7 +197,7 @@ func expandBootstrapConfigValue(value string, values map[string]any) string {
 // lookupBootstrapConfigValue 按点号路径查找配置值。
 func lookupBootstrapConfigValue(values map[string]any, path string) (any, bool) {
 	var current any = values
-	for _, key := range strings.Split(path, ".") {
+	for key := range strings.SplitSeq(path, ".") {
 		currentMap, ok := current.(map[string]any)
 		if !ok {
 			return nil, false

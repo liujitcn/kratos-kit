@@ -88,7 +88,7 @@ WHERE
 ORDER BY ci.relname, u.ord`
 
 // GetIndexes 按索引定义序返回表索引信息。
-func (m orderedIndexMigrator) GetIndexes(value interface{}) ([]gorm.Index, error) {
+func (m orderedIndexMigrator) GetIndexes(value any) ([]gorm.Index, error) {
 	indexes := make([]gorm.Index, 0)
 	err := m.runWithValue(value, func(stmt *gorm.Statement) error {
 		rows := make([]orderedIndexRow, 0)
@@ -123,7 +123,7 @@ func (m orderedIndexMigrator) GetIndexes(value interface{}) ([]gorm.Index, error
 }
 
 // runWithValue 与 gorm 迁移器同名方法语义一致：字符串入参视为表名，模型入参先解析。
-func (m orderedIndexMigrator) runWithValue(value interface{}, fc func(*gorm.Statement) error) error {
+func (m orderedIndexMigrator) runWithValue(value any, fc func(*gorm.Statement) error) error {
 	stmt := &gorm.Statement{DB: m.db}
 	if m.db.Statement != nil {
 		stmt.Table = m.db.Statement.Table

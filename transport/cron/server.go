@@ -242,7 +242,7 @@ func (s *Server) RemoveAllJobs() {
 	defer s.cronMu.Unlock()
 
 	count := 0
-	s.entryIDs.Range(func(key, _ interface{}) bool {
+	s.entryIDs.Range(func(key, _ any) bool {
 		if entryID, ok := key.(cron.EntryID); ok {
 			s.cronScheduler.Remove(entryID)
 			count++
@@ -265,7 +265,7 @@ func (s *Server) GetJobCount() int {
 	defer s.cronMu.RUnlock()
 
 	count := 0
-	s.entryIDs.Range(func(_, _ interface{}) bool {
+	s.entryIDs.Range(func(_, _ any) bool {
 		count++
 		return true
 	})

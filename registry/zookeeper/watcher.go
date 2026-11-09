@@ -21,7 +21,7 @@ type watcher struct {
 	conn   *zk.Conn
 	cancel context.CancelFunc
 
-	first uint32
+	first atomic.Uint32
 	// 前缀
 	prefix string
 	// watch 的服务名
@@ -59,9 +59,10 @@ func (w *watcher) watch(ctx context.Context) {
 	}
 }
 
+// Next 返回首次实例快照或下一次服务变更。
 func (w *watcher) Next() ([]*registry.ServiceInstance, error) {
 	// todo 如果多处调用 next 可能会导致多实例信息不同步
-	if atomic.CompareAndSwapUint32(&w.first, 0, 1) {
+	if w.first.CompareAndSwap(0, 1) {
 		return w.getServices()
 	}
 	select {

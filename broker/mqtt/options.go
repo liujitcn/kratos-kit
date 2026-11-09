@@ -106,11 +106,6 @@ func clientIDFromContext(ctx context.Context) (string, bool) {
 	return value, ok
 }
 
-func cleanSessionFromContext(ctx context.Context) (bool, bool) {
-	value, ok := ctx.Value(cleanSessionKey{}).(bool)
-	return value, ok
-}
-
 func keepAliveFromContext(ctx context.Context) (time.Duration, bool) {
 	value, ok := ctx.Value(keepAliveKey{}).(time.Duration)
 	return value, ok
@@ -121,33 +116,13 @@ func connectTimeoutFromContext(ctx context.Context) (time.Duration, bool) {
 	return value, ok
 }
 
-func autoReconnectFromContext(ctx context.Context) (bool, bool) {
-	value, ok := ctx.Value(autoReconnectKey{}).(bool)
-	return value, ok
-}
-
 func resumeSubsFromContext(ctx context.Context) (bool, bool) {
 	value, ok := ctx.Value(resumeSubsKey{}).(bool)
 	return value, ok
 }
 
-func orderMattersFromContext(ctx context.Context) (bool, bool) {
-	value, ok := ctx.Value(orderMattersKey{}).(bool)
-	return value, ok
-}
-
-func writeTimeoutFromContext(ctx context.Context) (time.Duration, bool) {
-	value, ok := ctx.Value(writeTimeoutKey{}).(time.Duration)
-	return value, ok
-}
-
 func connectRetryIntervalFromContext(ctx context.Context) (time.Duration, bool) {
 	value, ok := ctx.Value(connectRetryIntervalKey{}).(time.Duration)
-	return value, ok
-}
-
-func maxReconnectIntervalFromContext(ctx context.Context) (time.Duration, bool) {
-	value, ok := ctx.Value(maxReconnectIntervalKey{}).(time.Duration)
 	return value, ok
 }
 

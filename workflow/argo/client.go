@@ -68,7 +68,8 @@ func (wc *WorkflowClient) Close() error {
 /// HTTP 辅助方法
 ////////////////////////////////////////////////////////////////////////////////
 
-func (wc *WorkflowClient) newRequest(ctx context.Context, method, path string, body interface{}) (*http.Request, error) {
+// newRequest 构建携带认证信息和可选 JSON 请求体的 Argo 请求。
+func (wc *WorkflowClient) newRequest(ctx context.Context, method, path string, body any) (*http.Request, error) {
 	var reader io.Reader
 	var err error
 	if body != nil {
@@ -97,7 +98,7 @@ func (wc *WorkflowClient) newRequest(ctx context.Context, method, path string, b
 }
 
 // doRequest 发送 Argo 请求并解析 HTTP 响应。
-func (wc *WorkflowClient) doRequest(req *http.Request, result interface{}) error {
+func (wc *WorkflowClient) doRequest(req *http.Request, result any) error {
 	var resp *http.Response
 	var err error
 	resp, err = wc.client.Do(req)

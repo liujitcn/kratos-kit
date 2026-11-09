@@ -67,21 +67,21 @@ func (l *gormLogger) LogMode(level logger.LogLevel) logger.Interface {
 }
 
 // Info 输出 GORM 普通信息日志。
-func (l *gormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
+func (l *gormLogger) Info(ctx context.Context, msg string, data ...any) {
 	if l.LogLevel >= logger.Info {
 		writeLog(log.LevelInfo, fileWithLineNum(), l.infoStr+msg, data...)
 	}
 }
 
 // Warn 输出 GORM 警告日志。
-func (l *gormLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
+func (l *gormLogger) Warn(ctx context.Context, msg string, data ...any) {
 	if l.LogLevel >= logger.Warn {
 		writeLog(log.LevelWarn, fileWithLineNum(), l.warnStr+msg, data...)
 	}
 }
 
 // Error 输出 GORM 错误日志。
-func (l *gormLogger) Error(ctx context.Context, msg string, data ...interface{}) {
+func (l *gormLogger) Error(ctx context.Context, msg string, data ...any) {
 	if l.LogLevel >= logger.Error {
 		writeLog(log.LevelError, fileWithLineNum(), l.errStr+msg, data...)
 	}
@@ -122,7 +122,7 @@ func (l *gormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 }
 
 // writeLog 将 caller 作为结构化字段传入，避免在消息体中重复打印同一调用位置。
-func writeLog(level log.Level, caller string, format string, args ...interface{}) {
+func writeLog(level log.Level, caller string, format string, args ...any) {
 	log.Log(context.Background(),
 		level,
 		fmt.Sprintf(format, args...),

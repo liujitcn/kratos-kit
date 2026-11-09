@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sync"
 
 	"github.com/liujitcn/kratos-kit/auth/authz/engine"
@@ -48,9 +49,7 @@ func WithModule(name string, module string) Option {
 func WithModules(modules map[string]string) Option {
 	return func(options *options) {
 		options.modules = make(map[string]string, len(modules))
-		for name, module := range modules {
-			options.modules[name] = module
-		}
+		maps.Copy(options.modules, modules)
 	}
 }
 
@@ -263,9 +262,7 @@ func projectsFromResult(resultSet rego.ResultSet) (engine.Projects, error) {
 // cloneMap 浅复制策略或角色映射。
 func cloneMap[T ~map[string]any](value T) T {
 	cloned := make(T, len(value))
-	for key, item := range value {
-		cloned[key] = item
-	}
+	maps.Copy(cloned, value)
 	return cloned
 }
 

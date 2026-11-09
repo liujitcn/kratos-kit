@@ -4,11 +4,14 @@ package __PACKAGE_NAME__
 import (
 	"github.com/google/wire"
 	adminbackend "github.com/liujitcn/kratos-admin/backend"
+	"github.com/liujitcn/kratos-admin/backend/pkg/projectaccess"
 	kratoscore "github.com/liujitcn/kratos-core"
+	corebiz "github.com/liujitcn/kratos-core/biz"
 	corejob "github.com/liujitcn/kratos-core/job"
 	coremodule "github.com/liujitcn/kratos-core/module"
 	corequeue "github.com/liujitcn/kratos-core/queue"
 	coresse "github.com/liujitcn/kratos-core/sse"
+	"github.com/liujitcn/kratos-kit/database/gorm"
 	projectModule "__MODULE_PATH__/internal/module"
 )
 
@@ -21,6 +24,7 @@ var ProviderSet = wire.NewSet(
 
 // hostProviderSet 将当前项目业务模块与 Admin 的具名贡献合并为 Core 集合。
 var hostProviderSet = wire.NewSet(
+	projectaccess.NewLifecycle,
 	ProvideResources,
 	ProvideModules,
 	ProvideTasks,
@@ -38,8 +42,8 @@ func ProvideResources(adminResources adminbackend.AdminResources) coremodule.Res
 }
 
 // ProvideModules 在业务根包内完成项目模块构造，并合并 Admin 的协议模块。
-func ProvideModules(adminModules adminbackend.AdminModules) (coremodule.Modules, func(), error) {
-	projectModules, cleanup, err := projectModule.BuildModules()
+func ProvideModules(adminModules adminbackend.AdminModules, baseCase *corebiz.BaseCase, databases map[string]*gorm.Client) (coremodule.Modules, func(), error) {
+	projectModules, cleanup, err := projectModule.BuildModules(baseCase, databases)
 	if err != nil {
 		return nil, nil, err
 	}

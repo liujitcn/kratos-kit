@@ -22,8 +22,8 @@ const defaultCommonCharsSource = "的一是了不人我在有他这为大来以�
 // defaultBackground 创建默认验证码背景图。
 func defaultBackground(width, height int) image.Image {
 	bg := image.NewRGBA(image.Rect(0, 0, width, height))
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := range height {
+		for x := range width {
 			// 使用坐标扰动生成渐变纹理，避免依赖本地图片文件。
 			r := uint8(36 + (x*37+y*11)%90)
 			g := uint8(70 + (x*13+y*29)%100)
@@ -37,8 +37,8 @@ func defaultBackground(width, height int) image.Image {
 // defaultThumbBackground 创建白色提示图背景，方便多彩文字和干扰线形成对比。
 func defaultThumbBackground(width, height int) image.Image {
 	bg := image.NewRGBA(image.Rect(0, 0, width, height))
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := range height {
+		for x := range width {
 			shade := uint8(252 - (x*5+y*3)%8)
 			bg.SetRGBA(x, y, color.RGBA{R: shade, G: shade, B: shade, A: 255})
 		}
@@ -100,8 +100,8 @@ func defaultPuzzleImage(fill color.RGBA) image.Image {
 	const size = 80
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
 	center := float64(size) / 2
-	for y := 0; y < size; y++ {
-		for x := 0; x < size; x++ {
+	for y := range size {
+		for x := range size {
 			dx := math.Abs(float64(x) - center)
 			dy := math.Abs(float64(y) - center)
 			// 拼图块由中间矩形加两个圆形凸起组成，兼顾识别度和生成成本。

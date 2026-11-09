@@ -2,6 +2,7 @@ package memory
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"time"
 
@@ -80,9 +81,7 @@ func (s *Memory) TakeRateLimits(requests []store.RateLimitRequest) (bool, time.D
 	if denied {
 		return false, retryAfter, nil
 	}
-	for key, state := range updates {
-		s.rateLimitItems[key] = state
-	}
+	maps.Copy(s.rateLimitItems, updates)
 	return true, 0, nil
 }
 

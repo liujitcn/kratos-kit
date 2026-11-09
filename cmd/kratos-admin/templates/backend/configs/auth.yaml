@@ -15,7 +15,7 @@ authn:
                 - /base.v1.ConfigService/GetConfig
                 - /base.v1.LoginService/Captcha
                 - /base.v1.LoginService/VerifyCaptcha
-                - /base.v1.LoginService/PasswordPublicKey
+                - /base.v1.SecretCryptoService/GetSecretPublicKey
                 - /base.v1.LoginService/RefreshToken
                 - /base.v1.MfaService/VerifyMfa
                 - /base.v1.MfaService/BeginMfaEnrollment

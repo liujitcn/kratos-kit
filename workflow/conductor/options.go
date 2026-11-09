@@ -31,7 +31,7 @@ type StartWorkflowOptions struct {
 	Version *int32
 
 	// Input 是工作流输入数据。
-	Input map[string]interface{}
+	Input map[string]any
 
 	// CorrelationID 用于消息关联。
 	CorrelationID string

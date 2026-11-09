@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 
@@ -54,28 +54,32 @@ func NewClusterRedis(cfg *configv1.Data_Redis) (*ClusterRedis, func(), error) {
 		return nil, nil, fmt.Errorf("failed ping redis: %w", err)
 	}
 	return &ClusterRedis{
-			client: client,
-			meta:   make(map[string]entryMeta),
-		}, func() {
-			log.Info("cache cluster-redis cleanup...")
-			if client != nil {
-				err = client.Close()
-				if err != nil {
-					log.Error("failed close redis", "error", err)
-					return
-				}
+		client: client,
+		meta:   make(map[string]entryMeta),
+	}, func() {
+		log.Info("cache cluster-redis cleanup...")
+		if client != nil {
+			err = client.Close()
+			if err != nil {
+				log.Error("failed close redis", "error", err)
+				return
 			}
-		}, nil
+		}
+	}, nil
 }
 
 // List 返回 Redis 集群中支持的缓存条目及其运行时元数据。
 func (s *ClusterRedis) List() ([]store.Entry, error) {
 	keySet := make(map[string]struct{})
+	var keyMutex sync.Mutex
 	err := s.client.ForEachShard(context.TODO(), func(ctx context.Context, shard *redis.Client) error {
 		keys, err := scanKeys(shard)
 		if err != nil {
 			return err
 		}
+		// 各节点回调并发执行，汇总键时必须串行写入共享 map。
+		keyMutex.Lock()
+		defer keyMutex.Unlock()
 		for _, key := range keys {
 			keySet[key] = struct{}{}
 		}
@@ -88,7 +92,7 @@ func (s *ClusterRedis) List() ([]store.Entry, error) {
 	for key := range keySet {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	entries := make([]store.Entry, 0, len(keys))
 	for _, key := range keys {
 		kind, err := s.client.Type(context.TODO(), key).Result()

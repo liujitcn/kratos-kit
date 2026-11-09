@@ -96,13 +96,11 @@ func (r *Redis) Close() error {
 	return r.client.Close()
 }
 
+// newLease 创建带自动续期和取消能力的 Redis 锁租约。
 func newLease(parent context.Context, lock *redislock.Lock, ttl time.Duration) contract.Lease {
 	leaseContext, cancel := context.WithCancel(parent)
 	done := make(chan struct{})
-	refreshInterval := ttl / 3
-	if refreshInterval < time.Second {
-		refreshInterval = time.Second
-	}
+	refreshInterval := max(ttl/3, time.Second)
 	go func() {
 		defer close(done)
 		ticker := time.NewTicker(refreshInterval)

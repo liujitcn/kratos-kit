@@ -25,18 +25,18 @@ type dorisMigrator struct {
 // newDorisMigrator 创建 Doris 专用迁移器。
 func newDorisMigrator(db *gorm.DB, dialector gorm.Dialector) gorm.Migrator {
 	return dorisMigrator{
-		Migrator:  migrator.Migrator{Config: migrator.Config{DB: db, Dialector: dialector}},
+		Config:    migrator.Config{DB: db, Dialector: dialector},
 		Dialector: dialector,
 	}
 }
 
 // MigrateColumn 跳过已有字段的自动变更，避免生成 Doris 不兼容的 MySQL DDL。
-func (dorisMigrator) MigrateColumn(interface{}, *schema.Field, gorm.ColumnType) error {
+func (dorisMigrator) MigrateColumn(any, *schema.Field, gorm.ColumnType) error {
 	return nil
 }
 
 // AlterColumn 跳过已有字段的自动变更，复杂字段调整应通过版本化 SQL 完成。
-func (dorisMigrator) AlterColumn(interface{}, string) error {
+func (dorisMigrator) AlterColumn(any, string) error {
 	return nil
 }
 
@@ -54,7 +54,7 @@ func (m dorisMigrator) FullDataTypeOf(field *schema.Field) clause.Expr {
 }
 
 // CreateTable 使用 Doris OLAP 表语法创建模型表。
-func (m dorisMigrator) CreateTable(values ...interface{}) error {
+func (m dorisMigrator) CreateTable(values ...any) error {
 	var err error
 	for _, value := range m.ReorderModels(values, false) {
 		err = m.createTable(value)
@@ -66,14 +66,14 @@ func (m dorisMigrator) CreateTable(values ...interface{}) error {
 }
 
 // createTable 创建单个 Doris 模型表。
-func (m dorisMigrator) createTable(value interface{}) error {
+func (m dorisMigrator) createTable(value any) error {
 	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
 		if stmt.Schema == nil {
 			return errors.New("failed to get schema")
 		}
 
 		createSQL := "CREATE TABLE ? ("
-		args := []interface{}{m.CurrentTable(stmt)}
+		args := []any{m.CurrentTable(stmt)}
 		for _, dbName := range stmt.Schema.DBNames {
 			field := stmt.Schema.FieldsByDBName[dbName]
 			if field.IgnoreMigration {
@@ -110,7 +110,7 @@ func (m dorisMigrator) createTable(value interface{}) error {
 		}
 		createSQL += fmt.Sprintf(") BUCKETS %d", dorisDefaultBuckets)
 
-		replication := interface{}(1)
+		replication := any(1)
 		if value, ok := m.DB.Get(dorisReplicationSetting); ok {
 			replication = value
 		}

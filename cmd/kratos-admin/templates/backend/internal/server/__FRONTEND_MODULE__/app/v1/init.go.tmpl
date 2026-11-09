@@ -3,4 +3,4 @@ package v1
 import "github.com/google/wire"
 
 // ProviderSet 提供当前业务的 app 端依赖。
-var ProviderSet = wire.NewSet()
+var ProviderSet = wire.NewSet(wire.Struct(new(Services), "*"))

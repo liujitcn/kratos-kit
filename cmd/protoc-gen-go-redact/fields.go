@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/liujitcn/kratos-kit/cmd/protoc-gen-go-redact/redact/v1"
 	pgs "github.com/lyft/protoc-gen-star/v2"
+
+	"github.com/liujitcn/kratos-kit/cmd/protoc-gen-go-redact/redact/v1"
 )
 
 // processFields extracts each field's redaction information.
@@ -605,9 +606,10 @@ func (m *Module) redactedCustomValue(
 	}
 }
 
-// RuleInfo response type for Module.RuleInformation
+// RuleInfo 保存 Module.RuleInformation 返回的脱敏规则信息。
 type RuleInfo struct {
-	RedactionValue interface{}
+	// RedactionValue 是脱敏后使用的替代值。
+	RedactionValue any
 	// equivalent field type information
 	ProtoType  pgs.ProtoType
 	ProtoLabel pgs.ProtoLabel

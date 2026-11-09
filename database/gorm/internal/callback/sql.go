@@ -1,6 +1,7 @@
 package callback
 
 import (
+	"slices"
 	"strings"
 
 	"gorm.io/gorm"
@@ -216,8 +217,7 @@ func rawJoinRequiresUnsupportedOuterFallback(segment rawJoinSegment) bool {
 
 // appendRawJoinOnConditions 为原生 JOIN 的每个 ON 条件追加隔离表达式。
 func appendRawJoinOnConditions(query string, injections []rawJoinInjection) string {
-	for index := len(injections) - 1; index >= 0; index-- {
-		injection := injections[index]
+	for _, injection := range slices.Backward(injections) {
 		conditionEnd := injection.conditionEnd
 		for conditionEnd > injection.conditionStart && isRawSQLSpace(query[conditionEnd-1]) {
 			conditionEnd--

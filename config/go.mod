@@ -4,9 +4,9 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/go-utils/crypto v0.0.18
-	github.com/liujitcn/kratos-kit v0.0.95
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/go-utils/crypto v0.0.19
+	github.com/liujitcn/kratos-kit v0.0.97
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	github.com/liujitcn/kratos-kit/key v0.0.11
 	google.golang.org/protobuf v1.36.12
 )
@@ -112,16 +112,16 @@ require (
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
-	github.com/liujitcn/go-utils v0.0.43 // indirect
-	github.com/liujitcn/go-utils/translator v0.0.6 // indirect
-	github.com/liujitcn/kratos-kit/auth v0.0.34 // indirect
+	github.com/liujitcn/go-utils v0.0.44 // indirect
+	github.com/liujitcn/go-utils/translator v0.0.7 // indirect
+	github.com/liujitcn/kratos-kit/auth v0.0.35 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.27 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.24 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.26 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz/middleware v0.0.23 // indirect
 	github.com/liujitcn/kratos-kit/broker v0.0.15 // indirect
 	github.com/liujitcn/kratos-kit/cache v0.0.29 // indirect
-	github.com/liujitcn/kratos-kit/database/gorm v0.0.57 // indirect
+	github.com/liujitcn/kratos-kit/database/gorm v0.0.59 // indirect
 	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.24 // indirect
 	github.com/liujitcn/kratos-kit/locker v0.0.25 // indirect
 	github.com/liujitcn/kratos-kit/oss v0.0.25 // indirect
@@ -129,7 +129,7 @@ require (
 	github.com/liujitcn/kratos-kit/queue v0.0.37 // indirect
 	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.19 // indirect
 	github.com/liujitcn/kratos-kit/tracing v0.0.15 // indirect
-	github.com/liujitcn/kratos-kit/transport v0.0.28 // indirect
+	github.com/liujitcn/kratos-kit/transport v0.0.29 // indirect
 	github.com/liujitcn/kratos-kit/transport/hptimer v0.0.10 // indirect
 	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.28 // indirect

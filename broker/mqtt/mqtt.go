@@ -124,23 +124,21 @@ func (b *mqttBroker) Connect() error {
 		KeepAlive:         keepAliveSeconds(options),
 		ConnectRetryDelay: connectRetryDelay(options),
 		ConnectTimeout:    connectTimeout,
-		ClientConfig: paho.ClientConfig{
-			ClientID: optionsClientID(options),
-			Router:   router,
-			OnServerDisconnect: func(disconnect *paho.Disconnect) {
-				b.markDisconnected()
-				b.recordError(fmt.Errorf("mqtt server disconnect: %d", disconnect.ReasonCode))
-				if options.ErrorHandler != nil {
-					_ = options.ErrorHandler(context.Background(), &connectionEvent{err: fmt.Errorf("mqtt server disconnect: %d", disconnect.ReasonCode)})
-				}
-			},
-			OnClientError: func(clientErr error) {
-				b.markDisconnected()
-				b.recordError(clientErr)
-				if options.ErrorHandler != nil {
-					_ = options.ErrorHandler(context.Background(), &connectionEvent{err: clientErr})
-				}
-			},
+		ClientID:          optionsClientID(options),
+		Router:            router,
+		OnServerDisconnect: func(disconnect *paho.Disconnect) {
+			b.markDisconnected()
+			b.recordError(fmt.Errorf("mqtt server disconnect: %d", disconnect.ReasonCode))
+			if options.ErrorHandler != nil {
+				_ = options.ErrorHandler(context.Background(), &connectionEvent{err: fmt.Errorf("mqtt server disconnect: %d", disconnect.ReasonCode)})
+			}
+		},
+		OnClientError: func(clientErr error) {
+			b.markDisconnected()
+			b.recordError(clientErr)
+			if options.ErrorHandler != nil {
+				_ = options.ErrorHandler(context.Background(), &connectionEvent{err: clientErr})
+			}
 		},
 		OnConnectionUp: func(manager *autopaho.ConnectionManager, _ *paho.Connack) {
 			b.mu.Lock()
@@ -448,13 +446,6 @@ func keepAliveSeconds(options broker.Options) uint16 {
 		return uint16(value / time.Second)
 	}
 	return 30
-}
-
-func cleanSession(options broker.Options) bool {
-	if value, ok := cleanSessionFromContext(options.Context); ok {
-		return value
-	}
-	return true
 }
 
 func connectRetryDelay(options broker.Options) time.Duration {

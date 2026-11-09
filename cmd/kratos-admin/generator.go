@@ -253,7 +253,7 @@ func initializeProjectWithRunner(target, frontendModule string, runner projectCo
 		projectProgress.Printf("使用 %s CLI %s，复用 pnpm 可用缓存", cli.name, version)
 		// 精确版本隔离不同发布的 CLI 缓存，不再强制清空 dlx 缓存。
 		args := []string{"--config.@liujitcn:registry=https://registry.npmjs.org/", "dlx", cli.packageName + "@" + version, "create", filepath.Join(target, "frontend", cli.name), "--kratos-project"}
-		for _, moduleName := range strings.Split(frontendModule, ",") {
+		for moduleName := range strings.SplitSeq(frontendModule, ",") {
 			args = append(args, "--module", moduleName)
 		}
 		err = runner(target, ".", "pnpm", args...)
@@ -311,8 +311,8 @@ func replaceTokens(value string, tokens map[string]string) string {
 
 // renameTemplateFile 将可发布的占位文件名还原为点文件。
 func renameTemplateFile(filePath string) string {
-	if strings.HasSuffix(filePath, ".tmpl") {
-		return strings.TrimSuffix(filePath, ".tmpl")
+	if before, ok := strings.CutSuffix(filePath, ".tmpl"); ok {
+		return before
 	}
 	switch path.Base(filePath) {
 	case "gitignore":

@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.27
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.24
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.26
@@ -20,7 +20,7 @@ require (
 	github.com/go-playground/form/v4 v4.5.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
-	github.com/liujitcn/go-utils v0.0.43 // indirect
+	github.com/liujitcn/go-utils v0.0.44 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.28 // indirect
 	github.com/redis/go-redis/extra/rediscmd/v9 v9.23.0 // indirect
 	github.com/redis/go-redis/extra/redisotel/v9 v9.23.0 // indirect

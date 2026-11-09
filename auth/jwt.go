@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/go-kratos/kratos/v3/middleware"
@@ -30,7 +31,7 @@ func NewAuthMiddleware(authenticator engine.RequestAuthenticator,
 	return func(handler middleware.Handler) middleware.Handler {
 		fullAuthHandler := fullAuth(handler)
 		optionalAuthHandler := optionalAuth(handler)
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			serverTransport, ok := transport.FromServerContext(ctx)
 			if !ok {
 				// 无法识别请求元信息时，回退到完整鉴权链路。
@@ -65,7 +66,7 @@ func mapAuthnError(err error) error {
 // OptionalServer 为白名单接口补充可选认证解析。
 func OptionalServer(authenticator engine.RequestAuthenticator, userToken *data.UserToken) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			authnClaims, err := authenticator.Authenticate(ctx, engine.ContextTypeKratosMetaData, req)
 			if err != nil || authnClaims == nil {
 				return handler(ctx, req)
@@ -78,6 +79,7 @@ func OptionalServer(authenticator engine.RequestAuthenticator, userToken *data.U
 	}
 }
 
+// matchWhiteList 按前缀、正则和完整操作名判断是否命中白名单。
 func matchWhiteList(whiteList *configv1.Authentication_Jwt_WhiteList, operation string) bool {
 	if whiteList == nil {
 		return false
@@ -96,15 +98,8 @@ func matchWhiteList(whiteList *configv1.Authentication_Jwt_WhiteList, operation 
 			return true
 		}
 	}
-	for _, path := range whiteList.Path {
-		if path == operation {
-			return true
-		}
+	if slices.Contains(whiteList.Path, operation) {
+		return true
 	}
-	for _, item := range whiteList.Match {
-		if item == operation {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(whiteList.Match, operation)
 }

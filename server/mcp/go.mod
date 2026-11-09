@@ -3,7 +3,7 @@ module github.com/liujitcn/kratos-kit/server/mcp
 go 1.27.0
 
 require (
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	github.com/liujitcn/kratos-kit/transport/mcp v0.0.20
 	github.com/liujitcn/kratos-kit/utils v0.0.28
 	github.com/mark3labs/mcp-go v1.5.0
@@ -19,10 +19,10 @@ require (
 	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0 // indirect
-	github.com/liujitcn/go-utils v0.0.43 // indirect
+	github.com/liujitcn/go-utils v0.0.44 // indirect
 	github.com/liujitcn/kratos-kit/broker v0.0.15 // indirect
 	github.com/liujitcn/kratos-kit/tracing v0.0.15 // indirect
-	github.com/liujitcn/kratos-kit/transport v0.0.28 // indirect
+	github.com/liujitcn/kratos-kit/transport v0.0.29 // indirect
 	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17 // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
 	github.com/redis/go-redis/v9 v9.23.0 // indirect

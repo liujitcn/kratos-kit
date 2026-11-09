@@ -3,6 +3,7 @@ package polaris
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"net/url"
 	"strconv"
@@ -71,7 +72,7 @@ func NewRegistryWithConfig(conf config.Configuration, opts ...Option) (*Registry
 	return New(provider, consumer, opts...), nil
 }
 
-// Register the registration.
+// Register 将服务实例注册到 Polaris 并启动心跳。
 func (r *Registry) Register(_ context.Context, serviceInstance *registry.ServiceInstance) error {
 	ids := make([]string, 0, len(serviceInstance.Endpoints))
 	for _, endpoint := range serviceInstance.Endpoints {
@@ -102,32 +103,28 @@ func (r *Registry) Register(_ context.Context, serviceInstance *registry.Service
 			}
 		} else {
 			rmd = make(map[string]string, len(serviceInstance.Metadata)+2)
-			for k, v := range serviceInstance.Metadata {
-				rmd[k] = v
-			}
+			maps.Copy(rmd, serviceInstance.Metadata)
 			rmd["kind"] = u.Scheme
 			rmd["version"] = serviceInstance.Version
 		}
 		// Register
 		service, err := r.provider.Register(
 			&api.InstanceRegisterRequest{
-				InstanceRegisterRequest: model.InstanceRegisterRequest{
-					Service:      serviceInstance.Name + u.Scheme,
-					ServiceToken: r.opt.ServiceToken,
-					Namespace:    r.opt.Namespace,
-					Host:         host,
-					Port:         portNum,
-					Protocol:     r.opt.Protocol,
-					Weight:       &r.opt.Weight,
-					Priority:     &r.opt.Priority,
-					Version:      &serviceInstance.Version,
-					Metadata:     rmd,
-					Healthy:      &r.opt.Healthy,
-					Isolate:      &r.opt.Isolate,
-					TTL:          &r.opt.TTL,
-					Timeout:      &r.opt.Timeout,
-					RetryCount:   &r.opt.RetryCount,
-				},
+				Service:      serviceInstance.Name + u.Scheme,
+				ServiceToken: r.opt.ServiceToken,
+				Namespace:    r.opt.Namespace,
+				Host:         host,
+				Port:         portNum,
+				Protocol:     r.opt.Protocol,
+				Weight:       &r.opt.Weight,
+				Priority:     &r.opt.Priority,
+				Version:      &serviceInstance.Version,
+				Metadata:     rmd,
+				Healthy:      &r.opt.Healthy,
+				Isolate:      &r.opt.Isolate,
+				TTL:          &r.opt.TTL,
+				Timeout:      &r.opt.Timeout,
+				RetryCount:   &r.opt.RetryCount,
 			})
 		if err != nil {
 			return err
@@ -144,16 +141,14 @@ func (r *Registry) Register(_ context.Context, serviceInstance *registry.Service
 					<-ticker.C
 
 					err = r.provider.Heartbeat(&api.InstanceHeartbeatRequest{
-						InstanceHeartbeatRequest: model.InstanceHeartbeatRequest{
-							Service:      serviceInstance.Name + u.Scheme,
-							Namespace:    r.opt.Namespace,
-							Host:         host,
-							Port:         portNum,
-							ServiceToken: r.opt.ServiceToken,
-							InstanceID:   instanceID,
-							Timeout:      &r.opt.Timeout,
-							RetryCount:   &r.opt.RetryCount,
-						},
+						Service:      serviceInstance.Name + u.Scheme,
+						Namespace:    r.opt.Namespace,
+						Host:         host,
+						Port:         portNum,
+						ServiceToken: r.opt.ServiceToken,
+						InstanceID:   instanceID,
+						Timeout:      &r.opt.Timeout,
+						RetryCount:   &r.opt.RetryCount,
 					})
 					if err != nil {
 						log.Error(err.Error())
@@ -170,7 +165,7 @@ func (r *Registry) Register(_ context.Context, serviceInstance *registry.Service
 	return nil
 }
 
-// Deregister the registration.
+// Deregister 注销 Polaris 中的服务实例。
 func (r *Registry) Deregister(_ context.Context, serviceInstance *registry.ServiceInstance) error {
 	split := strings.Split(serviceInstance.ID, _instanceIDSeparator)
 	for i, endpoint := range serviceInstance.Endpoints {
@@ -194,16 +189,14 @@ func (r *Registry) Deregister(_ context.Context, serviceInstance *registry.Servi
 		// Deregister
 		err = r.provider.Deregister(
 			&api.InstanceDeRegisterRequest{
-				InstanceDeRegisterRequest: model.InstanceDeRegisterRequest{
-					Service:      serviceInstance.Name + u.Scheme,
-					ServiceToken: r.opt.ServiceToken,
-					Namespace:    r.opt.Namespace,
-					InstanceID:   split[i],
-					Host:         host,
-					Port:         portNum,
-					Timeout:      &r.opt.Timeout,
-					RetryCount:   &r.opt.RetryCount,
-				},
+				Service:      serviceInstance.Name + u.Scheme,
+				ServiceToken: r.opt.ServiceToken,
+				Namespace:    r.opt.Namespace,
+				InstanceID:   split[i],
+				Host:         host,
+				Port:         portNum,
+				Timeout:      &r.opt.Timeout,
+				RetryCount:   &r.opt.RetryCount,
 			},
 		)
 		if err != nil {
@@ -213,16 +206,14 @@ func (r *Registry) Deregister(_ context.Context, serviceInstance *registry.Servi
 	return nil
 }
 
-// GetService return the service instances in memory according to the service name.
+// GetService 按服务名获取 Polaris 服务实例。
 func (r *Registry) GetService(_ context.Context, serviceName string) ([]*registry.ServiceInstance, error) {
 	// get all instances
 	instancesResponse, err := r.consumer.GetAllInstances(&api.GetAllInstancesRequest{
-		GetAllInstancesRequest: model.GetAllInstancesRequest{
-			Service:    serviceName,
-			Namespace:  r.opt.Namespace,
-			Timeout:    &r.opt.Timeout,
-			RetryCount: &r.opt.RetryCount,
-		},
+		Service:    serviceName,
+		Namespace:  r.opt.Namespace,
+		Timeout:    &r.opt.Timeout,
+		RetryCount: &r.opt.RetryCount,
 	})
 	if err != nil {
 		return nil, err
@@ -251,11 +242,9 @@ type Watcher struct {
 func newWatcher(ctx context.Context, namespace string, serviceName string, consumer api.ConsumerAPI) (*Watcher, error) {
 	//nolint:staticcheck // WatchService 保留公开 Channel 事件契约，回调 API 无法无损替换。
 	watchServiceResponse, err := consumer.WatchService(&api.WatchServiceRequest{
-		WatchServiceRequest: model.WatchServiceRequest{
-			Key: model.ServiceKey{
-				Namespace: namespace,
-				Service:   serviceName,
-			},
+		Key: model.ServiceKey{
+			Namespace: namespace,
+			Service:   serviceName,
 		},
 	})
 	if err != nil {

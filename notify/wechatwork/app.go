@@ -116,7 +116,7 @@ func (s *AppSender) Send(ctx context.Context, message notify.Message) (*notify.R
 		return nil, fmt.Errorf("notify wechatwork: API error %d: %s", result.ErrCode, result.ErrMsg)
 	}
 	invalidUsers := make(map[string]struct{})
-	for _, userID := range strings.Split(result.InvalidUser, "|") {
+	for userID := range strings.SplitSeq(result.InvalidUser, "|") {
 		if userID != "" {
 			invalidUsers[userID] = struct{}{}
 		}

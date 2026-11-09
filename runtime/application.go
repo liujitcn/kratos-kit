@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"maps"
 	"sync"
 
 	"github.com/liujitcn/go-utils/translator"
@@ -62,9 +63,7 @@ func (e *Application) GetGormClients() map[string]*gorm.Client {
 	e.mux.RLock()
 	defer e.mux.RUnlock()
 	clients := make(map[string]*gorm.Client, len(e.gormClients))
-	for name, client := range e.gormClients {
-		clients[name] = client
-	}
+	maps.Copy(clients, e.gormClients)
 	return clients
 }
 
@@ -167,7 +166,7 @@ func (e *Application) GetKey() key.Key {
 }
 
 // GetStreamMessage 创建队列流消息。
-func (e *Application) GetStreamMessage(id string, value map[string]interface{}) (data.Message, error) {
+func (e *Application) GetStreamMessage(id string, value map[string]any) (data.Message, error) {
 	return data.Message{
 		ID:         id,
 		Values:     value,

@@ -84,12 +84,12 @@ func formatModuleFile(file string) (string, bool) {
 // trimModuleCachePath 在源码目录不可访问时按 Go module cache 路径回退格式化。
 func trimModuleCachePath(file string) string {
 	var marker = "/pkg/mod/"
-	var index = strings.Index(file, marker)
-	if index < 0 {
+	var _, after, ok = strings.Cut(file, marker)
+	if !ok {
 		return file
 	}
 
-	var parts = strings.Split(file[index+len(marker):], "/")
+	var parts = strings.Split(after, "/")
 	for i := range parts {
 		parts[i] = decodeModuleCacheSegment(parts[i])
 		var versionIndex = strings.IndexByte(parts[i], '@')

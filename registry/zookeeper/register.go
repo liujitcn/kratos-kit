@@ -82,7 +82,7 @@ func (r *Registry) Deregister(ctx context.Context, service *registry.ServiceInst
 
 // GetService 从 ZooKeeper 获取指定服务实例列表。
 func (r *Registry) GetService(_ context.Context, serviceName string) ([]*registry.ServiceInstance, error) {
-	instances, err, _ := r.group.Do(serviceName, func() (interface{}, error) {
+	instances, err, _ := r.group.Do(serviceName, func() (any, error) {
 		serviceNamePath := path.Join(r.opts.namespace, serviceName)
 		servicesID, _, err := r.conn.Children(serviceNamePath)
 		if err != nil {

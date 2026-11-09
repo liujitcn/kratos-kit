@@ -172,17 +172,17 @@ func applyTenantJoinConditions(db *gorm.DB, tenantID int64, scopedTables map[str
 // setTenantMap 将租户编号写入 map 创建参数。
 func setTenantMap(db *gorm.DB, tenantField *schema.Field, tenantID int64) bool {
 	switch dest := db.Statement.Dest.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		setTenantMapItem(db, dest, tenantField, tenantID)
-	case *map[string]interface{}:
+	case *map[string]any:
 		if dest != nil {
 			setTenantMapItem(db, *dest, tenantField, tenantID)
 		}
-	case []map[string]interface{}:
+	case []map[string]any:
 		for _, item := range dest {
 			setTenantMapItem(db, item, tenantField, tenantID)
 		}
-	case *[]map[string]interface{}:
+	case *[]map[string]any:
 		if dest != nil {
 			for _, item := range *dest {
 				setTenantMapItem(db, item, tenantField, tenantID)
@@ -195,7 +195,7 @@ func setTenantMap(db *gorm.DB, tenantField *schema.Field, tenantID int64) bool {
 }
 
 // setTenantMapItem 在单条 map 数据上填充或校验租户编号。
-func setTenantMapItem(db *gorm.DB, item map[string]interface{}, tenantField *schema.Field, tenantID int64) {
+func setTenantMapItem(db *gorm.DB, item map[string]any, tenantField *schema.Field, tenantID int64) {
 	if item == nil || db.Error != nil {
 		return
 	}
@@ -224,7 +224,7 @@ func setTenantMapItem(db *gorm.DB, item map[string]interface{}, tenantField *sch
 }
 
 // tenantMapValue 从 map 中读取租户字段值。
-func tenantMapValue(item map[string]interface{}, tenantField *schema.Field) (string, interface{}, bool) {
+func tenantMapValue(item map[string]any, tenantField *schema.Field) (string, any, bool) {
 	keys := []string{tenantColumnName, tenantStructFieldName}
 	if tenantField != nil {
 		keys = []string{tenantField.DBName, tenantField.Name}
@@ -271,7 +271,7 @@ func setTenantField(db *gorm.DB, value reflect.Value, tenantField *schema.Field,
 }
 
 // tenantIDFromValue 将字段值解析成租户编号，并返回该值是否为空。
-func tenantIDFromValue(value interface{}) (int64, bool, bool) {
+func tenantIDFromValue(value any) (int64, bool, bool) {
 	if value == nil {
 		return 0, true, true
 	}

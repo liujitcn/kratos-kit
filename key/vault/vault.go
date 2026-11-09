@@ -104,8 +104,9 @@ func (p *Provider) Get(ctx context.Context, name string) (internal.Secret, error
 	return internal.Secret{Value: value}, nil
 }
 
-func extractValue(data map[string]interface{}, valueKey string) ([]byte, error) {
-	if inner, ok := data["data"].(map[string]interface{}); ok {
+// extractValue 从 Vault KV v1 或 v2 响应中提取指定密钥值。
+func extractValue(data map[string]any, valueKey string) ([]byte, error) {
+	if inner, ok := data["data"].(map[string]any); ok {
 		data = inner
 	}
 	value, ok := data[valueKey]

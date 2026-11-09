@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.50.4
 	github.com/googleapis/gax-go/v2 v2.26.2
 	github.com/hashicorp/vault/api v1.23.0
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	google.golang.org/api v0.301.0
 	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.1

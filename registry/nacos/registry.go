@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"net"
 	"net/url"
@@ -47,7 +48,7 @@ func New(cli naming_client.INamingClient, opts ...Option) (r *Registry) {
 	}
 }
 
-// Register the registration.
+// Register 将服务实例的各协议端点注册到 Nacos。
 func (r *Registry) Register(_ context.Context, si *registry.ServiceInstance) error {
 	if si.Name == "" {
 		return ErrServiceInstanceNameEmpty
@@ -74,9 +75,7 @@ func (r *Registry) Register(_ context.Context, si *registry.ServiceInstance) err
 			}
 		} else {
 			rmd = make(map[string]string, len(si.Metadata)+2)
-			for k, v := range si.Metadata {
-				rmd[k] = v
-			}
+			maps.Copy(rmd, si.Metadata)
 			rmd["kind"] = u.Scheme
 			rmd["version"] = si.Version
 			if w, ok := si.Metadata["weight"]; ok {

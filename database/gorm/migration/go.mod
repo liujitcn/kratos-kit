@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/database/gorm v0.0.57
+	github.com/liujitcn/kratos-kit/database/gorm v0.0.59
 	gorm.io/gorm v1.31.2
 )
 
@@ -32,9 +32,9 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.20.1 // indirect
-	github.com/liujitcn/go-utils v0.0.43 // indirect
-	github.com/liujitcn/kratos-kit/api v0.0.41 // indirect
-	github.com/liujitcn/kratos-kit/auth v0.0.34 // indirect
+	github.com/liujitcn/go-utils v0.0.44 // indirect
+	github.com/liujitcn/kratos-kit/api v0.0.44 // indirect
+	github.com/liujitcn/kratos-kit/auth v0.0.35 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.27 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.24 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.26 // indirect

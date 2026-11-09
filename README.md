@@ -29,7 +29,7 @@ MCP 服务端与工具生成器统一基于 `mark3labs/mcp-go`，支持 Streamab
 | 模块 | 能力 |
 | --- | --- |
 | [`server`](server/README.md) | HTTP、gRPC、MCP、SSE 服务端构造和配置。 |
-| [`transport`](transport/README.md) | Kratos transport 辅助、SSE、MCP、队列、Cron、高精度定时器和保活服务。 |
+| [`transport`](transport/README.md) | Kratos transport 辅助、安全出站 HTTP、受信代理 IP 解析、SSE、MCP、队列、Cron、高精度定时器和保活服务。 |
 | [`broker`](broker/README.md) | Broker 接口、发布订阅、请求响应、typed handler 和 Kratos 生命周期适配。 |
 | [`broker/nats`](broker/nats/README.md) | Core NATS、JetStream、队列订阅、请求响应和消息追踪。 |
 | [`queue`](queue/README.md) | 内存队列、Redis Stream 队列和延迟消息。 |
@@ -133,6 +133,8 @@ func main() {
 - 验证码统一由 `Generate` 生成并写入缓存，由 `Verify` 校验，成功后删除缓存；图片只以 base64 或 JSON base64 返回。
 - `oauth` 只负责授权地址、state/PKCE、换取 Token 和用户信息，不负责业务用户、登录态或权限。
 - `secretcrypto` 的临时私钥只在缓存中短期保存；同一请求的多个密文应复用同一 `key_id`。
+- `transport/safehttp` 提供出站 URL、DNS、连接 IP 和重定向校验；AI 模型默认客户端使用该策略，私网模型需通过 `SECURITY_AI_ALLOWED_CIDRS` 或公共 `SECURITY_OUTBOUND_ALLOWED_CIDRS` 显式授权。
+- `transport/clientip.FromRequest` 默认使用 TCP 对端地址，仅在对端属于 `SECURITY_TRUSTED_PROXY_CIDRS` 时解析转发头；多个 CIDR 使用逗号分隔。
 
 ## 生成与开发
 
@@ -156,6 +158,8 @@ go install ./cmd/kratos-admin
 ```
 
 `kratos-admin create <name>` 拒绝覆盖已有目录，默认生成 `system` 业务模块；可通过 `--modules` 传入以逗号分隔的模块名，通过 `--module` 指定后端 Go module 路径。生成过程会创建目录、渲染模板、初始化三端前端并执行后端验证。
+
+每个业务模块的管理端和应用端提供 `Services` 注册骨架，统一接入 HTTP、gRPC 和 MCP；内部 Wire 从 Core 宿主接收共享的 `BaseCase` 和数据库客户端，并接入项目访问生命周期。
 
 ## 验证
 

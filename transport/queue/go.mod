@@ -4,7 +4,7 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.41
+	github.com/liujitcn/kratos-kit/api v0.0.44
 	github.com/liujitcn/kratos-kit/queue v0.0.37
 )
 
@@ -17,11 +17,11 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0 // indirect
-	github.com/liujitcn/go-utils v0.0.43 // indirect
+	github.com/liujitcn/go-utils v0.0.44 // indirect
 	github.com/liujitcn/kratos-kit/broker v0.0.15 // indirect
 	github.com/liujitcn/kratos-kit/queue/redisqueue v0.0.19 // indirect
 	github.com/liujitcn/kratos-kit/tracing v0.0.15 // indirect
-	github.com/liujitcn/kratos-kit/transport v0.0.28 // indirect
+	github.com/liujitcn/kratos-kit/transport v0.0.29 // indirect
 	github.com/liujitcn/kratos-kit/transport/hptimer v0.0.10 // indirect
 	github.com/liujitcn/kratos-kit/transport/keepalive v0.0.17 // indirect
 	github.com/liujitcn/kratos-kit/utils v0.0.28 // indirect

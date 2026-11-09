@@ -52,12 +52,12 @@ func New(config Config) (*Sender, error) {
 		region = "cn-hangzhou"
 	}
 	sdkConfig := &utils.Config{
-		AccessKeyId:     dara.String(config.AccessKeyID),
-		AccessKeySecret: dara.String(config.AccessKeySecret),
-		RegionId:        dara.String(region),
+		AccessKeyId:     new(config.AccessKeyID),
+		AccessKeySecret: new(config.AccessKeySecret),
+		RegionId:        new(region),
 	}
 	if config.Endpoint != "" {
-		sdkConfig.Endpoint = dara.String(config.Endpoint)
+		sdkConfig.Endpoint = new(config.Endpoint)
 	}
 	sdkClient, err := client.NewClient(sdkConfig)
 	if err != nil {

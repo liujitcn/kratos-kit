@@ -94,7 +94,7 @@ func (p *projectIsolation) update(db *gorm.DB) {
 	if statementUsesRegisteredTable(db, p.tables) {
 		protected := []string{"tenant_id", p.columns[p.mainTable(db)]}
 		switch value := db.Statement.Dest.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			for _, key := range protected {
 				if _, exists := value[key]; exists {
 					db.Error = db.AddError(ErrProjectScopeDenied)
@@ -162,7 +162,7 @@ func (p *projectIsolation) create(db *gorm.DB) {
 			}
 			return true
 		}
-		var tenantValue, projectValue interface{}
+		var tenantValue, projectValue any
 		if value.Kind() == reflect.Map && value.Type().Key().Kind() == reflect.String {
 			tenant := value.MapIndex(reflect.ValueOf("tenant_id"))
 			project := value.MapIndex(reflect.ValueOf(column))
@@ -281,7 +281,7 @@ func projectExpression(table, column string, scope ProjectScope) clause.Expressi
 		if len(ids) == 0 {
 			continue
 		}
-		values := make([]interface{}, len(ids))
+		values := make([]any, len(ids))
 		for index, id := range ids {
 			values[index] = id
 		}

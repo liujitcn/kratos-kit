@@ -20,7 +20,7 @@ var secretTargetMemo sync.Map
 // 中间件应挂在调用链最内侧，保证日志中间件只见密文。
 func (s *Service) Middleware() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			if msg, ok := req.(proto.Message); ok && msg != nil {
 				if err := s.decryptMessage(msg); err != nil {
 					return nil, err

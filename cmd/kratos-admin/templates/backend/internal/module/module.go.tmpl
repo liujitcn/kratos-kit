@@ -1,35 +1,26 @@
 package module
 
 import (
-	"github.com/go-kratos/kratos/v3/transport/http"
 	coremodule "github.com/liujitcn/kratos-core/module"
-	"github.com/liujitcn/kratos-kit/transport/mcp"
-	"google.golang.org/grpc"
+[[[range $index, $module := .Modules]]]
+	admin[[[$index]]] "__MODULE_PATH__/internal/server/[[[$module]]]/admin/v1"
+	app[[[$index]]] "__MODULE_PATH__/internal/server/[[[$module]]]/app/v1"
+[[[end]]]
 )
 
 // ProjectModules 表示当前项目提供给 Core 的协议模块集合。
 type ProjectModules coremodule.Modules
 
-// Module 表示当前项目注册到 Core 宿主的空业务模块。
-type Module struct{}
-
-var _ coremodule.Module = (*Module)(nil)
-
-// NewModule 创建当前项目的空业务模块。
-func NewModule() *Module {
-	return &Module{}
-}
-
 // NewModules 创建当前项目提供给 Core 的具名模块集合。
-func NewModules() ProjectModules {
-	return ProjectModules{NewModule()}
+func NewModules(
+[[[range $index, $module := .Modules]]]
+	admin[[[$index]]] *admin[[[$index]]].Services,
+	app[[[$index]]] *app[[[$index]]].Services,
+[[[end]]]
+) ProjectModules {
+	return ProjectModules{
+[[[range $index, $module := .Modules]]]
+		admin[[[$index]]], app[[[$index]]],
+[[[end]]]
+	}
 }
-
-// RegisterGRPC 注册当前项目的 gRPC 服务。
-func (*Module) RegisterGRPC(grpc.ServiceRegistrar) {}
-
-// RegisterHTTP 注册当前项目的 HTTP 服务。
-func (*Module) RegisterHTTP(*http.Server) {}
-
-// RegisterMCP 注册当前项目的 MCP 工具。
-func (*Module) RegisterMCP(*mcp.Server) {}

@@ -3,6 +3,7 @@ package health
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"sync"
 	"time"
@@ -197,8 +198,6 @@ func resultDetails(result Result) map[string]any {
 	if result.Message != "" {
 		details["message"] = result.Message
 	}
-	for key, value := range result.Details {
-		details[key] = value
-	}
+	maps.Copy(details, result.Details)
 	return details
 }

@@ -32,4 +32,4 @@ make test
 make build
 ```
 
-新增表后把模型加入 `internal/data.Models()`；新增接口后重新生成 Go、OpenAPI、脱敏和 TypeScript 产物。迁移脚本放入 `migration/assets/v0.0.1/mysql`，空目录只保留说明文件。
+标准单表 CRUD 使用管理端代码生成器维护模型、数据层依赖、接口、页面和服务注册，并执行 Go、OpenAPI、脱敏、TypeScript 和 Wire 生成命令。手写扩展仍通过 `internal/data.Models()` 注册模型。迁移脚本放入 `migration/assets/v0.0.1/mysql`，空目录只保留说明文件。

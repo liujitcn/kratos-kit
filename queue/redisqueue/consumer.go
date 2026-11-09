@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"sync"
@@ -230,9 +231,7 @@ func (c *Consumer) snapshotConsumers() map[string]registeredConsumer {
 	defer c.mux.RUnlock()
 
 	consumers := make(map[string]registeredConsumer, len(c.consumers))
-	for stream, consumer := range c.consumers {
-		consumers[stream] = consumer
-	}
+	maps.Copy(consumers, c.consumers)
 
 	return consumers
 }

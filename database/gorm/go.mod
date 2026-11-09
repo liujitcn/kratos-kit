@@ -4,8 +4,8 @@ go 1.27.0
 
 require (
 	github.com/go-kratos/kratos/v3 v3.0.0
-	github.com/liujitcn/kratos-kit/api v0.0.41
-	github.com/liujitcn/kratos-kit/auth v0.0.34
+	github.com/liujitcn/kratos-kit/api v0.0.44
+	github.com/liujitcn/kratos-kit/auth v0.0.35
 	github.com/liujitcn/kratos-kit/database/gorm/driver v0.0.24
 	gorm.io/gorm v1.31.2
 	gorm.io/plugin/opentelemetry v0.1.16
@@ -36,7 +36,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.20.1 // indirect
-	github.com/liujitcn/go-utils v0.0.43 // indirect
+	github.com/liujitcn/go-utils v0.0.44 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn v0.0.27 // indirect
 	github.com/liujitcn/kratos-kit/auth/authn/middleware v0.0.24 // indirect
 	github.com/liujitcn/kratos-kit/auth/authz v0.0.26 // indirect

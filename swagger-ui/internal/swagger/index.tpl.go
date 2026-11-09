@@ -1,11 +1,12 @@
 package swagger
 
 import (
+	"maps"
 	"slices"
 	"strings"
 )
 
-// IndexTpl creates page template.
+// IndexTpl 生成 Swagger UI 页面模板。
 //
 //nolint:funlen // The template is long.
 func IndexTpl(assetsBase, faviconBase string, cfg *Config) string {
@@ -43,9 +44,7 @@ func IndexTpl(assetsBase, faviconBase string, cfg *Config) string {
             }`,
 	}
 
-	for k, v := range cfg.SettingsUI {
-		settings[k] = v
-	}
+	maps.Copy(settings, cfg.SettingsUI)
 
 	settingsStr := make([]string, 0, len(settings))
 	for k, v := range settings {

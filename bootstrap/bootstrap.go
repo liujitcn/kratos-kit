@@ -73,7 +73,7 @@ func RunApp(ctx *Context, initApp InitAppFunc, opts ...func(root *cobra.Command)
 	}
 
 	// 如果 flags 实现了 Register，就在 Execute 前注册到命令上，确保 cobra 能解析这些 flag
-	if rb, ok := interface{}(flags).(interface{ Register(cmd *cobra.Command) }); ok {
+	if rb, ok := any(flags).(interface{ Register(cmd *cobra.Command) }); ok {
 		rb.Register(root)
 	}
 

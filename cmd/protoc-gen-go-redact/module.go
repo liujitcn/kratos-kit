@@ -24,7 +24,7 @@ type Module struct {
 // Name returns the name of this protoc-gen-star module
 func (*Module) Name() string { return "redactor" }
 
-// InitContext satisfies the pgs.Module interface and helps build the module
+// InitContext 初始化生成上下文并加载内置或自定义脱敏模板。
 func (m *Module) InitContext(c pgs.BuildContext) {
 	// Add panic recovery for initialization
 	defer func() {
@@ -45,7 +45,7 @@ func (m *Module) InitContext(c pgs.BuildContext) {
 	// Check for custom template file parameter
 	templateFile := c.Parameters().Str("template_file")
 
-	tpl := template.New("redact").Funcs(map[string]interface{}{
+	tpl := template.New("redact").Funcs(map[string]any{
 		"package": m.ctx.PackageName,
 		"name":    m.ctx.Name,
 	})

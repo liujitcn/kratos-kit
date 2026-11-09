@@ -177,6 +177,7 @@ func (c *Context) copyAppInfo(ai *configv1.AppInfo) {
 	}
 }
 
+// PrintAppInfo 按配置格式输出应用启动信息。
 func (c *Context) PrintAppInfo() {
 	ai := c.GetAppInfo()
 	if ai == nil {
@@ -187,7 +188,7 @@ func (c *Context) PrintAppInfo() {
 	pid := os.Getpid()
 
 	if os.Getenv("APPINFO_FORMAT") == "json" {
-		out := map[string]interface{}{
+		out := map[string]any{
 			"timestamp":   ts,
 			"host":        host,
 			"pid":         pid,
@@ -269,12 +270,12 @@ func (c *Context) RangeCustomConfig(fn func(key string, val any) bool) {
 }
 
 // SetValue 将任意值放入通用存储
-func (c *Context) SetValue(key string, val interface{}) {
+func (c *Context) SetValue(key string, val any) {
 	c.values.Store(key, val)
 }
 
 // GetValue 从通用存储读取值
-func (c *Context) GetValue(key string) (interface{}, bool) {
+func (c *Context) GetValue(key string) (any, bool) {
 	return c.values.Load(key)
 }
 

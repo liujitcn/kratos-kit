@@ -1,9 +1,10 @@
 package redis
 
 import (
+	"cmp"
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 
@@ -57,18 +58,18 @@ func NewRedis(cfg *configv1.Data_Redis) (*Redis, func(), error) {
 		return nil, nil, fmt.Errorf("failed ping redis: %w", err)
 	}
 	return &Redis{
-			client: client,
-			meta:   make(map[string]entryMeta),
-		}, func() {
-			log.Info("cache redis cleanup...")
-			if client != nil {
-				err = client.Close()
-				if err != nil {
-					log.Error("failed close redis", "error", err)
-					return
-				}
+		client: client,
+		meta:   make(map[string]entryMeta),
+	}, func() {
+		log.Info("cache redis cleanup...")
+		if client != nil {
+			err = client.Close()
+			if err != nil {
+				log.Error("failed close redis", "error", err)
+				return
 			}
-		}, nil
+		}
+	}, nil
 }
 
 // List 返回 Redis 中支持的缓存条目及其运行时元数据。
@@ -102,7 +103,7 @@ func (s *Redis) List() ([]store.Entry, error) {
 			entries = append(entries, entry)
 		}
 	}
-	sort.Slice(entries, func(i, j int) bool { return entries[i].Key < entries[j].Key })
+	slices.SortFunc(entries, func(a, b store.Entry) int { return cmp.Compare(a.Key, b.Key) })
 	return entries, nil
 }
 

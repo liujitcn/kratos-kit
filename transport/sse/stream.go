@@ -26,7 +26,7 @@ type Stream struct {
 	deregister chan *Subscriber
 
 	subscribers     []*Subscriber
-	subscriberCount int32
+	subscriberCount atomic.Int32
 
 	onSubscribe   SubscriberFunction
 	onUnsubscribe SubscriberFunction
@@ -59,7 +59,7 @@ func (s *Stream) run() {
 			select {
 			case subscriber := <-stream.register:
 				stream.subscribers = append(stream.subscribers, subscriber)
-				atomic.AddInt32(&stream.subscriberCount, 1)
+				stream.subscriberCount.Add(1)
 				close(subscriber.registered)
 				if stream.autoReplay {
 					stream.eventLog.Replay(subscriber)
@@ -155,8 +155,9 @@ func (s *Stream) addSubscriber(eventId string, req *http.Request) (*Subscriber, 
 	return sub, true
 }
 
+// removeSubscriber 移除指定订阅者并更新原子计数。
 func (s *Stream) removeSubscriber(i int) {
-	atomic.AddInt32(&s.subscriberCount, -1)
+	s.subscriberCount.Add(-1)
 	close(s.subscribers[i].connection)
 	if s.subscribers[i].removed != nil {
 		s.subscribers[i].removed <- struct{}{}
@@ -165,6 +166,7 @@ func (s *Stream) removeSubscriber(i int) {
 	s.subscribers = append(s.subscribers[:i], s.subscribers[i+1:]...)
 }
 
+// removeAllSubscribers 关闭所有订阅连接并清空计数。
 func (s *Stream) removeAllSubscribers() {
 	for i := 0; i < len(s.subscribers); i++ {
 		close(s.subscribers[i].connection)
@@ -173,10 +175,11 @@ func (s *Stream) removeAllSubscribers() {
 			close(s.subscribers[i].removed)
 		}
 	}
-	atomic.StoreInt32(&s.subscriberCount, 0)
+	s.subscriberCount.Store(0)
 	s.subscribers = s.subscribers[:0]
 }
 
+// getSubscriberCount 读取当前订阅者数量。
 func (s *Stream) getSubscriberCount() int {
-	return int(atomic.LoadInt32(&s.subscriberCount))
+	return int(s.subscriberCount.Load())
 }

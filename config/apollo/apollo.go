@@ -39,11 +39,12 @@ func NewSource(opts ...Option) (config.Source, error) {
 	return &apollo{client: client, opt: &op}, nil
 }
 
+// load 按命名空间加载配置并转换为 Kratos 配置条目。
 func (e *apollo) load() []*config.KeyValue {
 	kvs := make([]*config.KeyValue, 0)
-	namespaces := strings.Split(e.opt.namespace, ",")
+	namespaces := strings.SplitSeq(e.opt.namespace, ",")
 
-	for _, ns := range namespaces {
+	for ns := range namespaces {
 		if !e.opt.originConfig {
 			kv, err := e.getConfig(ns)
 			if err != nil {
