@@ -388,7 +388,7 @@ string ssn = 1 [(redact.value).custom = { name: "myRedactor" }];
 
 ### 条件脱敏 (Condition)
 
-根据环境变量决定是否执行脱敏，内部可包裹任意其他规则：
+条件字段保留协议兼容，生成代码始终执行内部脱敏规则，不再读取进程环境：
 
 ```protobuf
 string phone = 1 [(redact.value).condition = {
@@ -396,21 +396,20 @@ string phone = 1 [(redact.value).condition = {
     env_val: "production"
     rules: { mask: { keep_first: 3 keep_last: 4 } }
 }];
-// APP_ENV=production 时脱敏，否则不处理
+// 始终执行内层掩码规则
 
 string debug_data = 2 [(redact.value).condition = {
     env_var: "DEBUG"
     env_val: ""
     rules: { hash: { algo: SHA256 } }
 }];
-// DEBUG 变量存在（任意非空值）时执行哈希脱敏
+// 始终执行内层哈希规则
 ```
 
 | 参数        | 说明                  |
 |-----------|---------------------|
-| `env_var` | 环境变量名               |
-| `env_val` | 期望值（为空时检查变量是否存在且非空） |
-| `rules`   | 条件满足时应用的脱敏规则        |
+| `env_var` / `env_val` | 保留协议字段，仅用于兼容旧标注，不再读取 |
+| `rules`   | 始终应用的脱敏规则        |
 
 ---
 

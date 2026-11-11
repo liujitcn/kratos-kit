@@ -135,8 +135,8 @@ func main() {
 - 验证码统一由 `Generate` 生成并写入缓存，由 `Verify` 校验，成功后删除缓存；图片只以 base64 或 JSON base64 返回。
 - `oauth` 只负责授权地址、state/PKCE、换取 Token 和用户信息，不负责业务用户、登录态或权限。
 - `secretcrypto` 的临时私钥只在缓存中短期保存；同一请求的多个密文应复用同一 `key_id`。
-- `transport/safehttp` 提供出站 URL、DNS、连接 IP 和重定向校验；AI 模型默认客户端使用该策略，私网模型需通过 `SECURITY_AI_ALLOWED_CIDRS` 或公共 `SECURITY_OUTBOUND_ALLOWED_CIDRS` 显式授权。
-- `transport/clientip.FromRequest` 默认使用 TCP 对端地址，仅在对端属于 `SECURITY_TRUSTED_PROXY_CIDRS` 时解析转发头；多个 CIDR 使用逗号分隔。
+- `transport/safehttp` 提供出站 URL、DNS、连接 IP 和重定向校验；默认客户端只允许公网目标，私网目标由调用方通过 `NewPolicy` 显式授权。
+- `transport/clientip.FromRequest` 默认使用 TCP 对端地址；需要代理链时调用 `FromRequestWithTrustedProxyCIDRs` 显式传入受信网段。
 
 ## 生成与开发
 

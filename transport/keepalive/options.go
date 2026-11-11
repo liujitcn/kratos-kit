@@ -31,6 +31,20 @@ func WithAddress(addr string) ServerOption {
 	}
 }
 
+// WithHost 设置保活 endpoint 使用的主机地址。
+func WithHost(host string) ServerOption {
+	return func(s *Server) {
+		s.host = host
+	}
+}
+
+// WithInterface 设置保活 endpoint 自动探测时使用的网卡名称。
+func WithInterface(name string) ServerOption {
+	return func(s *Server) {
+		s.interfaceName = name
+	}
+}
+
 func WithEndpoint(endpoint *url.URL) ServerOption {
 	return func(s *Server) {
 		s.endpoint = endpoint

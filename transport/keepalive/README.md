@@ -19,11 +19,13 @@ app := kratos.New(kratos.Server(srv))
 
 ## 地址选择
 
-当监听地址只包含端口时，模块会根据实际 listener 调整 endpoint。多网卡或容器环境无法自动选择可达地址时，可以设置：
+当监听地址只包含端口时，模块会根据实际 listener 调整 endpoint。多网卡或容器环境无法自动选择可达地址时，可以通过显式选项设置：
 
-```bash
-export KRATOS_TRANSPORT_KEEPALIVE_INTERFACE=eth0
-export KRATOS_TRANSPORT_KEEPALIVE_HOST=192.0.2.10
+```go
+keepalive.NewServer(
+    keepalive.WithInterface("eth0"),
+    keepalive.WithHost("192.0.2.10"),
+)
 ```
 
-设置接口名时优先使用接口地址；否则使用显式 Host，最后才自动探测本机地址。环境变量只影响 endpoint 地址推导，不会改变 gRPC 监听端口。调用方仍应确认该地址能被注册中心或探活方访问。
+设置接口名时优先使用接口地址；否则使用显式 Host，最后才自动探测本机地址。上述选项只影响 endpoint 地址推导，不会改变 gRPC 监听端口。调用方仍应确认该地址能被注册中心或探活方访问。

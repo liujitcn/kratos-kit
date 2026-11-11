@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -585,13 +584,9 @@ func FixedLength(value, maskChar string) string {
 	return strings.Repeat(maskChar, len(value))
 }
 
-// Condition 根据环境变量值判断是否执行条件规则。
-func Condition(envVar, envVal string) bool {
-	value := os.Getenv(envVar)
-	if envVal == "" {
-		return value != ""
-	}
-	return value == envVal
+// Condition 保留生成代码兼容入口，环境条件不再从进程环境读取并默认执行内层脱敏规则。
+func Condition(_, _ string) bool {
+	return true
 }
 
 // Bypass 判断当前请求是否允许绕过内部方法保护。

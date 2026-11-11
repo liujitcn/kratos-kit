@@ -102,14 +102,8 @@ func AdjustAppInfo(ai *configv1.AppInfo) {
 	ai.StartTime = timestamppb.New(time.Now())
 }
 
-// ResolveHost 返回优先级选择的 host 标识：POD_NAME -> HOSTNAME env -> os.Hostname() -> 首个非 loopback IPv4 -> "unknown-host"
+// ResolveHost 返回优先级选择的 host 标识：os.Hostname() -> 首个非 loopback IPv4 -> "unknown-host"。
 func ResolveHost() string {
-	if v := os.Getenv("POD_NAME"); v != "" {
-		return v
-	}
-	if v := os.Getenv("HOSTNAME"); v != "" {
-		return v
-	}
 	if h, err := os.Hostname(); err == nil && h != "" {
 		return h
 	}

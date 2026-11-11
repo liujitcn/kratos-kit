@@ -137,7 +137,7 @@ message FieldRules {
     // Custom invokes a user-registered redactor function at runtime.
     CustomRules custom = 30;
 
-    // Condition applies inner rules only when an environment variable matches.
+    // Condition 保留环境条件标注兼容，生成代码始终执行内部规则。
     ConditionRules condition = 31;
   }
 }
@@ -249,18 +249,15 @@ message CustomRules {
   string name = 1;
 }
 
-// ConditionRules applies inner rules only when an environment variable
-// matches the expected value. This enables environment-specific redaction
-// (e.g., only mask in production).
+// ConditionRules 保留旧环境条件字段，当前生成代码忽略条件并始终应用内部规则。
 message ConditionRules {
-  // EnvVar is the environment variable name to check.
+  // EnvVar 保留旧环境变量字段，不再被运行时代码读取。
   string env_var = 1;
 
-  // EnvVal is the expected value. If empty, checks that the variable is
-  // set to any non-empty value.
+  // EnvVal 保留旧条件值字段，不再被运行时代码读取。
   string env_val = 2;
 
-  // Rules are the redaction rules to apply when the condition is met.
+  // Rules 是始终应用的脱敏规则。
   FieldRules rules = 3;
 }
 

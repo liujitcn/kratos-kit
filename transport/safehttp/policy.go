@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -61,14 +60,6 @@ func NewPolicy(allowPublic bool, hosts, cidrs []string) (*Policy, error) {
 		policy.networks = append(policy.networks, prefix.Masked())
 	}
 	return policy, nil
-}
-
-// FromEnvironment 读取公共及场景专属的部署白名单，例如 SECURITY_CLUSTER_ALLOWED_CIDRS。
-func FromEnvironment(scope string, allowPublic bool) (*Policy, error) {
-	prefix := "SECURITY_" + scope + "_ALLOWED_"
-	hosts := strings.Split(os.Getenv("SECURITY_OUTBOUND_ALLOWED_HOSTS")+","+os.Getenv(prefix+"HOSTS"), ",")
-	cidrs := strings.Split(os.Getenv("SECURITY_OUTBOUND_ALLOWED_CIDRS")+","+os.Getenv(prefix+"CIDRS"), ",")
-	return NewPolicy(allowPublic, hosts, cidrs)
 }
 
 // ValidateURL 在发送凭据或请求体之前校验协议、端口、主机和全部解析地址。

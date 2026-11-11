@@ -352,7 +352,7 @@ string ssn = 1 [(redact.value).custom = { name: "myRedactor" }];
 
 ### Conditional Redaction
 
-Apply inner rules only when an environment variable matches:
+The condition fields remain for annotation compatibility; generated code always applies the inner rules and never reads process environment variables:
 
 ```protobuf
 string phone = 1 [(redact.value).condition = {
@@ -360,7 +360,7 @@ string phone = 1 [(redact.value).condition = {
     env_val: "production"
     rules: { mask: { keep_first: 3 keep_last: 4 } }
 }];
-// Only redacts when APP_ENV=production
+// Always applies the inner masking rule
 ```
 
 ---

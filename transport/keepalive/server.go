@@ -33,8 +33,10 @@ type Server struct {
 	lis      net.Listener
 	endpoint *url.URL
 
-	network string
-	address string
+	network       string
+	address       string
+	host          string
+	interfaceName string
 
 	serviceKind string
 
@@ -65,7 +67,7 @@ func (s *Server) init(opts ...ServerOption) {
 	}
 
 	if s.address == "" {
-		addr, _ := generateHost()
+		addr, _ := generateHost(s.interfaceName, s.host)
 		s.address = fmt.Sprintf("%s:%d", addr, generatePort())
 	}
 

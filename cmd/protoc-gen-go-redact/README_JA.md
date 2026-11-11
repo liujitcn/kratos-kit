@@ -352,7 +352,7 @@ string ssn = 1 [(redact.value).custom = { name: "myRedactor" }];
 
 ### 条件付きマスキング (Condition)
 
-環境変数が条件を満たした場合のみマスキングを適用します：
+条件フィールドは注釈互換のために残ります。生成コードはプロセス環境を読み取らず、常に内部ルールを適用します：
 
 ```protobuf
 string phone = 1 [(redact.value).condition = {
@@ -360,7 +360,7 @@ string phone = 1 [(redact.value).condition = {
     env_val: "production"
     rules: { mask: { keep_first: 3 keep_last: 4 } }
 }];
-// APP_ENV=production の場合のみマスキング
+// 内部マスキングルールを常に適用
 ```
 
 ---

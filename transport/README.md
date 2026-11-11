@@ -2,10 +2,10 @@
 
 `transport` 提供可挂入 Kratos 生命周期的通用传输扩展。公共包负责注册和 transport 工具，并提供两个可直接导入的安全工具包：
 
-- `transport/clientip`：默认返回 TCP 对端地址，只有对端命中 `SECURITY_TRUSTED_PROXY_CIDRS` 时才从右向左解析 `X-Forwarded-For`，缺少该头时使用 `X-Real-IP`。
+- `transport/clientip`：默认返回 TCP 对端地址；调用 `FromRequestWithTrustedProxyCIDRs` 并传入受信网段后，才从右向左解析 `X-Forwarded-For`，缺少该头时使用 `X-Real-IP`。
 - `transport/safehttp`：在请求和拨号阶段校验目标，固定连接到已验证 IP，并校验每次重定向；默认拒绝私网、回环、链路本地和元数据地址。私网及回环服务需显式授权 CIDR，链路本地和元数据地址始终拒绝。
 
-`safehttp.FromEnvironment(scope, allowPublic)` 合并公共 `SECURITY_OUTBOUND_ALLOWED_HOSTS`、`SECURITY_OUTBOUND_ALLOWED_CIDRS` 与场景专属的 `SECURITY_<scope>_ALLOWED_HOSTS`、`SECURITY_<scope>_ALLOWED_CIDRS`，各项使用逗号分隔。域名白名单不能替代私网 CIDR 授权；`Client` 保留同源重定向，拒绝跨源跳转。
+调用方使用 `safehttp.NewPolicy(allowPublic, hosts, cidrs)` 显式传入公共或场景专属白名单。域名白名单不能替代私网 CIDR 授权；`Client` 保留同源重定向，拒绝跨源跳转。
 
 `DialProxy` 同时校验代理和最终目标，通过 HTTP(S) CONNECT 或 SOCKS5 连接固定 IP，避免代理再次解析域名；业务传输继续使用原始 Host、TLS SNI 和证书。代理认证保留，HTTP(S) 代理需允许目标端口的 CONNECT。调用方提供请求 deadline 和需要的代理 TLS 信任配置。
 

@@ -7,13 +7,12 @@
 package redact
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	descriptorpb "google.golang.org/protobuf/types/descriptorpb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -548,7 +547,7 @@ type FieldRules_Custom struct {
 }
 
 type FieldRules_Condition struct {
-	// Condition applies inner rules only when an environment variable matches.
+	// Condition 保留环境条件标注兼容，生成代码始终执行内部规则。
 	Condition *ConditionRules `protobuf:"bytes,31,opt,name=condition,proto3,oneof"`
 }
 
@@ -1150,17 +1149,14 @@ func (x *CustomRules) GetName() string {
 	return ""
 }
 
-// ConditionRules applies inner rules only when an environment variable
-// matches the expected value. This enables environment-specific redaction
-// (e.g., only mask in production).
+// ConditionRules 保留旧环境条件字段，当前生成代码忽略条件并始终应用内部规则。
 type ConditionRules struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// EnvVar is the environment variable name to check.
+	// EnvVar 保留旧环境变量字段，不再被运行时代码读取。
 	EnvVar string `protobuf:"bytes,1,opt,name=env_var,json=envVar,proto3" json:"env_var,omitempty"`
-	// EnvVal is the expected value. If empty, checks that the variable is
-	// set to any non-empty value.
+	// EnvVal 保留旧条件值字段，不再被运行时代码读取。
 	EnvVal string `protobuf:"bytes,2,opt,name=env_val,json=envVal,proto3" json:"env_val,omitempty"`
-	// Rules are the redaction rules to apply when the condition is met.
+	// Rules 是始终应用的脱敏规则。
 	Rules         *FieldRules `protobuf:"bytes,3,opt,name=rules,proto3" json:"rules,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

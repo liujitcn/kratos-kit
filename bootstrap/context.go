@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -186,25 +185,6 @@ func (c *Context) PrintAppInfo() {
 	ts := time.Now().Format(time.RFC3339)
 	host, _ := os.Hostname()
 	pid := os.Getpid()
-
-	if os.Getenv("APPINFO_FORMAT") == "json" {
-		out := map[string]any{
-			"timestamp":   ts,
-			"host":        host,
-			"pid":         pid,
-			"name":        ai.Name,
-			"version":     ai.Version,
-			"app_id":      ai.AppId,
-			"instance_id": ai.InstanceId,
-			"metadata":    ai.Metadata,
-		}
-		if b, err := json.Marshal(out); err == nil {
-			fmt.Println(string(b))
-		} else {
-			fmt.Printf("Application info marshal error: %v\n", err)
-		}
-		return
-	}
 
 	fmt.Printf("[%s] %s (pid:%d@%s)\n", ts, ai.Name, pid, host)
 	fmt.Printf("  Version: %s\n", ai.Version)

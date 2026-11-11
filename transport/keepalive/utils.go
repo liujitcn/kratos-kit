@@ -2,7 +2,6 @@ package keepalive
 
 import (
 	"math/rand"
-	"os"
 
 	"github.com/liujitcn/kratos-kit/transport"
 )
@@ -15,15 +14,15 @@ func generateNumber(minNum, maxNum int) int {
 	return rand.Intn(maxNum-minNum) + minNum
 }
 
-func generateHost() (string, error) {
-	if itf, ok := os.LookupEnv(EnvKeyInterface); ok {
-		h, err := transport.GetIPAddressByInterfaceName(itf)
+func generateHost(interfaceName, explicitHost string) (string, error) {
+	if interfaceName != "" {
+		h, err := transport.GetIPAddressByInterfaceName(interfaceName)
 		if err != nil {
 			return "", err
 		}
 		return h, nil
-	} else if h, ok := os.LookupEnv(EnvKeyHost); ok {
-		return h, nil
+	} else if explicitHost != "" {
+		return explicitHost, nil
 	} else {
 		h, err := transport.GetLocalIP()
 		if err != nil {

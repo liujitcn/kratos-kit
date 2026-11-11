@@ -3,7 +3,6 @@ package servicecomb
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"time"
 
 	"uuid"
@@ -16,14 +15,6 @@ import (
 	"github.com/go-kratos/kratos/v3/registry"
 )
 
-func init() {
-	appID = os.Getenv(appIDVar)
-	if appID == "" {
-		appID = "default"
-	}
-	env = os.Getenv(envVar)
-}
-
 var (
 	_ registry.Registrar = (*Registry)(nil)
 	_ registry.Discovery = (*Registry)(nil)
@@ -31,15 +22,13 @@ var (
 
 var (
 	curServiceID string
-	appID        string
+	appID        = "default"
 	env          string
 )
 
 const (
 	appIDKey         = "appId"
 	envKey           = "environment"
-	envVar           = "CAS_ENVIRONMENT_ID"
-	appIDVar         = "CAS_APPLICATION_NAME"
 	frameWorkName    = "kratos"
 	frameWorkVersion = "v2"
 )

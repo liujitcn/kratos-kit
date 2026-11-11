@@ -263,7 +263,11 @@ func GetNamespace() string {
 
 // GetPodName is used to get the name of the Pod where the current container is located
 func GetPodName() string {
-	return os.Getenv("HOSTNAME")
+	host, err := os.Hostname()
+	if err != nil {
+		return ""
+	}
+	return host
 }
 
 // //////////// ProtocolMap ////////////

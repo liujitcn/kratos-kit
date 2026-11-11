@@ -60,9 +60,9 @@ func applyClientConfig(cfg *ModelConfig, o *options, clientConfig *openai.Client
 	return nil
 }
 
-// NewHTTPClient 创建共享安全模型客户端，支持公网及部署明确授权的内网模型，保留调用方超时。
+// NewHTTPClient 创建默认仅允许公网目标的安全模型客户端，保留调用方超时。
 func NewHTTPClient(timeout time.Duration) (*http.Client, error) {
-	policy, err := safehttp.FromEnvironment("AI", true)
+	policy, err := safehttp.NewPolicy(true, nil, nil)
 	if err != nil {
 		return nil, err
 	}

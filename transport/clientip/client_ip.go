@@ -3,13 +3,17 @@ package clientip
 import (
 	"net/http"
 	"net/netip"
-	"os"
 	"slices"
 	"strings"
 )
 
 // FromRequest 仅在 TCP 对端属于受信代理时从右向左解析转发链，默认忽略客户端可伪造的头。
 func FromRequest(request *http.Request) string {
+	return FromRequestWithTrustedProxyCIDRs(request)
+}
+
+// FromRequestWithTrustedProxyCIDRs 使用调用方提供的受信代理网段解析转发链。
+func FromRequestWithTrustedProxyCIDRs(request *http.Request, trustedProxyCIDRs ...string) string {
 	address, err := netip.ParseAddrPort(request.RemoteAddr)
 	var peer netip.Addr
 	if err == nil {
@@ -22,7 +26,7 @@ func FromRequest(request *http.Request) string {
 		peer = peer.Unmap()
 	}
 	var trusted []netip.Prefix
-	for network := range strings.SplitSeq(os.Getenv("SECURITY_TRUSTED_PROXY_CIDRS"), ",") {
+	for _, network := range trustedProxyCIDRs {
 		network = strings.TrimSpace(network)
 		if network == "" {
 			continue
