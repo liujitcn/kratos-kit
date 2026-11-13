@@ -44,6 +44,9 @@ type ModelConfig struct {
 	MaxRetries int32
 	// APIType 是模型 API 协议类型。
 	APIType APIType
+	// DisableStreaming 表示该供应商是否禁用流式输出。聚合网关的流式协议存在
+	// 双发、混组等兼容问题时置 true，调用方回退非流式请求并整段透传。
+	DisableStreaming bool
 }
 
 // ResolvedAPIKey 返回模型客户端实际使用的 API Key。
